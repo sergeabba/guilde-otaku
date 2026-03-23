@@ -154,17 +154,22 @@ export default function BirthdaysPage() {
             ))}
           </div>
 
-          <nav style={{ 
-            display: "flex", gap: "20px", fontWeight: 700, fontSize: "14px", fontFamily: "'Barlow Condensed', sans-serif",
-            overflowX: isMobile ? "auto" : "visible", width: isMobile ? "100%" : "auto",
-            paddingBottom: isMobile ? "5px" : "0", whiteSpace: "nowrap"
-          }}>
-            <Link href="/" style={{ textDecoration: "none", color: isDark ? "rgba(255,255,255,0.6)" : "#666", transition: "0.2s" }}>MEMBRES</Link>
-            <Link href="/birthdays" style={{ textDecoration: "none", color: themeAccent, transition: "0.2s" }}>ANNIVERSAIRES</Link>
-            <Link href="/wanted" style={{ textDecoration: "none", color: isDark ? "rgba(255,255,255,0.6)" : "#666", transition: "0.2s" }}>WANTED</Link>
-            <Link href="/fighters" style={{ textDecoration: "none", color: isDark ? "rgba(255,255,255,0.6)" : "#666", transition: "0.2s" }}>FIGHTERS</Link>
-            <Link href="/bons-plans" style={{ textDecoration: "none", color: isDark ? "rgba(255,255,255,0.6)" : "#666", transition: "0.2s" }}>BONS PLANS</Link>
-          </nav>
+          {/* --- MENU DE NAVIGATION --- */}
+        <nav style={{ 
+          display: "flex", 
+          gap: isMobile ? "20px" : "35px", // <-- Plus d'espace entre les menus sur PC
+          fontWeight: 800, // <-- Un peu plus gras pour que ça ressorte mieux
+          fontSize: isMobile ? "14px" : "19px", // <-- LA MAGIE EST LÀ : 19px sur PC !
+          overflowX: isMobile ? "auto" : "visible", 
+          width: isMobile ? "100%" : "auto",
+          paddingBottom: isMobile ? "5px" : "0", 
+          whiteSpace: "nowrap"
+        }}>
+          <Link href="/birthdays" style={{ textDecoration: "none", color: "inherit", transition: "0.2s" }}>ANNIVERSAIRES</Link>
+          <Link href="/wanted" style={{ textDecoration: "none", color: "inherit", transition: "0.2s" }}>WANTED</Link>
+          <Link href="/fighters" style={{ textDecoration: "none", color: "inherit", transition: "0.2s" }}>FIGHTERS</Link>
+          <Link href="/bons-plans" style={{ textDecoration: "none", color: "inherit", transition: "0.2s" }}>BONS PLANS</Link>
+        </nav>
         </div>
       </motion.header>
 

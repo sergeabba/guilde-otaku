@@ -99,15 +99,21 @@ export default function HomePage() {
           <h1 style={{ fontSize: isMobile ? "20px" : "24px", fontWeight: 900 }}>GUILDE OTAKU</h1>
         </div>
 
+       {/* --- MENU DE NAVIGATION --- */}
         <nav style={{ 
-          display: "flex", gap: "20px", fontWeight: 700, fontSize: "14px",
-          overflowX: isMobile ? "auto" : "visible", width: isMobile ? "100%" : "auto",
-          paddingBottom: isMobile ? "5px" : "0", whiteSpace: "nowrap"
+          display: "flex", 
+          gap: isMobile ? "20px" : "35px", // <-- Plus d'espace entre les menus sur PC
+          fontWeight: 800, // <-- Un peu plus gras pour que ça ressorte mieux
+          fontSize: isMobile ? "14px" : "19px", // <-- LA MAGIE EST LÀ : 19px sur PC !
+          overflowX: isMobile ? "auto" : "visible", 
+          width: isMobile ? "100%" : "auto",
+          paddingBottom: isMobile ? "5px" : "0", 
+          whiteSpace: "nowrap"
         }}>
-          <Link href="/birthdays" style={{ textDecoration: "none", color: "inherit" }}>ANNIVERSAIRES</Link>
-          <Link href="/wanted" style={{ textDecoration: "none", color: "inherit" }}>WANTED</Link>
-          <Link href="/fighters" style={{ textDecoration: "none", color: "inherit" }}>FIGHTERS</Link>
-          <Link href="/bons-plans" style={{ textDecoration: "none", color: "inherit" }}>BONS PLANS</Link>
+          <Link href="/birthdays" style={{ textDecoration: "none", color: "inherit", transition: "0.2s" }}>ANNIVERSAIRES</Link>
+          <Link href="/wanted" style={{ textDecoration: "none", color: "inherit", transition: "0.2s" }}>WANTED</Link>
+          <Link href="/fighters" style={{ textDecoration: "none", color: "inherit", transition: "0.2s" }}>FIGHTERS</Link>
+          <Link href="/bons-plans" style={{ textDecoration: "none", color: "inherit", transition: "0.2s" }}>BONS PLANS</Link>
         </nav>
       </motion.header>
 
