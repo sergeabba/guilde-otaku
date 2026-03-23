@@ -111,13 +111,13 @@ export default function HomePage() {
         </nav>
       </motion.header>
 
-      {/* --- BARRE DE FILTRES --- */}
+      {/* --- BARRE DE FILTRES FIXÉE (Anti-écrasement avec flexShrink) --- */}
       <div style={{ 
-        display: "flex", gap: "10px", padding: isMobile ? "15px" : "20px 40px", 
-        overflowX: "auto", 
+        display: "flex", gap: "10px", padding: isMobile ? "15px 20px" : "20px 40px", 
+        overflowX: "auto", WebkitOverflowScrolling: "touch",
         background: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)"
       }}>
-        <div style={{ display: "flex", background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)", borderRadius: "100px", padding: "4px", marginRight: "10px" }}>
+        <div style={{ flexShrink: 0, display: "flex", background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)", borderRadius: "100px", padding: "4px", marginRight: "10px" }}>
           {(["real", "anime"] as ViewMode[]).map((mode) => (
             <button key={mode} onClick={() => setViewMode(mode)} style={{
               padding: "6px 14px", borderRadius: "100px", border: "none", cursor: "pointer",
@@ -136,6 +136,7 @@ export default function HomePage() {
             key={rank} 
             onClick={() => setActiveRank(rank as Rank | "Tous")}
             style={{
+              flexShrink: 0, // C'est CA qui empêche les logos de s'écraser
               display: "flex", alignItems: "center", gap: "8px", padding: "8px 16px",
               borderRadius: "100px", border: activeRank === rank ? `2px solid ${accent}` : "1px solid transparent",
               background: activeRank === rank ? `${accent}20` : "transparent",
@@ -149,9 +150,9 @@ export default function HomePage() {
         ))}
       </div>
 
+      {/* --- LA PARTIE QUI AVAIT DISPARU (LE MAIN) --- */}
       <main style={{ maxWidth: "1400px", margin: "0 auto", padding: isMobile ? "30px 15px" : "60px 40px" }}>
         
-        {/* --- TITRE PRINCIPAL --- */}
         <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "flex-end", marginBottom: isMobile ? "40px" : "80px", gap: "20px" }}>
           <motion.div layout>
             <p style={{ color: accent, letterSpacing: "0.4em", fontWeight: 900, fontSize: "14px" }}>
@@ -177,7 +178,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* --- SECTIONS DE RANGS ANIMÉES (Design affiné) --- */}
         <AnimatePresence mode="wait">
           <motion.div 
             key={activeRank}
@@ -193,7 +193,6 @@ export default function HomePage() {
               return (
                 <section key={rank} style={{ marginBottom: isMobile ? "60px" : "80px" }}>
                   
-                  {/* EN-TÊTE DU RANG (Plus petit et élégant) */}
                   <div style={{ display: "flex", alignItems: "center", gap: isMobile ? "15px" : "20px", marginBottom: "30px" }}>
                     <img src={rankLogos[rank as Rank]} style={{ height: isMobile ? "50px" : "70px", objectFit: "contain" }} alt="" />
                     <h3 style={{ fontSize: isMobile ? "24px" : "32px", fontWeight: 900, fontStyle: "italic", color: rankAccents[rank as Rank] }}>
@@ -202,7 +201,6 @@ export default function HomePage() {
                     <div style={{ flexGrow: 1, height: "1px", background: `linear-gradient(90deg, ${rankAccents[rank as Rank]}40, transparent)` }} />
                   </div>
 
-                  {/* GRILLE (Cartes légèrement réduites) */}
                   <div style={{ 
                     display: "grid", 
                     gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(auto-fill, minmax(230px, 1fr))", 
