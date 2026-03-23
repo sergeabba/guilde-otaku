@@ -69,7 +69,16 @@ export default function BirthdaysPage() {
   const [activeMonth, setActiveMonth] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("real");
 
-  useEffect(() => { setNow(new Date()); }, []);
+  // --- DÉTECTION MOBILE ---
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setNow(new Date());
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const membersWithDates = members
     .map((m) => {
@@ -102,109 +111,68 @@ export default function BirthdaysPage() {
       transition={{ duration: 0.6 }}
       style={{ minHeight: "100vh" }}
     >
-      {/* HEADER */}
-      <motion.header
-        animate={{
-          backgroundColor: isDark ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.7)",
+      {/* --- HEADER RESPONSIVE UNIFIÉ --- */}
+      <motion.header 
+        animate={{ 
+          backgroundColor: isDark ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.7)", 
+          borderBottomColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)" 
         }}
-        transition={{ duration: 0.5 }}
         style={{
-          borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.08)"}`,
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-          position: "sticky", top: 0, zIndex: 40,
+          padding: isMobile ? "15px" : "0 40px", 
+          minHeight: "80px", 
+          display: "flex", 
+          flexDirection: isMobile ? "column" : "row",
+          alignItems: "center", 
+          justifyContent: "space-between", 
+          gap: isMobile ? "15px" : "0",
+          position: "sticky", top: 0, zIndex: 100,
+          backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
+          borderBottom: "1px solid"
         }}
       >
-        <div style={{
-          maxWidth: "1280px", margin: "0 auto",
-          padding: "0 40px",
-          display: "flex", alignItems: "center",
-          justifyContent: "space-between",
-          height: "72px",
-        }}>
-          <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "16px" }}>
-            <img src="/logo.png" alt="logo" style={{
-              width: "48px", height: "48px", objectFit: "contain",
-              filter: isDark ? "brightness(1.3)" : "none",
-            }} />
-            <div>
-              <div style={{
-                fontFamily: "'Barlow Condensed', sans-serif",
-                fontSize: "24px", fontWeight: 900,
-                color: isDark ? "#fff" : "#111",
-                letterSpacing: "0.04em", textTransform: "uppercase",
-                lineHeight: 1, fontStyle: "italic",
-              }}>GUILDE OTAKU</div>
-              <div style={{
-                fontFamily: "'Barlow Condensed', sans-serif",
-                fontSize: "13px", fontWeight: 600,
-                color: themeAccent, letterSpacing: "0.25em",
-                textTransform: "uppercase", marginTop: "2px",
-              }}>SINCE 2020</div>
-            </div>
-          </Link>
-
-          <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-
-            {/* Switch Réel / Anime */}
-            <div style={{
-              display: "flex", alignItems: "center",
-              background: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
-              borderRadius: "100px", padding: "4px", gap: "2px",
-            }}>
-              {(["real", "anime"] as ViewMode[]).map((mode) => {
-                const isActive = viewMode === mode;
-                return (
-                  <button
-                    key={mode}
-                    onClick={() => setViewMode(mode)}
-                    style={{
-                      fontFamily: "'Barlow Condensed', sans-serif",
-                      fontSize: "11px", fontWeight: 700,
-                      letterSpacing: "0.1em", textTransform: "uppercase",
-                      padding: "6px 14px", borderRadius: "100px",
-                      border: "none", cursor: "pointer",
-                      display: "flex", alignItems: "center", gap: "6px",
-                      transition: "all 0.25s ease",
-                      background: isActive ? themeAccent : "transparent",
-                      color: isActive ? "#fff" : (isDark ? "rgba(255,255,255,0.4)" : "#888"),
-                      boxShadow: isActive ? `0 2px 8px ${themeAccent}60` : "none",
-                    }}
-                  >
-                    {mode === "real" ? <User size={13} strokeWidth={2.5} /> : <Sword size={13} strokeWidth={2.5} />}
-                    {mode === "real" ? "Réel" : "Anime"}
-                  </button>
-                );
-              })}
-            </div>
-
-            <Link href="/" style={{
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontSize: "14px", fontWeight: 700,
-              color: isDark ? "rgba(255,255,255,0.5)" : "#666",
-              textDecoration: "none",
-              letterSpacing: "0.1em", textTransform: "uppercase",
-              transition: "color 0.2s",
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.color = themeAccent}
-            onMouseLeave={(e) => e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.5)" : "#666"}
-            >← Membres</Link>
-
-            <span style={{
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontSize: "14px", fontWeight: 800,
-              color: isDark ? "#fff" : "#111",
-              letterSpacing: "0.1em", textTransform: "uppercase",
-            }}>Anniversaires</span>
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: "15px", textDecoration: "none", width: isMobile ? "100%" : "auto", justifyContent: isMobile ? "center" : "flex-start" }}>
+          <img src="/logo.png" style={{ height: isMobile ? "40px" : "45px", filter: isDark ? "brightness(1.2)" : "none" }} alt="Logo" />
+          <div>
+            <h1 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: isMobile ? "20px" : "24px", fontWeight: 900, lineHeight: 1, margin: 0, color: isDark ? "#fff" : "#111" }}>GUILDE OTAKU</h1>
+            <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "11px", fontWeight: 700, color: themeAccent, letterSpacing: "0.2em", margin: "2px 0 0 0" }}>DEPUIS 2020</p>
           </div>
+        </Link>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "20px", flexDirection: isMobile ? "column" : "row", width: isMobile ? "100%" : "auto" }}>
+          
+          <div style={{ display: "flex", background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)", borderRadius: "100px", padding: "4px" }}>
+            {(["real", "anime"] as ViewMode[]).map((mode) => (
+              <button key={mode} onClick={() => setViewMode(mode)} style={{
+                padding: "6px 14px", borderRadius: "100px", border: "none", cursor: "pointer",
+                fontFamily: "'Barlow Condensed', sans-serif", fontSize: "12px", fontWeight: 700, textTransform: "uppercase",
+                background: viewMode === mode ? themeAccent : "transparent",
+                color: viewMode === mode ? "#fff" : (isDark ? "#aaa" : "#666"),
+                transition: "0.3s"
+              }}>
+                {mode === "real" ? "Réel" : "Anime"}
+              </button>
+            ))}
+          </div>
+
+          <nav style={{ 
+            display: "flex", gap: "20px", fontWeight: 700, fontSize: "14px", fontFamily: "'Barlow Condensed', sans-serif",
+            overflowX: isMobile ? "auto" : "visible", width: isMobile ? "100%" : "auto",
+            paddingBottom: isMobile ? "5px" : "0", whiteSpace: "nowrap"
+          }}>
+            <Link href="/" style={{ textDecoration: "none", color: isDark ? "rgba(255,255,255,0.6)" : "#666", transition: "0.2s" }}>MEMBRES</Link>
+            <Link href="/birthdays" style={{ textDecoration: "none", color: themeAccent, transition: "0.2s" }}>ANNIVERSAIRES</Link>
+            <Link href="/wanted" style={{ textDecoration: "none", color: isDark ? "rgba(255,255,255,0.6)" : "#666", transition: "0.2s" }}>WANTED</Link>
+            <Link href="/fighters" style={{ textDecoration: "none", color: isDark ? "rgba(255,255,255,0.6)" : "#666", transition: "0.2s" }}>FIGHTERS</Link>
+            <Link href="/bons-plans" style={{ textDecoration: "none", color: isDark ? "rgba(255,255,255,0.6)" : "#666", transition: "0.2s" }}>BONS PLANS</Link>
+          </nav>
         </div>
       </motion.header>
 
-      <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "0 40px" }}>
+      <div style={{ maxWidth: "1100px", margin: "0 auto", padding: isMobile ? "0 15px" : "0 40px" }}>
 
         {/* HERO */}
         <motion.div
-          style={{ paddingTop: "56px", paddingBottom: "40px" }}
+          style={{ paddingTop: isMobile ? "40px" : "56px", paddingBottom: "40px" }}
           initial={{ opacity: 0, y: -16 }}
           animate={{ opacity: 1, y: 0 }}
         >
@@ -219,7 +187,7 @@ export default function BirthdaysPage() {
             transition={{ duration: 0.4 }}
             style={{
               fontFamily: "'Barlow Condensed', sans-serif",
-              fontSize: "clamp(52px, 8vw, 88px)",
+              fontSize: isMobile ? "50px" : "clamp(52px, 8vw, 88px)",
               fontWeight: 900, lineHeight: 0.9,
               letterSpacing: "-0.03em",
               textTransform: "uppercase", fontStyle: "italic",
@@ -241,10 +209,11 @@ export default function BirthdaysPage() {
               border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "transparent"}`,
               backdropFilter: "blur(12px)",
               borderRadius: "16px",
-              padding: "36px 44px",
+              padding: isMobile ? "24px 20px" : "36px 44px",
               marginBottom: "48px",
               display: "flex",
-              alignItems: "center",
+              flexDirection: isMobile ? "column" : "row",
+              alignItems: isMobile ? "flex-start" : "center",
               justifyContent: "space-between",
               gap: "24px", flexWrap: "wrap",
               cursor: "pointer",
@@ -256,64 +225,66 @@ export default function BirthdaysPage() {
               background: `linear-gradient(90deg, ${themeAccent}, ${themeAccent}60, transparent)`,
             }} />
 
-            {/* Photo miniature */}
-            <div style={{
-              width: "72px", height: "72px", borderRadius: "50%",
-              overflow: "hidden", flexShrink: 0,
-              border: `2px solid ${themeAccent}`,
-              boxShadow: `0 0 20px ${themeAccent}40`,
-              position: "relative",
-            }}>
-              <AnimatePresence mode="wait">
-                <motion.img
-                  key={viewMode}
-                  src={viewMode === "anime" ? next.animeChar : next.photo}
-                  alt={next.name}
-                  initial={{ opacity: 0, scale: 1.1, filter: "blur(4px)" }}
-                  animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-                  exit={{ opacity: 0, scale: 0.9, filter: "blur(4px)" }}
-                  transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
-                  style={{
-                    position: "absolute", inset: 0,
-                    width: "100%", height: "100%",
-                    objectFit: "cover", objectPosition: "top",
-                  }}
-                  onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0"; }}
-                />
-              </AnimatePresence>
-            </div>
-
-            <div style={{ flex: 1 }}>
-              <p style={{
-                fontFamily: "'Barlow Condensed', sans-serif",
-                fontSize: "11px", fontWeight: 700,
-                letterSpacing: "0.3em", textTransform: "uppercase",
-                color: isDark ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.4)",
-                marginBottom: "10px",
-              }}>Prochain anniversaire</p>
-              <div style={{ display: "flex", alignItems: "baseline", gap: "10px", flexWrap: "wrap" }}>
-                {sameDay.map((m, i) => (
-                  <h2 key={m.id} style={{
-                    fontFamily: "'Barlow Condensed', sans-serif",
-                    fontSize: "clamp(24px, 4vw, 40px)",
-                    fontWeight: 900, color: "#fff",
-                    letterSpacing: "-0.02em", textTransform: "uppercase",
-                    fontStyle: "italic",
-                  }}>
-                    {m.name}{i < sameDay.length - 1 ? " &" : ""}
-                  </h2>
-                ))}
-              </div>
-              <p style={{
-                fontFamily: "'Barlow Condensed', sans-serif",
-                fontSize: "14px", fontWeight: 500,
-                color: "rgba(255,255,255,0.4)", marginTop: "8px",
+            <div style={{ display: "flex", gap: "20px", width: isMobile ? "100%" : "auto" }}>
+              {/* Photo miniature */}
+              <div style={{
+                width: "72px", height: "72px", borderRadius: "50%",
+                overflow: "hidden", flexShrink: 0,
+                border: `2px solid ${themeAccent}`,
+                boxShadow: `0 0 20px ${themeAccent}40`,
+                position: "relative",
               }}>
-                {next.day} {monthNames[next.month - 1]} — {next.rank}
-              </p>
+                <AnimatePresence mode="wait">
+                  <motion.img
+                    key={viewMode}
+                    src={viewMode === "anime" ? next.animeChar : next.photo}
+                    alt={next.name}
+                    initial={{ opacity: 0, scale: 1.1, filter: "blur(4px)" }}
+                    animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                    exit={{ opacity: 0, scale: 0.9, filter: "blur(4px)" }}
+                    transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
+                    style={{
+                      position: "absolute", inset: 0,
+                      width: "100%", height: "100%",
+                      objectFit: "cover", objectPosition: "top",
+                    }}
+                    onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0"; }}
+                  />
+                </AnimatePresence>
+              </div>
+
+              <div style={{ flex: 1 }}>
+                <p style={{
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontSize: "11px", fontWeight: 700,
+                  letterSpacing: "0.3em", textTransform: "uppercase",
+                  color: isDark ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.4)",
+                  marginBottom: "10px",
+                }}>Prochain anniversaire</p>
+                <div style={{ display: "flex", alignItems: "baseline", gap: "10px", flexWrap: "wrap" }}>
+                  {sameDay.map((m, i) => (
+                    <h2 key={m.id} style={{
+                      fontFamily: "'Barlow Condensed', sans-serif",
+                      fontSize: isMobile ? "32px" : "clamp(24px, 4vw, 40px)",
+                      fontWeight: 900, color: "#fff",
+                      letterSpacing: "-0.02em", textTransform: "uppercase",
+                      fontStyle: "italic", lineHeight: 1
+                    }}>
+                      {m.name}{i < sameDay.length - 1 ? " &" : ""}
+                    </h2>
+                  ))}
+                </div>
+                <p style={{
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontSize: "14px", fontWeight: 500,
+                  color: "rgba(255,255,255,0.4)", marginTop: "8px",
+                }}>
+                  {next.day} {monthNames[next.month - 1]} — {next.rank}
+                </p>
+              </div>
             </div>
 
-            <div style={{ textAlign: "right", flexShrink: 0 }}>
+            <div style={{ textAlign: isMobile ? "left" : "right", flexShrink: 0, width: isMobile ? "100%" : "auto", borderTop: isMobile ? "1px solid rgba(255,255,255,0.1)" : "none", paddingTop: isMobile ? "15px" : "0" }}>
               {next.daysUntil === 0 ? (
                 <div>
                   <p style={{
@@ -427,14 +398,12 @@ export default function BirthdaysPage() {
                   transition={{ delay: idx * 0.03 }}
                   style={{ marginBottom: "48px" }}
                 >
-                  {/* Month header */}
                   <div style={{
                     display: "flex", alignItems: "center",
                     gap: "14px", marginBottom: "12px",
                     paddingBottom: "12px",
                     borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)"}`,
                   }}>
-                    {/* Barre colorée */}
                     <div style={{
                       width: "5px", height: "28px",
                       background: mTheme.accent,
@@ -469,23 +438,16 @@ export default function BirthdaysPage() {
                     </span>
                   </div>
 
-                  {/* Liste membres */}
                   <div style={{
                     display: "flex", flexDirection: "column",
                     gap: "2px", borderRadius: "14px", overflow: "hidden",
-                    boxShadow: isDark
-                      ? `0 4px 24px rgba(0,0,0,0.3)`
-                      : "0 2px 16px rgba(0,0,0,0.06)",
+                    boxShadow: isDark ? `0 4px 24px rgba(0,0,0,0.3)` : "0 2px 16px rgba(0,0,0,0.06)",
                   }}>
                     {monthMembers.map((m, i) => {
                       const accent = rankAccents[m.rank] ?? "#111";
                       const isToday = m.daysUntil === 0;
                       const isSoon = m.daysUntil <= 7 && m.daysUntil > 0;
-                      const rowBg = isToday
-                        ? "#111"
-                        : isDark
-                        ? "rgba(255,255,255,0.04)"
-                        : "#fff";
+                      const rowBg = isToday ? "#111" : isDark ? "rgba(255,255,255,0.04)" : "#fff";
 
                       return (
                         <motion.div
@@ -494,16 +456,8 @@ export default function BirthdaysPage() {
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: 0.03 * i }}
                           onClick={() => setSelectedMember(m)}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = isToday
-                              ? "#1a1a1a"
-                              : isDark
-                              ? "rgba(255,255,255,0.08)"
-                              : "#f5f3ee";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = rowBg;
-                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = isToday ? "#1a1a1a" : isDark ? "rgba(255,255,255,0.08)" : "#f5f3ee"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = rowBg; }}
                           style={{
                             background: rowBg,
                             display: "flex", alignItems: "stretch",
@@ -512,54 +466,35 @@ export default function BirthdaysPage() {
                             transition: "background 0.2s",
                           }}
                         >
-                          {/* Barre couleur rang */}
-                          <div style={{
-                            width: "4px", flexShrink: 0,
-                            background: accent,
-                            opacity: isToday ? 1 : 0.6,
-                          }} />
+                          <div style={{ width: "4px", flexShrink: 0, background: accent, opacity: isToday ? 1 : 0.6 }} />
 
-                          {/* Photo */}
-                          <div style={{
-  width: "80px", height: "80px", flexShrink: 0,
-  overflow: "hidden",
-  background: isDark ? "rgba(255,255,255,0.04)" : "#f0f0ee",
-  position: "relative",
-}}>
-  <AnimatePresence mode="wait">
-    <motion.img
-      key={viewMode}
-      src={viewMode === "anime" ? m.animeChar : m.photo}
-      alt=""
-      initial={{ opacity: 0, scale: 1.1, filter: "blur(4px)" }}
-      animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-      exit={{ opacity: 0, scale: 0.9, filter: "blur(4px)" }}
-      transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
-      style={{
-        position: "absolute", inset: 0,
-        width: "100%", height: "100%",
-        objectFit: "cover", objectPosition: "top",
-        display: "block",
-      }}
-      onError={(e) => {
-        (e.target as HTMLImageElement).style.display = "none";
-      }}
-    />
-  </AnimatePresence>
-</div>
+                          <div style={{ width: "80px", height: "80px", flexShrink: 0, overflow: "hidden", background: isDark ? "rgba(255,255,255,0.04)" : "#f0f0ee", position: "relative" }}>
+                            <AnimatePresence mode="wait">
+                              <motion.img
+                                key={viewMode}
+                                src={viewMode === "anime" ? m.animeChar : m.photo}
+                                alt=""
+                                initial={{ opacity: 0, scale: 1.1, filter: "blur(4px)" }}
+                                animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                                exit={{ opacity: 0, scale: 0.9, filter: "blur(4px)" }}
+                                transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
+                                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "top", display: "block" }}
+                                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                              />
+                            </AnimatePresence>
+                          </div>
 
-                          {/* Infos */}
                           <div style={{
-                            flex: 1, padding: "14px 20px",
+                            flex: 1, padding: isMobile ? "10px 15px" : "14px 20px",
                             display: "flex", alignItems: "center",
                             justifyContent: "space-between", gap: "16px",
                           }}>
                             <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
                               <span style={{
                                 fontFamily: "'Barlow Condensed', sans-serif",
-                                fontSize: "36px", fontWeight: 900,
+                                fontSize: isMobile ? "28px" : "36px", fontWeight: 900,
                                 color: isToday ? mTheme.accent : accent,
-                                lineHeight: 1, minWidth: "52px",
+                                lineHeight: 1, minWidth: isMobile ? "35px" : "52px",
                                 fontStyle: "italic",
                               }}>
                                 {String(m.day).padStart(2, "0")}
@@ -567,7 +502,7 @@ export default function BirthdaysPage() {
                               <div>
                                 <div style={{
                                   fontFamily: "'Barlow Condensed', sans-serif",
-                                  fontSize: "18px", fontWeight: 800,
+                                  fontSize: isMobile ? "16px" : "18px", fontWeight: 800,
                                   color: isToday ? "#fff" : (isDark ? "rgba(255,255,255,0.9)" : "#111"),
                                   textTransform: "uppercase",
                                   letterSpacing: "0.01em", lineHeight: 1,
@@ -583,53 +518,20 @@ export default function BirthdaysPage() {
                                 }}>
                                   {m.rank}
                                 </div>
-                                {m.badge && (
-                                  <div style={{
-                                    display: "inline-block",
-                                    background: isToday ? mTheme.accent : "#111",
-                                    color: isToday ? "#111" : "#c9a84c",
-                                    fontFamily: "'Barlow Condensed', sans-serif",
-                                    fontSize: "9px", fontWeight: 800,
-                                    letterSpacing: "0.14em", textTransform: "uppercase",
-                                    padding: "2px 8px", borderRadius: "2px",
-                                    marginTop: "5px",
-                                  }}>
-                                    {m.badge}
-                                  </div>
-                                )}
                               </div>
                             </div>
 
-                            {/* Countdown */}
                             <div style={{ flexShrink: 0 }}>
                               {isToday ? (
-                                <span style={{
-                                  fontFamily: "'Barlow Condensed', sans-serif",
-                                  fontSize: "13px", fontWeight: 800,
-                                  color: mTheme.accent, letterSpacing: "0.1em",
-                                  textTransform: "uppercase",
-                                }}>
-                                  AUJOURD'HUI
+                                <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "13px", fontWeight: 800, color: mTheme.accent, letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                                  {isMobile ? "Auj." : "AUJOURD'HUI"}
                                 </span>
                               ) : isSoon ? (
-                                <span style={{
-                                  fontFamily: "'Barlow Condensed', sans-serif",
-                                  fontSize: "13px", fontWeight: 800,
-                                  color: mTheme.accent,
-                                  background: `${mTheme.accent}18`,
-                                  padding: "5px 14px", borderRadius: "100px",
-                                  border: `1.5px solid ${mTheme.accent}40`,
-                                  letterSpacing: "0.06em",
-                                }}>
+                                <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "13px", fontWeight: 800, color: mTheme.accent, background: `${mTheme.accent}18`, padding: "5px 14px", borderRadius: "100px", border: `1.5px solid ${mTheme.accent}40`, letterSpacing: "0.06em" }}>
                                   J-{m.daysUntil}
                                 </span>
                               ) : (
-                                <span style={{
-                                  fontFamily: "'Barlow Condensed', sans-serif",
-                                  fontSize: "14px", fontWeight: 600,
-                                  color: isDark ? "rgba(255,255,255,0.2)" : "#ccc",
-                                  letterSpacing: "0.04em",
-                                }}>
+                                <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "14px", fontWeight: 600, color: isDark ? "rgba(255,255,255,0.2)" : "#ccc", letterSpacing: "0.04em" }}>
                                   J-{m.daysUntil}
                                 </span>
                               )}
@@ -655,12 +557,12 @@ export default function BirthdaysPage() {
             color: isDark ? "rgba(255,255,255,0.2)" : "#bbb",
             letterSpacing: "0.25em", textTransform: "uppercase",
           }}>
-            Guilde Otaku
+            Guilde Otaku — Depuis 2020
           </p>
         </footer>
       </div>
 
-      <MemberModal member={selectedMember} onClose={() => setSelectedMember(null)} viewMode={viewMode} />
+      <MemberModal member={selectedMember} onClose={() => setSelectedMember(null)} viewMode={viewMode} isMobile={isMobile} />
     </motion.main>
   );
 }

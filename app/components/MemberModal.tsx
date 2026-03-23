@@ -27,11 +27,11 @@ export default function MemberModal({ member, onClose, viewMode, isMobile }: {
     <AnimatePresence>
       {member && (
         <motion.div
-          className="fixed inset-0 z-50 overflow-y-auto"
+          className="fixed inset-0 overflow-y-auto"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          style={{ background: "#08080f" }}
+          style={{ background: "#08080f", zIndex: 9999 }} // <-- CORRECTION ICI : La modal passe par-dessus tout
         >
           {/* BOUTON FERMER / RETOUR */}
           <button onClick={onClose} style={{
@@ -39,7 +39,7 @@ export default function MemberModal({ member, onClose, viewMode, isMobile }: {
             top: isMobile ? "20px" : "30px", 
             left: isMobile ? "20px" : "auto", 
             right: isMobile ? "auto" : "30px", 
-            zIndex: 100,
+            zIndex: 10000, // <-- CORRECTION ICI : Le bouton passe par-dessus la modal
             display: "flex", alignItems: "center", gap: "8px",
             padding: isMobile ? "8px 16px" : "10px",
             borderRadius: "100px",
@@ -115,10 +115,9 @@ export default function MemberModal({ member, onClose, viewMode, isMobile }: {
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "4px", background: accent, zIndex: 10 }} />
             </div>
 
-           {/* --- INFO SECTION --- */}
+            {/* --- INFO SECTION --- */}
             <div style={{ padding: isMobile ? "40px 20px" : "80px 5%", background: "#fff", color: "#000" }}>
               
-              {/* CONTENEUR CENTRAL : La magie opère ici pour éviter l'effet "géant" sur PC */}
               <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
                 
                 {/* STATS */}
@@ -170,24 +169,23 @@ export default function MemberModal({ member, onClose, viewMode, isMobile }: {
                     <div style={{ width: "40px", height: "4px", background: accent, borderRadius: "2px" }} />
                   </div>
                   
-                  {/* GRILLE FAÇON "CARTES DE COLLECTION" (Taille fixée et contrôlée) */}
                   <div style={{
                     display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-                    gap: "40px" // Espacement très propre
+                    gap: "40px" 
                   }}>
                     
                     {/* CARTE 1 */}
                     <div style={{ 
                       position: "relative", 
-                      height: isMobile ? "350px" : "450px", // Hauteur fixe au lieu d'un ratio infini
+                      height: isMobile ? "350px" : "450px", 
                       borderRadius: "24px", overflow: "hidden",
                       boxShadow: "0 15px 40px rgba(0,0,0,0.12)", border: `1px solid #eaeaea`,
-                      transform: "translateZ(0)" // Petite astuce pour forcer les bords arrondis parfaits
+                      transform: "translateZ(0)" 
                     }}>
                       <img 
                         src={isAnime ? member.animeChar : member.photo} 
                         alt="Mode Actuel" 
-                        style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 15%" }} // 15% focalise mieux sur les visages
+                        style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 15%" }} 
                       />
                       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 40%, transparent 100%)" }} />
                       <div style={{ position: "absolute", bottom: "25px", left: "20px", right: "20px", textAlign: "center" }}>
