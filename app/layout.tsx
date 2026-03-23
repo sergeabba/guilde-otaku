@@ -2,16 +2,17 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://guilde-otaku.vercel.app'), // Ajoute cette ligne avec ton URL
   title: "Guilde Otaku",
   description: "Le trombinoscope légendaire de la Guilde Otaku",
   openGraph: {
-    images: ['/logo.png'], // Assure-toi que ce fichier existe dans /public
+    images: ['/logo.png'],
   },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr">
+    <html lang="fr" data-scroll-behavior="smooth">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

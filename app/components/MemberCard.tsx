@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { Member, rankJP } from "../../data/members";
+import { Member } from "../../data/members";
 import { useState } from "react";
 import { ViewMode } from "../page";
 import { User, Sword, Cake } from "lucide-react";
@@ -15,8 +15,9 @@ const rankAccents: Record<string, string> = {
 
 const darkRanks = ["Fondateur", "Monarque", "Ex Monarque", "Ordre Céleste", "Revenant"];
 
-export default function MemberCard({ member, index, viewMode, onClick }: {
-  member: Member; index: number; viewMode: ViewMode; onClick: () => void;
+// AJOUT DE ISMOBILE ICI
+export default function MemberCard({ member, index, viewMode, onClick, isMobile }: {
+  member: Member; index: number; viewMode: ViewMode; onClick: () => void; isMobile?: boolean;
 }) {
   const [imgErrorReal, setImgErrorReal] = useState(false);
   const [imgErrorAnime, setImgErrorAnime] = useState(false);
@@ -35,11 +36,11 @@ export default function MemberCard({ member, index, viewMode, onClick }: {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, delay: index * 0.04 }}
       onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseEnter={() => !isMobile && setHovered(true)}
+      onMouseLeave={() => !isMobile && setHovered(false)}
       style={{
         cursor: "pointer",
-        borderRadius: "16px",
+        borderRadius: isMobile ? "12px" : "16px",
         overflow: "hidden",
         position: "relative",
         aspectRatio: "2/3",
@@ -53,177 +54,53 @@ export default function MemberCard({ member, index, viewMode, onClick }: {
         background: isDark ? "#0d0d14" : "#f5f5f2",
       }}
     >
-      {/* Photo switchable */}
       <AnimatePresence mode="wait">
-        <motion.div
-          key={viewMode}
-          initial={{ opacity: 0, scale: 1.05 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.97 }}
-          transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
-          style={{ position: "absolute", inset: 0 }}
-        >
+        <motion.div key={viewMode} initial={{ opacity: 0, scale: 1.05 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.97 }} transition={{ duration: 0.35 }} style={{ position: "absolute", inset: 0 }}>
           {!hasError ? (
             <Image
-              src={photoSrc}
-              alt={member.name}
-              fill
-              className="object-cover object-top"
-              onError={onError}
-              style={{
-                transition: "transform 0.6s ease",
-                transform: hovered ? "scale(1.06)" : "scale(1)",
-              }}
-            />
+  src={photoSrc}
+  alt={member.name}
+  fill
+  priority={index < 4} // Charge en priorité les 4 premiers membres
+  className="object-cover object-top"
+  onError={onError}
+/>
           ) : (
-            <div style={{
-              position: "absolute", inset: 0,
-              background: isDark
-                ? "linear-gradient(135deg, #0d0d14, #1a1a2e)"
-                : "linear-gradient(135deg, #f5f5f3, #ebebeb)",
-              display: "flex", flexDirection: "column",
-              alignItems: "center", justifyContent: "center", gap: "12px",
-            }}>
-              <div style={{
-                width: "64px", height: "64px", borderRadius: "50%",
-                background: `${accent}20`, border: `2px solid ${accent}40`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>
-                {isAnime
-                  ? <Sword size={24} color={accent} strokeWidth={2} />
-                  : <User size={24} color={accent} strokeWidth={2} />
-                }
+            <div style={{ position: "absolute", inset: 0, background: isDark ? "#0d0d14" : "#f5f5f3", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+              <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: `${accent}20`, border: `2px solid ${accent}40`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {isAnime ? <Sword size={20} color={accent} /> : <User size={20} color={accent} />}
               </div>
-              <span style={{
-                fontFamily: "'Barlow Condensed', sans-serif",
-                fontSize: "10px", fontWeight: 600,
-                color: isDark ? "#555" : "#bbb",
-                letterSpacing: "0.15em", textTransform: "uppercase",
-              }}>
-                {isAnime ? "Alter ego à venir" : "Photo à venir"}
-              </span>
             </div>
           )}
         </motion.div>
       </AnimatePresence>
 
-      {/* Gradient overlay */}
-      <div style={{
-        position: "absolute", inset: 0,
-        background: isDark
-          ? "linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, transparent 35%, rgba(0,0,0,0.9) 100%)"
-          : "linear-gradient(to bottom, transparent 35%, rgba(0,0,0,0.82) 100%)",
-        opacity: hasError ? 0 : 1,
-        pointerEvents: "none",
-      }} />
+      <div style={{ position: "absolute", inset: 0, background: isDark ? "linear-gradient(to bottom, transparent 35%, rgba(0,0,0,0.95) 100%)" : "linear-gradient(to bottom, transparent 35%, rgba(0,0,0,0.82) 100%)", opacity: hasError ? 0 : 1, pointerEvents: "none" }} />
 
-      {/* Glow hover */}
+      {/* Watermark numéro (Réduit sur mobile) */}
       <div style={{
-        position: "absolute", inset: 0,
-        background: `radial-gradient(ellipse at 50% 0%, ${accent}28 0%, transparent 65%)`,
-        opacity: hovered ? 1 : 0,
-        transition: "opacity 0.4s ease",
-        pointerEvents: "none",
-      }} />
-
-      {/* Accent line top */}
-      <div style={{
-        position: "absolute", top: 0, left: 0, right: 0, height: "4px",
-        background: `linear-gradient(90deg, ${accent}, ${accent}60, transparent)`,
-        opacity: hovered ? 1 : 0.5,
-        transition: "opacity 0.3s ease",
-      }} />
-
-      {/* Watermark numéro */}
-      <div style={{
-        position: "absolute", top: "8px", right: "12px",
+        position: "absolute", top: isMobile ? "2px" : "8px", right: isMobile ? "6px" : "12px",
         fontFamily: "'Barlow Condensed', sans-serif",
-        fontSize: "72px", fontWeight: 900,
+        fontSize: isMobile ? "40px" : "72px", fontWeight: 900,
         color: accent, opacity: hovered ? 0.18 : 0.08,
-        lineHeight: 1, letterSpacing: "-0.05em",
-        transition: "opacity 0.4s ease",
-        userSelect: "none", pointerEvents: "none",
+        lineHeight: 1, letterSpacing: "-0.05em", pointerEvents: "none",
       }}>
         {String(member.id).padStart(2, "0")}
       </div>
 
-      {/* Badge anime */}
-      {isAnime && (
-        <div style={{
-          position: "absolute", top: "14px", left: "14px", zIndex: 3,
-          background: "rgba(0,0,0,0.6)",
-          border: `1px solid ${accent}60`,
-          backdropFilter: "blur(8px)",
-          color: accent,
-          fontFamily: "'Barlow Condensed', sans-serif",
-          fontSize: "9px", fontWeight: 800,
-          letterSpacing: "0.16em", textTransform: "uppercase",
-          padding: "4px 10px", borderRadius: "4px",
-          display: "flex", alignItems: "center", gap: "5px",
-        }}>
-          <Sword size={10} strokeWidth={2.5} />
-          Alter Ego
-        </div>
-      )}
-
-      {/* Badge membre (mode réel seulement) */}
-      {!isAnime && member.badge && (
-        <div style={{
-          position: "absolute", top: "14px", left: "14px", zIndex: 2,
-          background: accent, color: "#fff",
-          fontFamily: "'Barlow Condensed', sans-serif",
-          fontSize: "9px", fontWeight: 800,
-          letterSpacing: "0.16em", textTransform: "uppercase",
-          padding: "4px 10px", borderRadius: "4px",
-          boxShadow: `0 2px 12px ${accent}60`,
-        }}>
-          {member.badge}
-        </div>
-      )}
-
       {/* Info bottom */}
-<div style={{
-  position: "absolute", bottom: 0, left: 0, right: 0,
-  padding: "20px 18px", zIndex: 2,
-  background: hasError ? (isDark ? "#0d0d14" : "#fff") : "transparent",
-  borderTop: hasError ? `3px solid ${accent}` : "none",
-}}>
-  {/* Rang */}
-  <div style={{
-    fontFamily: "'Barlow Condensed', sans-serif",
-    fontSize: "11px", fontWeight: 800,
-    color: accent, letterSpacing: "0.22em",
-    textTransform: "uppercase", marginBottom: "4px",
-  }}>
-    {member.rank}
-  </div>
-
-  {/* Nom */}
-  <div style={{
-    fontFamily: "'Barlow Condensed', sans-serif",
-    fontSize: "clamp(18px, 2.2vw, 26px)", fontWeight: 900,
-    color: hasError ? (isDark ? "#fff" : "#111") : "#fff",
-    lineHeight: 1,
-    textTransform: "uppercase", letterSpacing: "-0.01em",
-    fontStyle: "italic",
-    textShadow: hasError ? "none" : "0 2px 12px rgba(0,0,0,0.5)",
-  }}>
-    {member.name}
-  </div>
-
-  {/* Anniversaire */}
-  <div style={{
-    display: "flex", alignItems: "center", gap: "5px",
-    fontFamily: "'Barlow Condensed', sans-serif",
-    fontSize: "12px", fontWeight: 700,
-    color: hasError ? accent : "rgba(255,255,255,0.65)",
-    letterSpacing: "0.12em", marginTop: "7px",
-    textTransform: "uppercase",
-  }}>
-    <Cake size={11} strokeWidth={2} />
-    {member.birthday}
-  </div>
-</div>
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: isMobile ? "12px" : "20px 18px", zIndex: 2 }}>
+        <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: isMobile ? "9px" : "11px", fontWeight: 800, color: accent, letterSpacing: "0.22em", textTransform: "uppercase", marginBottom: "2px" }}>
+          {member.rank}
+        </div>
+        <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: isMobile ? "18px" : "26px", fontWeight: 900, color: "#fff", lineHeight: 1, textTransform: "uppercase", fontStyle: "italic", textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>
+          {member.name}
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "5px", fontFamily: "'Barlow Condensed', sans-serif", fontSize: isMobile ? "10px" : "12px", fontWeight: 700, color: "rgba(255,255,255,0.65)", marginTop: "4px" }}>
+          <Cake size={isMobile ? 10 : 11} />
+          {member.birthday}
+        </div>
+      </div>
     </motion.div>
   );
 }
