@@ -8,7 +8,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search } from "lucide-react";
 
-// --- CONFIGURATION DES THÈMES ---
+// --- CONFIGURATION DES THÈMES -
 const rankAccents: Record<string, string> = {
   "Fondateur": "#f59e0b", "Monarque": "#c9a84c", "Ex Monarque": "#fb923c",
   "Ordre Céleste": "#7c3aed", "New G dorée": "#db2777", "Futurs Espoirs": "#2563eb",
@@ -104,7 +104,7 @@ export default function HomePage() {
           display: "flex", 
           gap: isMobile ? "20px" : "35px", // <-- Plus d'espace entre les menus sur PC
           fontWeight: 800, // <-- Un peu plus gras pour que ça ressorte mieux
-          fontSize: isMobile ? "14px" : "19px", // <-- LA MAGIE EST LÀ : 19px sur PC !
+          fontSize: isMobile ? "14px" : "19px", // 
           overflowX: isMobile ? "auto" : "visible", 
           width: isMobile ? "100%" : "auto",
           paddingBottom: isMobile ? "5px" : "0", 
@@ -156,7 +156,7 @@ export default function HomePage() {
         ))}
       </div>
 
-      {/* --- LA PARTIE QUI AVAIT DISPARU (LE MAIN) --- */}
+      {/*  LA PARTIE QUI AVAIT DISPARU (LE MAIN)  */}
       <main style={{ maxWidth: "1400px", margin: "0 auto", padding: isMobile ? "30px 15px" : "60px 40px" }}>
         
         <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "flex-end", marginBottom: isMobile ? "40px" : "80px", gap: "20px" }}>
