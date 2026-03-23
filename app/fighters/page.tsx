@@ -153,10 +153,10 @@ export default function FightersPage() {
         </div>
       </div>
 
-      {/* --- ZONE DE VERSUS (Flexbox en colonne pour séparer Image et Stats) --- */}
+      {/* --- ZONE DE VERSUS --- */}
       <div style={{ 
         flex: 1, display: "flex", flexDirection: "row", 
-        alignItems: "stretch", // IMPORTANT: On étire les divs sur toute la hauteur dispo
+        alignItems: "stretch", 
         justifyContent: "space-between", 
         padding: isMobile ? "10px 2%" : "0 4%", 
         position: "relative", zIndex: 10, 
@@ -167,31 +167,18 @@ export default function FightersPage() {
           <AnimatePresence>
             {p1 && (
               <motion.div key={`p1-${p1.id}`} initial={{ x: -50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -50, opacity: 0 }} transition={{ type: "spring", stiffness: 100, damping: 14 }} style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
-                
-                {/* L'image prend tout l'espace du haut grâce à flex: 1 */}
                 <div style={{ flex: 1, position: "relative", marginBottom: "10px", minHeight: "150px" }}>
                   <AnimatePresence mode="wait">
                     <motion.img key={viewMode} src={viewMode === "anime" ? p1.animeChar : p1.photo} alt={p1.name} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} style={{ position: "absolute", bottom: 0, left: 0, height: "100%", width: "100%", objectFit: "contain", objectPosition: "bottom center", filter: "drop-shadow(5px 5px 0px rgba(240, 62, 62, 0.4))", zIndex: 1 }} />
                   </AnimatePresence>
                 </div>
-
-                {/* HUD Player 1 : Reste solidement fixé en bas */}
-                <div style={{ 
-                  position: "relative", 
-                  background: isMobile ? "rgba(0,0,0,0.6)" : "linear-gradient(90deg, rgba(0,0,0,0.85) 50%, transparent)", 
-                  padding: isMobile ? "10px" : "15px", 
-                  borderRadius: "12px", border: isMobile ? "1px solid rgba(240,62,62,0.3)" : "none",
-                  width: "100%", zIndex: 10, backdropFilter: "blur(4px)"
-                }}>
+                <div style={{ position: "relative", background: isMobile ? "rgba(0,0,0,0.6)" : "linear-gradient(90deg, rgba(0,0,0,0.85) 50%, transparent)", padding: isMobile ? "10px" : "15px", borderRadius: "12px", border: isMobile ? "1px solid rgba(240,62,62,0.3)" : "none", width: "100%", zIndex: 10, backdropFilter: "blur(4px)" }}>
                   <p style={{ color: "#f03e3e", fontSize: isMobile ? "12px" : "16px", fontWeight: 900, fontStyle: "italic", marginBottom: "-2px", ...textContrastShadow }}>PLAYER 1</p>
                   <h2 style={{ fontSize: isMobile ? "16px" : "clamp(24px, 3vw, 40px)", fontWeight: 900, textTransform: "uppercase", lineHeight: 0.95, ...textContrastShadow }}>{p1.name.replace(/"/g, "")}</h2>
                   <p style={{ color: "rgba(255,255,255,0.7)", fontSize: isMobile ? "10px" : "14px", letterSpacing: "0.1em", textTransform: "uppercase", marginTop: "4px", marginBottom: "12px", ...textContrastShadow }}>{p1.rank}</p>
-                  
                   <StatBar label="Force" value={p1.stats.force} color="#f03e3e" />
                   <StatBar label="Vitesse" value={p1.stats.vitesse} color="#eab308" />
                   <StatBar label="Techniq" value={p1.stats.technique} color="#3b82f6" />
-
-                  {/* Attaque Spéciale */}
                   <div style={{ marginTop: "12px", padding: "8px", background: "rgba(240,62,62,0.15)", borderLeft: "3px solid #f03e3e", borderRadius: "0 4px 4px 0" }}>
                     <p style={{ fontSize: isMobile ? "11px" : "14px", color: "#f03e3e", fontWeight: 800, textTransform: "uppercase", display: "flex", alignItems: "center", gap: "6px", ...textContrastShadow }}><Zap size={isMobile ? 12 : 16} fill="#f03e3e"/> {p1.special.name}</p>
                     <p style={{ fontSize: isMobile ? "10px" : "12px", color: "rgba(255,255,255,0.8)", marginTop: "4px", lineHeight: 1.2, ...textContrastShadow }}>{p1.special.effect}</p>
@@ -202,8 +189,8 @@ export default function FightersPage() {
           </AnimatePresence>
         </div>
 
-        {/* LOGO V.S. remonté pour ne pas gêner */}
-        <div style={{ position: "absolute", left: "50%", top: "40%", transform: "translate(-50%, -50%)", zIndex: 20 }}>
+        {/* LOGO V.S. */}
+        <div style={{ position: "absolute", left: "50%", top: isMobile ? "30%" : "40%", transform: "translate(-50%, -50%)", zIndex: 20 }}>
           <AnimatePresence>
             {p1 && p2 && (
               <motion.div initial={{ scale: 6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", bounce: 0.6 }} style={{ fontSize: isMobile ? "45px" : "130px", fontWeight: 900, fontStyle: "italic", background: "linear-gradient(to bottom, #f03e3e 30%, #8b0000 100%)", WebkitBackgroundClip: "text", color: "transparent", WebkitTextStroke: isMobile ? "1px #fff" : "2.5px #fff", filter: "drop-shadow(0 0 10px rgba(240,62,62,0.8))" }}>V.S.</motion.div>
@@ -216,32 +203,18 @@ export default function FightersPage() {
           <AnimatePresence>
             {p2 && (
               <motion.div key={`p2-${p2.id}`} initial={{ x: 50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: 50, opacity: 0 }} transition={{ type: "spring", stiffness: 100, damping: 14 }} style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
-                
-                {/* L'image prend tout l'espace du haut */}
                 <div style={{ flex: 1, position: "relative", marginBottom: "10px", minHeight: "150px" }}>
                   <AnimatePresence mode="wait">
                     <motion.img key={viewMode} src={viewMode === "anime" ? p2.animeChar : p2.photo} alt={p2.name} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} style={{ position: "absolute", bottom: 0, left: 0, height: "100%", width: "100%", objectFit: "contain", objectPosition: "bottom center", filter: "drop-shadow(-5px 5px 0px rgba(59, 130, 246, 0.4))", zIndex: 1 }} />
                   </AnimatePresence>
                 </div>
-
-                {/* HUD Player 2 : Reste solidement fixé en bas */}
-                <div style={{ 
-                  position: "relative", 
-                  textAlign: isMobile ? "left" : "right", 
-                  background: isMobile ? "rgba(0,0,0,0.6)" : "linear-gradient(270deg, rgba(0,0,0,0.85) 50%, transparent)", 
-                  padding: isMobile ? "10px" : "15px", 
-                  borderRadius: "12px", border: isMobile ? "1px solid rgba(59,130,246,0.3)" : "none",
-                  width: "100%", zIndex: 10, backdropFilter: "blur(4px)"
-                }}>
+                <div style={{ position: "relative", textAlign: isMobile ? "left" : "right", background: isMobile ? "rgba(0,0,0,0.6)" : "linear-gradient(270deg, rgba(0,0,0,0.85) 50%, transparent)", padding: isMobile ? "10px" : "15px", borderRadius: "12px", border: isMobile ? "1px solid rgba(59,130,246,0.3)" : "none", width: "100%", zIndex: 10, backdropFilter: "blur(4px)" }}>
                   <p style={{ color: "#3b82f6", fontSize: isMobile ? "12px" : "16px", fontWeight: 900, fontStyle: "italic", marginBottom: "-2px", ...textContrastShadow }}>PLAYER 2</p>
                   <h2 style={{ fontSize: isMobile ? "16px" : "clamp(24px, 3vw, 40px)", fontWeight: 900, textTransform: "uppercase", lineHeight: 0.95, ...textContrastShadow }}>{p2.name.replace(/"/g, "")}</h2>
                   <p style={{ color: "rgba(255,255,255,0.7)", fontSize: isMobile ? "10px" : "14px", letterSpacing: "0.1em", textTransform: "uppercase", marginTop: "4px", marginBottom: "12px", ...textContrastShadow }}>{p2.rank}</p>
-
                   <StatBar label="Force" value={p2.stats.force} color="#f03e3e" />
                   <StatBar label="Vitesse" value={p2.stats.vitesse} color="#eab308" />
                   <StatBar label="Techniq" value={p2.stats.technique} color="#3b82f6" />
-
-                  {/* Attaque Spéciale */}
                   <div style={{ marginTop: "12px", padding: "8px", background: "rgba(59,130,246,0.15)", borderLeft: isMobile ? "3px solid #3b82f6" : "none", borderRight: isMobile ? "none" : "3px solid #3b82f6", borderRadius: isMobile ? "0 4px 4px 0" : "4px 0 0 4px", display: "flex", flexDirection: "column", alignItems: isMobile ? "flex-start" : "flex-end" }}>
                     <p style={{ fontSize: isMobile ? "11px" : "14px", color: "#3b82f6", fontWeight: 800, textTransform: "uppercase", display: "flex", alignItems: "center", gap: "6px", ...textContrastShadow }}>{isMobile ? "" : p2.special.name} <Zap size={isMobile ? 12 : 16} fill="#3b82f6"/> {isMobile ? p2.special.name : ""}</p>
                     <p style={{ fontSize: isMobile ? "10px" : "12px", color: "rgba(255,255,255,0.8)", marginTop: "4px", lineHeight: 1.2, ...textContrastShadow }}>{p2.special.effect}</p>
@@ -253,39 +226,38 @@ export default function FightersPage() {
         </div>
       </div>
 
-      {/* --- CSS POUR CACHER LA BARRE DE SCROLL SUR MOBILE --- */}
-      <style>{`
-        .roster-scroll::-webkit-scrollbar { display: none; }
-        .roster-scroll { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
-
-      {/* --- GRILLE DE SÉLECTION (Design Premium) --- */}
-      <div className="roster-scroll" style={{ 
-        padding: isMobile ? "20px 15px 30px 15px" : "20px 4%", 
+      {/* --- PANNEAU DE SÉLECTION (GRILLE FIXE SUR MOBILE) --- */}
+      <div style={{ 
+        padding: isMobile ? "15px" : "20px 4%", 
         background: "linear-gradient(to top, #000 75%, rgba(0,0,0,0) 100%)", 
         position: "relative", zIndex: 30, 
-        display: "flex", flexWrap: isMobile ? "nowrap" : "wrap", 
-        justifyContent: isMobile ? "flex-start" : "center", 
-        gap: isMobile ? "12px" : "8px", marginTop: "auto", 
-        overflowX: isMobile ? "auto" : "visible", WebkitOverflowScrolling: "touch"
+        // Changement critique : Grille sur Mobile, Flex Wrap sur PC
+        display: isMobile ? "grid" : "flex",
+        gridTemplateColumns: isMobile ? "repeat(4, 1fr)" : "none", 
+        flexWrap: isMobile ? "nowrap" : "wrap",
+        justifyContent: isMobile ? "start" : "center", 
+        gap: "10px", 
+        marginTop: "auto", 
+        // Empêche le défilement horizontal sur mobile
+        overflowX: "hidden", 
       }}>
         {members.map((m) => {
           const isP1 = p1?.id === m.id;
           const isP2 = p2?.id === m.id;
           const isSelected = isP1 || isP2;
           const isSelectionComplete = p1 && p2;
-          const isDimmed = isSelectionComplete && !isSelected; // Assombrit les autres quand 2 joueurs sont choisis
+          const isDimmed = isSelectionComplete && !isSelected;
           
-          // Sur mobile on fait des cartes plus hautes (format portrait), sur PC on garde les carrés biseautés
-          const w = isMobile ? "65px" : "80px";
-          const h = isMobile ? "85px" : "80px"; 
+          // Portraits légèrement plus petits sur mobile pour tenir dans la grille
+          const w = isMobile ? "100%" : "80px";
+          const h = isMobile ? "75px" : "80px"; 
 
           return (
             <motion.div 
               key={m.id} 
-              // Sur PC, effet de survol. Sur mobile, la carte se soulève si elle est sélectionnée
               whileHover={!isMobile ? { scale: 1.1, y: -5, zIndex: 10 } : {}} 
-              animate={isMobile && isSelected ? { y: -8, scale: 1.05 } : { y: 0, scale: 1 }}
+              // Animation de sélection "Pop-out" accentuée sur mobile
+              animate={isMobile && isSelected ? { y: -10, scale: 1.12, zIndex: 5 } : { y: 0, scale: 1, zIndex: 1 }}
               onClick={() => handleSelect(m)} 
               style={{ 
                 width: w, height: h, flexShrink: 0, cursor: "pointer", position: "relative", 
@@ -300,16 +272,9 @@ export default function FightersPage() {
               }}
             >
               <AnimatePresence mode="wait">
-                <motion.img 
-                  key={viewMode} 
-                  src={viewMode === "anime" ? m.animeChar : m.photo} 
-                  alt={m.name} 
-                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} 
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }} 
-                />
+                <motion.img key={viewMode} src={viewMode === "anime" ? m.animeChar : m.photo} alt={m.name} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               </AnimatePresence>
               
-              {/* Bandeaux P1 / P2 en bas de la carte */}
               {isP1 && (
                 <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "#f03e3e", color: "#fff", fontSize: "11px", fontWeight: 900, textAlign: "center", padding: "3px 0", letterSpacing: "0.1em" }}>
                   P1
