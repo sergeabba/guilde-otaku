@@ -33,14 +33,32 @@ export default function MemberModal({ member, onClose, viewMode, isMobile }: {
           exit={{ opacity: 0 }}
           style={{ background: "#08080f" }}
         >
-          {/* BOUTON FERMER */}
+          {/* BOUTON FERMER / RETOUR */}
           <button onClick={onClose} style={{
-            position: "fixed", top: "20px", right: "20px", zIndex: 100,
-            width: "44px", height: "44px", borderRadius: "50%",
-            background: "rgba(255,255,255,0.1)", border: "none", color: "#fff", 
-            fontSize: "20px", backdropFilter: "blur(8px)", cursor: "pointer"
-          }}> ✕ </button>
-
+            position: "fixed", 
+            top: isMobile ? "20px" : "30px", 
+            left: isMobile ? "20px" : "auto", // À gauche sur mobile
+            right: isMobile ? "auto" : "30px", // À droite sur PC
+            zIndex: 100,
+            display: "flex", alignItems: "center", gap: "8px",
+            padding: isMobile ? "8px 16px" : "10px",
+            borderRadius: "100px",
+            background: "rgba(0,0,0,0.6)", 
+            border: "1px solid rgba(255,255,255,0.2)", 
+            color: "#fff", 
+            fontFamily: "'Barlow Condensed', sans-serif",
+            fontSize: "16px", fontWeight: 700, textTransform: "uppercase",
+            backdropFilter: "blur(8px)", cursor: "pointer",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.3)"
+          }}> 
+            {isMobile ? (
+              <>
+                <span style={{ fontSize: "18px", marginTop: "-2px" }}>←</span> Retour
+              </>
+            ) : (
+              <span style={{ fontSize: "20px", lineHeight: 1, padding: "0 4px" }}>✕</span>
+            )}
+          </button>
           <motion.div 
             initial={{ y: 20, opacity: 0 }} 
             animate={{ y: 0, opacity: 1 }} 
