@@ -6,7 +6,17 @@ import MemberCard from "./components/MemberCard";
 import MemberModal from "./components/MemberModal";
 import Link from "next/link";
 import { Search, User, Sword, Flame, Gift, Target, Database } from "lucide-react";
-
+const rankLogos: Partial<Record<Rank | "Tous", string>> = {
+  "Fondateur":      "/ranks/fondateur.png",
+  "Monarque":       "/ranks/monarque.png",
+  "Ex Monarque":    "/ranks/ex-monarque.png",
+  "Ordre Céleste":  "/ranks/ordre-celeste.png", // Corrigé ici
+  "New G dorée":    "/ranks/new-g-doree.png",   // Corrigé ici
+  "Futurs Espoirs": "/ranks/futurs-espoirs.png",
+  "Vieux Briscard": "/ranks/vieux-briscard.png",
+  "Fantôme":        "/ranks/fantome.png",        // Corrigé ici
+  "Revenant":       "/ranks/revenant.png",
+};
 export type ViewMode = "real" | "anime"; // Assure-toi qu'il y a "export"
 
 export default function HomePage() {
