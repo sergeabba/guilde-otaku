@@ -253,28 +253,73 @@ export default function FightersPage() {
         </div>
       </div>
 
-      {/* --- GRILLE DE SÉLECTION (Scrollable sur mobile) --- */}
-      <div style={{ 
-        padding: isMobile ? "12px 10px" : "20px 4%", 
-        background: "linear-gradient(to top, #000 70%, rgba(0,0,0,0.4) 100%)", 
+      {/* --- CSS POUR CACHER LA BARRE DE SCROLL SUR MOBILE --- */}
+      <style>{`
+        .roster-scroll::-webkit-scrollbar { display: none; }
+        .roster-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
+
+      {/* --- GRILLE DE SÉLECTION (Design Premium) --- */}
+      <div className="roster-scroll" style={{ 
+        padding: isMobile ? "20px 15px 30px 15px" : "20px 4%", 
+        background: "linear-gradient(to top, #000 75%, rgba(0,0,0,0) 100%)", 
         position: "relative", zIndex: 30, 
         display: "flex", flexWrap: isMobile ? "nowrap" : "wrap", 
         justifyContent: isMobile ? "flex-start" : "center", 
-        gap: "8px", marginTop: "auto", 
+        gap: isMobile ? "12px" : "8px", marginTop: "auto", 
         overflowX: isMobile ? "auto" : "visible", WebkitOverflowScrolling: "touch"
       }}>
         {members.map((m) => {
           const isP1 = p1?.id === m.id;
           const isP2 = p2?.id === m.id;
           const isSelected = isP1 || isP2;
-          const size = isMobile ? "55px" : "80px";
+          const isSelectionComplete = p1 && p2;
+          const isDimmed = isSelectionComplete && !isSelected; // Assombrit les autres quand 2 joueurs sont choisis
+          
+          // Sur mobile on fait des cartes plus hautes (format portrait), sur PC on garde les carrés biseautés
+          const w = isMobile ? "65px" : "80px";
+          const h = isMobile ? "85px" : "80px"; 
+
           return (
-            <motion.div key={m.id} whileHover={!isMobile ? { scale: 1.1, y: -5, zIndex: 10 } : {}} onClick={() => handleSelect(m)} style={{ width: size, height: size, flexShrink: 0, cursor: "pointer", position: "relative", border: isP1 ? "2px solid #f03e3e" : isP2 ? "2px solid #3b82f6" : "1px solid #333", boxShadow: isP1 ? "0 0 10px rgba(240,62,62,0.6)" : isP2 ? "0 0 10px rgba(59,130,246,0.6)" : "none", borderRadius: isMobile ? "4px" : "0", clipPath: isMobile ? "none" : "polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)", background: "#111", overflow: "hidden", filter: (!p1 || !p2 || isSelected) ? "none" : "grayscale(0.7) brightness(0.6)", transition: "all 0.3s ease", }}>
+            <motion.div 
+              key={m.id} 
+              // Sur PC, effet de survol. Sur mobile, la carte se soulève si elle est sélectionnée
+              whileHover={!isMobile ? { scale: 1.1, y: -5, zIndex: 10 } : {}} 
+              animate={isMobile && isSelected ? { y: -8, scale: 1.05 } : { y: 0, scale: 1 }}
+              onClick={() => handleSelect(m)} 
+              style={{ 
+                width: w, height: h, flexShrink: 0, cursor: "pointer", position: "relative", 
+                border: isP1 ? "2px solid #f03e3e" : isP2 ? "2px solid #3b82f6" : (isMobile ? "2px solid #222" : "1px solid #333"), 
+                boxShadow: isP1 ? "0 5px 15px rgba(240,62,62,0.6)" : isP2 ? "0 5px 15px rgba(59,130,246,0.6)" : "0 5px 10px rgba(0,0,0,0.5)", 
+                borderRadius: isMobile ? "8px" : "0", 
+                clipPath: isMobile ? "none" : "polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)", 
+                background: "#111", overflow: "hidden", 
+                filter: isDimmed ? "grayscale(0.8) brightness(0.4)" : "none", 
+                opacity: isDimmed ? 0.6 : 1,
+                transition: "all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)", 
+              }}
+            >
               <AnimatePresence mode="wait">
-                <motion.img key={viewMode} src={viewMode === "anime" ? m.animeChar : m.photo} alt={m.name} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                <motion.img 
+                  key={viewMode} 
+                  src={viewMode === "anime" ? m.animeChar : m.photo} 
+                  alt={m.name} 
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} 
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }} 
+                />
               </AnimatePresence>
-              {isP1 && <div style={{ position: "absolute", top: 0, left: 0, background: "#f03e3e", color: "#fff", fontSize: "10px", fontWeight: 900, padding: "2px 4px", borderBottomRightRadius: "4px" }}>P1</div>}
-              {isP2 && <div style={{ position: "absolute", top: 0, right: 0, background: "#3b82f6", color: "#fff", fontSize: "10px", fontWeight: 900, padding: "2px 4px", borderBottomLeftRadius: "4px" }}>P2</div>}
+              
+              {/* Bandeaux P1 / P2 en bas de la carte */}
+              {isP1 && (
+                <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "#f03e3e", color: "#fff", fontSize: "11px", fontWeight: 900, textAlign: "center", padding: "3px 0", letterSpacing: "0.1em" }}>
+                  P1
+                </div>
+              )}
+              {isP2 && (
+                <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "#3b82f6", color: "#fff", fontSize: "11px", fontWeight: 900, textAlign: "center", padding: "3px 0", letterSpacing: "0.1em" }}>
+                  P2
+                </div>
+              )}
             </motion.div>
           );
         })}
