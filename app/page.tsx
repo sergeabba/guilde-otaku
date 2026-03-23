@@ -43,7 +43,6 @@ const rankLogos: Record<string, string> = {
   "Revenant": "/ranks/revenant.png",
 };
 
-// LA CORRECTION EST ICI : L'export indispensable pour les autres composants
 export type ViewMode = "real" | "anime";
 
 export default function HomePage() {
@@ -52,7 +51,6 @@ export default function HomePage() {
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("real");
   
-  // DÉTECTION MOBILE
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -77,7 +75,7 @@ export default function HomePage() {
   return (
     <motion.div 
       animate={{ backgroundColor: theme.bg }}
-      transition={{ duration: 0.8, ease: "easeInOut" }} // Transition douce et premium
+      transition={{ duration: 0.8, ease: "easeInOut" }} 
       style={{ minHeight: "100vh", color: theme.text, overflowX: "hidden", fontFamily: "'Barlow Condensed', sans-serif" }}
     >
       
@@ -88,7 +86,7 @@ export default function HomePage() {
           padding: isMobile ? "15px" : "0 40px", 
           minHeight: "80px", 
           display: "flex", 
-          flexDirection: isMobile ? "column" : "row", // S'empile sur mobile
+          flexDirection: isMobile ? "column" : "row",
           alignItems: "center", 
           justifyContent: "space-between", 
           gap: isMobile ? "15px" : "0",
@@ -171,7 +169,7 @@ export default function HomePage() {
               value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
               style={{
                 padding: "15px 15px 15px 45px", borderRadius: "10px", 
-                width: isMobile ? "100%" : "320px", // Prend toute la largeur sur mobile
+                width: isMobile ? "100%" : "320px",
                 background: isDark ? "rgba(255,255,255,0.07)" : "#fff",
                 border: "none", color: "inherit", outline: `2px solid ${accent}40`, fontFamily: "inherit"
               }}
@@ -179,7 +177,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* --- SECTIONS DE RANGS ANIMÉES --- */}
+        {/* --- SECTIONS DE RANGS ANIMÉES (Design affiné) --- */}
         <AnimatePresence mode="wait">
           <motion.div 
             key={activeRank}
@@ -193,18 +191,22 @@ export default function HomePage() {
               if (rankMembers.length === 0) return null;
 
               return (
-                <section key={rank} style={{ marginBottom: isMobile ? "60px" : "100px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: isMobile ? "15px" : "30px", marginBottom: "30px" }}>
-                    <img src={rankLogos[rank as Rank]} style={{ height: isMobile ? "70px" : "140px", objectFit: "contain" }} alt="" />
-                    <h3 style={{ fontSize: isMobile ? "28px" : "48px", fontWeight: 900, fontStyle: "italic", color: rankAccents[rank as Rank] }}>
+                <section key={rank} style={{ marginBottom: isMobile ? "60px" : "80px" }}>
+                  
+                  {/* EN-TÊTE DU RANG (Plus petit et élégant) */}
+                  <div style={{ display: "flex", alignItems: "center", gap: isMobile ? "15px" : "20px", marginBottom: "30px" }}>
+                    <img src={rankLogos[rank as Rank]} style={{ height: isMobile ? "50px" : "70px", objectFit: "contain" }} alt="" />
+                    <h3 style={{ fontSize: isMobile ? "24px" : "32px", fontWeight: 900, fontStyle: "italic", color: rankAccents[rank as Rank] }}>
                       {rank.toUpperCase()}
                     </h3>
+                    <div style={{ flexGrow: 1, height: "1px", background: `linear-gradient(90deg, ${rankAccents[rank as Rank]}40, transparent)` }} />
                   </div>
 
+                  {/* GRILLE (Cartes légèrement réduites) */}
                   <div style={{ 
                     display: "grid", 
-                    gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(auto-fill, minmax(280px, 1fr))", // 2 Colonnes sur Mobile !
-                    gap: isMobile ? "10px" : "30px" 
+                    gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(auto-fill, minmax(230px, 1fr))", 
+                    gap: isMobile ? "10px" : "25px" 
                   }}>
                     {rankMembers.map((member, i) => (
                       <MemberCard 
@@ -213,7 +215,7 @@ export default function HomePage() {
                         index={i} 
                         viewMode={viewMode} 
                         onClick={() => setSelectedMember(member)} 
-                        isMobile={isMobile} // Bien transmis !
+                        isMobile={isMobile} 
                       />
                     ))}
                   </div>

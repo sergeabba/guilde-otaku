@@ -37,8 +37,8 @@ export default function MemberModal({ member, onClose, viewMode, isMobile }: {
           <button onClick={onClose} style={{
             position: "fixed", 
             top: isMobile ? "20px" : "30px", 
-            left: isMobile ? "20px" : "auto", // À gauche sur mobile
-            right: isMobile ? "auto" : "30px", // À droite sur PC
+            left: isMobile ? "20px" : "auto", 
+            right: isMobile ? "auto" : "30px", 
             zIndex: 100,
             display: "flex", alignItems: "center", gap: "8px",
             padding: isMobile ? "8px 16px" : "10px",
@@ -59,6 +59,7 @@ export default function MemberModal({ member, onClose, viewMode, isMobile }: {
               <span style={{ fontSize: "20px", lineHeight: 1, padding: "0 4px" }}>✕</span>
             )}
           </button>
+          
           <motion.div 
             initial={{ y: 20, opacity: 0 }} 
             animate={{ y: 0, opacity: 1 }} 
@@ -68,14 +69,13 @@ export default function MemberModal({ member, onClose, viewMode, isMobile }: {
            {/* --- HERO SECTION --- */}
             <div style={{
               position: "relative", width: "100%", 
-              height: isMobile ? "65vh" : "100vh", // Hauteur réduite sur mobile (65% de l'écran)
+              height: isMobile ? "65vh" : "100vh",
               minHeight: isMobile ? "400px" : "700px",
               display: "flex", flexDirection: "column", justifyContent: "flex-end",
               background: "#08080f", overflow: "hidden"
             }}>
-              {/* Photo Hero */}
               <div style={{
-                position: "absolute", // En absolu partout pour servir de fond
+                position: "absolute", 
                 bottom: 0, right: 0,
                 width: isMobile ? "100%" : "55%", 
                 height: isMobile ? "100%" : "90%",
@@ -86,12 +86,11 @@ export default function MemberModal({ member, onClose, viewMode, isMobile }: {
                   alt={member.name} 
                   style={{ 
                     width: "100%", height: "100%", 
-                    objectFit: isMobile ? "cover" : "contain", // "cover" remplit tout l'espace sur mobile
-                    objectPosition: isMobile ? "center 20%" : "bottom" // Centre l'image un peu vers le haut pour voir les visages
+                    objectFit: isMobile ? "cover" : "contain", 
+                    objectPosition: isMobile ? "center 20%" : "bottom" 
                   }}
                   onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.jpg"; }}
                 />
-                {/* Dégradé sombre indispensable sur mobile pour lire le texte blanc par dessus l'image */}
                 {isMobile && (
                   <div style={{
                     position: "absolute", inset: 0,
@@ -100,97 +99,135 @@ export default function MemberModal({ member, onClose, viewMode, isMobile }: {
                 )}
               </div>
 
-              {/* Titre et Rang */}
               <div style={{ position: "relative", padding: isMobile ? "20px 20px 30px" : "0 0 80px 5%", zIndex: 5 }}>
                 <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: isMobile ? "14px" : "20px", fontWeight: 700, color: accent, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: "5px" }}>
                   {member.rank}
                 </p>
                 <h1 style={{ 
                   fontFamily: "'Barlow Condensed', sans-serif", 
-                  fontSize: isMobile ? "clamp(32px, 10vw, 48px)" : "100px", // Taille dynamique qui rétrécit si le nom est trop long
+                  fontSize: isMobile ? "clamp(32px, 10vw, 48px)" : "100px", 
                   fontWeight: 900, color: "#fff", lineHeight: 0.9, fontStyle: "italic", textTransform: "uppercase" 
                 }}>
                   {member.name}
                 </h1>
               </div>
 
-              {/* Barre d'accentuation en bas du Hero */}
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "4px", background: accent, zIndex: 10 }} />
             </div>
 
-            {/* --- INFO SECTION --- */}
-            <div style={{ padding: isMobile ? "40px 20px" : "64px 5%", background: "#fff", color: "#000" }}>
+           {/* --- INFO SECTION --- */}
+            <div style={{ padding: isMobile ? "40px 20px" : "80px 5%", background: "#fff", color: "#000" }}>
               
-              {/* STATS */}
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)",
-                gap: isMobile ? "10px" : "2px",
-                background: "rgba(0,0,0,0.06)",
-                borderRadius: "14px",
-                overflow: "hidden",
-                marginBottom: "64px",
-              }}>
-                {[
-                  { label: "Rang", value: member.rank },
-                  { label: "Anniversaire", value: member.birthday },
-                  { label: "Guilde", value: "Otaku" },
-                ].map((stat) => (
-                  <div key={stat.label} style={{
-                    background: "#fff", padding: "25px", borderTop: `4px solid ${accent}`,
-                  }}>
-                    <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "14px", fontWeight: 700, color: accent, textTransform: "uppercase" }}>
-                      {stat.label}
-                    </p>
-                    <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "28px", fontWeight: 900, color: "#111" }}>
-                      {stat.value}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              {/* BIOGRAPHIE */}
-              <div style={{ marginBottom: "64px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
-                  <div style={{ width: "30px", height: "3px", background: accent }} />
-                  <p style={{ fontWeight: 800, color: accent, letterSpacing: "0.2em" }}>BIOGRAPHIE</p>
-                </div>
-                <p style={{ fontSize: isMobile ? "18px" : "24px", fontWeight: 600, lineHeight: 1.5 }}>
-                  {member.bio}
-                </p>
-              </div>
-
-              {/* ALTER EGO SECTIONS */}
-              <div style={{ borderTop: "1px solid #eee", paddingTop: "40px" }}>
-                 <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "30px" }}>
-                  <div style={{ width: "30px", height: "3px", background: accent }} />
-                  <p style={{ fontWeight: 800, color: accent, letterSpacing: "0.2em" }}>PERSONNAGE ASSOCIÉ</p>
-                </div>
+              {/* CONTENEUR CENTRAL : La magie opère ici pour éviter l'effet "géant" sur PC */}
+              <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
                 
+                {/* STATS */}
                 <div style={{
-                  display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-                  gap: "10px", borderRadius: "16px", overflow: "hidden"
+                  display: "grid",
+                  gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)",
+                  gap: isMobile ? "10px" : "2px",
+                  background: "rgba(0,0,0,0.06)",
+                  borderRadius: "14px",
+                  overflow: "hidden",
+                  marginBottom: "60px",
                 }}>
-                  <div style={{ position: "relative", height: "350px", background: "#f0f0f0" }}>
-                    <img src={isAnime ? member.animeChar : member.photo} alt="Mode Actuel" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    <div style={{ position: "absolute", bottom: "15px", left: "15px", color: "#fff", zIndex: 2 }}>
-                      <p style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>{isAnime ? "Alter Ego" : "Réel"}</p>
-                      <p style={{ fontSize: "20px", fontWeight: 900 }}>{member.name}</p>
+                  {[
+                    { label: "Rang", value: member.rank },
+                    { label: "Anniversaire", value: member.birthday },
+                    { label: "Guilde", value: "Otaku" },
+                  ].map((stat) => (
+                    <div key={stat.label} style={{
+                      background: "#fff", padding: "25px", borderTop: `4px solid ${accent}`, textAlign: "center"
+                    }}>
+                      <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "14px", fontWeight: 700, color: accent, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                        {stat.label}
+                      </p>
+                      <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "28px", fontWeight: 900, color: "#111", marginTop: "5px" }}>
+                        {stat.value}
+                      </p>
                     </div>
-                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7), transparent)" }} />
-                  </div>
+                  ))}
+                </div>
 
-                  <div style={{ position: "relative", height: "350px", background: "#f0f0f0" }}>
-                    <img src={isAnime ? member.photo : member.animeChar} alt="Opposé" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    <div style={{ position: "absolute", bottom: "15px", left: "15px", color: "#fff", zIndex: 2 }}>
-                      <p style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>{isAnime ? "Réel" : "Alter Ego"}</p>
-                      <p style={{ fontSize: "20px", fontWeight: 900 }}>{member.name}</p>
+                {/* BIOGRAPHIE */}
+                <div style={{ marginBottom: "80px", textAlign: "center" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", marginBottom: "25px" }}>
+                    <div style={{ width: "30px", height: "3px", background: accent }} />
+                    <p style={{ fontWeight: 800, color: accent, letterSpacing: "0.2em", fontSize: "18px" }}>BIOGRAPHIE</p>
+                    <div style={{ width: "30px", height: "3px", background: accent }} />
+                  </div>
+                  <p style={{ fontSize: isMobile ? "18px" : "22px", fontWeight: 600, lineHeight: 1.6, maxWidth: "800px", margin: "0 auto", color: "#333" }}>
+                    {member.bio}
+                  </p>
+                </div>
+
+                {/* --- ALTER EGO SECTIONS (CARTES PREMIUM) --- */}
+                <div style={{ borderTop: "1px solid #eee", paddingTop: "60px", paddingBottom: "20px" }}>
+                  
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "15px", marginBottom: "40px" }}>
+                    <div style={{ width: "40px", height: "4px", background: accent, borderRadius: "2px" }} />
+                    <p style={{ fontSize: "22px", fontWeight: 900, color: accent, letterSpacing: "0.2em", textTransform: "uppercase" }}>PERSONNAGE ASSOCIÉ</p>
+                    <div style={{ width: "40px", height: "4px", background: accent, borderRadius: "2px" }} />
+                  </div>
+                  
+                  {/* GRILLE FAÇON "CARTES DE COLLECTION" (Taille fixée et contrôlée) */}
+                  <div style={{
+                    display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+                    gap: "40px" // Espacement très propre
+                  }}>
+                    
+                    {/* CARTE 1 */}
+                    <div style={{ 
+                      position: "relative", 
+                      height: isMobile ? "350px" : "450px", // Hauteur fixe au lieu d'un ratio infini
+                      borderRadius: "24px", overflow: "hidden",
+                      boxShadow: "0 15px 40px rgba(0,0,0,0.12)", border: `1px solid #eaeaea`,
+                      transform: "translateZ(0)" // Petite astuce pour forcer les bords arrondis parfaits
+                    }}>
+                      <img 
+                        src={isAnime ? member.animeChar : member.photo} 
+                        alt="Mode Actuel" 
+                        style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 15%" }} // 15% focalise mieux sur les visages
+                      />
+                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 40%, transparent 100%)" }} />
+                      <div style={{ position: "absolute", bottom: "25px", left: "20px", right: "20px", textAlign: "center" }}>
+                        <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "12px", fontWeight: 800, color: accent, textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "6px" }}>
+                          {isAnime ? "Alter Ego Manga" : "Dans la vraie vie"}
+                        </p>
+                        <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "32px", fontWeight: 900, color: "#fff", lineHeight: 1, textTransform: "uppercase", fontStyle: "italic" }}>
+                          {member.name}
+                        </p>
+                      </div>
                     </div>
-                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7), transparent)" }} />
+
+                    {/* CARTE 2 */}
+                    <div style={{ 
+                      position: "relative", 
+                      height: isMobile ? "350px" : "450px",
+                      borderRadius: "24px", overflow: "hidden",
+                      boxShadow: "0 15px 40px rgba(0,0,0,0.12)", border: `1px solid #eaeaea`,
+                      transform: "translateZ(0)"
+                    }}>
+                      <img 
+                        src={isAnime ? member.photo : member.animeChar} 
+                        alt="Opposé" 
+                        style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 15%" }}
+                      />
+                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 40%, transparent 100%)" }} />
+                      <div style={{ position: "absolute", bottom: "25px", left: "20px", right: "20px", textAlign: "center" }}>
+                        <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "12px", fontWeight: 800, color: accent, textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "6px" }}>
+                          {isAnime ? "Dans la vraie vie" : "Alter Ego Manga"}
+                        </p>
+                        <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "32px", fontWeight: 900, color: "#fff", lineHeight: 1, textTransform: "uppercase", fontStyle: "italic" }}>
+                          {member.name}
+                        </p>
+                      </div>
+                    </div>
+
                   </div>
                 </div>
-              </div>
 
+              </div>
             </div>
           </motion.div>
         </motion.div>
