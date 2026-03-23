@@ -212,7 +212,7 @@ export const members: Member[] = [
     special: { name: "Tir de Mokkori", effect: "Tir précis qui ignore les armures." }
   },
   { 
-    id: 36, name: "Junior MG", rank: "Futurs Espoirs", birthday: "09 Mai", bio: "L'Orateur, l'éloquence incarnée, mannequin à temps plein et égérie du Guinzshow, cet homme charismatique transforme votre vision de la vie.", photo: "/photos/junior.JPG", animeChar: "/anime/junior_anime.jpg", color: "#3498DB",
+    id: 36, name: "Junior MG", rank: "Futurs Espoirs", birthday: "09 Mai", bio: "L'Orateur, l'éloquence incarnée, mannequin à temps plein et égérie du Guinzshow, cet homme charismatique transforme votre vision de la vie.", photo: "/photos/junior.jpg", animeChar: "/anime/junior_anime.jpg", color: "#3498DB",
     stats: { force: 80, vitesse: 85, technique: 95 },
     special: { name: "Discours Envoûtant", effect: "Endort l'adversaire avec sa voix suave." }
   },
