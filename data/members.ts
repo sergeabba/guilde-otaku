@@ -244,7 +244,7 @@ export const members: Member[] = [
     special: { name: "Étoile Filante", effect: "Attaque éclair multiple très difficile à parer." }
   },
   { 
-    id: 42, name: "Herta", rank: "Futurs Espoirs", birthday: "06 Mars", bio: "Le Miel du Ox, elle réagit toujours aux messages mais interagit si peu ; peut-être une agente secrète, qui sait ?", photo: "/photos/herta.jpg", animeChar: "/anime/herta_anime.jpg", color: "#3498DB",
+    id: 42, name: "Herta", rank: "Fantôme", birthday: "06 Mars", bio: "Le Miel du Ox, elle réagit toujours aux messages mais interagit si peu ; peut-être une agente secrète, qui sait ?", photo: "/photos/herta.jpg", animeChar: "/anime/herta_anime.jpg", color: "#3498DB",
     stats: { force: 78, vitesse: 95, technique: 90 },
     special: { name: "Infiltration Secrète", effect: "Attaque dans le dos infligeant des dégâts critiques." }
   },
@@ -259,12 +259,12 @@ export const members: Member[] = [
     special: { name: "Invocation Chevaleresque", effect: "Appelle un chevalier pour la protéger de la prochaine attaque." }
   },
   { 
-    id: 45, name: "Prunelle Come", rank: "Futurs Espoirs", birthday: "01 novembre", bio: "Titania, à la voix empreinte d'autorité ; peut paraître froide mais profondément attachée et protectrice. Elle illumine les Discord.", photo: "/photos/prunelle.jpg", animeChar: "/anime/prunelle_anime.jpg", color: "#3498DB",
+    id: 45, name: "Prunelle Come", rank: "Fantôme", birthday: "01 novembre", bio: "Titania, à la voix empreinte d'autorité ; peut paraître froide mais profondément attachée et protectrice. Elle illumine les Discord.", photo: "/photos/prunelle.jpg", animeChar: "/anime/prunelle_anime.jpg", color: "#3498DB",
     stats: { force: 85, vitesse: 82, technique: 95 },
     special: { name: "Autorité de Titania", effect: "Silence l'adversaire (impossible d'utiliser un coup spécial)." }
   },
   { 
-    id: 46, name: "DAOUD", rank: "Futurs Espoirs", birthday: "01 janvier", bio: "Frère de Prunelle, il se fait appeler Guerro maintenant. Amateur de rap, simple, posé, avec une détermination qui rappelle Eren Yeager.", photo: "/photos/daoud.jpg", animeChar: "/anime/daoud_anime.jpg", color: "#3498DB",
+    id: 46, name: "DAOUD", rank: "Fantôme", birthday: "01 janvier", bio: "Frère de Prunelle, il se fait appeler Guerro maintenant. Amateur de rap, simple, posé, avec une détermination qui rappelle Eren Yeager.", photo: "/photos/daoud.jpg", animeChar: "/anime/daoud_anime.jpg", color: "#3498DB",
     stats: { force: 92, vitesse: 85, technique: 82 },
     special: { name: "Grand Terrassement", effect: "Transformation brutale augmentant ses stats de Force de 50%." }
   },
@@ -311,11 +311,13 @@ export const members: Member[] = [
     special: { name: "Tranchant Tridimensionnel", effect: "Frappe mortelle au point faible (Nuque)." }
   },
   */
+ /*
   { 
     id: 55, name: "Paule Ackerman", rank: "Fantôme", birthday: "25 Mars", bio: "Rengoku Kyojuro Ackerman, figure emblématique des jeux inter-otaku, grand amour de Dorian ; désormais plus rare, mais fidèle à la famille.", photo: "/photos/paule.jpg", animeChar: "/anime/paule_anime.jpg", color: "#7F8C8D",
     stats: { force: 95, vitesse: 90, technique: 98 },
     special: { name: "Souffle de la Flamme", effect: "Dégâts de feu colossaux qui embrasent l'arène entière." }
   },
+  */
   { 
     id: 56, name: "Emmanuel Melrick", rank: "Revenant", birthday: "23 Mai", bio: "Fantôme revenu d'entre les morts, tel Cell face à Gohan. Très chill et coqueluche des jeunes femmes. Il faut dire qu'il est costumé.", photo: "/photos/melrick.jpg", animeChar: "/anime/melrick_anime.jpg", color: "#8E44AD",
     stats: { force: 92, vitesse: 88, technique: 94 },
