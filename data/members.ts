@@ -52,7 +52,7 @@ export const members: Member[] = [
     special: { name: "Aura Maternelle", effect: "Restaure 50% de ses PV et paralyse l'ennemi de respect." }
   },
   { 
-    id: 4, name: "Serge \"Le Don\"", rank: "Ex Monarque", birthday: "12 mars", bio: "Vagabond, héros du Méta dans son esprit, l'un des premiers monarques de la première ère d'Otaku, toujours dévoué à la gente féminine.", photo: "/photos/serge.jpg", animeChar: "/anime/serge_anime.jpg", color: "#FFD700",
+    id: 4, name: "Serge \"Le Don\"", rank: "Ex Monarque", birthday: "12 mars", bio: "Vagabond, héros du Méta dans son esprit, l'un des premiers monarques de la première ère d'Otaku, toujours dévoué à la gente féminine.", photo: "/photos/serge.JPG", animeChar: "/anime/serge_anime.jpg", color: "#FFD700",
     stats: { force: 88, vitesse: 92, technique: 85 },
     special: { name: "Esquive Méta", effect: "Se déplace dans le Métavers pour esquiver la prochaine attaque." }
   },
@@ -82,7 +82,7 @@ export const members: Member[] = [
     special: { name: "Cristiano-Grappling", effect: "Prise de soumission au sol impossible à briser." }
   },
   { 
-    id: 10, name: "Hugo", rank: "Monarque", birthday: "30 Septembre", bio: "Le bachelor, le bonbon de ces dames, HUGOAT, disponible uniquement le jeudi (et popoh), mais dernièrement de plus en plus actif.", photo: "/photos/hugo.jpg", animeChar: "/anime/hugo_anime.jpg", color: "#FFD700",
+    id: 10, name: "Hugo", rank: "Monarque", birthday: "30 Septembre", bio: "Le bachelor, le bonbon de ces dames, HUGOAT, disponible uniquement le jeudi (et popoh), mais dernièrement de plus en plus actif.", photo: "/photos/hugo.JPG", animeChar: "/anime/hugo_anime.jpg", color: "#FFD700",
     stats: { force: 85, vitesse: 88, technique: 90 },
     special: { name: "Charme du Jeudi", effect: "Réduit l'attaque ennemie de 50% sous l'effet du charisme." }
   },
@@ -97,12 +97,12 @@ export const members: Member[] = [
     special: { name: "Aura Paternelle", effect: "Bouclier impénétrable protégeant toute sa barre de vie." }
   },
   { 
-    id: 13, name: "Eric \"The SVAGE\"", rank: "Monarque", birthday: "24 Novembre", bio: "Artiste, ingénieur du son et photographe, ce géant locksé de deux mètres, figure majeure de l'industrie audiovisuelle.", photo: "/photos/eric.jpg", animeChar: "/anime/eric_anime.jpg", color: "#FFD700",
+    id: 13, name: "Eric \"The SVAGE\"", rank: "Monarque", birthday: "24 Novembre", bio: "Artiste, ingénieur du son et photographe, ce géant locksé de deux mètres, figure majeure de l'industrie audiovisuelle.", photo: "/photos/eric.JPG", animeChar: "/anime/eric_anime.jpg", color: "#FFD700",
     stats: { force: 96, vitesse: 75, technique: 90 },
     special: { name: "Onde Sonore", effect: "Dégâts de zone massifs basés sur des fréquences destructrices." }
   },
   { 
-    id: 14, name: "BVSH", rank: "Ordre Céleste", birthday: "18 juillet", bio: "Le Bachester United, homme de l'année, maître de la chronique du Bash, virtuose des recommandations, rappeur et poète, digne héritier d'All Might.", photo: "/photos/bvsh.jpg", animeChar: "/anime/bvsh_anime.jpg", color: "#9B59B6", badge: "HOMME DE L'ANNÉE 2024 ",
+    id: 14, name: "BVSH", rank: "Ordre Céleste", birthday: "18 juillet", bio: "Le Bachester United, homme de l'année, maître de la chronique du Bash, virtuose des recommandations, rappeur et poète, digne héritier d'All Might.", photo: "/photos/bvsh.JPG", animeChar: "/anime/bvsh_anime.jpg", color: "#9B59B6", badge: "HOMME DE L'ANNÉE 2024 ",
     stats: { force: 95, vitesse: 88, technique: 92 },
     special: { name: "Chronique du Smash", effect: "Coup de poing ravageur hérité du symbole de la paix." }
   },
@@ -172,7 +172,7 @@ export const members: Member[] = [
     special: { name: "Jugement \"Surcoté\"", effect: "Annule le coup spécial de l'adversaire d'un simple regard." }
   },
   { 
-    id: 28, name: "Séréna (Sun Set)", rank: "New G dorée", birthday: "6 janvier", bio: "Organisatrice de quiz et ANIMATRICE DE L'ANNÉE 2025, très méthodique, dotée d'un puissant esprit de leadership.", photo: "/photos/serena.jpg", animeChar: "/anime/serena_anime.jpg", color: "#E91E8C", badge: "ANIMATRICE DE L'ANNÉE 2025",
+    id: 28, name: "Séréna (Sun Set)", rank: "New G dorée", birthday: "6 janvier", bio: "Organisatrice de quiz et ANIMATRICE DE L'ANNÉE 2025, très méthodique, dotée d'un puissant esprit de leadership.", photo: "/photos/serena.JPG", animeChar: "/anime/serena_anime.jpg", color: "#E91E8C", badge: "ANIMATRICE DE L'ANNÉE 2025",
     stats: { force: 75, vitesse: 85, technique: 98 },
     special: { name: "Ordre Méthodique", effect: "Contrôle les actions de l'ennemi pour le prochain tour." }
   },
@@ -212,7 +212,7 @@ export const members: Member[] = [
     special: { name: "Tir de Mokkori", effect: "Tir précis qui ignore les armures." }
   },
   { 
-    id: 36, name: "Junior MG", rank: "Futurs Espoirs", birthday: "09 Mai", bio: "L'Orateur, l'éloquence incarnée, mannequin à temps plein et égérie du Guinzshow, cet homme charismatique transforme votre vision de la vie.", photo: "/photos/junior.jpg", animeChar: "/anime/junior_anime.jpg", color: "#3498DB",
+    id: 36, name: "Junior MG", rank: "Futurs Espoirs", birthday: "09 Mai", bio: "L'Orateur, l'éloquence incarnée, mannequin à temps plein et égérie du Guinzshow, cet homme charismatique transforme votre vision de la vie.", photo: "/photos/junior.JPG", animeChar: "/anime/junior_anime.jpg", color: "#3498DB",
     stats: { force: 80, vitesse: 85, technique: 95 },
     special: { name: "Discours Envoûtant", effect: "Endort l'adversaire avec sa voix suave." }
   },
@@ -237,7 +237,7 @@ export const members: Member[] = [
     special: { name: "Rayon de Soleil", effect: "Éblouit l'ennemi et annule son prochain tour." }
   },
   { 
-    id: 41, name: "Traicy", rank: "Futurs Espoirs", birthday: "30 Avril", bio: "Petite par la taille, immense par l'esprit et le cœur, adorable étoile de 2006. MEILLEURE RECRUE DE L'ANNÉE 2025.", photo: "/photos/traicy.jpg", animeChar: "/anime/traicy_anime.jpg", color: "#3498DB", badge: "RECRUE DE L'ANNÉE 2025",
+    id: 41, name: "Traicy", rank: "Futurs Espoirs", birthday: "30 Avril", bio: "Petite par la taille, immense par l'esprit et le cœur, adorable étoile de 2006. MEILLEURE RECRUE DE L'ANNÉE 2025.", photo: "/photos/traicy.JPG", animeChar: "/anime/traicy_anime.jpg", color: "#3498DB", badge: "RECRUE DE L'ANNÉE 2025",
     stats: { force: 75, vitesse: 92, technique: 85 },
     special: { name: "Étoile Filante", effect: "Attaque éclair multiple très difficile à parer." }
   },
@@ -272,7 +272,7 @@ export const members: Member[] = [
     special: { name: "Hurlement du Démon", effect: "Mélange de feu et de force démoniaque ravageuse." }
   },
   { 
-    id: 48, name: "Éméraude Norina", rank: "Futurs Espoirs", birthday: "13 novembre", bio: "Nono, femme unique à la douceur remarquable, pleine de bonnes intentions. Elle est une véritable pierre précieuse, tout comme son prénom.", photo: "/photos/emeraude.jpg", animeChar: "/anime/emeraude_anime.jpg", color: "#3498DB",
+    id: 48, name: "Éméraude Norina", rank: "Futurs Espoirs", birthday: "13 novembre", bio: "Nono, femme unique à la douceur remarquable, pleine de bonnes intentions. Elle est une véritable pierre précieuse, tout comme son prénom.", photo: "/photos/emeraude.JPG", animeChar: "/anime/emeraude_anime.jpg", color: "#3498DB",
     stats: { force: 75, vitesse: 82, technique: 94 },
     special: { name: "Éclat Précieux", effect: "Éblouissement purificateur qui soigne ses altérations d'état." }
   },
