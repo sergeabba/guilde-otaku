@@ -154,22 +154,24 @@ export default function BirthdaysPage() {
             ))}
           </div>
 
-          {/* --- MENU DE NAVIGATION --- */}
-        <nav style={{ 
-          display: "flex", 
-          gap: isMobile ? "20px" : "35px", // <-- Plus d'espace entre les menus sur PC
-          fontWeight: 800, // <-- Un peu plus gras pour que ça ressorte mieux
-          fontSize: isMobile ? "14px" : "19px", // <-- LA MAGIE EST LÀ : 19px sur PC !
-          overflowX: isMobile ? "auto" : "visible", 
-          width: isMobile ? "100%" : "auto",
-          paddingBottom: isMobile ? "5px" : "0", 
-          whiteSpace: "nowrap"
-        }}>
-          <Link href="/birthdays" style={{ textDecoration: "none", color: "inherit", transition: "0.2s" }}>ANNIVERSAIRES</Link>
-          <Link href="/wanted" style={{ textDecoration: "none", color: "inherit", transition: "0.2s" }}>WANTED</Link>
-          <Link href="/fighters" style={{ textDecoration: "none", color: "inherit", transition: "0.2s" }}>FIGHTERS</Link>
-          <Link href="/bons-plans" style={{ textDecoration: "none", color: "inherit", transition: "0.2s" }}>BONS PLANS</Link>
-        </nav>
+      {/* MENU DE NAVIGATION COMPLET (Synchronisé avec l'accueil) */}
+          <nav style={{ 
+            display: "flex", 
+            gap: isMobile ? "20px" : "35px", // Même espace
+            fontWeight: 800, // Même épaisseur
+            fontSize: isMobile ? "14px" : "19px", // Même taille sur PC
+            fontFamily: "'Barlow Condensed', sans-serif", // <-- FORCAGE DE LA POLICE ICI
+            overflowX: isMobile ? "auto" : "visible", 
+            width: isMobile ? "100%" : "auto",
+            paddingBottom: isMobile ? "5px" : "0", 
+            whiteSpace: "nowrap"
+          }}>
+            <Link href="/" style={{ textDecoration: "none", color: isDark ? "rgba(255,255,255,0.6)" : "#666", transition: "0.2s", fontFamily: "inherit" }}>MEMBRES</Link>
+            <Link href="/birthdays" style={{ textDecoration: "none", color: themeAccent, transition: "0.2s", fontFamily: "inherit" }}>ANNIVERSAIRES</Link>
+            <Link href="/wanted" style={{ textDecoration: "none", color: isDark ? "rgba(255,255,255,0.6)" : "#666", transition: "0.2s", fontFamily: "inherit" }}>WANTED</Link>
+            <Link href="/fighters" style={{ textDecoration: "none", color: isDark ? "rgba(255,255,255,0.6)" : "#666", transition: "0.2s", fontFamily: "inherit" }}>FIGHTERS</Link>
+            <Link href="/bons-plans" style={{ textDecoration: "none", color: isDark ? "rgba(255,255,255,0.6)" : "#666", transition: "0.2s", fontFamily: "inherit" }}>BONS PLANS</Link>
+          </nav>
         </div>
       </motion.header>
 
@@ -186,7 +188,7 @@ export default function BirthdaysPage() {
             fontSize: "13px", fontWeight: 700,
             letterSpacing: "0.35em", textTransform: "uppercase",
             color: themeAccent, marginBottom: "12px",
-          }}>Guilde Otaku — 2025 / 26</p>
+          }}>Guilde Otaku 2025 / 26</p>
           <motion.h1
             animate={{ color: isDark ? "#fff" : "#111" }}
             transition={{ duration: 0.4 }}
@@ -562,7 +564,7 @@ export default function BirthdaysPage() {
             color: isDark ? "rgba(255,255,255,0.2)" : "#bbb",
             letterSpacing: "0.25em", textTransform: "uppercase",
           }}>
-            Guilde Otaku — Depuis 2020
+            Guilde Otaku Depuis 2020
           </p>
         </footer>
       </div>
