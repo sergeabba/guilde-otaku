@@ -47,42 +47,57 @@ export default function MemberModal({ member, onClose, viewMode, isMobile }: {
             exit={{ y: 20, opacity: 0 }}
             transition={{ duration: 0.4 }}
           >
-            {/* --- HERO SECTION --- */}
+           {/* --- HERO SECTION --- */}
             <div style={{
               position: "relative", width: "100%", 
-              height: isMobile ? "auto" : "100vh", 
-              minHeight: isMobile ? "550px" : "700px",
+              height: isMobile ? "65vh" : "100vh", // Hauteur réduite sur mobile (65% de l'écran)
+              minHeight: isMobile ? "400px" : "700px",
               display: "flex", flexDirection: "column", justifyContent: "flex-end",
               background: "#08080f", overflow: "hidden"
             }}>
               {/* Photo Hero */}
               <div style={{
-                position: isMobile ? "relative" : "absolute",
-                bottom: 0, right: isMobile ? "0" : "5%",
+                position: "absolute", // En absolu partout pour servir de fond
+                bottom: 0, right: 0,
                 width: isMobile ? "100%" : "55%", 
-                height: isMobile ? "400px" : "90%",
+                height: isMobile ? "100%" : "90%",
                 zIndex: 1
               }}>
                 <img 
                   src={isAnime ? member.animeChar : member.photo} 
                   alt={member.name} 
-                  style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom" }}
+                  style={{ 
+                    width: "100%", height: "100%", 
+                    objectFit: isMobile ? "cover" : "contain", // "cover" remplit tout l'espace sur mobile
+                    objectPosition: isMobile ? "center 20%" : "bottom" // Centre l'image un peu vers le haut pour voir les visages
+                  }}
                   onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.jpg"; }}
                 />
+                {/* Dégradé sombre indispensable sur mobile pour lire le texte blanc par dessus l'image */}
+                {isMobile && (
+                  <div style={{
+                    position: "absolute", inset: 0,
+                    background: "linear-gradient(to top, rgba(8,8,15,1) 0%, rgba(8,8,15,0.5) 40%, transparent 100%)"
+                  }} />
+                )}
               </div>
 
               {/* Titre et Rang */}
-              <div style={{ position: "relative", padding: isMobile ? "20px" : "0 0 80px 5%", zIndex: 5 }}>
-                <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: isMobile ? "14px" : "20px", fontWeight: 700, color: accent, letterSpacing: "0.3em", textTransform: "uppercase" }}>
+              <div style={{ position: "relative", padding: isMobile ? "20px 20px 30px" : "0 0 80px 5%", zIndex: 5 }}>
+                <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: isMobile ? "14px" : "20px", fontWeight: 700, color: accent, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: "5px" }}>
                   {member.rank}
                 </p>
-                <h1 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: isMobile ? "48px" : "100px", fontWeight: 900, color: "#fff", lineHeight: 0.9, fontStyle: "italic", textTransform: "uppercase" }}>
+                <h1 style={{ 
+                  fontFamily: "'Barlow Condensed', sans-serif", 
+                  fontSize: isMobile ? "clamp(32px, 10vw, 48px)" : "100px", // Taille dynamique qui rétrécit si le nom est trop long
+                  fontWeight: 900, color: "#fff", lineHeight: 0.9, fontStyle: "italic", textTransform: "uppercase" 
+                }}>
                   {member.name}
                 </h1>
               </div>
 
               {/* Barre d'accentuation en bas du Hero */}
-              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "4px", background: accent }} />
+              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "4px", background: accent, zIndex: 10 }} />
             </div>
 
             {/* --- INFO SECTION --- */}
