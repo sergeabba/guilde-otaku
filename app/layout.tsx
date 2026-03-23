@@ -2,8 +2,11 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Trombinoscope — Guilde Otaku",
-  description: "Le trombinoscope légendaire de la Guilde Otaku de Dakar",
+  title: "Guilde Otaku",
+  description: "Le trombinoscope légendaire de la Guilde Otaku",
+  openGraph: {
+    images: ['/logo.png'], // Assure-toi que ce fichier existe dans /public
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
