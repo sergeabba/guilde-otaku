@@ -5,17 +5,16 @@ import Image from "next/image";
 import { Member } from "../../data/members";
 import { useState } from "react";
 import { ViewMode } from "../page";
-import { User, Sword, Cake } from "lucide-react";
+import { User, Sword, Cake, Trophy } from "lucide-react"; // <-- Trophy ajouté ici
 
 const rankAccents: Record<string, string> = {
   "Fondateur": "#f59e0b", "Monarque": "#c9a84c", "Ex Monarque": "#fb923c",
   "Ordre Céleste": "#7c3aed", "New G dorée": "#db2777", "Futurs Espoirs": "#2563eb",
-  "Vieux Briscard": "#0d9488", "Fantôme": "#64748b", "Revenant": "#8b5cf6",
+  "Vieux Briscard": "#0d9488", "Fantôme": "#64748b", "Revenant": "#7c3aed", // Correction de la couleur de Revenant pour l'harmonie
 };
 
 const darkRanks = ["Fondateur", "Monarque", "Ex Monarque", "Ordre Céleste", "Revenant"];
 
-// AJOUT DE ISMOBILE ICI
 export default function MemberCard({ member, index, viewMode, onClick, isMobile }: {
   member: Member; index: number; viewMode: ViewMode; onClick: () => void; isMobile?: boolean;
 }) {
@@ -43,7 +42,7 @@ export default function MemberCard({ member, index, viewMode, onClick, isMobile 
         borderRadius: isMobile ? "12px" : "16px",
         overflow: "hidden",
         position: "relative",
-        aspectRatio: "2/3",
+        aspectRatio: isMobile ? "3/4" : "2/3", // Un peu moins haut sur mobile
         boxShadow: hovered
           ? `0 32px 64px rgba(0,0,0,0.28), 0 0 0 2px ${accent}, 0 0 40px ${accent}55`
           : `0 4px 20px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.07)`,
@@ -58,13 +57,13 @@ export default function MemberCard({ member, index, viewMode, onClick, isMobile 
         <motion.div key={viewMode} initial={{ opacity: 0, scale: 1.05 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.97 }} transition={{ duration: 0.35 }} style={{ position: "absolute", inset: 0 }}>
           {!hasError ? (
             <Image
-  src={photoSrc}
-  alt={member.name}
-  fill
-  priority={index < 4} // Charge en priorité les 4 premiers membres
-  className="object-cover object-top"
-  onError={onError}
-/>
+              src={photoSrc}
+              alt={member.name}
+              fill
+              priority={index < 4}
+              className="object-cover object-top"
+              onError={onError}
+            />
           ) : (
             <div style={{ position: "absolute", inset: 0, background: isDark ? "#0d0d14" : "#f5f5f3", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "8px" }}>
               <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: `${accent}20`, border: `2px solid ${accent}40`, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -77,7 +76,7 @@ export default function MemberCard({ member, index, viewMode, onClick, isMobile 
 
       <div style={{ position: "absolute", inset: 0, background: isDark ? "linear-gradient(to bottom, transparent 35%, rgba(0,0,0,0.95) 100%)" : "linear-gradient(to bottom, transparent 35%, rgba(0,0,0,0.82) 100%)", opacity: hasError ? 0 : 1, pointerEvents: "none" }} />
 
-      {/* Watermark numéro (Réduit sur mobile) */}
+      {/* Watermark ID */}
       <div style={{
         position: "absolute", top: isMobile ? "2px" : "8px", right: isMobile ? "6px" : "12px",
         fontFamily: "'Barlow Condensed', sans-serif",
@@ -93,6 +92,34 @@ export default function MemberCard({ member, index, viewMode, onClick, isMobile 
         <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: isMobile ? "9px" : "11px", fontWeight: 800, color: accent, letterSpacing: "0.22em", textTransform: "uppercase", marginBottom: "2px" }}>
           {member.rank}
         </div>
+
+        {/* --- NOUVEAU : BADGE PRESTIGE INTÉGRÉ ICI --- */}
+        {member.badge && (
+          <div style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "4px",
+            marginTop: "2px",
+            marginBottom: "6px",
+            background: "linear-gradient(90deg, #b8860b 0%, #ffd700 50%, #b8860b 100%)",
+            padding: isMobile ? "2px 6px" : "4px 8px",
+            borderRadius: "4px",
+            boxShadow: "0 4px 10px rgba(0,0,0,0.4)",
+            border: "1px solid rgba(255,255,255,0.4)"
+          }}>
+            <Trophy size={isMobile ? 10 : 12} color="#000" strokeWidth={3} />
+            <span style={{ 
+              fontSize: isMobile ? "9px" : "10px", 
+              fontWeight: 900, 
+              color: "#000", 
+              textTransform: "uppercase",
+              fontFamily: "'Barlow Condensed', sans-serif"
+            }}>
+              {member.badge}
+            </span>
+          </div>
+        )}
+
         <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: isMobile ? "18px" : "26px", fontWeight: 900, color: "#fff", lineHeight: 1, textTransform: "uppercase", fontStyle: "italic", textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>
           {member.name}
         </div>

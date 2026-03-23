@@ -196,11 +196,13 @@ export const members: Member[] = [
     stats: { force: 70, vitesse: 98, technique: 85 },
     special: { name: "Disparition", effect: "Devient intangible pendant 2 tours." }
   },
+  /*
   { 
     id: 33, name: "Clay", rank: "New G dorée", birthday: "11 février", bio: "Grande jeune femme, tireuse d'élite sur Call of Duty, passionnée de Genshin Impact, actuellement en cavale telle une voleuse fantôme.", photo: "/photos/clay.jpg", animeChar: "/anime/clay_anime.jpg", color: "#E91E8C",
     stats: { force: 75, vitesse: 96, technique: 94 },
     special: { name: "Vol Fantôme", effect: "Vole un objet ou buff à l'adversaire tout en fuyant." }
   },
+  */
   { 
     id: 34, name: "Loreena Maëlice", rank: "New G dorée", birthday: "11 Juillet", bio: "Nouvelle venue, femme aux multiples facettes, brave et intelligente. Son front généreux fait partie de son charme.", photo: "/photos/loreena.jpg", animeChar: "/anime/loreena_anime.jpg", color: "#E91E8C",
     stats: { force: 80, vitesse: 85, technique: 90 },
@@ -301,11 +303,14 @@ export const members: Member[] = [
     stats: { force: 70, vitesse: 82, technique: 95 },
     special: { name: "Éclipse de la SABA", effect: "Disparaît et restaure sa jauge de spécial secrètement." }
   },
+  /*
   { 
+    
     id: 54, name: "Annaëlle", rank: "Fantôme", birthday: "16 Juillet", bio: "Très discrète, ses véritables talents demeurent un mystère ; à l'image de Mikasa, calme, déterminée, portée par une force silencieuse.", photo: "/photos/annaelle.jpg", animeChar: "/anime/annaelle_anime.jpg", color: "#7F8C8D",
     stats: { force: 90, vitesse: 94, technique: 92 },
     special: { name: "Tranchant Tridimensionnel", effect: "Frappe mortelle au point faible (Nuque)." }
   },
+  */
   { 
     id: 55, name: "Paule Ackerman", rank: "Fantôme", birthday: "25 Mars", bio: "Rengoku Kyojuro Ackerman, figure emblématique des jeux inter-otaku, grand amour de Dorian ; désormais plus rare, mais fidèle à la famille.", photo: "/photos/paule.jpg", animeChar: "/anime/paule_anime.jpg", color: "#7F8C8D",
     stats: { force: 95, vitesse: 90, technique: 98 },
@@ -316,6 +321,31 @@ export const members: Member[] = [
     stats: { force: 92, vitesse: 88, technique: 94 },
     special: { name: "Régénération de Cell", effect: "Revient d'un K.O. avec 20% de sa santé si tué." }
   },
+  { 
+    id: 57, 
+    name: "Merveille", 
+    rank: "New G dorée", 
+    birthday: "14 mars", 
+    bio: "Femme aux multiples facettes, décriée par certains (que grazy hein ), mais en réalité d’une simplicité désarmante. Drôle sans forcer, intelligente sans le crier, généreuse sans calcul ; elle incarne cette joie de vivre naturelle qui ne s’explique pas, elle se ressent. Toujours un sourire en coin, toujours un rire prêt à éclater une présence légère mais marquante, tu vois le genre hehe ( ou pas ).", 
+    photo: "/photos/merveille.jpg", 
+    animeChar: "/anime/merveille_anime.jpg", 
+    color: "#E91E8C",
+    stats: { force: 75, vitesse: 85, technique: 92 },
+    special: { name: "Sourire en Coin", effect: "Désarme complètement l'adversaire grâce à une simplicité désarmante." }
+  },
+  { 
+    id: 58, 
+    name: "Brian Obame", 
+    rank: "Revenant", 
+    birthday: "21 Mai", 
+    bio: "Le golden boy du meta en personne (désormais retraité de Facebook), ancien “fantôme de l’année 2025” titre qu’il a bien incarné. Retiré du groupe otaku à une époque ( un fantôme quoi ) mais revenu comme si de rien n’était, tu connais. Un gars chill, posé, avec de vraies valeurs et surtout des republications TikTok toujours bien ...…. bref, un vrai bg.", 
+    photo: "/photos/brian.jpg", 
+    animeChar: "/anime/brian_anime.jpg", 
+    color: "#8E44AD", 
+    badge: "FANTÔME DE L'ANNÉE 2025",
+    stats: { force: 82, vitesse: 96, technique: 88 },
+    special: { name: "Apparition Chill", effect: "Esquive l'attaque ennemie telle un fantôme et contre-attaque avec une trend TikTok." }
+  }
 ];
 
 export const rankColors: Record<Rank, { bg: string; text: string; border: string; glow: string }> = {
