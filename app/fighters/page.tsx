@@ -65,8 +65,8 @@ export default function FightersPage() {
 
   // BARRE DE STATS FLUIDE
   const StatBar = ({ label, value, color }: { label: string, value: number, color: string }) => (
-    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px", width: "100%" }}>
-      <span style={{ flexShrink: 0, width: isMobile ? "30px" : "60px", fontSize: isMobile ? "10px" : "12px", fontWeight: 900, textTransform: "uppercase", color: "rgba(255,255,255,0.8)", textShadow: "0 2px 4px #000" }}>{label}</span>
+    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: isMobile ? "2px" : "4px", width: "100%" }}>
+      <span style={{ flexShrink: 0, width: isMobile ? "25px" : "60px", fontSize: isMobile ? "10px" : "12px", fontWeight: 900, textTransform: "uppercase", color: "rgba(255,255,255,0.8)", textShadow: "0 2px 4px #000" }}>{label}</span>
       <div style={{ flex: 1, height: isMobile ? "4px" : "6px", background: "rgba(0,0,0,0.6)", borderRadius: "10px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)" }}>
         <motion.div initial={{ width: 0 }} animate={{ width: `${value}%` }} transition={{ duration: 0.8, ease: "easeOut" }} style={{ height: "100%", background: color, boxShadow: `0 0 10px ${color}` }} />
       </div>
@@ -113,10 +113,10 @@ export default function FightersPage() {
 
       {/* TITRE ET ARÈNE */}
       <div style={{ textAlign: "center", position: "relative", zIndex: 20, padding: isMobile ? "5px 0" : "0 0 10px 0", flexShrink: 0 }}>
-        <h1 style={{ fontSize: "clamp(24px, 4vw, 36px)", fontWeight: 900, fontStyle: "italic", textTransform: "uppercase", margin: 0, textShadow: "0 4px 15px rgba(0,0,0,0.9)" }}>
+        <h1 style={{ fontSize: "clamp(20px, 4vw, 36px)", fontWeight: 900, fontStyle: "italic", textTransform: "uppercase", margin: 0, textShadow: "0 4px 15px rgba(0,0,0,0.9)" }}>
           <span style={{ color: "#f03e3e" }}>OTAKU</span> FIGHTERS
         </h1>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "15px", marginTop: "5px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "15px", marginTop: "2px" }}>
           <button onClick={prevArena} style={{ background: "none", border: "none", color: "#fff", cursor: "pointer" }}><ChevronLeft size={16} /></button>
           <div style={{ textAlign: "center", minWidth: "150px" }}>
             <p style={{ fontSize: "9px", fontWeight: 800, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.2em", margin: 0 }}>ARENA</p>
@@ -132,8 +132,8 @@ export default function FightersPage() {
       {isMobile ? (
         <div style={{ flex: 1, display: "flex", flexDirection: "column", position: "relative", zIndex: 10, overflow: "hidden" }}>
           
-          {/* HAUT : P1 & P2 (45% de l'écran, pas de dépassement) */}
-          <div style={{ flex: "0 0 45%", display: "flex", borderBottom: "2px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.5)" }}>
+          {/* HAUT : P1 & P2 (Légèrement agrandi pour laisser respirer le texte) */}
+          <div style={{ flex: "0 0 48%", display: "flex", borderBottom: "2px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.5)" }}>
             
             {/* --- P1 MOBILE --- */}
             <div style={{ flex: 1, position: "relative", borderRight: "1px solid rgba(255,255,255,0.1)", overflow: "hidden" }}>
@@ -141,28 +141,34 @@ export default function FightersPage() {
                 {p1 ? (
                   <motion.div key="p1" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", position: "relative" }}>
                     
-                    {/* L'IMAGE : object-position: top = tête toujours visible ! */}
                     <div style={{ position: "absolute", inset: 0 }}>
                       <img src={viewMode === "anime" ? p1.animeChar : p1.photo} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top center", filter: "brightness(0.85) drop-shadow(2px 2px 10px #000)" }} alt={p1.name} />
                     </div>
                     
-                    {/* DÉGRADÉ ET STATS (Poussés en bas via Flexbox) */}
-                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,1) 10%, rgba(0,0,0,0.6) 50%, transparent 100%)" }} />
-                    <div style={{ position: "relative", zIndex: 10, flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "10px" }}>
+                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,1) 15%, rgba(0,0,0,0.6) 50%, transparent 100%)" }} />
+                    <div style={{ position: "relative", zIndex: 10, flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "8px" }}>
                       {p1.badge && (
-                        <div style={{ display: "inline-flex", alignSelf: "flex-start", background: "linear-gradient(135deg, #b8860b, #ffd700)", padding: "3px 6px", borderRadius: "4px", boxShadow: "0 2px 10px #000", alignItems: "center", gap: "4px", marginBottom: "4px" }}>
-                          <Trophy size={10} color="#000" />
+                        <div style={{ display: "inline-flex", alignSelf: "flex-start", background: "linear-gradient(135deg, #b8860b, #ffd700)", padding: "2px 4px", borderRadius: "3px", boxShadow: "0 2px 10px #000", alignItems: "center", gap: "4px", marginBottom: "2px" }}>
+                          <Trophy size={8} color="#000" />
                           <span style={{ fontSize: "8px", fontWeight: 900, color: "#000", textTransform: "uppercase" }}>{p1.badge}</span>
                         </div>
                       )}
                       <p style={{ color: "#f03e3e", fontSize: "10px", fontWeight: 900, fontStyle: "italic", margin: 0, textShadow: "0 2px 4px #000" }}>PLAYER 1</p>
-                      <h2 style={{ fontSize: "clamp(16px, 5vw, 24px)", fontWeight: 900, textTransform: "uppercase", lineHeight: 1, margin: "2px 0 6px 0", textShadow: "0 2px 5px #000", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p1.name}</h2>
+                      <h2 style={{ fontSize: "clamp(16px, 5vw, 22px)", fontWeight: 900, textTransform: "uppercase", lineHeight: 1, margin: "2px 0 4px 0", textShadow: "0 2px 5px #000", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p1.name}</h2>
                       
                       <div style={{ width: "100%" }}>
                         <StatBar label="For" value={p1.stats.force} color="#f03e3e" />
                         <StatBar label="Vit" value={p1.stats.vitesse} color="#eab308" />
                         <StatBar label="Tec" value={p1.stats.technique} color="#3b82f6" />
                       </div>
+
+                      {/* --- ATTAQUE SPÉCIALE MOBILE P1 --- */}
+                      <div style={{ marginTop: "2px", background: "rgba(240,62,62,0.2)", borderLeft: "2px solid #f03e3e", padding: "3px 6px", borderRadius: "0 4px 4px 0", display: "inline-flex", alignSelf: "flex-start", backdropFilter: "blur(4px)" }}>
+                        <p style={{ fontSize: "9px", color: "#f03e3e", fontWeight: 900, textTransform: "uppercase", display: "flex", alignItems: "center", gap: "4px", margin: 0, textShadow: "0 1px 2px #000", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          <Zap size={10} fill="#f03e3e" /> {p1.special.name}
+                        </p>
+                      </div>
+
                     </div>
                   </motion.div>
                 ) : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(240,62,62,0.4)", fontSize: "18px", fontWeight: 900, fontStyle: "italic" }}>P1 SELECT</div>}
@@ -175,28 +181,34 @@ export default function FightersPage() {
                 {p2 ? (
                   <motion.div key="p2" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", position: "relative" }}>
                     
-                    {/* L'IMAGE */}
                     <div style={{ position: "absolute", inset: 0 }}>
                       <img src={viewMode === "anime" ? p2.animeChar : p2.photo} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top center", filter: "brightness(0.85) drop-shadow(-2px 2px 10px #000)" }} alt={p2.name} />
                     </div>
                     
-                    {/* DÉGRADÉ ET STATS */}
-                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,1) 10%, rgba(0,0,0,0.6) 50%, transparent 100%)" }} />
-                    <div style={{ position: "relative", zIndex: 10, flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "10px", alignItems: "flex-end", textAlign: "right" }}>
+                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,1) 15%, rgba(0,0,0,0.6) 50%, transparent 100%)" }} />
+                    <div style={{ position: "relative", zIndex: 10, flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "8px", alignItems: "flex-end", textAlign: "right" }}>
                       {p2.badge && (
-                        <div style={{ display: "inline-flex", alignSelf: "flex-end", background: "linear-gradient(135deg, #b8860b, #ffd700)", padding: "3px 6px", borderRadius: "4px", boxShadow: "0 2px 10px #000", alignItems: "center", gap: "4px", marginBottom: "4px" }}>
+                        <div style={{ display: "inline-flex", alignSelf: "flex-end", background: "linear-gradient(135deg, #b8860b, #ffd700)", padding: "2px 4px", borderRadius: "3px", boxShadow: "0 2px 10px #000", alignItems: "center", gap: "4px", marginBottom: "2px" }}>
                           <span style={{ fontSize: "8px", fontWeight: 900, color: "#000", textTransform: "uppercase" }}>{p2.badge}</span>
-                          <Trophy size={10} color="#000" />
+                          <Trophy size={8} color="#000" />
                         </div>
                       )}
                       <p style={{ color: "#3b82f6", fontSize: "10px", fontWeight: 900, fontStyle: "italic", margin: 0, textShadow: "0 2px 4px #000" }}>PLAYER 2</p>
-                      <h2 style={{ fontSize: "clamp(16px, 5vw, 24px)", fontWeight: 900, textTransform: "uppercase", lineHeight: 1, margin: "2px 0 6px 0", textShadow: "0 2px 5px #000", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>{p2.name}</h2>
+                      <h2 style={{ fontSize: "clamp(16px, 5vw, 22px)", fontWeight: 900, textTransform: "uppercase", lineHeight: 1, margin: "2px 0 4px 0", textShadow: "0 2px 5px #000", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>{p2.name}</h2>
                       
                       <div style={{ width: "100%" }}>
                         <StatBar label="For" value={p2.stats.force} color="#f03e3e" />
                         <StatBar label="Vit" value={p2.stats.vitesse} color="#eab308" />
                         <StatBar label="Tec" value={p2.stats.technique} color="#3b82f6" />
                       </div>
+
+                      {/* --- ATTAQUE SPÉCIALE MOBILE P2 --- */}
+                      <div style={{ marginTop: "2px", background: "rgba(59,130,246,0.2)", borderRight: "2px solid #3b82f6", padding: "3px 6px", borderRadius: "4px 0 0 4px", display: "inline-flex", alignSelf: "flex-end", backdropFilter: "blur(4px)" }}>
+                        <p style={{ fontSize: "9px", color: "#3b82f6", fontWeight: 900, textTransform: "uppercase", display: "flex", alignItems: "center", gap: "4px", margin: 0, textShadow: "0 1px 2px #000", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {p2.special.name} <Zap size={10} fill="#3b82f6" />
+                        </p>
+                      </div>
+
                     </div>
                   </motion.div>
                 ) : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(59,130,246,0.4)", fontSize: "18px", fontWeight: 900, fontStyle: "italic" }}>P2 SELECT</div>}
@@ -228,7 +240,7 @@ export default function FightersPage() {
                       boxShadow: isSelected ? (isP1 ? "0 0 10px #f03e3e" : "0 0 10px #3b82f6") : "0 2px 5px #000"
                     }}>
                     <img src={viewMode === "anime" ? m.animeChar : m.photo} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top" }} alt={m.name} />
-                    {m.badge && <div style={{ position: "absolute", top: "2px", right: "2px", background: "linear-gradient(135deg, #b8860b, #ffd700)", borderRadius: "50%", padding: "2px" }}><Trophy size={8} color="#000" /></div>}
+                    {m.badge && <div style={{ position: "absolute", top: "2px", right: "2px", background: "linear-gradient(135deg, #b8860b, #ffd700)", borderRadius: "50%", padding: "3px" }}><Trophy size={8} color="#000" /></div>}
                     {isP1 && <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "#f03e3e", color: "#fff", fontSize: "10px", fontWeight: 900 }}>P1</div>}
                     {isP2 && <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "#3b82f6", color: "#fff", fontSize: "10px", fontWeight: 900 }}>P2</div>}
                   </button>
