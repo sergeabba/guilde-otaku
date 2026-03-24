@@ -21,7 +21,7 @@ export default function FightersPage() {
   const [p1, setP1] = useState<Member | null>(null);
   const [p2, setP2] = useState<Member | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>("anime"); 
+  const [viewMode, setViewMode] = useState<ViewMode>("anime");
   const [arenaIdx, setArenaIdx] = useState(0);
   const [trackIdx, setTrackIdx] = useState(0); 
   const [isMobile, setIsMobile] = useState(false);
