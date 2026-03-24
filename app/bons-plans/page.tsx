@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { Tv, BookOpen, Globe, ExternalLink, Search, Film } from "lucide-react";
 
-// --- LES CATÉGORIES (Goodies supprimé) ---
+// --- LES CATÉGORIES ---
 const categories = ["Tout", "Animes", "Scans", "Films/Séries", "Utiles"];
 
 // --- LA BASE DE DONNÉES DES BONS PLANS ---
@@ -14,42 +14,64 @@ const links = [
   { 
     id: 101, title: "Anime-Sama", desc: "La référence actuelle. Excellente plateforme de streaming anime communautaire.", 
     url: "https://anime-sama.to/", category: "Animes", 
-    logo: "", fallbackIcon: Tv, color: "#8b5cf6" 
+    logo: "https://www.google.com/s2/favicons?domain=anime-sama.to&sz=128", fallbackIcon: Tv, color: "#8b5cf6" 
   },
   { 
     id: 102, title: "SushiScan", desc: "La meilleure base pour lire vos scans mangas en VF rapidement.", 
     url: "https://sushiscan.net/", category: "Scans", 
-    logo: "", fallbackIcon: BookOpen, color: "#f43f5e" 
+    logo: "https://www.google.com/s2/favicons?domain=sushiscan.net&sz=128", fallbackIcon: BookOpen, color: "#f43f5e" 
   },
   { 
     id: 103, title: "FRAnime", desc: "Site de stream anime très fluide, très complet et sans prise de tête.", 
     url: "https://franime.fr/", category: "Animes", 
-    logo: "", fallbackIcon: Tv, color: "#f97316" 
+    logo: "https://www.google.com/s2/favicons?domain=franime.fr&sz=128", fallbackIcon: Tv, color: "#f97316" 
   },
   { 
     id: 104, title: "VoirAnime", desc: "L'un des plus connus. Streaming d'animes très souvent mis à jour.", 
     url: "https://v6.voiranime.com/", category: "Animes", 
-    logo: "", fallbackIcon: Tv, color: "#3b82f6" 
+    logo: "https://www.google.com/s2/favicons?domain=voiranime.com&sz=128", fallbackIcon: Tv, color: "#3b82f6" 
   },
   { 
     id: 105, title: "AnimeOVF", desc: "Un excellent plan pour vos streams d'anime VF et VOSTFR.", 
     url: "https://animeovf.fr/", category: "Animes", 
-    logo: "", fallbackIcon: Tv, color: "#10b981" 
+    logo: "https://www.google.com/s2/favicons?domain=animeovf.fr&sz=128", fallbackIcon: Tv, color: "#10b981" 
   },
   { 
     id: 106, title: "Movix", desc: "Le bon plan du Don pour le streaming de vos Séries et Films classiques.", 
     url: "https://movix.rodeo/", category: "Films/Séries", 
-    logo: "", fallbackIcon: Film, color: "#eab308" 
+    logo: "https://www.google.com/s2/favicons?domain=movix.rodeo&sz=128", fallbackIcon: Film, color: "#eab308" 
   },
   { 
     id: 107, title: "SadisFlix", desc: "Un autre site très solide pour le streaming de films récents.", 
     url: "https://sadisflix-officiel.icu/", category: "Films/Séries", 
-    logo: "", fallbackIcon: Film, color: "#ec4899" 
+    logo: "https://www.google.com/s2/favicons?domain=sadisflix-officiel.icu&sz=128", fallbackIcon: Film, color: "#ec4899" 
   },
   { 
     id: 108, title: "FS7", desc: "Très bonne alternative de streaming pour les films de tout genre.", 
     url: "https://fs7.lol/", category: "Films/Séries", 
-    logo: "", fallbackIcon: Film, color: "#6366f1" 
+    logo: "https://www.google.com/s2/favicons?domain=fs7.lol&sz=128", fallbackIcon: Film, color: "#6366f1" 
+  },
+
+  // --- LES NOUVEAUX LIENS DU DON ---
+  { 
+    id: 109, title: "MovieBox", desc: "Excellente alternative de site de stream film pour vos soirées cinéma.", 
+    url: "https://moviebox.ph/", category: "Films/Séries", 
+    logo: "https://www.google.com/s2/favicons?domain=moviebox.ph&sz=128", fallbackIcon: Film, color: "#14b8a6" 
+  },
+  { 
+    id: 110, title: "DessinAnime", desc: "La plateforme idéale pour retrouver chaque dessin animé et anime.", 
+    url: "https://dessinanime.cc/", category: "Animes", 
+    logo: "https://www.google.com/s2/favicons?domain=dessinanime.cc&sz=128", fallbackIcon: Tv, color: "#a855f7" 
+  },
+  { 
+    id: 111, title: "WiTV", desc: "La solution parfaite pour regarder la telé en Stream et tout le reste.", 
+    url: "https://witv.team/", category: "Utiles", 
+    logo: "https://www.google.com/s2/favicons?domain=witv.team&sz=128", fallbackIcon: Tv, color: "#f43f5e" 
+  },
+  { 
+    id: 112, title: "Ygg", desc: "Le tracker de référence pour retrouver tous les torrents fr.", 
+    url: "https://ygg.gratis/", category: "Utiles", 
+    logo: "https://www.google.com/s2/favicons?domain=ygg.gratis&sz=128", fallbackIcon: Globe, color: "#0ea5e9" 
   },
 
   // --- QUELQUES LIENS OFFICIELS / UTILES POUR COMPLÉTER ---
@@ -72,7 +94,6 @@ const links = [
     fallbackIcon: Globe, color: "#3b82f6" 
   },
 ];
-
 // Composant intelligent pour afficher le logo s'il y en a un, ou l'icône sinon
 const CardLogo = ({ logoUrl, FallbackIcon, color }: { logoUrl: string, FallbackIcon: any, color: string }) => {
   const [hasError, setHasError] = useState(false);
@@ -119,18 +140,11 @@ export default function BonsPlansPage() {
 
       <div style={{ position: "relative", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 32px", background: "linear-gradient(to bottom, rgba(0,0,0,0.9), transparent)" }}>
         <Link href="/" style={{ color: "#fff", textDecoration: "none", fontSize: "15px", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.15em" }}>← Retour Guilde</Link>
-        <span className="hidden md:block" style={{ 
-    fontSize: "13px", 
-    fontWeight: 800, 
-    color: "#c9a84c", 
-    letterSpacing: "0.3em", 
-    textTransform: "uppercase", 
-    position: "absolute", 
-    left: "50%", 
-    transform: "translateX(-50%)" 
-}}>
-    LE COFFRE DU DON
-</span>
+        <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", display: "flex", alignItems: "center" }}>
+          <span style={{ fontSize: "13px", fontWeight: 800, color: "#c9a84c", letterSpacing: "0.3em", textTransform: "uppercase", display: "none" }} className="md:block">
+            LE COFFRE DU DON
+          </span>
+        </div>
       </div>
 
       <main style={{ flex: 1, padding: "40px 5%", position: "relative", zIndex: 10, maxWidth: "1200px", margin: "0 auto", width: "100%" }}>
