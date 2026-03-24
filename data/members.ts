@@ -347,7 +347,24 @@ export const members: Member[] = [
     badge: "FANTÔME DE L'ANNÉE 2025",
     stats: { force: 82, vitesse: 96, technique: 88 },
     special: { name: "Apparition Chill", effect: "Esquive l'attaque ennemie telle un fantôme et contre-attaque avec une trend TikTok." }
+  },
+  { 
+    id: 59, 
+    name: "Armand", 
+    rank: "New G dorée", 
+    birthday: "23 Décembre", 
+    bio: "Nouveau venu dans la Guilde sous le pseudo d'Armandstone, ce gars chill de 21 ans s'est vite intégré. Très proche de Traicy ( huum ), Côté culture, il a des goûts pointus : il valide le génie de Senku, et la classe de Nicky Larson.", 
+    photo: "/photos/armand.jpg", 
+    animeChar: "/anime/arman_anime.jpg", 
+    color: "#E91E8C", 
+    stats: { force: 95, vitesse: 85, technique: 88 },
+    special: { 
+      name: "Kamui Scientifique", 
+      effect: "Disparaît dans une autre dimension comme Kakashi pour esquiver, puis élabore une contre-attaque à 10 milliards de pourcents façon Senku en écoutant Mockingbird." 
+    }
   }
+
+  
 ];
 
 export const rankColors: Record<Rank, { bg: string; text: string; border: string; glow: string }> = {
