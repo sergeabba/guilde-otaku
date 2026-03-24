@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { members, Rank, Member } from "../data/members";
 import MemberCard from "./components/MemberCard";
-import MemberModal from "./components/MemberModal"; // Importation propre
+import MemberModal from "./components/MemberModal"; 
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search } from "lucide-react";
@@ -19,7 +19,8 @@ const rankAccents: Record<string, string> = {
 const darkRanks = ["Fondateur", "Monarque", "Ex Monarque", "Ordre Céleste", "Revenant"];
 
 const rankBg: Record<string, { bg: string; nav: string; text: string }> = {
-  "Tous":           { bg: "#f7f5f0", nav: "rgba(247,245,240,0.92)", text: "#111" },
+  // Le fond "Tous" est maintenant un blanc perle légèrement plus propre pour laisser briller le Mesh Gradient
+  "Tous":           { bg: "#fcfaf8", nav: "rgba(252, 250, 248, 0.75)", text: "#111" },
   "Fondateur":      { bg: "#0a0800", nav: "rgba(10,8,0,0.92)",      text: "#fff" },
   "Monarque":       { bg: "#09080a", nav: "rgba(9,8,10,0.92)",       text: "#fff" },
   "Ex Monarque":    { bg: "#0d0700", nav: "rgba(13,7,0,0.92)",       text: "#fff" },
@@ -49,7 +50,7 @@ export default function HomePage() {
   const [activeRank, setActiveRank] = useState<Rank | "Tous">("Tous");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>("real");
+ const [viewMode, setViewMode] = useState<ViewMode>("anime");
   
   const [isMobile, setIsMobile] = useState(false);
 
@@ -76,158 +77,192 @@ export default function HomePage() {
     <motion.div 
       animate={{ backgroundColor: theme.bg }}
       transition={{ duration: 0.8, ease: "easeInOut" }} 
-      style={{ minHeight: "100vh", color: theme.text, overflowX: "hidden", fontFamily: "'Barlow Condensed', sans-serif" }}
+      style={{ minHeight: "100vh", color: theme.text, overflowX: "hidden", fontFamily: "'Barlow Condensed', sans-serif", position: "relative" }}
     >
       
-      {/* --- HEADER RESPONSIVE --- */}
-      <motion.header 
-        animate={{ backgroundColor: theme.nav, borderBottomColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)" }}
-        style={{
-          padding: isMobile ? "15px" : "0 40px", 
-          minHeight: "80px", 
-          display: "flex", 
-          flexDirection: isMobile ? "column" : "row",
-          alignItems: "center", 
-          justifyContent: "space-between", 
-          gap: isMobile ? "15px" : "0",
-          position: "sticky", top: 0, zIndex: 100,
-          backdropFilter: "blur(12px)", borderBottom: "1px solid"
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "15px", width: isMobile ? "100%" : "auto", justifyContent: isMobile ? "center" : "flex-start" }}>
-          <img src="/logo.png" style={{ height: isMobile ? "40px" : "45px" }} alt="Logo" />
-          <h1 style={{ fontSize: isMobile ? "20px" : "24px", fontWeight: 900 }}>GUILDE OTAKU</h1>
-        </div>
+      {/* --- ANIMATIONS CSS GLOBALES --- */}
+      <style>{`
+        @keyframes floatSlow {
+          0% { transform: translate(0px, 0px) scale(1); }
+          33% { transform: translate(30px, -50px) scale(1.1); }
+          66% { transform: translate(-20px, 20px) scale(0.9); }
+          100% { transform: translate(0px, 0px) scale(1); }
+        }
+      `}</style>
 
-       {/* --- MENU DE NAVIGATION --- */}
-        <nav style={{ 
-          display: "flex", 
-          gap: isMobile ? "20px" : "35px", 
-          fontWeight: 800, 
-          fontSize: isMobile ? "14px" : "19px", 
-          overflowX: isMobile ? "auto" : "visible", 
-          width: isMobile ? "100%" : "auto",
-          paddingBottom: isMobile ? "5px" : "0", 
-          whiteSpace: "nowrap"
+      {/* --- ARRIÈRE-PLAN PREMIUM MESH GRADIENT (VISIBLE UNIQUEMENT SUR "TOUS") --- */}
+      <AnimatePresence>
+        {activeRank === "Tous" && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1 }}
+            style={{ position: "absolute", inset: 0, zIndex: 0, overflow: "hidden", pointerEvents: "none" }}
+          >
+            {/* Orbe Dorée Haut-Gauche */}
+            <div style={{ position: "absolute", top: "-10%", left: "-10%", width: "50vw", height: "50vw", background: "radial-gradient(circle, rgba(201,168,76,0.15) 0%, rgba(201,168,76,0) 70%)", filter: "blur(60px)", animation: "floatSlow 15s ease-in-out infinite" }} />
+            {/* Orbe Violette Bas-Droite */}
+            <div style={{ position: "absolute", top: "40%", right: "-5%", width: "60vw", height: "60vw", background: "radial-gradient(circle, rgba(167,139,250,0.1) 0%, rgba(167,139,250,0) 70%)", filter: "blur(80px)", animation: "floatSlow 18s ease-in-out infinite reverse" }} />
+            {/* Texture de grain (Noise) très subtile */}
+            <div style={{ position: "absolute", inset: 0, backgroundImage: "url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.8%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')", opacity: 0.04, mixBlendMode: "overlay" }} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* WRAPPER DU CONTENU (Pour s'assurer qu'il reste au-dessus de l'arrière-plan) */}
+      <div style={{ position: "relative", zIndex: 10 }}>
+        
+        {/* --- HEADER RESPONSIVE --- */}
+        <motion.header 
+          animate={{ backgroundColor: theme.nav, borderBottomColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)" }}
+          style={{
+            padding: isMobile ? "15px" : "0 40px", 
+            minHeight: "80px", 
+            display: "flex", 
+            flexDirection: isMobile ? "column" : "row",
+            alignItems: "center", 
+            justifyContent: "space-between", 
+            gap: isMobile ? "15px" : "0",
+            position: "sticky", top: 0, zIndex: 100,
+            backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderBottom: "1px solid"
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "15px", width: isMobile ? "100%" : "auto", justifyContent: isMobile ? "center" : "flex-start" }}>
+            <img src="/logo.png" style={{ height: isMobile ? "40px" : "45px" }} alt="Logo" />
+            <h1 style={{ fontSize: isMobile ? "20px" : "24px", fontWeight: 900 }}>GUILDE OTAKU</h1>
+          </div>
+
+        {/* --- MENU DE NAVIGATION --- */}
+          <nav style={{ 
+            display: "flex", 
+            gap: isMobile ? "20px" : "35px", 
+            fontWeight: 800, 
+            fontSize: isMobile ? "14px" : "19px", 
+            overflowX: isMobile ? "auto" : "visible", 
+            width: isMobile ? "100%" : "auto",
+            paddingBottom: isMobile ? "5px" : "0", 
+            whiteSpace: "nowrap"
+          }}>
+            <Link href="/birthdays" style={{ textDecoration: "none", color: "inherit", transition: "0.2s" }}>ANNIVERSAIRES</Link>
+            <Link href="/wanted" style={{ textDecoration: "none", color: "inherit", transition: "0.2s" }}>WANTED</Link>
+            <Link href="/fighters" style={{ textDecoration: "none", color: "inherit", transition: "0.2s" }}>FIGHTERS</Link>
+            <Link href="/bons-plans" style={{ textDecoration: "none", color: "inherit", transition: "0.2s" }}>BONS PLANS</Link>
+          </nav>
+        </motion.header>
+
+        {/* --- BARRE DE FILTRES FIXÉE --- */}
+        <div style={{ 
+          display: "flex", gap: "10px", padding: isMobile ? "15px 20px" : "20px 40px", 
+          overflowX: "auto", WebkitOverflowScrolling: "touch",
+          background: isDark ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.4)",
+          backdropFilter: "blur(10px)", borderBottom: `1px solid ${isDark ? "transparent" : "rgba(0,0,0,0.03)"}`
         }}>
-          <Link href="/birthdays" style={{ textDecoration: "none", color: "inherit", transition: "0.2s" }}>ANNIVERSAIRES</Link>
-          <Link href="/wanted" style={{ textDecoration: "none", color: "inherit", transition: "0.2s" }}>WANTED</Link>
-          <Link href="/fighters" style={{ textDecoration: "none", color: "inherit", transition: "0.2s" }}>FIGHTERS</Link>
-          <Link href="/bons-plans" style={{ textDecoration: "none", color: "inherit", transition: "0.2s" }}>BONS PLANS</Link>
-        </nav>
-      </motion.header>
+          <div style={{ flexShrink: 0, display: "flex", background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)", borderRadius: "100px", padding: "4px", marginRight: "10px" }}>
+            {(["real", "anime"] as ViewMode[]).map((mode) => (
+              <button key={mode} onClick={() => setViewMode(mode)} style={{
+                padding: "6px 14px", borderRadius: "100px", border: "none", cursor: "pointer",
+                fontSize: "12px", fontWeight: 700, textTransform: "uppercase",
+                background: viewMode === mode ? accent : "transparent",
+                color: viewMode === mode ? "#fff" : (isDark ? "#aaa" : "#666"),
+                transition: "0.3s"
+              }}>
+                {mode === "real" ? "Réel" : "Anime"}
+              </button>
+            ))}
+          </div>
 
-      {/* --- BARRE DE FILTRES FIXÉE --- */}
-      <div style={{ 
-        display: "flex", gap: "10px", padding: isMobile ? "15px 20px" : "20px 40px", 
-        overflowX: "auto", WebkitOverflowScrolling: "touch",
-        background: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)"
-      }}>
-        <div style={{ flexShrink: 0, display: "flex", background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)", borderRadius: "100px", padding: "4px", marginRight: "10px" }}>
-          {(["real", "anime"] as ViewMode[]).map((mode) => (
-            <button key={mode} onClick={() => setViewMode(mode)} style={{
-              padding: "6px 14px", borderRadius: "100px", border: "none", cursor: "pointer",
-              fontSize: "12px", fontWeight: 700, textTransform: "uppercase",
-              background: viewMode === mode ? accent : "transparent",
-              color: viewMode === mode ? "#fff" : (isDark ? "#aaa" : "#666"),
-              transition: "0.3s"
-            }}>
-              {mode === "real" ? "Réel" : "Anime"}
+          {["Tous", ...Object.keys(rankLogos)].map((rank) => (
+            <button 
+              key={rank} 
+              onClick={() => setActiveRank(rank as Rank | "Tous")}
+              style={{
+                flexShrink: 0, 
+                display: "flex", alignItems: "center", gap: "8px", padding: "8px 16px",
+                borderRadius: "100px", border: activeRank === rank ? `2px solid ${accent}` : "1px solid transparent",
+                background: activeRank === rank ? `${accent}20` : "transparent",
+                color: activeRank === rank ? accent : (isDark ? "#888" : "#666"),
+                cursor: "pointer", transition: "0.3s", whiteSpace: "nowrap"
+              }}
+            >
+              {rank !== "Tous" && <img src={rankLogos[rank]} style={{ height: "20px" }} alt="" />}
+              <span style={{ fontWeight: 800, fontSize: "13px" }}>{rank.toUpperCase()}</span>
             </button>
           ))}
         </div>
 
-        {["Tous", ...Object.keys(rankLogos)].map((rank) => (
-          <button 
-            key={rank} 
-            onClick={() => setActiveRank(rank as Rank | "Tous")}
-            style={{
-              flexShrink: 0, 
-              display: "flex", alignItems: "center", gap: "8px", padding: "8px 16px",
-              borderRadius: "100px", border: activeRank === rank ? `2px solid ${accent}` : "1px solid transparent",
-              background: activeRank === rank ? `${accent}20` : "transparent",
-              color: activeRank === rank ? accent : (isDark ? "#888" : "#666"),
-              cursor: "pointer", transition: "0.3s", whiteSpace: "nowrap"
-            }}
-          >
-            {rank !== "Tous" && <img src={rankLogos[rank]} style={{ height: "20px" }} alt="" />}
-            <span style={{ fontWeight: 800, fontSize: "13px" }}>{rank.toUpperCase()}</span>
-          </button>
-        ))}
-      </div>
+        <main style={{ maxWidth: "1400px", margin: "0 auto", padding: isMobile ? "30px 15px" : "60px 40px" }}>
+          
+          <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "flex-end", marginBottom: isMobile ? "40px" : "80px", gap: "20px" }}>
+            <motion.div layout style={{ position: "relative" }}>
+              <p style={{ color: accent, letterSpacing: "0.4em", fontWeight: 900, fontSize: "14px", textShadow: isDark ? "none" : "0 2px 10px rgba(255,255,255,0.8)" }}>
+                2025 / 26 MODE {viewMode.toUpperCase()}
+              </p>
+              <h2 style={{ fontSize: isMobile ? "50px" : "100px", fontWeight: 900, lineHeight: 0.8, fontStyle: "italic", marginTop: "10px" }}>
+                MEMBRES<br /><span style={{ color: accent }}>DE LA GUILDE</span>
+              </h2>
+            </motion.div>
 
-      <main style={{ maxWidth: "1400px", margin: "0 auto", padding: isMobile ? "30px 15px" : "60px 40px" }}>
-        
-        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "flex-end", marginBottom: isMobile ? "40px" : "80px", gap: "20px" }}>
-          <motion.div layout>
-            <p style={{ color: accent, letterSpacing: "0.4em", fontWeight: 900, fontSize: "14px" }}>
-              2025 / 26 MODE {viewMode.toUpperCase()}
-            </p>
-            <h2 style={{ fontSize: isMobile ? "50px" : "100px", fontWeight: 900, lineHeight: 0.8, fontStyle: "italic", marginTop: "10px" }}>
-              MEMBRES<br /><span style={{ color: accent }}>DE LA GUILDE</span>
-            </h2>
-          </motion.div>
-
-          <div style={{ position: "relative", width: isMobile ? "100%" : "auto" }}>
-            <Search style={{ position: "absolute", left: "15px", top: "50%", transform: "translateY(-50%)", color: accent }} size={20} />
-            <input 
-              type="text" placeholder="Rechercher une légende..." 
-              value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-              style={{
-                padding: "15px 15px 15px 45px", borderRadius: "10px", 
-                width: isMobile ? "100%" : "320px",
-                background: isDark ? "rgba(255,255,255,0.07)" : "#fff",
-                border: "none", color: "inherit", outline: `2px solid ${accent}40`, fontFamily: "inherit"
-              }}
-            />
+            <div style={{ position: "relative", width: isMobile ? "100%" : "auto" }}>
+              <Search style={{ position: "absolute", left: "15px", top: "50%", transform: "translateY(-50%)", color: accent }} size={20} />
+              <input 
+                type="text" placeholder="Rechercher une légende..." 
+                value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+                style={{
+                  padding: "15px 15px 15px 45px", borderRadius: "12px", 
+                  width: isMobile ? "100%" : "320px",
+                  background: isDark ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.8)",
+                  backdropFilter: "blur(10px)",
+                  border: "none", color: "inherit", outline: `2px solid ${accent}40`, fontFamily: "inherit",
+                  boxShadow: isDark ? "none" : "0 4px 20px rgba(0,0,0,0.04)"
+                }}
+              />
+            </div>
           </div>
-        </div>
 
-        <AnimatePresence mode="wait">
-          <motion.div 
-            key={activeRank}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.5 }}
-          >
-            {(activeRank === "Tous" ? Object.keys(rankLogos) : [activeRank]).map((rank) => {
-              const rankMembers = filteredMembers.filter(m => m.rank === rank);
-              if (rankMembers.length === 0) return null;
+          <AnimatePresence mode="wait">
+            <motion.div 
+              key={activeRank}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.5 }}
+            >
+              {(activeRank === "Tous" ? Object.keys(rankLogos) : [activeRank]).map((rank) => {
+                const rankMembers = filteredMembers.filter(m => m.rank === rank);
+                if (rankMembers.length === 0) return null;
 
-              return (
-                <section key={rank} style={{ marginBottom: isMobile ? "60px" : "80px" }}>
-                  
-                  <div style={{ display: "flex", alignItems: "center", gap: isMobile ? "15px" : "20px", marginBottom: "30px" }}>
-                    <img src={rankLogos[rank as Rank]} style={{ height: isMobile ? "50px" : "70px", objectFit: "contain" }} alt="" />
-                    <h3 style={{ fontSize: isMobile ? "24px" : "32px", fontWeight: 900, fontStyle: "italic", color: rankAccents[rank as Rank] }}>
-                      {rank.toUpperCase()}
-                    </h3>
-                    <div style={{ flexGrow: 1, height: "1px", background: `linear-gradient(90deg, ${rankAccents[rank as Rank]}40, transparent)` }} />
-                  </div>
+                return (
+                  <section key={rank} style={{ marginBottom: isMobile ? "60px" : "80px" }}>
+                    
+                    <div style={{ display: "flex", alignItems: "center", gap: isMobile ? "15px" : "20px", marginBottom: "30px" }}>
+                      <img src={rankLogos[rank as Rank]} style={{ height: isMobile ? "50px" : "70px", objectFit: "contain" }} alt="" />
+                      <h3 style={{ fontSize: isMobile ? "24px" : "32px", fontWeight: 900, fontStyle: "italic", color: rankAccents[rank as Rank] }}>
+                        {rank.toUpperCase()}
+                      </h3>
+                      <div style={{ flexGrow: 1, height: "1px", background: `linear-gradient(90deg, ${rankAccents[rank as Rank]}40, transparent)` }} />
+                    </div>
 
-                  <div style={{ 
-                    display: "grid", 
-                    gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(auto-fill, minmax(230px, 1fr))", 
-                    gap: isMobile ? "10px" : "25px" 
-                  }}>
-                    {rankMembers.map((member, i) => (
-                      <MemberCard 
-                        key={member.id} 
-                        member={member} 
-                        index={i} 
-                        viewMode={viewMode} 
-                        onClick={() => setSelectedMember(member)} 
-                        isMobile={isMobile} 
-                      />
-                    ))}
-                  </div>
-                </section>
-              );
-            })}
-          </motion.div>
-        </AnimatePresence>
-      </main>
+                    <div style={{ 
+                      display: "grid", 
+                      gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(auto-fill, minmax(230px, 1fr))", 
+                      gap: isMobile ? "10px" : "25px" 
+                    }}>
+                      {rankMembers.map((member, i) => (
+                        <MemberCard 
+                          key={member.id} 
+                          member={member} 
+                          index={i} 
+                          viewMode={viewMode} 
+                          onClick={() => setSelectedMember(member)} 
+                          isMobile={isMobile} 
+                        />
+                      ))}
+                    </div>
+                  </section>
+                );
+              })}
+            </motion.div>
+          </AnimatePresence>
+        </main>
+      </div> {/* Fin du wrapper Z-index */}
 
       <MemberModal member={selectedMember} onClose={() => setSelectedMember(null)} viewMode={viewMode} isMobile={isMobile} />
     </motion.div>
