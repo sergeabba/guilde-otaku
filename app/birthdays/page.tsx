@@ -6,7 +6,7 @@ import { members, Member } from "../../data/members";
 import Link from "next/link";
 import MemberModal from "../components/MemberModal";
 import { User, Sword, Gift, Crown } from "lucide-react";
-import { ViewMode } from "../page"; // Assure-toi que ce chemin est correct
+import { ViewMode } from "../page"; 
 
 const monthNames = [
   "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
@@ -58,7 +58,6 @@ function getDaysUntil(day: number, month: number): number {
   const now = new Date();
   const thisYear = now.getFullYear();
   let next = new Date(thisYear, month - 1, day);
-  // Pour tester l'effet "Aujourd'hui", tu peux forcer un retour 0 ici temporairement : return 0;
   if (next.getDate() === now.getDate() && next.getMonth() === now.getMonth()) return 0;
   if (next < now) next = new Date(thisYear + 1, month - 1, day);
   return Math.ceil((next.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
@@ -188,11 +187,15 @@ export default function BirthdaysPage() {
             transition={{ delay: 0.1 }}
             onClick={() => setSelectedMember(next)}
             style={{
-              // CHANGEMENT ICI : Si c'est aujourd'hui, background animé et bordures lumineuses
-              background: isToday 
+              // LA CORRECTION EST LÀ 👇 : On sépare backgroundImage et backgroundColor
+              backgroundImage: isToday 
                 ? `linear-gradient(270deg, ${isDark ? '#1a1a1a' : '#fff'} 0%, ${themeAccent}25 50%, ${isDark ? '#1a1a1a' : '#fff'} 100%)` 
+                : "none",
+              backgroundColor: isToday 
+                ? "transparent" 
                 : (isDark ? "rgba(255,255,255,0.05)" : "#111"),
               backgroundSize: isToday ? "200% 200%" : "auto",
+              
               animation: isToday ? "gradientMove 3s ease infinite" : "none",
               border: isToday ? `2px solid ${themeAccent}` : `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "transparent"}`,
               boxShadow: isToday ? `0 0 30px ${themeAccent}40` : "none",
@@ -207,12 +210,10 @@ export default function BirthdaysPage() {
               cursor: "pointer", position: "relative", overflow: "hidden",
             }}
           >
-            {/* Ligne lumineuse en haut */}
             <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: isToday ? "4px" : "3px", background: `linear-gradient(90deg, transparent, ${themeAccent}, transparent)` }} />
 
             <div style={{ display: "flex", gap: "20px", width: isMobile ? "100%" : "auto", zIndex: 10 }}>
               
-              {/* Photo miniature (qui pulse si c'est aujourd'hui) */}
               <div style={{
                 width: isToday ? "85px" : "72px", height: isToday ? "85px" : "72px", 
                 borderRadius: "50%", overflow: "hidden", flexShrink: 0,
@@ -229,7 +230,6 @@ export default function BirthdaysPage() {
                     onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0"; }}
                   />
                 </AnimatePresence>
-                {/* Petite couronne flottante si c'est aujourd'hui */}
                 {isToday && (
                   <div style={{ position: "absolute", top: "-15px", left: "50%", transform: "translateX(-50%)", animation: "float 3s ease-in-out infinite", filter: "drop-shadow(0 2px 5px rgba(0,0,0,0.5))" }}>
                     <Crown size={24} color="#FFD700" fill="#FFD700" />
@@ -281,9 +281,6 @@ export default function BirthdaysPage() {
           </motion.div>
         )}
 
-        {/* ... LE RESTE DU CODE RESTE IDENTIQUE (FILTRES ET LISTE PAR MOIS) ... */}
-        {/* Assure-toi de garder ton code original ici en dessous pour les filtres et la liste */}
-        
         {/* FILTRE PAR MOIS */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "40px" }}>
           <button onClick={() => setActiveMonth(null)} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "13px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", padding: "8px 18px", borderRadius: "100px", border: activeMonth === null ? `2px solid ${themeAccent}` : `2px solid ${isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.12)"}`, background: activeMonth === null ? themeAccent : "transparent", color: activeMonth === null ? "#fff" : (isDark ? "rgba(255,255,255,0.5)" : "#666"), cursor: "pointer", transition: "all 0.2s" }}>
