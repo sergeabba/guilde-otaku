@@ -7,41 +7,8 @@ import MemberModal from "./components/MemberModal";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, User, Sword } from "lucide-react"; // <-- Ajout de User et Sword ici
+import { rankAccents, rankBg, rankLogos, darkRanks } from "./config/ranks";
 
-// --- CONFIGURATION DES THÈMES ---
-const rankAccents: Record<string, string> = {
-  "Fondateur": "#f59e0b", "Monarque": "#c9a84c", "Ex Monarque": "#fb923c",
-  "Ordre Céleste": "#7c3aed", "New G dorée": "#db2777", "Futurs Espoirs": "#2563eb",
-  "Vieux Briscard": "#0d9488", "Fantôme": "#64748b", "Revenant": "#8b5cf6",
-  "Tous": "#c9a84c",
-};
-
-const darkRanks = ["Fondateur", "Monarque", "Ex Monarque", "Ordre Céleste", "Revenant"];
-
-const rankBg: Record<string, { bg: string; nav: string; text: string }> = {
-  "Tous":           { bg: "#fcfaf8", nav: "rgba(252, 250, 248, 0.75)", text: "#111" },
-  "Fondateur":      { bg: "#0a0800", nav: "rgba(10,8,0,0.92)",      text: "#fff" },
-  "Monarque":       { bg: "#09080a", nav: "rgba(9,8,10,0.92)",       text: "#fff" },
-  "Ex Monarque":    { bg: "#0d0700", nav: "rgba(13,7,0,0.92)",       text: "#fff" },
-  "Ordre Céleste":  { bg: "#06030f", nav: "rgba(6,3,15,0.92)",       text: "#fff" },
-  "New G dorée":    { bg: "#fff0f6", nav: "rgba(255,240,246,0.92)",  text: "#111" },
-  "Futurs Espoirs": { bg: "#f0f5ff", nav: "rgba(240,245,255,0.92)",  text: "#111" },
-  "Vieux Briscard": { bg: "#f0fafa", nav: "rgba(240,250,250,0.92)",  text: "#111" },
-  "Fantôme":        { bg: "#f2f2f2", nav: "rgba(242,242,242,0.92)",  text: "#111" },
-  "Revenant":       { bg: "#08030f", nav: "rgba(8,3,15,0.92)",       text: "#fff" },
-};
-
-const rankLogos: Record<string, string> = {
-  "Fondateur": "/ranks/fondateur.png",
-  "Monarque": "/ranks/monarque.png",
-  "Ex Monarque": "/ranks/ex-monarque.png",
-  "Ordre Céleste": "/ranks/ordre-celeste.png",
-  "New G dorée": "/ranks/new-g-doree.png",
-  "Futurs Espoirs": "/ranks/futurs-espoirs.png",
-  "Vieux Briscard": "/ranks/vieux-briscard.png",
-  "Fantôme": "/ranks/fantome.png",
-  "Revenant": "/ranks/revenant.png",
-};
 
 export type ViewMode = "real" | "anime";
 
@@ -61,8 +28,8 @@ export default function HomePage() {
   }, []);
 
   const theme = rankBg[activeRank] ?? rankBg["Tous"];
-  const accent = rankAccents[activeRank] ?? "#c9a84c";
-  const isDark = darkRanks.includes(activeRank);
+ const accent = rankAccents[activeRank as Rank | "Tous"];
+ const isDark = darkRanks.includes(activeRank as Rank);
 
   const filteredMembers = useMemo(() => {
     return members.filter((m) => {
@@ -139,6 +106,10 @@ export default function HomePage() {
             <Link href="/wanted" style={{ textDecoration: "none", color: "inherit", transition: "0.2s" }}>WANTED</Link>
             <Link href="/fighters" style={{ textDecoration: "none", color: "inherit", transition: "0.2s" }}>FIGHTERS</Link>
             <Link href="/bons-plans" style={{ textDecoration: "none", color: "inherit", transition: "0.2s" }}>BONS PLANS</Link>
+            
+            {/*  LE NOUVEAU LIEN EST ICI  */}
+            <Link href="/bibliotheque" style={{ textDecoration: "none", color: "inherit", transition: "0.2s", }}>BIBLIOTHÈQUE</Link>
+            
           </nav>
         </motion.header>
 
@@ -163,7 +134,7 @@ export default function HomePage() {
               }}
             >
               {/* Taille des logos augmentée : 30px sur PC, 22px sur Mobile */}
-              {rank !== "Tous" && <img src={rankLogos[rank]} style={{ height: isMobile ? "22px" : "30px", objectFit: "contain" }} alt="" />}
+{rank !== "Tous" && <img src={rankLogos[rank as Rank]} style={{ height: isMobile ? "22px" : "30px", objectFit: "contain" }} alt="" />}
               
               {/* Taille du texte augmentée : 17px sur PC, 14px sur Mobile avec un léger espacement des lettres */}
               <span style={{ fontWeight: 900, fontSize: isMobile ? "14px" : "17px", letterSpacing: "0.05em" }}>

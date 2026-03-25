@@ -7,6 +7,7 @@ import Link from "next/link";
 import MemberModal from "../components/MemberModal";
 import { User, Sword, Gift, Crown } from "lucide-react";
 import { ViewMode } from "../page"; 
+import { rankAccents } from "../config/ranks";
 
 const monthNames = [
   "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
@@ -33,11 +34,7 @@ const monthThemes: Record<number, { accent: string; bg: string; dark: boolean }>
   12: { accent: "#34d399", bg: "linear-gradient(135deg, #f0fdf9 0%, #ccfbf1 100%)", dark: false },
 };
 
-const rankAccents: Record<string, string> = {
-  "Fondateur": "#f59e0b", "Monarque": "#c9a84c", "Ex Monarque": "#fb923c",
-  "Ordre Céleste": "#7c3aed", "New G dorée": "#db2777", "Futurs Espoirs": "#2563eb",
-  "Vieux Briscard": "#0d9488", "Fantôme": "#64748b", "Revenant": "#7c3aed",
-};
+
 
 function parseBirthday(birthday: string): { day: number; month: number } | null {
   const clean = birthday.trim().toLowerCase();
@@ -70,13 +67,11 @@ export default function BirthdaysPage() {
   const [viewMode, setViewMode] = useState<ViewMode>("anime");
   const [isMobile, setIsMobile] = useState(false);
 
-  useEffect(() => {
-    setNow(new Date());
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+useEffect(() => {
+  const interval = setInterval(() => setNow(new Date()), 60_000);
+  return () => clearInterval(interval);
+}, []);
+
 
   const membersWithDates = members
     .map((m) => {
