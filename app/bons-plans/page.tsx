@@ -28,7 +28,7 @@ const links = [
   },
   { 
     id: 104, title: "VoirAnime", desc: "L'un des plus connus. Streaming d'animes très souvent mis à jour.", 
-    url: "https://v6.voiranime.com/", category: "Animes", 
+    url: "https://voiranime.tv/", category: "Animes", 
     logo: "https://www.google.com/s2/favicons?domain=voiranime.com&sz=128", fallbackIcon: Tv, color: "#3b82f6" 
   },
   { 
