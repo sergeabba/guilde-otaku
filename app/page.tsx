@@ -6,7 +6,7 @@ import MemberCard from "./components/MemberCard";
 import MemberModal from "./components/MemberModal"; 
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search } from "lucide-react";
+import { Search, User, Sword } from "lucide-react"; // <-- Ajout de User et Sword ici
 
 // --- CONFIGURATION DES THÈMES ---
 const rankAccents: Record<string, string> = {
@@ -19,7 +19,6 @@ const rankAccents: Record<string, string> = {
 const darkRanks = ["Fondateur", "Monarque", "Ex Monarque", "Ordre Céleste", "Revenant"];
 
 const rankBg: Record<string, { bg: string; nav: string; text: string }> = {
-  // Le fond "Tous" est maintenant un blanc perle légèrement plus propre pour laisser briller le Mesh Gradient
   "Tous":           { bg: "#fcfaf8", nav: "rgba(252, 250, 248, 0.75)", text: "#111" },
   "Fondateur":      { bg: "#0a0800", nav: "rgba(10,8,0,0.92)",      text: "#fff" },
   "Monarque":       { bg: "#09080a", nav: "rgba(9,8,10,0.92)",       text: "#fff" },
@@ -50,7 +49,7 @@ export default function HomePage() {
   const [activeRank, setActiveRank] = useState<Rank | "Tous">("Tous");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
- const [viewMode, setViewMode] = useState<ViewMode>("anime");
+  const [viewMode, setViewMode] = useState<ViewMode>("anime"); // Reste par défaut sur Anime comme demandé
   
   const [isMobile, setIsMobile] = useState(false);
 
@@ -90,24 +89,20 @@ export default function HomePage() {
         }
       `}</style>
 
-      {/* --- ARRIÈRE-PLAN PREMIUM MESH GRADIENT (VISIBLE UNIQUEMENT SUR "TOUS") --- */}
+      {/* --- ARRIÈRE-PLAN PREMIUM MESH GRADIENT --- */}
       <AnimatePresence>
         {activeRank === "Tous" && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1 }}
             style={{ position: "absolute", inset: 0, zIndex: 0, overflow: "hidden", pointerEvents: "none" }}
           >
-            {/* Orbe Dorée Haut-Gauche */}
             <div style={{ position: "absolute", top: "-10%", left: "-10%", width: "50vw", height: "50vw", background: "radial-gradient(circle, rgba(201,168,76,0.15) 0%, rgba(201,168,76,0) 70%)", filter: "blur(60px)", animation: "floatSlow 15s ease-in-out infinite" }} />
-            {/* Orbe Violette Bas-Droite */}
             <div style={{ position: "absolute", top: "40%", right: "-5%", width: "60vw", height: "60vw", background: "radial-gradient(circle, rgba(167,139,250,0.1) 0%, rgba(167,139,250,0) 70%)", filter: "blur(80px)", animation: "floatSlow 18s ease-in-out infinite reverse" }} />
-            {/* Texture de grain (Noise) très subtile */}
             <div style={{ position: "absolute", inset: 0, backgroundImage: "url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.8%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')", opacity: 0.04, mixBlendMode: "overlay" }} />
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* WRAPPER DU CONTENU (Pour s'assurer qu'il reste au-dessus de l'arrière-plan) */}
       <div style={{ position: "relative", zIndex: 10 }}>
         
         {/* --- HEADER RESPONSIVE --- */}
@@ -130,7 +125,6 @@ export default function HomePage() {
             <h1 style={{ fontSize: isMobile ? "20px" : "24px", fontWeight: 900 }}>GUILDE OTAKU</h1>
           </div>
 
-        {/* --- MENU DE NAVIGATION --- */}
           <nav style={{ 
             display: "flex", 
             gap: isMobile ? "20px" : "35px", 
@@ -148,42 +142,33 @@ export default function HomePage() {
           </nav>
         </motion.header>
 
-        {/* --- BARRE DE FILTRES FIXÉE --- */}
+       {/* --- BARRE DE FILTRES FIXÉE --- */}
         <div style={{ 
-          display: "flex", gap: "10px", padding: isMobile ? "15px 20px" : "20px 40px", 
+          display: "flex", gap: isMobile ? "10px" : "15px", padding: isMobile ? "15px 20px" : "20px 40px", 
           overflowX: "auto", WebkitOverflowScrolling: "touch",
           background: isDark ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.4)",
           backdropFilter: "blur(10px)", borderBottom: `1px solid ${isDark ? "transparent" : "rgba(0,0,0,0.03)"}`
         }}>
-          <div style={{ flexShrink: 0, display: "flex", background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)", borderRadius: "100px", padding: "4px", marginRight: "10px" }}>
-            {(["real", "anime"] as ViewMode[]).map((mode) => (
-              <button key={mode} onClick={() => setViewMode(mode)} style={{
-                padding: "6px 14px", borderRadius: "100px", border: "none", cursor: "pointer",
-                fontSize: "12px", fontWeight: 700, textTransform: "uppercase",
-                background: viewMode === mode ? accent : "transparent",
-                color: viewMode === mode ? "#fff" : (isDark ? "#aaa" : "#666"),
-                transition: "0.3s"
-              }}>
-                {mode === "real" ? "Réel" : "Anime"}
-              </button>
-            ))}
-          </div>
-
           {["Tous", ...Object.keys(rankLogos)].map((rank) => (
             <button 
               key={rank} 
               onClick={() => setActiveRank(rank as Rank | "Tous")}
               style={{
                 flexShrink: 0, 
-                display: "flex", alignItems: "center", gap: "8px", padding: "8px 16px",
+                display: "flex", alignItems: "center", gap: isMobile ? "8px" : "12px", padding: isMobile ? "8px 16px" : "10px 24px",
                 borderRadius: "100px", border: activeRank === rank ? `2px solid ${accent}` : "1px solid transparent",
                 background: activeRank === rank ? `${accent}20` : "transparent",
-                color: activeRank === rank ? accent : (isDark ? "#888" : "#666"),
+                color: activeRank === rank ? accent : (isDark ? "#888" : "#555"),
                 cursor: "pointer", transition: "0.3s", whiteSpace: "nowrap"
               }}
             >
-              {rank !== "Tous" && <img src={rankLogos[rank]} style={{ height: "20px" }} alt="" />}
-              <span style={{ fontWeight: 800, fontSize: "13px" }}>{rank.toUpperCase()}</span>
+              {/* Taille des logos augmentée : 30px sur PC, 22px sur Mobile */}
+              {rank !== "Tous" && <img src={rankLogos[rank]} style={{ height: isMobile ? "22px" : "30px", objectFit: "contain" }} alt="" />}
+              
+              {/* Taille du texte augmentée : 17px sur PC, 14px sur Mobile avec un léger espacement des lettres */}
+              <span style={{ fontWeight: 900, fontSize: isMobile ? "14px" : "17px", letterSpacing: "0.05em" }}>
+                {rank.toUpperCase()}
+              </span>
             </button>
           ))}
         </div>
@@ -262,9 +247,48 @@ export default function HomePage() {
             </motion.div>
           </AnimatePresence>
         </main>
-      </div> {/* Fin du wrapper Z-index */}
+      </div> 
 
       <MemberModal member={selectedMember} onClose={() => setSelectedMember(null)} viewMode={viewMode} isMobile={isMobile} />
+
+      {/* --- LE NOUVEAU BOUTON FLOTTANT (SWITCH RÉEL / ANIME) --- */}
+      <motion.div
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.3, type: "spring", bounce: 0.4 }}
+        style={{
+          position: "fixed",
+          bottom: isMobile ? "20px" : "40px",
+          left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 999,
+          display: "flex",
+          background: isDark ? "rgba(10,10,10,0.85)" : "rgba(255,255,255,0.85)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          padding: "6px",
+          borderRadius: "100px",
+          boxShadow: isDark ? "0 10px 40px rgba(0,0,0,0.8)" : "0 10px 40px rgba(0,0,0,0.15)",
+          border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)"}`
+        }}
+      >
+        {(["real", "anime"] as ViewMode[]).map((mode) => (
+          <button key={mode} onClick={() => setViewMode(mode)} style={{
+            padding: isMobile ? "10px 20px" : "12px 28px",
+            borderRadius: "100px", border: "none", cursor: "pointer",
+            display: "flex", alignItems: "center", gap: "8px",
+            fontFamily: "'Barlow Condensed', sans-serif", fontSize: isMobile ? "14px" : "16px", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em",
+            background: viewMode === mode ? accent : "transparent",
+            color: viewMode === mode ? "#fff" : (isDark ? "#888" : "#888"),
+            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            boxShadow: viewMode === mode ? `0 4px 15px ${accent}60` : "none"
+          }}>
+            {mode === "real" ? <User size={isMobile ? 16 : 18} /> : <Sword size={isMobile ? 16 : 18} />}
+            {mode === "real" ? "Réel" : "Anime"}
+          </button>
+        ))}
+      </motion.div>
+
     </motion.div>
   );
 }

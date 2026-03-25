@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Member } from "../../data/members";
 import { useEffect, useState } from "react";
 import { ViewMode } from "../page";
+import { Trophy } from "lucide-react"; // <-- On importe Trophy pour le badge géant
 
 const rankAccents: Record<string, string> = {
   "Fondateur": "#f59e0b", "Monarque": "#c9a84c", "Ex Monarque": "#fb923c",
@@ -16,12 +17,24 @@ export default function MemberModal({ member, onClose, viewMode, isMobile }: {
 }) {
   const accent = member ? (rankAccents[member.rank] ?? "#111") : "#111";
   
-  // --- NOUVEAU : État local pour gérer le switch DANS la modal ---
   const [localMode, setLocalMode] = useState<ViewMode>("real");
+  // --- NOUVEAU : État pour gérer l'affichage du badge en plein écran ---
+  const [showBadgeSplash, setShowBadgeSplash] = useState(false);
 
-  // Synchronise le mode local avec le mode de la page quand on ouvre un profil
+  // Synchronise le mode local et gère le splash screen du badge
   useEffect(() => {
-    if (member) setLocalMode(viewMode);
+    if (member) {
+      setLocalMode(viewMode);
+      // Si le membre a un badge, on active l'écran plein écran
+      if (member.badge) {
+        setShowBadgeSplash(true);
+        // Le badge disparaît automatiquement après 3.5 secondes
+        const timer = setTimeout(() => setShowBadgeSplash(false), 3500);
+        return () => clearTimeout(timer);
+      } else {
+        setShowBadgeSplash(false);
+      }
+    }
   }, [member, viewMode]);
 
   const isAnime = localMode === "anime";
@@ -42,7 +55,49 @@ export default function MemberModal({ member, onClose, viewMode, isMobile }: {
           exit={{ opacity: 0 }}
           style={{ background: "#08080f", zIndex: 9999 }}
         >
-          {/* --- NOUVEAU : SWITCH RÉEL / ANIME CENTRÉ --- */}
+          {/* --- NOUVEAU : OVERLAY BADGE PLEIN ÉCRAN --- */}
+          <AnimatePresence>
+            {showBadgeSplash && member.badge && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, filter: "blur(10px)" }}
+                animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                exit={{ opacity: 0, scale: 1.1, filter: "blur(10px)" }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                onClick={() => setShowBadgeSplash(false)} // Permet de passer l'animation au clic
+                style={{
+                  position: "fixed", inset: 0, zIndex: 99999,
+                  background: "rgba(0,0,0,0.85)", backdropFilter: "blur(15px)",
+                  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                  cursor: "pointer"
+                }}
+              >
+                <motion.div
+                  initial={{ y: 50 }} animate={{ y: 0 }} transition={{ delay: 0.2, duration: 0.6, type: "spring" }}
+                  style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}
+                >
+                  <Trophy size={isMobile ? 80 : 120} color="#ffd700" strokeWidth={1.5} style={{ marginBottom: "20px", filter: "drop-shadow(0 0 20px rgba(255,215,0,0.6))" }} />
+                  
+                  <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: isMobile ? "24px" : "32px", fontWeight: 700, color: "#fff", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: "10px" }}>
+                    AWARDS OTAKU OBTENU 
+                  </p>
+                  
+                  <h2 style={{ 
+                    fontFamily: "'Barlow Condensed', sans-serif", fontSize: isMobile ? "50px" : "100px", 
+                    fontWeight: 900, color: "#ffd700", lineHeight: 0.9, fontStyle: "italic", textTransform: "uppercase",
+                    textShadow: "0 0 40px rgba(255,215,0,0.4), 0 4px 10px rgba(0,0,0,0.8)"
+                  }}>
+                    {member.badge}
+                  </h2>
+                </motion.div>
+                <p style={{ position: "absolute", bottom: "30px", color: "rgba(255,255,255,0.4)", fontFamily: "'Barlow Condensed', sans-serif", fontSize: "14px", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                  Cliquez pour continuer
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          {/* --- FIN OVERLAY BADGE --- */}
+
+          {/* --- SWITCH RÉEL / ANIME CENTRÉ --- */}
           <div style={{
             position: "fixed", 
             top: isMobile ? "20px" : "30px", 
@@ -93,7 +148,7 @@ export default function MemberModal({ member, onClose, viewMode, isMobile }: {
                 {/* --- LA MAGIE DE LA TRANSITION SMOOTH EST ICI --- */}
                 <AnimatePresence mode="wait">
                   <motion.img 
-                    key={localMode} // Change la clé pour déclencher l'animation
+                    key={localMode} 
                     initial={{ opacity: 0, filter: "blur(10px)", scale: 1.05 }}
                     animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
                     exit={{ opacity: 0, filter: "blur(10px)", scale: 0.95 }}
@@ -101,7 +156,7 @@ export default function MemberModal({ member, onClose, viewMode, isMobile }: {
                     src={isAnime ? member.animeChar : member.photo} 
                     alt={member.name} 
                     style={{ 
-                      position: "absolute", inset: 0, // Indispensable pour que les 2 images se croisent proprement
+                      position: "absolute", inset: 0, 
                       width: "100%", height: "100%", 
                       objectFit: isMobile ? "cover" : "contain", 
                       objectPosition: isMobile ? "center 20%" : "bottom" 
