@@ -2,13 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { members, Member } from "../../data/members";
+import { members, Member, Rank } from "../../data/members";
 import Link from "next/link";
 import MemberModal from "../components/MemberModal";
-import { User, Sword, Gift, Crown } from "lucide-react";
-import { ViewMode } from "../page"; 
+import { Gift, Crown } from "lucide-react";
 import { rankAccents } from "../config/ranks";
 import { useIsMobile } from "../hooks/useIsMobile";
+import GuildeHeader from "../components/GuildeHeader";
+
+// On définit le type localement pour éviter les erreurs d'importation croisées
+type ViewMode = "real" | "anime";
+
 const monthNames = [
   "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
   "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
@@ -33,8 +37,6 @@ const monthThemes: Record<number, { accent: string; bg: string; dark: boolean }>
   11: { accent: "#94a3b8", bg: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)", dark: false },
   12: { accent: "#34d399", bg: "linear-gradient(135deg, #f0fdf9 0%, #ccfbf1 100%)", dark: false },
 };
-
-
 
 function parseBirthday(birthday: string): { day: number; month: number } | null {
   const clean = birthday.trim().toLowerCase();
@@ -67,11 +69,10 @@ export default function BirthdaysPage() {
   const [viewMode, setViewMode] = useState<ViewMode>("anime");
   const isMobile = useIsMobile();
 
-useEffect(() => {
-  const interval = setInterval(() => setNow(new Date()), 60_000);
-  return () => clearInterval(interval);
-}, []);
-
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(interval);
+  }, []);
 
   const membersWithDates = members
     .map((m) => {
@@ -83,7 +84,7 @@ useEffect(() => {
 
   const next = [...membersWithDates].sort((a, b) => a.daysUntil - b.daysUntil)[0];
   const sameDay = membersWithDates.filter(m => m.daysUntil === next?.daysUntil);
-  const isToday = next?.daysUntil === 0; // Trigger de célébration
+  const isToday = next?.daysUntil === 0;
 
   const byMonth: Record<number, typeof membersWithDates> = {};
   for (let i = 1; i <= 12; i++) byMonth[i] = [];
@@ -98,10 +99,24 @@ useEffect(() => {
   const isDark = activeTheme.dark;
   const themeAccent = activeTheme.accent;
 
+  const renderViewToggle = () => (
+    <div style={{ display: "flex", background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)", borderRadius: "100px", padding: "4px" }}>
+      {(["real", "anime"] as const).map((mode) => (
+        <button key={mode} onClick={() => setViewMode(mode)} style={{
+          padding: "6px 14px", borderRadius: "100px", border: "none", cursor: "pointer",
+          fontFamily: "'Barlow Condensed', sans-serif", fontSize: "12px", fontWeight: 900, textTransform: "uppercase",
+          background: viewMode === mode ? themeAccent : "transparent",
+          color: viewMode === mode ? "#fff" : (isDark ? "#aaa" : "#666"), transition: "0.3s"
+        }}>
+          {mode === "real" ? "Réel" : "Anime"}
+        </button>
+      ))}
+    </div>
+  );
+
   return (
     <motion.main animate={{ background: activeTheme.bg }} transition={{ duration: 0.6 }} style={{ minHeight: "100vh" }}>
       
-      {/* ANIMATIONS CSS POUR LA CÉLÉBRATION */}
       <style>{`
         @keyframes gradientMove {
           0% { background-position: 0% 50%; }
@@ -120,49 +135,17 @@ useEffect(() => {
         }
       `}</style>
 
-      {/* HEADER RESPONSIVE UNIFIÉ */}
-      <motion.header 
-        animate={{ backgroundColor: isDark ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.7)", borderBottomColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)" }}
-        style={{
-          padding: isMobile ? "15px" : "0 40px", minHeight: "80px", display: "flex", flexDirection: isMobile ? "column" : "row",
-          alignItems: "center", justifyContent: "space-between", gap: isMobile ? "15px" : "0",
-          position: "sticky", top: 0, zIndex: 100, backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderBottom: "1px solid"
-        }}
-      >
-        <Link href="/" style={{ display: "flex", alignItems: "center", gap: "15px", textDecoration: "none", width: isMobile ? "100%" : "auto", justifyContent: isMobile ? "center" : "flex-start" }}>
-          <img src="/logo.png" style={{ height: isMobile ? "40px" : "45px", filter: isDark ? "brightness(1.2)" : "none" }} alt="Logo" />
-          <div>
-            <h1 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: isMobile ? "20px" : "24px", fontWeight: 900, lineHeight: 1, margin: 0, color: isDark ? "#fff" : "#111" }}>GUILDE OTAKU</h1>
-            <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "11px", fontWeight: 700, color: themeAccent, letterSpacing: "0.2em", margin: "2px 0 0 0" }}>DEPUIS 2020</p>
-          </div>
-        </Link>
-
-        <div style={{ display: "flex", alignItems: "center", gap: "20px", flexDirection: isMobile ? "column" : "row", width: isMobile ? "100%" : "auto" }}>
-          <div style={{ display: "flex", background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)", borderRadius: "100px", padding: "4px" }}>
-            {(["real", "anime"] as ViewMode[]).map((mode) => (
-              <button key={mode} onClick={() => setViewMode(mode)} style={{
-                padding: "6px 14px", borderRadius: "100px", border: "none", cursor: "pointer",
-                fontFamily: "'Barlow Condensed', sans-serif", fontSize: "12px", fontWeight: 700, textTransform: "uppercase",
-                background: viewMode === mode ? themeAccent : "transparent",
-                color: viewMode === mode ? "#fff" : (isDark ? "#aaa" : "#666"), transition: "0.3s"
-              }}>
-                {mode === "real" ? "Réel" : "Anime"}
-              </button>
-            ))}
-          </div>
-          <nav style={{ display: "flex", gap: isMobile ? "20px" : "35px", fontWeight: 800, fontSize: isMobile ? "14px" : "19px", fontFamily: "'Barlow Condensed', sans-serif", overflowX: isMobile ? "auto" : "visible", width: isMobile ? "100%" : "auto", paddingBottom: isMobile ? "5px" : "0", whiteSpace: "nowrap" }}>
-            <Link href="/" style={{ textDecoration: "none", color: isDark ? "rgba(255,255,255,0.6)" : "#666", transition: "0.2s" }}>MEMBRES</Link>
-            <Link href="/birthdays" style={{ textDecoration: "none", color: themeAccent, transition: "0.2s" }}>ANNIVERSAIRES</Link>
-            <Link href="/wanted" style={{ textDecoration: "none", color: isDark ? "rgba(255,255,255,0.6)" : "#666", transition: "0.2s" }}>WANTED</Link>
-            <Link href="/fighters" style={{ textDecoration: "none", color: isDark ? "rgba(255,255,255,0.6)" : "#666", transition: "0.2s" }}>FIGHTERS</Link>
-            <Link href="/bons-plans" style={{ textDecoration: "none", color: isDark ? "rgba(255,255,255,0.6)" : "#666", transition: "0.2s" }}>BONS PLANS</Link>
-          </nav>
-        </div>
-      </motion.header>
-
+      {/* HEADER RESPONSIVE UNIFIÉ ET DYNAMIQUE */}
+      <GuildeHeader 
+        activePage="birthdays" 
+        accentColor={themeAccent}
+        bgColor={isDark ? "rgba(5,5,8,0.7)" : "rgba(255,255,255,0.4)"}
+        textColor={isDark ? "#fff" : "#111"}
+        rightSlot={renderViewToggle()} 
+      />
+      
       <div style={{ maxWidth: "1100px", margin: "0 auto", padding: isMobile ? "0 15px" : "0 40px" }}>
 
-        {/* HERO */}
         <motion.div style={{ paddingTop: isMobile ? "40px" : "56px", paddingBottom: "40px" }} initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }}>
           <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "13px", fontWeight: 700, letterSpacing: "0.35em", textTransform: "uppercase", color: themeAccent, marginBottom: "12px" }}>
             Guilde Otaku 2025 / 26
@@ -172,9 +155,6 @@ useEffect(() => {
           </motion.h1>
         </motion.div>
 
-        {/* ========================================================= */}
-        {/* ================= CARTE ANNIVERSAIRE ==================== */}
-        {/* ========================================================= */}
         {next && (
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -182,15 +162,9 @@ useEffect(() => {
             transition={{ delay: 0.1 }}
             onClick={() => setSelectedMember(next)}
             style={{
-              // LA CORRECTION EST LÀ 👇 : On sépare backgroundImage et backgroundColor
-              backgroundImage: isToday 
-                ? `linear-gradient(270deg, ${isDark ? '#1a1a1a' : '#fff'} 0%, ${themeAccent}25 50%, ${isDark ? '#1a1a1a' : '#fff'} 100%)` 
-                : "none",
-              backgroundColor: isToday 
-                ? "transparent" 
-                : (isDark ? "rgba(255,255,255,0.05)" : "#111"),
+              backgroundImage: isToday ? `linear-gradient(270deg, ${isDark ? '#1a1a1a' : '#fff'} 0%, ${themeAccent}25 50%, ${isDark ? '#1a1a1a' : '#fff'} 100%)` : "none",
+              backgroundColor: isToday ? "transparent" : (isDark ? "rgba(255,255,255,0.05)" : "#111"),
               backgroundSize: isToday ? "200% 200%" : "auto",
-              
               animation: isToday ? "gradientMove 3s ease infinite" : "none",
               border: isToday ? `2px solid ${themeAccent}` : `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "transparent"}`,
               boxShadow: isToday ? `0 0 30px ${themeAccent}40` : "none",
@@ -208,7 +182,6 @@ useEffect(() => {
             <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: isToday ? "4px" : "3px", background: `linear-gradient(90deg, transparent, ${themeAccent}, transparent)` }} />
 
             <div style={{ display: "flex", gap: "20px", width: isMobile ? "100%" : "auto", zIndex: 10 }}>
-              
               <div style={{
                 width: isToday ? "85px" : "72px", height: isToday ? "85px" : "72px", 
                 borderRadius: "50%", overflow: "hidden", flexShrink: 0,
@@ -276,7 +249,6 @@ useEffect(() => {
           </motion.div>
         )}
 
-        {/* FILTRE PAR MOIS */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "40px" }}>
           <button onClick={() => setActiveMonth(null)} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "13px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", padding: "8px 18px", borderRadius: "100px", border: activeMonth === null ? `2px solid ${themeAccent}` : `2px solid ${isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.12)"}`, background: activeMonth === null ? themeAccent : "transparent", color: activeMonth === null ? "#fff" : (isDark ? "rgba(255,255,255,0.5)" : "#666"), cursor: "pointer", transition: "all 0.2s" }}>
             Tous
@@ -294,7 +266,6 @@ useEffect(() => {
           })}
         </motion.div>
 
-        {/* LISTE PAR MOIS */}
         <AnimatePresence mode="wait">
           <motion.div key={activeMonth ?? "tous"} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3 }}>
             {visibleMonths.map((monthNum, idx) => {
@@ -315,7 +286,7 @@ useEffect(() => {
 
                   <div style={{ display: "flex", flexDirection: "column", gap: "2px", borderRadius: "14px", overflow: "hidden", boxShadow: isDark ? `0 4px 24px rgba(0,0,0,0.3)` : "0 2px 16px rgba(0,0,0,0.06)" }}>
                     {monthMembers.map((m, i) => {
-                      const accent = rankAccents[m.rank] ?? "#111";
+                      const accent = rankAccents[m.rank as Rank] ?? "#111";
                       const isTodayRow = m.daysUntil === 0;
                       const isSoon = m.daysUntil <= 7 && m.daysUntil > 0;
                       const rowBg = isTodayRow ? (isDark ? "#1a1a1a" : "#fff5f5") : isDark ? "rgba(255,255,255,0.04)" : "#fff";

@@ -4,10 +4,10 @@ import { useState, useMemo, useEffect } from "react";
 import { members, Rank, Member } from "../data/members";
 import MemberCard from "./components/MemberCard";
 import MemberModal from "./components/MemberModal"; 
-import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, User, Sword } from "lucide-react"; // <-- Ajout de User et Sword ici
+import { Search, User, Sword } from "lucide-react"; 
 import { rankAccents, rankBg, rankLogos, darkRanks } from "./config/ranks";
+import GuildeHeader from "./components/GuildeHeader";
 
 
 export type ViewMode = "real" | "anime";
@@ -16,7 +16,7 @@ export default function HomePage() {
   const [activeRank, setActiveRank] = useState<Rank | "Tous">("Tous");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>("anime"); // Reste par défaut sur Anime comme demandé
+  const [viewMode, setViewMode] = useState<ViewMode>("anime"); 
   
   const [isMobile, setIsMobile] = useState(false);
 
@@ -28,8 +28,8 @@ export default function HomePage() {
   }, []);
 
   const theme = rankBg[activeRank] ?? rankBg["Tous"];
- const accent = rankAccents[activeRank as Rank | "Tous"];
- const isDark = darkRanks.includes(activeRank as Rank);
+  const accent = rankAccents[activeRank as Rank | "Tous"];
+  const isDark = darkRanks.includes(activeRank as Rank);
 
   const filteredMembers = useMemo(() => {
     return members.filter((m) => {
@@ -38,6 +38,21 @@ export default function HomePage() {
       return matchesRank && matchesSearch;
     });
   }, [activeRank, searchTerm]);
+
+  const renderViewToggle = () => (
+    <div style={{ display: "flex", background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)", borderRadius: "100px", padding: "4px" }}>
+      {(["real", "anime"] as ViewMode[]).map((mode) => (
+        <button key={mode} onClick={() => setViewMode(mode)} style={{
+          padding: "6px 14px", borderRadius: "100px", border: "none", cursor: "pointer",
+          fontFamily: "'Barlow Condensed', sans-serif", fontSize: "12px", fontWeight: 900, textTransform: "uppercase",
+          background: viewMode === mode ? accent : "transparent",
+          color: viewMode === mode ? "#fff" : (isDark ? "#aaa" : "#666"), transition: "0.3s"
+        }}>
+          {mode === "real" ? "Réel" : "Anime"}
+        </button>
+      ))}
+    </div>
+  );
 
   return (
     <motion.div 
@@ -72,47 +87,15 @@ export default function HomePage() {
 
       <div style={{ position: "relative", zIndex: 10 }}>
         
-        {/* --- HEADER RESPONSIVE --- */}
-        <motion.header 
-          animate={{ backgroundColor: theme.nav, borderBottomColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)" }}
-          style={{
-            padding: isMobile ? "15px" : "0 40px", 
-            minHeight: "80px", 
-            display: "flex", 
-            flexDirection: isMobile ? "column" : "row",
-            alignItems: "center", 
-            justifyContent: "space-between", 
-            gap: isMobile ? "15px" : "0",
-            position: "sticky", top: 0, zIndex: 100,
-            backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderBottom: "1px solid"
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "15px", width: isMobile ? "100%" : "auto", justifyContent: isMobile ? "center" : "flex-start" }}>
-            <img src="/logo.png" style={{ height: isMobile ? "40px" : "45px" }} alt="Logo" />
-            <h1 style={{ fontSize: isMobile ? "20px" : "24px", fontWeight: 900 }}>GUILDE OTAKU</h1>
-          </div>
-
-          <nav style={{ 
-            display: "flex", 
-            gap: isMobile ? "20px" : "35px", 
-            fontWeight: 800, 
-            fontSize: isMobile ? "14px" : "19px", 
-            overflowX: isMobile ? "auto" : "visible", 
-            width: isMobile ? "100%" : "auto",
-            paddingBottom: isMobile ? "5px" : "0", 
-            whiteSpace: "nowrap"
-          }}>
-            <Link href="/birthdays" style={{ textDecoration: "none", color: "inherit", transition: "0.2s" }}>ANNIVERSAIRES</Link>
-            <Link href="/wanted" style={{ textDecoration: "none", color: "inherit", transition: "0.2s" }}>WANTED</Link>
-            <Link href="/fighters" style={{ textDecoration: "none", color: "inherit", transition: "0.2s" }}>FIGHTERS</Link>
-            <Link href="/bons-plans" style={{ textDecoration: "none", color: "inherit", transition: "0.2s" }}>BONS PLANS</Link>
-            
-            {/*  LE NOUVEAU LIEN EST ICI  */}
-            <Link href="/bibliotheque" style={{ textDecoration: "none", color: "inherit", transition: "0.2s", }}>BIBLIOTHÈQUE</Link>
-            
-          </nav>
-        </motion.header>
-
+       {/* ── HEADER ── */}
+      <GuildeHeader 
+        activePage="membres"
+        accentColor={accent}
+        bgColor={rankBg[activeRank as Rank | "Tous"].nav}
+        textColor={isDark ? "#fff" : "#111"}
+        rightSlot={renderViewToggle()}
+      />
+        
        {/* --- BARRE DE FILTRES FIXÉE --- */}
         <div style={{ 
           display: "flex", gap: isMobile ? "10px" : "15px", padding: isMobile ? "15px 20px" : "20px 40px", 
@@ -134,7 +117,7 @@ export default function HomePage() {
               }}
             >
               {/* Taille des logos augmentée : 30px sur PC, 22px sur Mobile */}
-{rank !== "Tous" && <img src={rankLogos[rank as Rank]} style={{ height: isMobile ? "22px" : "30px", objectFit: "contain" }} alt="" />}
+              {rank !== "Tous" && <img src={rankLogos[rank as Rank]} style={{ height: isMobile ? "22px" : "30px", objectFit: "contain" }} alt="" />}
               
               {/* Taille du texte augmentée : 17px sur PC, 14px sur Mobile avec un léger espacement des lettres */}
               <span style={{ fontWeight: 900, fontSize: isMobile ? "14px" : "17px", letterSpacing: "0.05em" }}>
