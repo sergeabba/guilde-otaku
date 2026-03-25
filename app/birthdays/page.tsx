@@ -8,7 +8,7 @@ import MemberModal from "../components/MemberModal";
 import { User, Sword, Gift, Crown } from "lucide-react";
 import { ViewMode } from "../page"; 
 import { rankAccents } from "../config/ranks";
-
+import { useIsMobile } from "../hooks/useIsMobile";
 const monthNames = [
   "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
   "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
@@ -65,7 +65,7 @@ export default function BirthdaysPage() {
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [activeMonth, setActiveMonth] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("anime");
-  const [isMobile, setIsMobile] = useState(false);
+  const isMobile = useIsMobile();
 
 useEffect(() => {
   const interval = setInterval(() => setNow(new Date()), 60_000);
