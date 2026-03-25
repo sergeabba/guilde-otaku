@@ -4,80 +4,32 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
 import GuildeHeader from "../components/GuildeHeader";
-// Ajout des icônes pour remplacer les émojis
+import { supabase } from "../../lib/supabase"; // 🔗 Connexion à ta base de données
 import { 
-  Star, BookOpen, Tv, Gamepad2, Film, Quote, Flame, Gem, Meh, TrendingDown, Search, X,
-  Sparkles, Swords, Castle, Aperture, Axe, Sword, Palette, Wine, ChefHat, Utensils, Bot, Bug, Hammer, Eye, Cpu, Circle, Skull 
+  Star, BookOpen, Tv, Gamepad2, Film, Quote, Flame, Gem, Meh, TrendingDown, Search, X, Clock
 } from "lucide-react";
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 type Category = "Tout" | "Anime" | "Manga" | "Film/Série" | "Jeu Vidéo";
-type Tier = "Chef-d'œuvre" | "Pépite" | "Bof" | "Surcoté";
+type Tier = "Chef-d'œuvre" | "Pépite" | "Bof" | "Surcoté" | "A définir";
 
-interface Entry {
-  id: number;
-  title: string;
-  category: Category;
-  tier: Tier;
-  year: number;
-  // Type modifié pour accepter soit une icône JSX, soit un string (si tu passes à des vraies images plus tard)
-  cover: React.ReactNode; 
-  genre: string;
-  note: number;
-  tags: string[];
-  review?: string;
-  reviewAuthor?: string;
-}
-
-// ─── DATA ─────────────────────────────────────────────────────────────────────
+// ─── DATA CHRONIQUE DU BASH ──────────────────────────────────────────────────
 const BASH_CHRONIQUE = {
   title: "Frieren : Beyond Journey's End",
   category: "Anime",
   note: 9.8,
   excerpt:
     "Frieren ne ressemble à rien de ce qu'on a vu. Dans un genre saturé de power-ups et de tournois, Madhouse ose la lenteur, la mélancolie, la poésie pure. Chaque épisode est une gifle silencieuse qui te rappelle que la vie passe, que les gens qu'on aime disparaissent, et que le temps n'attend personne. La direction artistique est somptueuse, les silences parlent plus que les dialogues, et Frieren elle-même est l'un des personnages les plus singuliers de la décennie. Un chef-d'œuvre absolu. Le Bash l'a dit.",
-  date: "Chronique de Mars 2025",
+  date: "Chronique de Mars 2026",
 };
 
-// Remplacement des émojis par des icônes Lucide de taille 42px
-const entries: Entry[] = [
- { 
-    id: 1, 
-    title: "Frieren: Beyond Journey's End", 
-    category: "Anime", 
-    tier: "Chef-d'œuvre", 
-    year: 2023, 
-    cover: <img src="/affiches/frieren.jpg" alt="Affiche Frieren" style={{ width: "100%", height: "180px", objectFit: "cover", borderRadius: "12px", boxShadow: "0 4px 12px rgba(0,0,0,0.5)" }} />, 
-    genre: "Fantasy / Seinen", 
-    note: 9.8, 
-    tags: ["Mélancolie", "Chef-d'œuvre absolu", "BVSH approved"] 
-  },
-  { id: 2, title: "Vagabond", category: "Manga", tier: "Chef-d'œuvre", year: 1998, cover: <Swords size={42} strokeWidth={1.5} />, genre: "Historique / Arts martiaux", note: 9.7, tags: ["Inoue", "Miyamoto Musashi", "Inachevé mais légendaire"] },
-  { id: 3, title: "Elden Ring", category: "Jeu Vidéo", tier: "Chef-d'œuvre", year: 2022, cover: <Castle size={42} strokeWidth={1.5} />, genre: "Action-RPG / Soulslike", note: 9.6, tags: ["FromSoftware", "Open World", "Game of the year"] },
-  { id: 4, title: "Inception", category: "Film/Série", tier: "Chef-d'œuvre", year: 2010, cover: <Aperture size={42} strokeWidth={1.5} />, genre: "Sci-Fi / Thriller", note: 9.5, tags: ["Nolan", "Mind-blowing", "Classique"] },
-  { id: 5, title: "Vinland Saga", category: "Anime", tier: "Chef-d'œuvre", year: 2019, cover: <Axe size={42} strokeWidth={1.5} />, genre: "Historique / Action", note: 9.4, tags: ["Vikings", "Redemption arc", "Épique"] },
-  { id: 6, title: "Berserk (1997)", category: "Anime", tier: "Chef-d'œuvre", year: 1997, cover: <Sword size={42} strokeWidth={1.5} />, genre: "Dark Fantasy", note: 9.3, tags: ["Guts", "Golden Age", "Trauma"] },
-  { id: 7, title: "Blue Period", category: "Manga", tier: "Pépite", year: 2017, cover: <Palette size={42} strokeWidth={1.5} />, genre: "Slice of Life / Drame", note: 8.8, tags: ["Art", "Émouvant", "Sous-estimé"] },
-  { id: 8, title: "Disco Elysium", category: "Jeu Vidéo", tier: "Pépite", year: 2019, cover: <Wine size={42} strokeWidth={1.5} />, genre: "RPG / Narratif", note: 9.0, tags: ["Writing", "Philosophie", "Pépite cachée"] },
-  { id: 9, title: "The Bear", category: "Film/Série", tier: "Pépite", year: 2022, cover: <ChefHat size={42} strokeWidth={1.5} />, genre: "Drame / Comédie", note: 8.7, tags: ["Intense", "Culte", "Cuisine"] },
-  { id: 10, title: "Dungeon Meshi", category: "Anime", tier: "Pépite", year: 2024, cover: <Utensils size={42} strokeWidth={1.5} />, genre: "Fantasy / Comédie", note: 8.9, tags: ["Cuisine", "World-building", "Frais"] },
-  { id: 11, title: "Pluto", category: "Manga", tier: "Pépite", year: 2003, cover: <Bot size={42} strokeWidth={1.5} />, genre: "Sci-Fi / Drame", note: 8.6, tags: ["Urasawa", "Astro Boy reimagined", "Magistral"] },
-  { id: 12, title: "Hollow Knight", category: "Jeu Vidéo", tier: "Pépite", year: 2017, cover: <Bug size={42} strokeWidth={1.5} />, genre: "Metroidvania", note: 8.8, tags: ["Indie", "Atmosphère", "Difficile"] },
-  { id: 13, title: "Sword Art Online", category: "Anime", tier: "Surcoté", year: 2012, cover: <Sword size={42} strokeWidth={1.5} />, genre: "Isekai / Action", note: 5.5, tags: ["Kirito", "Kibaou", "Bof"] },
-  { id: 14, title: "Ready Player One", category: "Film/Série", tier: "Surcoté", year: 2018, cover: <Gamepad2 size={42} strokeWidth={1.5} />, genre: "Sci-Fi / Aventure", note: 5.0, tags: ["Spielberg mode easy", "Références vides", "Surcoté"] },
-  { id: 15, title: "Fortnite", category: "Jeu Vidéo", tier: "Surcoté", year: 2017, cover: <Hammer size={42} strokeWidth={1.5} />, genre: "Battle Royale", note: 5.2, tags: ["Marketing", "Kids", "On passe"] },
-  { id: 16, title: "Tokyo Ghoul (saison 2+)", category: "Anime", tier: "Bof", year: 2014, cover: <Eye size={42} strokeWidth={1.5} />, genre: "Dark Fantasy", note: 5.8, tags: ["Potentiel gâché", "Manga >> Anime", "Sadness"] },
-  { id: 17, title: "Cyberpunk 2077 (launch)", category: "Jeu Vidéo", tier: "Bof", year: 2020, cover: <Cpu size={42} strokeWidth={1.5} />, genre: "Action-RPG", note: 6.0, tags: ["Hype déçue", "Bugs", "Mieux maintenant"] },
-  { id: 18, title: "The Rings of Power", category: "Film/Série", tier: "Bof", year: 2022, cover: <Circle size={42} strokeWidth={1.5} />, genre: "Fantasy", note: 5.5, tags: ["Amazon", "Tolkien pleure", "Visuel ok"] },
-  { id: 19, title: "Bleach (fin Aizen)", category: "Anime", tier: "Bof", year: 2006, cover: <Skull size={42} strokeWidth={1.5} />, genre: "Shōnen", note: 6.2, tags: ["Power creep", "Trop long", "Mais Bankai..."] },
-];
-
-// ─── CONFIG TIERS ────────────────────────────────────────────────────────────
+// ─── CONFIG TIERS & CATEGORIES ───────────────────────────────────────────────
 const tierConfig: Record<Tier, { color: string; bg: string; icon: React.ReactNode; label: string; glow: string }> = {
   "Chef-d'œuvre": { color: "#FFD700", bg: "rgba(255,215,0,0.08)",   icon: <Flame size={16} />,       label: "CHEFS-D'ŒUVRE", glow: "0 0 30px rgba(255,215,0,0.3)" },
   "Pépite":       { color: "#34d399", bg: "rgba(52,211,153,0.08)",  icon: <Gem size={16} />,          label: "PÉPITES",       glow: "0 0 30px rgba(52,211,153,0.3)" },
   "Bof":          { color: "#94a3b8", bg: "rgba(148,163,184,0.08)", icon: <Meh size={16} />,          label: "BOF",           glow: "0 0 30px rgba(148,163,184,0.2)" },
   "Surcoté":      { color: "#f87171", bg: "rgba(248,113,113,0.08)", icon: <TrendingDown size={16} />, label: "SURCOTÉS",      glow: "0 0 30px rgba(248,113,113,0.3)" },
+  "A définir":    { color: "#a1a1aa", bg: "rgba(161,161,170,0.08)", icon: <Clock size={16} />,        label: "EN ATTENTE",    glow: "0 0 10px rgba(161,161,170,0.2)" }, // Nouveau tier pour les ajouts récents
 };
 
 const categoryConfig: Record<string, { icon: React.ReactNode; color: string }> = {
@@ -87,14 +39,14 @@ const categoryConfig: Record<string, { icon: React.ReactNode; color: string }> =
   "Jeu Vidéo":  { icon: <Gamepad2 size={12} />,  color: "#4ade80" },
 };
 
-const TIERS: Tier[] = ["Chef-d'œuvre", "Pépite", "Bof", "Surcoté"];
+const TIERS: Tier[] = ["Chef-d'œuvre", "Pépite", "Bof", "Surcoté", "A définir"];
 const CATEGORIES: Category[] = ["Tout", "Anime", "Manga", "Film/Série", "Jeu Vidéo"];
 
 // ─── ENTRY CARD ──────────────────────────────────────────────────────────────
-function EntryCard({ entry, index, onSelect }: { entry: Entry; index: number; onSelect: () => void }) {
+function EntryCard({ entry, index, onSelect }: { entry: any; index: number; onSelect: () => void }) {
   const [hovered, setHovered] = useState(false);
-  const tier = tierConfig[entry.tier];
-  const cat = categoryConfig[entry.category];
+  const tier = tierConfig[entry.tier as Tier] || tierConfig["A définir"];
+  const cat = categoryConfig[entry.category] || categoryConfig["Anime"];
 
   return (
     <motion.div
@@ -120,7 +72,7 @@ function EntryCard({ entry, index, onSelect }: { entry: Entry; index: number; on
     >
       <div style={{ position: "absolute", top: 0, left: "20px", right: "20px", height: "2px", background: `linear-gradient(90deg, transparent, ${tier.color}, transparent)`, borderRadius: "0 0 4px 4px", opacity: hovered ? 1 : 0.4, transition: "opacity 0.3s" }} />
 
-      {/* Rendu de l'icône (ou de l'image plus tard) avec une couleur adaptée au thème */}
+      {/* Rendu de l'image Supabase */}
       <div style={{ marginBottom: "12px", color: "rgba(255,255,255,0.85)", display: "flex", alignItems: "center" }}>
         {entry.cover}
       </div>
@@ -135,16 +87,8 @@ function EntryCard({ entry, index, onSelect }: { entry: Entry; index: number; on
       </h3>
 
       <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "12px", color: "rgba(255,255,255,0.35)", letterSpacing: "0.06em", marginBottom: "14px" }}>
-        {entry.genre} · {entry.year}
+        {entry.status} · {entry.year}
       </p>
-
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "16px" }}>
-        {entry.tags.map((tag) => (
-          <span key={tag} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "10px", fontWeight: 600, color: "rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.05)", borderRadius: "4px", padding: "2px 6px" }}>
-            #{tag}
-          </span>
-        ))}
-      </div>
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "12px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
@@ -162,30 +106,61 @@ function EntryCard({ entry, index, onSelect }: { entry: Entry; index: number; on
 
 // ─── PAGE ────────────────────────────────────────────────────────────────────
 export default function BibliothequePage() {
+  const [oeuvres, setOeuvres] = useState<any[]>([]); // Données brutes de Supabase
+  const [loading, setLoading] = useState(true);
+
   const [activeCategory, setActiveCategory] = useState<Category>("Tout");
   const [activeTier, setActiveTier] = useState<Tier | "Tous">("Tous");
   const [searchTerm, setSearchTerm] = useState("");
   const [isMobile, setIsMobile] = useState(false);
-  const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null);
+  const [selectedEntry, setSelectedEntry] = useState<any | null>(null);
 
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
+  // 1. Récupérer les données au chargement
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     handleResize();
     window.addEventListener("resize", handleResize);
+    
+    fetchOeuvres();
+
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const filtered = entries.filter((e) => {
+  const fetchOeuvres = async () => {
+    const { data, error } = await supabase
+      .from("bibliotheque")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (!error && data) {
+      setOeuvres(data);
+    }
+    setLoading(false);
+  };
+
+  // 2. Transformer les données DB pour l'interface UI
+  const mappedEntries = oeuvres.map((dbEntry) => ({
+    id: dbEntry.id,
+    title: dbEntry.title,
+    category: dbEntry.type || "Anime",
+    tier: dbEntry.tier || "A définir",
+    year: new Date(dbEntry.created_at).getFullYear(),
+    cover: <img src={dbEntry.cover_image} alt={dbEntry.title} style={{ width: "100%", height: "200px", objectFit: "cover", borderRadius: "12px", boxShadow: "0 4px 12px rgba(0,0,0,0.5)" }} />,
+    status: dbEntry.status || "Terminé",
+    note: dbEntry.score || 0,
+    synopsis: dbEntry.synopsis
+  }));
+
+  // 3. Appliquer les filtres
+  const filtered = mappedEntries.filter((e) => {
     const matchCat = activeCategory === "Tout" || e.category === activeCategory;
     const matchTier = activeTier === "Tous" || e.tier === activeTier;
-    const matchSearch =
-      e.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      e.tags.some((t) => t.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchSearch = e.title.toLowerCase().includes(searchTerm.toLowerCase());
     return matchCat && matchTier && matchSearch;
   });
 
@@ -222,7 +197,8 @@ export default function BibliothequePage() {
         <div style={{ position: "absolute", top: "40%", left: "50%", transform: "translateX(-50%)", width: "80vw", height: "40vw", background: "radial-gradient(ellipse, rgba(52,211,153,0.04) 0%, transparent 70%)", filter: "blur(40px)" }} />
         <div style={{ position: "absolute", inset: 0, opacity: 0.04, backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' /%3E%3C/svg%3E\")" }} />
       </div>
-{/* ── HEADER ── */}
+
+      {/* ── HEADER ── */}
       <GuildeHeader activePage="bibliotheque" />
       <div style={{ position: "relative", zIndex: 10 }}>
 
@@ -288,7 +264,6 @@ export default function BibliothequePage() {
 
               <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: "40px", alignItems: isMobile ? "flex-start" : "center", position: "relative", zIndex: 2 }}>
 
-                {/* Photo BVSH */}
                 <motion.div
                   animate={{ y: [0, -10, 0] }}
                   transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
@@ -302,11 +277,7 @@ export default function BibliothequePage() {
                     boxShadow: "0 20px 40px rgba(201,168,76,0.2)",
                   }}
                 >
-                  <img
-                    src="/photos/bvsh.JPG"
-                    alt="BVSH"
-                    style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top" }}
-                  />
+                  <img src="/photos/bvsh.JPG" alt="BVSH" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top" }} />
                 </motion.div>
 
                 <div style={{ flex: 1 }}>
@@ -431,16 +402,20 @@ export default function BibliothequePage() {
             </div>
           </motion.div>
 
-          {/* TIER SECTIONS */}
+          {/* AFFICHAGE DES RÉSULTATS SUPABASE */}
           <AnimatePresence mode="wait">
             <motion.div key={`${activeCategory}-${activeTier}-${searchTerm}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
-              {entriesByTier.length === 0 ? (
+              {loading ? (
+                <div style={{ textAlign: "center", padding: "60px 0", color: "#c9a84c", fontSize: "20px", fontStyle: "italic", fontWeight: "bold" }}>
+                  Chargement de la Bibliothèque depuis Supabase...
+                </div>
+              ) : entriesByTier.length === 0 ? (
                 <div style={{ textAlign: "center", padding: "60px 0", color: "rgba(255,255,255,0.3)", fontSize: "20px", fontStyle: "italic" }}>
-                  Aucune entrée trouvée dans ces filtres...
+                  Aucune œuvre trouvée dans ces filtres...
                 </div>
               ) : (
                 entriesByTier.map(({ tier, items }) => {
-                  const cfg = tierConfig[tier];
+                  const cfg = tierConfig[tier as Tier];
                   return (
                     <motion.div
                       key={tier}
@@ -507,10 +482,10 @@ export default function BibliothequePage() {
               onClick={(e) => e.stopPropagation()}
               style={{
                 background: "#0d0d14",
-                border: `1px solid ${tierConfig[selectedEntry.tier].color}40`,
+                border: `1px solid ${tierConfig[selectedEntry.tier as Tier].color}40`,
                 borderRadius: "24px", padding: isMobile ? "28px 24px" : "40px",
-                maxWidth: "500px", width: "100%",
-                boxShadow: tierConfig[selectedEntry.tier].glow,
+                maxWidth: "500px", width: "100%", maxHeight: "90vh", overflowY: "auto",
+                boxShadow: tierConfig[selectedEntry.tier as Tier].glow,
                 position: "relative",
               }}
             >
@@ -523,15 +498,15 @@ export default function BibliothequePage() {
               </button>
 
               {/* Top accent */}
-              <div style={{ position: "absolute", top: 0, left: "20px", right: "20px", height: "3px", background: `linear-gradient(90deg, transparent, ${tierConfig[selectedEntry.tier].color}, transparent)`, borderRadius: "0 0 4px 4px" }} />
+              <div style={{ position: "absolute", top: 0, left: "20px", right: "20px", height: "3px", background: `linear-gradient(90deg, transparent, ${tierConfig[selectedEntry.tier as Tier].color}, transparent)`, borderRadius: "0 0 4px 4px" }} />
 
-              {/* Rendu de l'icône dans la modale */}
+              {/* Rendu de l'image */}
               <div style={{ marginBottom: "16px", color: "rgba(255,255,255,0.9)", display: "flex" }}>
                 {selectedEntry.cover}
               </div>
 
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px", flexWrap: "wrap" }}>
-                <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "11px", fontWeight: 800, color: tierConfig[selectedEntry.tier].color, background: tierConfig[selectedEntry.tier].bg, border: `1px solid ${tierConfig[selectedEntry.tier].color}30`, padding: "3px 10px", borderRadius: "100px", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "11px", fontWeight: 800, color: tierConfig[selectedEntry.tier as Tier].color, background: tierConfig[selectedEntry.tier as Tier].bg, border: `1px solid ${tierConfig[selectedEntry.tier as Tier].color}30`, padding: "3px 10px", borderRadius: "100px", textTransform: "uppercase", letterSpacing: "0.1em" }}>
                   {selectedEntry.tier}
                 </span>
                 <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "11px", color: "rgba(255,255,255,0.3)", fontWeight: 600 }}>
@@ -544,28 +519,25 @@ export default function BibliothequePage() {
               </h2>
 
               <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "14px", color: "rgba(255,255,255,0.4)", marginBottom: "20px", letterSpacing: "0.05em" }}>
-                {selectedEntry.genre}
+                Statut : {selectedEntry.status}
               </p>
 
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "24px" }}>
-                <Star size={18} fill={tierConfig[selectedEntry.tier].color} color={tierConfig[selectedEntry.tier].color} />
-                <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "40px", fontWeight: 900, color: tierConfig[selectedEntry.tier].color, lineHeight: 1 }}>
+                <Star size={18} fill={tierConfig[selectedEntry.tier as Tier].color} color={tierConfig[selectedEntry.tier as Tier].color} />
+                <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "40px", fontWeight: 900, color: tierConfig[selectedEntry.tier as Tier].color, lineHeight: 1 }}>
                   {selectedEntry.note}
                 </span>
                 <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "16px", color: "rgba(255,255,255,0.3)" }}>/10</span>
               </div>
 
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "28px" }}>
-                {selectedEntry.tags.map((tag) => (
-                  <span key={tag} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "12px", color: "rgba(255,255,255,0.5)", background: "rgba(255,255,255,0.06)", borderRadius: "6px", padding: "4px 10px" }}>
-                    #{tag}
-                  </span>
-                ))}
-              </div>
+              {/* Affichage du Synopsis récupéré de l'API */}
+              <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.7)", lineHeight: 1.6, marginBottom: "28px", padding: "15px", background: "rgba(255,255,255,0.03)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.05)" }}>
+                {selectedEntry.synopsis || "Aucun synopsis disponible pour cette œuvre."}
+              </p>
 
               <button
                 onClick={() => setSelectedEntry(null)}
-                style={{ width: "100%", padding: "14px", background: tierConfig[selectedEntry.tier].color, border: "none", borderRadius: "12px", fontFamily: "'Barlow Condensed', sans-serif", fontSize: "16px", fontWeight: 900, color: "#000", textTransform: "uppercase", letterSpacing: "0.1em", cursor: "pointer" }}
+                style={{ width: "100%", padding: "14px", background: tierConfig[selectedEntry.tier as Tier].color, border: "none", borderRadius: "12px", fontFamily: "'Barlow Condensed', sans-serif", fontSize: "16px", fontWeight: 900, color: "#000", textTransform: "uppercase", letterSpacing: "0.1em", cursor: "pointer" }}
               >
                 FERMER
               </button>
