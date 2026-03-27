@@ -18,7 +18,7 @@ const DOSSIER_BASH_DATA = [
     searchQuery: "Snowball Earth", 
     title: "Snowball Earth",
     date: "03 Avril 2026",
-    tag: "COUP DE CŒUR ABSOLU ✦",
+    tag: "COUP DE CŒUR ABSOLU ",
     color: "#4ade80",
     review: "J'ai juste pas d'autres mots pour décrire ce que j'ai ressenti devant ce bail : c'est juste ÉPIQUE. On suit Tetsuo, un garçon timide, et son robot géant Yukio qui combattent des monstres spatiaux. Après la bataille finale, Tetsuo retourne sur Terre et la trouve recouverte de glace.\n\nCe sera une histoire touchante sur l'amitié, la survie, la résilience et le dépassement de soi. L'œuvre est recommandée par ONE et Hideo Kojima. L'animation donne terriblement envie. Mention spéciale pour l'opening de TUKI et l'ending de Ai Higuchi qui seront dans mon top de la saison !",
     cover: "" 
@@ -27,7 +27,7 @@ const DOSSIER_BASH_DATA = [
     searchQuery: "Reincarnation no Kaben", 
     title: "Petals of Reincarnation",
     date: "02 Avril 2026",
-    tag: "L'ANIME À SUIVRE 🎯",
+    tag: "L'ANIME À SUIVRE ",
     color: "#f472b6",
     review: "On suivra TOUYA Senji, un lycéen qui ne recherche qu'une seule chose : son talent. Il se fait secourir par Haito qui lui explique qu'il peut retrouver le talent d'une de ses anciennes vies : la réincarnation.\n\nPourquoi j'en parle depuis longtemps ? La D.A est sublime et épurée. L'histoire est super intéressante car il va affronter des figures historiques (Newton, Hitler, Nostradamus...). Si l'animation suit, on tient là un anime super prometteur qui fera du bruit.",
     cover: ""
@@ -36,7 +36,7 @@ const DOSSIER_BASH_DATA = [
     searchQuery: "Killed in Action Detective", 
     title: "Killed Again, Mr. Detective",
     date: "02 Avril 2026",
-    tag: "INTRIGUANT 🔍",
+    tag: "INTRIGUANT ",
     color: "#60a5fa",
     review: "Killed Again, Mr Detective va ouvrir le bal. Le concept est particulier : on suit un jeune lycéen doté d'une capacité exceptionnelle : il peut revenir à la vie après avoir été tué. Il se retrouvera impliqué dans des affaires louches et mourra plein de fois.\n\nLe plot de départ est suffisamment consistant pour 13 épisodes. La bande-son est sympa, avec des morceaux de jazz et une ambiance film policier à l'ancienne.",
     cover: ""
@@ -45,7 +45,7 @@ const DOSSIER_BASH_DATA = [
     searchQuery: "Monster Eater",
     title: "Monster EATER",
     date: "02 Avril 2026",
-    tag: "LE PLUS SINGULIER 👽",
+    tag: "LE PLUS SINGULIER ",
     color: "#ffd700",
     review: "L'anime le plus singulier de la saison. L'animation est étrange, on a l'impression de voir des planches bouger... Mais le scénario est cool : Rudd, un aventurier faible, se fait trahir et se retrouve forcé de manger des monstres, ce qui le rend surpuissant !\n\nTrope basique d'un isekai sur un gars qui devient cheaté, c'est toujours intéressant. Le webtoon d'origine semble assez prometteur, donc pourquoi pas !",
     cover: ""
