@@ -5,7 +5,7 @@ import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion"
 import GuildeHeader from "../components/GuildeHeader";
 import { Sparkles, X, ChevronLeft, ChevronRight, ZoomIn, Cpu } from "lucide-react";
 
-// ─── HOOK : récupère les images depuis l'API ──────────────────────────────────
+// ─── HOOK ─────────────────────────────────────────────────────────────────────
 interface AtelierImage {
   filename: string;
   url: string;
@@ -32,9 +32,11 @@ const ACCENT_POOL = [
   "#d97706","#c9a84c","#e11d48","#db2777",
 ];
 const SIZE_POOL = ["large","tall","wide","normal","normal","normal","tall","wide"] as const;
-const CATEGORIES = ["Tout", "Personnage", "Crossover", "Groupe", "Concept"];
 
-// ─── STYLES CSS ───────────────────────────────────────────────────────────────
+// Seules 2 catégories utiles : "Tout" et "Création" (toutes les images sont "Création")
+const CATEGORIES = ["Tout", "Création"];
+
+// ─── CSS ──────────────────────────────────────────────────────────────────────
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
 
@@ -68,6 +70,7 @@ const CSS = `
   .filter-btn:hover { border-color:rgba(255,255,255,0.25);color:rgba(255,255,255,0.8);background:rgba(255,255,255,0.06); }
   .filter-btn.active { background:#c9a84c;border-color:#c9a84c;color:#000;box-shadow:0 0 20px rgba(201,168,76,0.35); }
 
+  /* ── BENTO GRID ── */
   .bento { display:grid;grid-template-columns:repeat(12,1fr);grid-auto-rows:100px;gap:14px; }
   @media(min-width:768px){
     .cell-large{grid-column:span 8;grid-row:span 5}
@@ -81,6 +84,7 @@ const CSS = `
     .cell-tall,.cell-normal{grid-column:span 1;grid-row:span 1}
   }
 
+  /* ── CARDS ── */
   .bento-card { position:relative;border-radius:20px;overflow:hidden;cursor:pointer;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);transition:border-color 0.35s ease,box-shadow 0.35s ease; }
   .bento-card:hover { border-color:rgba(255,255,255,0.18); }
   .bento-card img { width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.7s cubic-bezier(0.4,0,0.2,1),filter 0.4s ease;filter:brightness(0.9) saturate(1.1); }
@@ -97,31 +101,167 @@ const CSS = `
   .bento-card:hover .card-top-bar { opacity:1; }
   .card-num { position:absolute;top:10px;left:14px;font-family:'Bebas Neue','Barlow Condensed',sans-serif;font-size:11px;font-weight:900;letter-spacing:0.15em;color:rgba(255,255,255,0.25);z-index:2; }
 
-  .modal-backdrop { position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.92);backdrop-filter:blur(24px);display:flex;align-items:center;justify-content:center;padding:20px; }
-  .modal-inner { position:relative;width:100%;max-width:900px;max-height:90vh;border-radius:28px;overflow:hidden;display:grid;grid-template-columns:1fr 340px;background:#0a0a12;border:1px solid rgba(255,255,255,0.1);box-shadow:0 40px 80px rgba(0,0,0,0.8); }
-  @media(max-width:700px){ .modal-inner{grid-template-columns:1fr;grid-template-rows:55vw 1fr;max-height:88vh;border-radius:20px} .modal-info{overflow-y:auto} }
-  .modal-img-wrap { position:relative;overflow:hidden; }
-  .modal-img-wrap img { width:100%;height:100%;object-fit:cover;display:block;filter:brightness(0.92) saturate(1.15); }
-  .modal-img-gradient { position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,0,0,0.3) 0%,transparent 60%);pointer-events:none; }
-  .modal-info { padding:32px 28px;display:flex;flex-direction:column;gap:20px;background:#0a0a12;overflow-y:auto; }
-  @media(max-width:700px){ .modal-info{padding:20px;gap:14px} }
-  .modal-close { position:absolute;top:16px;right:16px;z-index:10;width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.15);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.2s; }
-  .modal-close:hover { background:rgba(255,255,255,0.15); }
-  .modal-nav { position:absolute;top:50%;transform:translateY(-50%);z-index:10;width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.15);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.2s; }
-  .modal-nav:hover{background:rgba(255,255,255,0.15)}
-  .modal-nav-prev{left:14px} .modal-nav-next{right:14px}
-  @media(max-width:700px){.modal-nav{display:none}}
-  .prompt-box { background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px 16px; }
-  .prompt-label { display:flex;align-items:center;gap:6px;font-size:10px;font-weight:900;letter-spacing:0.2em;text-transform:uppercase;color:#c9a84c;margin-bottom:8px; }
-  .prompt-text { font-size:14px;font-weight:500;color:rgba(255,255,255,0.75);line-height:1.6;font-style:italic; }
-  .modal-counter { font-size:12px;font-weight:700;color:rgba(255,255,255,0.25);letter-spacing:0.1em;text-align:center;margin-top:auto; }
-  .stats-bar { display:flex;align-items:center;justify-content:center;gap:32px;padding:28px 0;border-top:1px solid rgba(255,255,255,0.06);flex-wrap:wrap;gap:16px 32px; }
-  .stat-item{text-align:center}
-  .stat-num { font-family:'Bebas Neue','Barlow Condensed',sans-serif;font-size:40px;line-height:1;color:#c9a84c;letter-spacing:0.02em; }
-  .stat-label { font-size:10px;font-weight:800;letter-spacing:0.25em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-top:2px; }
-  .progress-dots { display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-top:auto;padding-top:8px; }
+  /* ── MODAL : bottom-sheet sur mobile, centré sur desktop ── */
+  .modal-backdrop {
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(0,0,0,0.92);
+    backdrop-filter: blur(24px);
+    display: flex;
+    align-items: flex-end;   /* bottom-sheet mobile */
+    justify-content: center;
+    padding: 0;
+  }
+  @media(min-width:701px){
+    .modal-backdrop { align-items: center; padding: 20px; }
+  }
+
+  .modal-inner {
+    position: relative;
+    width: 100%;
+    max-width: 900px;
+    background: #0a0a12;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 -20px 60px rgba(0,0,0,0.8);
+    /* Mobile : bottom sheet avec coins arrondis en haut */
+    border-radius: 24px 24px 0 0;
+    max-height: 92dvh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  @media(min-width:701px){
+    .modal-inner {
+      border-radius: 28px;
+      max-height: 88vh;
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      flex-direction: unset;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.8);
+    }
+  }
+
+  /* Handle drag visible uniquement sur mobile */
+  .modal-handle {
+    width: 40px; height: 4px;
+    background: rgba(255,255,255,0.18);
+    border-radius: 2px;
+    margin: 10px auto 0;
+    flex-shrink: 0;
+  }
+  @media(min-width:701px){ .modal-handle { display: none; } }
+
+  /* Image : hauteur fixe sur mobile, pleine hauteur sur desktop */
+  .modal-img-wrap {
+    position: relative; overflow: hidden;
+    height: 55vw;
+    min-height: 200px;
+    max-height: 320px;
+    flex-shrink: 0;
+  }
+  @media(min-width:701px){
+    .modal-img-wrap { height: auto; max-height: none; min-height: unset; }
+  }
+  .modal-img-wrap img {
+    width: 100%; height: 100%;
+    object-fit: cover; display: block;
+    filter: brightness(0.92) saturate(1.15);
+  }
+  .modal-img-gradient {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(10,10,18,0.6) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  /* Infos : scrollables sur mobile */
+  .modal-info {
+    padding: 16px 20px 20px;
+    display: flex; flex-direction: column; gap: 12px;
+    background: #0a0a12;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+    -webkit-overflow-scrolling: touch;
+  }
+  @media(min-width:701px){
+    .modal-info { padding: 32px 28px; gap: 20px; overflow-y: auto; }
+  }
+
+  /* Bouton fermer : dans modal-info sur mobile, absolu sur desktop */
+  .modal-close {
+    position: absolute;
+    top: 12px; right: 12px;
+    z-index: 10;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #fff; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+  }
+  .modal-close:hover { background: rgba(255,255,255,0.15); }
+
+  /* Flèches nav (cachées mobile) */
+  .modal-nav {
+    position: absolute; top: 50%; transform: translateY(-50%); z-index: 10;
+    width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #fff; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+  }
+  .modal-nav:hover { background: rgba(255,255,255,0.2); }
+  .modal-nav-prev { left: 12px; }
+  .modal-nav-next { right: 12px; }
+  @media(max-width:700px){ .modal-nav { display: none; } }
+
+  /* Navigation mobile : flèches en bas dans modal-info */
+  .modal-nav-mobile {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: auto;
+    padding-top: 4px;
+  }
+  @media(min-width:701px){ .modal-nav-mobile { display: none; } }
+
+  .modal-nav-mobile button {
+    flex: 1;
+    padding: 10px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    color: rgba(255,255,255,0.6);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    gap: 6px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    transition: all 0.2s;
+  }
+  .modal-nav-mobile button:hover {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+  }
+
+  .prompt-box { background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:12px 14px; }
+  .prompt-label { display:flex;align-items:center;gap:6px;font-size:10px;font-weight:900;letter-spacing:0.2em;text-transform:uppercase;color:#c9a84c;margin-bottom:6px; }
+  .prompt-text { font-size:13px;font-weight:500;color:rgba(255,255,255,0.75);line-height:1.6;font-style:italic; }
+  .modal-counter { font-size:11px;font-weight:700;color:rgba(255,255,255,0.25);letter-spacing:0.1em;text-align:center; }
+
+  .progress-dots { display:flex;gap:5px;justify-content:center;flex-wrap:wrap; }
   .progress-dot { width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.15);cursor:pointer;transition:all 0.25s ease;border:none;padding:0; }
   .progress-dot.active { background:#c9a84c;box-shadow:0 0 8px rgba(201,168,76,0.6);width:18px;border-radius:3px; }
+
+  .stats-bar { display:flex;align-items:center;justify-content:center;padding:28px 0;border-top:1px solid rgba(255,255,255,0.06);flex-wrap:wrap;gap:16px 32px; }
+  .stat-item { text-align:center; }
+  .stat-num { font-family:'Bebas Neue','Barlow Condensed',sans-serif;font-size:40px;line-height:1;color:#c9a84c;letter-spacing:0.02em; }
+  .stat-label { font-size:10px;font-weight:800;letter-spacing:0.25em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-top:2px; }
+
   @media(prefers-reduced-motion:reduce){ .orb{animation:none} .bento-card img{transition:none} }
 `;
 
@@ -167,6 +307,7 @@ function Modal({ works, currentIdx, onClose, onPrev, onNext, onGoto }: {
   onGoto: (i: number) => void;
 }) {
   const work = works[currentIdx];
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -178,20 +319,36 @@ function Modal({ works, currentIdx, onClose, onPrev, onNext, onGoto }: {
   }, [onClose, onPrev, onNext]);
 
   return (
-    <motion.div className="modal-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }} onClick={onClose}>
-      <div style={{ position: "absolute", inset: 0, background: `radial-gradient(circle at 30% 50%, ${work.accent}15 0%, transparent 60%)`, pointerEvents: "none" }} />
+    <motion.div
+      className="modal-backdrop"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.25 }}
+      onClick={onClose}
+    >
+      {/* Orbe de couleur derrière */}
+      <div style={{ position: "absolute", inset: 0, background: `radial-gradient(circle at 30% 50%, ${work.accent}12 0%, transparent 60%)`, pointerEvents: "none" }} />
+
       <motion.div
         className="modal-inner"
-        initial={{ scale: 0.92, y: 20, opacity: 0 }}
-        animate={{ scale: 1, y: 0, opacity: 1 }}
-        exit={{ scale: 0.94, y: 10, opacity: 0 }}
+        initial={{ y: 60, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 60, opacity: 0 }}
         transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
         onClick={(e) => e.stopPropagation()}
         style={{ borderColor: `${work.accent}30` }}
       >
+        {/* Handle mobile */}
+        <div className="modal-handle" />
+
+        {/* ── IMAGE ── */}
         <div className="modal-img-wrap">
           <AnimatePresence mode="wait">
-            <motion.img key={work.id} src={work.image} alt={work.title}
+            <motion.img
+              key={work.id}
+              src={work.image}
+              alt={work.title}
               initial={{ opacity: 0, scale: 1.04, filter: "blur(8px)" }}
               animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
               exit={{ opacity: 0, scale: 0.98 }}
@@ -199,48 +356,90 @@ function Modal({ works, currentIdx, onClose, onPrev, onNext, onGoto }: {
             />
           </AnimatePresence>
           <div className="modal-img-gradient" />
+          {/* Flèches desktop uniquement */}
           <button className="modal-nav modal-nav-prev" onClick={onPrev}><ChevronLeft size={18} /></button>
           <button className="modal-nav modal-nav-next" onClick={onNext}><ChevronRight size={18} /></button>
+          {/* Bouton fermer sur l'image (desktop) */}
+          <button className="modal-close" onClick={onClose}><X size={16} /></button>
         </div>
+
+        {/* ── INFOS ── */}
         <div className="modal-info">
-          <button className="modal-close" onClick={onClose}><X size={18} /></button>
+
+          {/* Header titre */}
           <div>
             <CategoryBadge cat={work.category} accent={work.accent} />
-            <div style={{ fontFamily: "'Bebas Neue','Barlow Condensed',sans-serif", fontSize: "clamp(28px,6vw,42px)", lineHeight: 0.95, color: "#fff", marginTop: "10px", letterSpacing: "0.02em" }}>{work.title}</div>
-            <div style={{ fontSize: "13px", fontWeight: 600, color: work.accent, letterSpacing: "0.1em", textTransform: "uppercase", marginTop: "6px" }}>{work.universe}</div>
+            <div style={{
+              fontFamily: "'Bebas Neue','Barlow Condensed',sans-serif",
+              fontSize: "clamp(24px,6vw,40px)",
+              lineHeight: 0.95, color: "#fff", marginTop: "8px", letterSpacing: "0.02em"
+            }}>
+              {work.title}
+            </div>
+            <div style={{ fontSize: "12px", fontWeight: 600, color: work.accent, letterSpacing: "0.1em", textTransform: "uppercase", marginTop: "4px" }}>
+              {work.universe}
+            </div>
           </div>
-          <div style={{ height: "1px", background: `linear-gradient(90deg, ${work.accent}50, transparent)` }} />
+
+          {/* Séparateur coloré */}
+          <div style={{ height: "1px", background: `linear-gradient(90deg, ${work.accent}50, transparent)`, flexShrink: 0 }} />
+
+          {/* Prompt */}
           <div className="prompt-box">
             <div className="prompt-label"><Cpu size={12} />Prompt IA</div>
             <p className="prompt-text">"{work.prompt}"</p>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+
+          {/* Méta-données (2×2) */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
             {[
               { label: "Univers", value: work.universe },
               { label: "Catégorie", value: work.category },
-              { label: "Création", value: "Guilde Otaku" },
-              { label: "ID", value: `#${String(work.id).padStart(2,"0")}` },
+              { label: "Par", value: "Guilde Otaku" },
+              { label: "ID", value: `#${String(work.id).padStart(2, "0")}` },
             ].map(({ label, value }) => (
-              <div key={label} style={{ background: "rgba(255,255,255,0.03)", borderRadius: "10px", padding: "10px 12px", border: "1px solid rgba(255,255,255,0.06)" }}>
-                <div style={{ fontSize: "9px", fontWeight: 800, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: "4px" }}>{label}</div>
-                <div style={{ fontSize: "13px", fontWeight: 700, color: "#fff", letterSpacing: "0.04em" }}>{value}</div>
+              <div key={label} style={{ background: "rgba(255,255,255,0.03)", borderRadius: "8px", padding: "8px 10px", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ fontSize: "8px", fontWeight: 800, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)", marginBottom: "3px" }}>{label}</div>
+                <div style={{ fontSize: "12px", fontWeight: 700, color: "#fff" }}>{value}</div>
               </div>
             ))}
           </div>
-          <div className="progress-dots">
-            {works.map((_, i) => (
-              <button key={i} className={`progress-dot ${i === currentIdx ? "active" : ""}`} onClick={() => onGoto(i)}
-                style={i === currentIdx ? { background: work.accent, boxShadow: `0 0 8px ${work.accent}60` } : {}} />
-            ))}
+
+          {/* Points de navigation + compteur */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "auto" }}>
+            <div className="progress-dots">
+              {works.map((_, i) => (
+                <button
+                  key={i}
+                  className={`progress-dot ${i === currentIdx ? "active" : ""}`}
+                  onClick={() => onGoto(i)}
+                  style={i === currentIdx ? { background: work.accent, boxShadow: `0 0 8px ${work.accent}60` } : {}}
+                />
+              ))}
+            </div>
+            <div className="modal-counter">{currentIdx + 1} / {works.length}</div>
           </div>
-          <div className="modal-counter">{currentIdx + 1} / {works.length}</div>
+
+          {/* ── NAVIGATION MOBILE : flèches en bas ── */}
+          <div className="modal-nav-mobile">
+            <button onClick={onPrev}>
+              <ChevronLeft size={16} /> Précédent
+            </button>
+            <button onClick={onClose} style={{ flex: "none", padding: "10px 16px", background: `${work.accent}18`, borderColor: `${work.accent}40`, color: work.accent }}>
+              Fermer
+            </button>
+            <button onClick={onNext}>
+              Suivant <ChevronRight size={16} />
+            </button>
+          </div>
+
         </div>
       </motion.div>
     </motion.div>
   );
 }
 
-// ─── HELPER : construit un objet "work" depuis une AtelierImage ───────────────
+// ─── HELPER ───────────────────────────────────────────────────────────────────
 function buildWork(img: AtelierImage, index: number) {
   return {
     id: index + 1,
@@ -265,11 +464,8 @@ export default function AtelierPage() {
   const heroY = useTransform(scrollYProgress, [0, 1], ["0%", "35%"]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.75], [1, 0]);
 
-  // Transforme les images en "works" compatibles avec le reste du composant
   const allWorks = images.map((img, i) => buildWork(img, i));
 
-  // Le filtre par catégorie ne s'applique pas ici (toutes les images = "Création")
-  // mais on garde la structure pour les ajouter via l'admin atelier plus tard
   const filtered = activeFilter === "Tout"
     ? allWorks
     : allWorks.filter(w => w.category === activeFilter);
@@ -282,8 +478,6 @@ export default function AtelierPage() {
   const closeModal = () => setModalIdx(null);
   const prevModal = () => setModalIdx(i => i === null ? null : (i - 1 + filtered.length) % filtered.length);
   const nextModal = () => setModalIdx(i => i === null ? null : (i + 1) % filtered.length);
-
-  const universes = new Set(allWorks.map(w => w.universe)).size;
 
   return (
     <div className="atelier-page">
@@ -307,8 +501,10 @@ export default function AtelierPage() {
                 <span className="gold">ATELIER</span><br />
                 <span className="outline">DE LA GUILDE</span>
               </h1>
-              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3, duration: 0.6 }}
-                style={{ fontSize: "clamp(14px,2.5vw,18px)", fontWeight: 500, color: "rgba(255,255,255,0.45)", maxWidth: "560px", margin: "24px auto 0", lineHeight: 1.6, fontFamily: "'Barlow Condensed', sans-serif" }}>
+              <motion.p
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3, duration: 0.6 }}
+                style={{ fontSize: "clamp(14px,2.5vw,18px)", fontWeight: 500, color: "rgba(255,255,255,0.45)", maxWidth: "560px", margin: "24px auto 0", lineHeight: 1.6, fontFamily: "'Barlow Condensed', sans-serif" }}
+              >
                 L'espace où l'imagination de la guilde Otaku prend vie.
               </motion.p>
             </motion.div>
@@ -321,9 +517,9 @@ export default function AtelierPage() {
           <div className="stats-bar">
             {[
               { num: loading ? "..." : allWorks.length, label: "Créations" },
-              { num: universes || "...", label: "Univers" },
-              { num: CATEGORIES.length - 1, label: "Catégories" },
-              { num: "100%", label: "IA Génératif" },
+              { num: "IA", label: "Génération" },
+              { num: "100%", label: "Original" },
+              { num: "2025", label: "Saison" },
             ].map(({ num, label }) => (
               <div className="stat-item" key={label}>
                 <div className="stat-num">{num}</div>
@@ -338,7 +534,11 @@ export default function AtelierPage() {
           style={{ padding: "40px clamp(20px,5vw,64px) 32px", maxWidth: "1200px", margin: "0 auto" }}>
           <div className="filters-wrap">
             {CATEGORIES.map(cat => (
-              <button key={cat} className={`filter-btn ${activeFilter === cat ? "active" : ""}`} onClick={() => setActiveFilter(cat)}>
+              <button
+                key={cat}
+                className={`filter-btn ${activeFilter === cat ? "active" : ""}`}
+                onClick={() => setActiveFilter(cat)}
+              >
                 {cat}
               </button>
             ))}
@@ -353,11 +553,18 @@ export default function AtelierPage() {
             </div>
           ) : filtered.length === 0 ? (
             <div style={{ textAlign: "center", padding: "80px 0", color: "rgba(255,255,255,0.25)", fontFamily: "'Barlow Condensed', sans-serif", fontSize: "20px", fontStyle: "italic" }}>
-              Aucune création dans cette catégorie...
+              Aucune création trouvée...
             </div>
           ) : (
             <AnimatePresence mode="wait">
-              <motion.div key={activeFilter} className="bento" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
+              <motion.div
+                key={activeFilter}
+                className="bento"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
                 {filtered.map((work, i) => (
                   <BentoCard key={work.id} work={work} index={i} onClick={() => openModal(work)} />
                 ))}
@@ -372,7 +579,7 @@ export default function AtelierPage() {
             Guilde Otaku Créations Originales 2025-26
           </p>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", fontWeight: 700, color: "rgba(255,255,255,0.2)", letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: "'Barlow Condensed', sans-serif" }}>
-            <Cpu size={13} style={{ color: "#c9a84c" }} />Généré par IA
+            <Cpu size={13} style={{ color: "#c9a84c" }} /> Généré par IA
           </div>
         </div>
       </div>
@@ -380,7 +587,14 @@ export default function AtelierPage() {
       {/* ── MODAL ── */}
       <AnimatePresence>
         {modalIdx !== null && filtered.length > 0 && (
-          <Modal works={filtered} currentIdx={modalIdx} onClose={closeModal} onPrev={prevModal} onNext={nextModal} onGoto={setModalIdx} />
+          <Modal
+            works={filtered}
+            currentIdx={modalIdx}
+            onClose={closeModal}
+            onPrev={prevModal}
+            onNext={nextModal}
+            onGoto={setModalIdx}
+          />
         )}
       </AnimatePresence>
     </div>
