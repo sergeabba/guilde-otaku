@@ -18,16 +18,16 @@ const DOSSIER_BASH_DATA = [
     searchQuery: "Snowball Earth", 
     title: "Snowball Earth",
     date: "03 Avril 2026",
-    tag: "COUP DE CŒUR ABSOLU ",
+    tag: "COUP DE CŒUR ABSOLU ✦",
     color: "#4ade80",
-    review: "J'ai juste pas d'autres mots pour décrire ce que j'ai ressenti devant ce bail : c'est juste ÉPIQUE. On suit Tetsuo, un garçon timide, et son robot géant Yukio qui combattent des monstres spatiaux. Après la bataille finale, Tetsuo retourne sur Terre et la trouve recouverte de glace.\n\nCe sera une histoire touchante sur l'amitié, la survie, la résilience et le dépassement de soi. L'œuvre est recommandée par ONE et Hideo Kojima. L'animation donne terriblement envie. Mention spéciale pour l'opening de TUKI et l'ending de Ai Higuchi qui seront dans mon top de la saison !",
+    review: "J'ai juste pas d'autres mots pour décrire ce que j'ai senti devant ce bail : c'est juste ÉPIQUE. On suit Tetsuo, un garçon timide, et son robot géant Yukio qui combattent des monstres spatiaux. Après la bataille finale, Tetsuo retourne sur Terre et la trouve recouverte de glace.\n\nCe sera une histoire touchante sur l'amitié, la survie, la résilience et le dépassement de soi. L'œuvre est recommandée par ONE et Hideo Kojima. L'animation donne terriblement envie. Mention spéciale pour l'opening de TUKI et l'ending de Ai Higuchi qui seront dans mon top de la saison !",
     cover: "" 
   },
   {
     searchQuery: "Reincarnation no Kaben", 
     title: "Petals of Reincarnation",
     date: "02 Avril 2026",
-    tag: "L'ANIME À SUIVRE ",
+    tag: "L'ANIME À SUIVRE 🎯",
     color: "#f472b6",
     review: "On suivra TOUYA Senji, un lycéen qui ne recherche qu'une seule chose : son talent. Il se fait secourir par Haito qui lui explique qu'il peut retrouver le talent d'une de ses anciennes vies : la réincarnation.\n\nPourquoi j'en parle depuis longtemps ? La D.A est sublime et épurée. L'histoire est super intéressante car il va affronter des figures historiques (Newton, Hitler, Nostradamus...). Si l'animation suit, on tient là un anime super prometteur qui fera du bruit.",
     cover: ""
@@ -36,7 +36,7 @@ const DOSSIER_BASH_DATA = [
     searchQuery: "Killed in Action Detective", 
     title: "Killed Again, Mr. Detective",
     date: "02 Avril 2026",
-    tag: "INTRIGUANT ",
+    tag: "INTRIGUANT 🔍",
     color: "#60a5fa",
     review: "Killed Again, Mr Detective va ouvrir le bal. Le concept est particulier : on suit un jeune lycéen doté d'une capacité exceptionnelle : il peut revenir à la vie après avoir été tué. Il se retrouvera impliqué dans des affaires louches et mourra plein de fois.\n\nLe plot de départ est suffisamment consistant pour 13 épisodes. La bande-son est sympa, avec des morceaux de jazz et une ambiance film policier à l'ancienne.",
     cover: ""
@@ -45,7 +45,7 @@ const DOSSIER_BASH_DATA = [
     searchQuery: "Monster Eater",
     title: "Monster EATER",
     date: "02 Avril 2026",
-    tag: "LE PLUS SINGULIER ",
+    tag: "LE PLUS SINGULIER 👽",
     color: "#ffd700",
     review: "L'anime le plus singulier de la saison. L'animation est étrange, on a l'impression de voir des planches bouger... Mais le scénario est cool : Rudd, un aventurier faible, se fait trahir et se retrouve forcé de manger des monstres, ce qui le rend surpuissant !\n\nTrope basique d'un isekai sur un gars qui devient cheaté, c'est toujours intéressant. Le webtoon d'origine semble assez prometteur, donc pourquoi pas !",
     cover: ""
@@ -295,17 +295,14 @@ export default function BibliothequePage() {
                   whileHover={{ scale: 1.015, borderColor: anime.color }}
                   transition={{ duration: 0.2 }}
                   onClick={() => {
-                    // Magie noire : On vérifie si l'anime est déjà dans ta base de données Supabase !
                     const dbMatch = mappedEntries.find(e => 
                       e.title.toLowerCase().includes(anime.searchQuery.toLowerCase()) || 
                       e.title.toLowerCase() === anime.title.toLowerCase()
                     );
 
                     if (dbMatch) {
-                      // Si oui, on affiche la vraie fiche !
                       setSelectedEntry(dbMatch);
                     } else {
-                      // Si non, on génère une fiche d'attente stylée avec la note "HYPE"
                       setSelectedEntry({
                         title: anime.title,
                         category: "Anime",
@@ -313,7 +310,7 @@ export default function BibliothequePage() {
                         year: 2026,
                         cover: <img src={anime.cover} alt={anime.title} style={{ width: "100%", height: "200px", objectFit: "cover", borderRadius: "12px", boxShadow: "0 4px 12px rgba(0,0,0,0.5)" }} />,
                         status: "Saison Printemps",
-                        note: "✨", // Petite fantaisie pour les animes non notés
+                        note: "✨", 
                         avis_guilde: anime.review,
                         synopsis: "Cette œuvre n'a pas encore sa fiche complète dans la base de données de la Guilde. Fais confiance à l'avis du Bash en attendant !"
                       });
@@ -328,12 +325,25 @@ export default function BibliothequePage() {
                     backdropFilter: "blur(20px)",
                     display: "flex",
                     flexDirection: isMobile ? "column" : "row",
-                    gap: "32px"
+                    gap: "32px",
+                    alignItems: isMobile ? "flex-start" : "center" // Centre l'image verticalement en bureau
                   }}
                 >
                   
-                  {/* L'Affiche de l'Anime */}
-                  <div style={{ flexShrink: 0, width: isMobile ? "100%" : "200px", height: isMobile ? "300px" : "280px", borderRadius: "16px", overflow: "hidden", border: `1px solid ${anime.color}40`, boxShadow: `0 10px 30px ${anime.color}20`, background: "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {/* L'Affiche de l'Anime ── 🔥 IMAGE AGRANDIE ICI */}
+                  <div style={{ 
+                    flexShrink: 0, 
+                    width: isMobile ? "100%" : "300px", // Agrandissement de 200px à 300px
+                    height: isMobile ? "350px" : "420px", // Agrandissement de 280px à 420px
+                    borderRadius: "16px", 
+                    overflow: "hidden", 
+                    border: `1px solid ${anime.color}40`, 
+                    boxShadow: `0 10px 30px ${anime.color}20`, 
+                    background: "rgba(255,255,255,0.05)", 
+                    display: "flex", 
+                    alignItems: "center", 
+                    justifyContent: "center" 
+                  }}>
                     {anime.cover ? (
                       <img src={anime.cover} alt={anime.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     ) : (
@@ -353,21 +363,32 @@ export default function BibliothequePage() {
                       </span>
                     </div>
 
-                    <h2 style={{ fontSize: isMobile ? "28px" : "36px", fontWeight: 900, lineHeight: 1, textTransform: "uppercase", fontStyle: "italic", marginBottom: "20px", color: "#fff" }}>
+                    <h2 style={{ fontSize: isMobile ? "28px" : "44px", fontWeight: 900, lineHeight: 1, textTransform: "uppercase", fontStyle: "italic", marginBottom: "20px", color: "#fff" }}>
                       {anime.title}
                     </h2>
 
-                    <div style={{ position: "relative", paddingLeft: "24px", borderLeft: `3px solid ${anime.color}50` }}>
+                    <div style={{ position: "relative", paddingLeft: "24px", borderLeft: `3px solid ${anime.color}50`, marginBottom: "20px" }}>
                       <Quote size={20} color={`${anime.color}40`} style={{ position: "absolute", top: 0, left: "-11px", background: index === 0 ? "none" : "#050508", padding: "2px" }} />
                       
                       {anime.review.split('\n\n').map((paragraph, pIndex) => (
-                        <p key={pIndex} style={{ fontSize: "15px", fontWeight: 500, color: "rgba(255,255,255,0.75)", lineHeight: 1.7, marginBottom: pIndex === anime.review.split('\n\n').length - 1 ? 0 : "16px" }}>
+                        <p key={pIndex} style={{ fontSize: "16px", fontWeight: 500, color: "rgba(255,255,255,0.8)", lineHeight: 1.7, marginBottom: pIndex === anime.review.split('\n\n').length - 1 ? 0 : "16px" }}>
                           {paragraph}
                         </p>
                       ))}
                     </div>
                     
-                    <div style={{ marginTop: "24px", fontSize: "12px", color: "rgba(255,255,255,0.3)", fontStyle: "italic", fontWeight: "bold" }}>
+                    {/* 🔥 TEXTE PLUS GRAS ET VISIBLE ICI */}
+                    <div style={{ 
+                      marginTop: "24px", 
+                      fontSize: "14px", // Un peu plus grand
+                      color: "rgba(255,255,255,0.6)", // Plus clair pour plus de visibilité
+                      fontStyle: "italic", 
+                      fontWeight: 800, // Beaucoup plus gras (Extra-bold)
+                      textTransform: "uppercase", // En majuscules pour le style
+                      letterSpacing: "0.1em", // Un peu d'espacement pour la lisibilité
+                      borderTop: "1px solid rgba(255,255,255,0.1)", // Petite barre de séparation
+                      paddingTop: "12px" 
+                    }}>
                       → Cliquer pour voir la fiche détaillée
                     </div>
                   </div>
