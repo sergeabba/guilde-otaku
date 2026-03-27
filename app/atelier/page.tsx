@@ -1008,9 +1008,8 @@ export default function AtelierPage() {
                   fontFamily: "'Barlow Condensed', sans-serif",
                 }}
               >
-                L'espace où l'imagination Otaku prend vie.
-                Chaque création est générée par Intelligence Artificielle
-                à partir d'un prompt imaginé par la Guilde.
+                L'espace où l'imagination de la guilde  Otaku prend vie.
+                
               </motion.p>
             </motion.div>
           </div>
@@ -1146,7 +1145,7 @@ export default function AtelierPage() {
               textTransform: "uppercase",
             }}
           >
-            Guilde Otaku · Créations Originales 2025
+            Guilde Otaku Créations Originales 2025-26
           </p>
           <div
             style={{
