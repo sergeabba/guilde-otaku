@@ -5,7 +5,7 @@ import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion"
 import GuildeHeader from "../components/GuildeHeader";
 import { supabase } from "../../lib/supabase";
 import { 
-  Star, BookOpen, Tv, Gamepad2, Film, Quote, Flame, Gem, Meh, TrendingDown, Search, X, Clock, Calendar
+  Star, BookOpen, Tv, Gamepad2, Film, Quote, Flame, Gem, Meh, TrendingDown, Search, X, Clock, Calendar, Youtube
 } from "lucide-react";
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
@@ -71,6 +71,12 @@ const categoryConfig: Record<string, { icon: React.ReactNode; color: string }> =
 const TIERS: Tier[] = ["Chef-d'œuvre", "Pépite", "Bof", "Surcoté", "A définir"];
 const CATEGORIES: Category[] = ["Tout", "Anime", "Manga", "Film/Série", "Jeu Vidéo"];
 
+const tagStyle: React.CSSProperties = {
+  fontFamily: "'Barlow Condensed', sans-serif", fontSize: "10px",
+  color: "rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.06)",
+  padding: "2px 7px", borderRadius: "100px", border: "1px solid rgba(255,255,255,0.08)",
+};
+
 // ─── ENTRY CARD ──────────────────────────────────────────────────────────────
 function EntryCard({ entry, index, onSelect }: { entry: any; index: number; onSelect: () => void }) {
   const [hovered, setHovered] = useState(false);
@@ -114,9 +120,17 @@ function EntryCard({ entry, index, onSelect }: { entry: any; index: number; onSe
         {entry.title}
       </h3>
 
-      <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "12px", color: "rgba(255,255,255,0.35)", letterSpacing: "0.06em", marginBottom: "14px" }}>
-        {entry.status} {entry.year ? `· ${entry.year}` : ""}
-      </p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "14px" }}>
+        <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "12px", color: "rgba(255,255,255,0.35)", letterSpacing: "0.06em" }}>
+          {entry.status} {entry.year ? `· ${entry.year}` : ""}
+        </span>
+        {/* 🔥 Ajout du petit badge Trailer sur la carte si le lien existe */}
+        {entry.trailer_url && (
+          <span style={{ ...tagStyle, color: "#f87171", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)" }}>
+            ▶ Trailer
+          </span>
+        )}
+      </div>
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "12px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
@@ -326,15 +340,15 @@ export default function BibliothequePage() {
                     display: "flex",
                     flexDirection: isMobile ? "column" : "row",
                     gap: "32px",
-                    alignItems: isMobile ? "flex-start" : "center" // Centre l'image verticalement en bureau
+                    alignItems: isMobile ? "flex-start" : "center" 
                   }}
                 >
                   
-                  {/* L'Affiche de l'Anime ── 🔥 IMAGE AGRANDIE ICI */}
+                  {/* L'Affiche de l'Anime */}
                   <div style={{ 
                     flexShrink: 0, 
-                    width: isMobile ? "100%" : "300px", // Agrandissement de 200px à 300px
-                    height: isMobile ? "350px" : "420px", // Agrandissement de 280px à 420px
+                    width: isMobile ? "100%" : "300px", 
+                    height: isMobile ? "350px" : "420px", 
                     borderRadius: "16px", 
                     overflow: "hidden", 
                     border: `1px solid ${anime.color}40`, 
@@ -377,16 +391,15 @@ export default function BibliothequePage() {
                       ))}
                     </div>
                     
-                    {/* 🔥 TEXTE PLUS GRAS ET VISIBLE ICI */}
                     <div style={{ 
                       marginTop: "24px", 
-                      fontSize: "14px", // Un peu plus grand
-                      color: "rgba(255,255,255,0.6)", // Plus clair pour plus de visibilité
+                      fontSize: "14px", 
+                      color: "rgba(255,255,255,0.6)", 
                       fontStyle: "italic", 
-                      fontWeight: 800, // Beaucoup plus gras (Extra-bold)
-                      textTransform: "uppercase", // En majuscules pour le style
-                      letterSpacing: "0.1em", // Un peu d'espacement pour la lisibilité
-                      borderTop: "1px solid rgba(255,255,255,0.1)", // Petite barre de séparation
+                      fontWeight: 800, 
+                      textTransform: "uppercase", 
+                      letterSpacing: "0.1em", 
+                      borderTop: "1px solid rgba(255,255,255,0.1)", 
                       paddingTop: "12px" 
                     }}>
                       → Cliquer pour voir la fiche détaillée
@@ -552,6 +565,20 @@ export default function BibliothequePage() {
               <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.6)", lineHeight: 1.6, marginBottom: "28px", padding: "15px", background: "rgba(255,255,255,0.03)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.05)" }}>
                 {selectedEntry.synopsis || "Aucun synopsis disponible pour cette œuvre."}
               </p>
+
+              {/* 🔥 BOUTON YOUTUBE AJOUTÉ ICI */}
+              {selectedEntry.trailer_url && (
+                <a 
+                  href={selectedEntry.trailer_url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", width: "100%", padding: "14px", background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.3)", borderRadius: "12px", fontFamily: "'Barlow Condensed', sans-serif", fontSize: "16px", fontWeight: 900, color: "#f87171", textTransform: "uppercase", letterSpacing: "0.1em", cursor: "pointer", textDecoration: "none", marginBottom: "12px", transition: "all 0.2s" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(248,113,113,0.2)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(248,113,113,0.1)"; }}
+                >
+                  <Youtube size={18} /> Voir le Trailer
+                </a>
+              )}
 
               <button onClick={() => setSelectedEntry(null)} style={{ width: "100%", padding: "14px", background: tierConfig[selectedEntry.tier as Tier].color, border: "none", borderRadius: "12px", fontFamily: "'Barlow Condensed', sans-serif", fontSize: "16px", fontWeight: 900, color: "#000", textTransform: "uppercase", letterSpacing: "0.1em", cursor: "pointer" }}>
                 FERMER
