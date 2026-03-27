@@ -1,25 +1,191 @@
+/* ─── GUILDE OTAKU · GLOBAL STYLES AMÉLIORÉS ─────────────────────────────────
+   Remplace / complète app/globals.css
+   Les améliorations apportées :
+   1. Shimmer skeleton (remplace l'animate pulse de Framer Motion)
+   2. Scrollbar raffinée
+   3. CSS custom properties pour la cohérence des couleurs
+   4. Touch targets minimums pour l'accessibilité mobile
+   5. Suppression du flash de couleur sur tap mobile
+   6. Focus visible stylisé (accessibilité clavier)
+   ─────────────────────────────────────────────────────────────────────────── */
+
 @import "tailwindcss";
 
-* { box-sizing: border-box; padding: 0; margin: 0; }
-
-html { scroll-behavior: smooth; }
-
-html, body {
-  color: #111;
-  font-family: 'Barlow', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -webkit-tap-highlight-color: transparent;
+/* ─── RESET ─────────────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
 }
 
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%; /* Empêche iOS d'agrandir le texte en paysage */
+}
+
+html, body {
+  font-family: 'Barlow Condensed', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent; /* Supprime le flash bleu sur tap mobile */
+}
+
+/* ─── CSS CUSTOM PROPERTIES ──────────────────────────────────────────────────── */
+:root {
+  --gold:          #c9a84c;
+  --gold-light:    rgba(201, 168, 76, 0.15);
+  --gold-border:   rgba(201, 168, 76, 0.3);
+  --bg-main:       #050508;
+  --bg-card:       rgba(255, 255, 255, 0.02);
+  --bg-hover:      rgba(255, 255, 255, 0.04);
+  --border-subtle: rgba(255, 255, 255, 0.07);
+  --text-primary:  #fff;
+  --text-muted:    rgba(255, 255, 255, 0.4);
+  --font-guilde:   'Barlow Condensed', sans-serif;
+  --radius-card:   16px;
+  --radius-btn:    12px;
+  --radius-pill:   100px;
+}
+
+/* ─── SCROLLBAR ──────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(201, 168, 76, 0.35);
+  border-radius: 2px;
+  transition: background 0.2s;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(201, 168, 76, 0.6);
+}
+
+/* ─── FOCUS VISIBLE (accessibilité clavier) ──────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+/* Supprime l'outline sur les clics souris (garde seulement le focus clavier) */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ─── TOUCH TARGETS MINIMUM ─────────────────────────────────────────────────── */
+/* Tous les boutons et liens ont un minimum de 44×44px pour les doigts */
+button, a, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+/* Exception : les boutons décoratifs sans zone cliquable critique */
+button.no-min, a.no-min {
+  min-height: unset;
+  min-width: unset;
+  display: inline-flex;
+}
+
+/* ─── SHIMMER SKELETON ───────────────────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.10) 50%,
+    rgba(255, 255, 255, 0.04) 75%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+/* Variante pour les images/covers */
+.skeleton-cover {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+/* ─── INPUTS & TEXTAREAS ─────────────────────────────────────────────────────── */
+input::placeholder,
+textarea::placeholder {
+  color: rgba(255, 255, 255, 0.25);
+  font-family: var(--font-guilde);
+}
+
+input:focus,
+textarea:focus {
+  outline: 2px solid rgba(201, 168, 76, 0.5);
+  outline-offset: 0;
+}
+
+/* ─── ANIMATIONS GLOBALES ────────────────────────────────────────────────────── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(201, 168, 76, 0.3); }
+  50%       { box-shadow: 0 0 40px rgba(201, 168, 76, 0.6); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-8px); }
+}
+
+@keyframes gradient-move {
+  0%   { background-position: 0%   50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0%   50%; }
+}
+
+/* Classes utilitaires pour les animations */
+.animate-spin      { animation: spin 1s linear infinite; }
+.animate-float     { animation: float 3s ease-in-out infinite; }
+.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+.animate-gradient  {
+  background-size: 200% 200%;
+  animation: gradient-move 3s ease infinite;
+}
+
+/* ─── MEDIA QUERIES UTILITAIRES ──────────────────────────────────────────────── */
+/* Préférence de mouvement réduit (accessibilité) */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .skeleton, .skeleton-cover {
+    animation: none;
+    background: rgba(255, 255, 255, 0.06);
+  }
+}
+
+/* ─── PAGE D'ACCUEIL · BACKGROUND ────────────────────────────────────────────── */
 body {
   background-color: #f7f5f0;
   background-image:
-    radial-gradient(ellipse at 10% 0%, rgba(201,168,76,0.12) 0%, transparent 50%),
-    radial-gradient(ellipse at 90% 10%, rgba(167,139,250,0.08) 0%, transparent 45%),
-    radial-gradient(ellipse at 50% 100%, rgba(219,39,119,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 10% 0%,  rgba(201, 168, 76, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 90% 10%, rgba(167, 139, 250, 0.08) 0%, transparent 45%),
+    radial-gradient(ellipse at 50% 100%, rgba(219, 39, 119, 0.06) 0%, transparent 50%),
     url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.018'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }
-
-::-webkit-scrollbar { width: 3px; }
-::-webkit-scrollbar-track { background: #f0ede6; }
-::-webkit-scrollbar-thumb { background: #c9a84c; border-radius: 2px; }
