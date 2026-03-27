@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import Link from "next/link";
 import GuildeHeader from "../components/GuildeHeader";
 import { supabase } from "../../lib/supabase";
 import { 
-  Star, BookOpen, Tv, Gamepad2, Film, Quote, Flame, Gem, Meh, TrendingDown, Search, X, Clock, Calendar, Youtube
+  Star, BookOpen, Tv, Gamepad2, Film, Quote, Flame, Gem, Meh, TrendingDown, Search, X, Clock, Calendar, Youtube, ArrowUpDown, Pencil
 } from "lucide-react";
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
@@ -21,7 +22,8 @@ const DOSSIER_BASH_DATA = [
     tag: "COUP DE CŒUR ABSOLU ✦",
     color: "#4ade80",
     review: "J'ai juste pas d'autres mots pour décrire ce que j'ai senti devant ce bail : c'est juste ÉPIQUE. On suit Tetsuo, un garçon timide, et son robot géant Yukio qui combattent des monstres spatiaux. Après la bataille finale, Tetsuo retourne sur Terre et la trouve recouverte de glace.\n\nCe sera une histoire touchante sur l'amitié, la survie, la résilience et le dépassement de soi. L'œuvre est recommandée par ONE et Hideo Kojima. L'animation donne terriblement envie. Mention spéciale pour l'opening de TUKI et l'ending de Ai Higuchi qui seront dans mon top de la saison !",
-    cover: "" 
+    cover: "",
+    trailer_url: "https://www.youtube.com/results?search_query=Snowball+Earth+manga+trailer" 
   },
   {
     searchQuery: "Reincarnation no Kaben", 
@@ -30,7 +32,8 @@ const DOSSIER_BASH_DATA = [
     tag: "L'ANIME À SUIVRE 🎯",
     color: "#f472b6",
     review: "On suivra TOUYA Senji, un lycéen qui ne recherche qu'une seule chose : son talent. Il se fait secourir par Haito qui lui explique qu'il peut retrouver le talent d'une de ses anciennes vies : la réincarnation.\n\nPourquoi j'en parle depuis longtemps ? La D.A est sublime et épurée. L'histoire est super intéressante car il va affronter des figures historiques (Newton, Hitler, Nostradamus...). Si l'animation suit, on tient là un anime super prometteur qui fera du bruit.",
-    cover: ""
+    cover: "",
+    trailer_url: "https://www.youtube.com/results?search_query=Petals+of+Reincarnation+anime+trailer"
   },
   {
     searchQuery: "Killed in Action Detective", 
@@ -39,7 +42,8 @@ const DOSSIER_BASH_DATA = [
     tag: "INTRIGUANT 🔍",
     color: "#60a5fa",
     review: "Killed Again, Mr Detective va ouvrir le bal. Le concept est particulier : on suit un jeune lycéen doté d'une capacité exceptionnelle : il peut revenir à la vie après avoir été tué. Il se retrouvera impliqué dans des affaires louches et mourra plein de fois.\n\nLe plot de départ est suffisamment consistant pour 13 épisodes. La bande-son est sympa, avec des morceaux de jazz et une ambiance film policier à l'ancienne.",
-    cover: ""
+    cover: "",
+    trailer_url: "https://www.youtube.com/results?search_query=Killed+Again+Mr+Detective+trailer"
   },
   {
     searchQuery: "Monster Eater",
@@ -48,7 +52,8 @@ const DOSSIER_BASH_DATA = [
     tag: "LE PLUS SINGULIER 👽",
     color: "#ffd700",
     review: "L'anime le plus singulier de la saison. L'animation est étrange, on a l'impression de voir des planches bouger... Mais le scénario est cool : Rudd, un aventurier faible, se fait trahir et se retrouve forcé de manger des monstres, ce qui le rend surpuissant !\n\nTrope basique d'un isekai sur un gars qui devient cheaté, c'est toujours intéressant. Le webtoon d'origine semble assez prometteur, donc pourquoi pas !",
-    cover: ""
+    cover: "",
+    trailer_url: "https://www.youtube.com/results?search_query=Monster+Eater+anime+trailer"
   }
 ];
 
@@ -76,6 +81,46 @@ const tagStyle: React.CSSProperties = {
   color: "rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.06)",
   padding: "2px 7px", borderRadius: "100px", border: "1px solid rgba(255,255,255,0.08)",
 };
+
+// ─── COMPOSANT IMAGE OPTIMISÉ (Fade-in + Skeleton) ───────────────────────────
+function OptimizedImage({ src, alt, style }: { src: string; alt: string; style?: React.CSSProperties }) {
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  return (
+    <div style={{ position: "relative", width: "100%", height: "100%", ...style }}>
+      {/* Skeleton de chargement visible tant que l'image n'est pas chargée */}
+      {!isLoaded && (
+        <motion.div 
+          animate={{ opacity: [0.2, 0.5, 0.2] }} 
+          transition={{ repeat: Infinity, duration: 1.5 }} 
+          style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.1)", borderRadius: style?.borderRadius }} 
+        />
+      )}
+      <img 
+        src={src} 
+        alt={alt} 
+        onLoad={() => setIsLoaded(true)}
+        loading="lazy"
+        style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: style?.borderRadius, opacity: isLoaded ? 1 : 0, transition: "opacity 0.5s ease-in-out" }} 
+      />
+    </div>
+  );
+}
+
+// ─── COMPOSANT SKELETON POUR LE CHARGEMENT DE LA PAGE ────────────────────────
+function SkeletonCard() {
+  return (
+    <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "16px", padding: "20px", display: "flex", flexDirection: "column" }}>
+      <motion.div animate={{ opacity: [0.1, 0.3, 0.1] }} transition={{ repeat: Infinity, duration: 1.5 }} style={{ width: "100%", height: "200px", background: "rgba(255,255,255,0.1)", borderRadius: "12px", marginBottom: "16px" }} />
+      <motion.div animate={{ opacity: [0.1, 0.3, 0.1] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.2 }} style={{ width: "40%", height: "18px", background: "rgba(255,255,255,0.1)", borderRadius: "100px", marginBottom: "12px" }} />
+      <motion.div animate={{ opacity: [0.1, 0.3, 0.1] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.4 }} style={{ width: "80%", height: "24px", background: "rgba(255,255,255,0.1)", borderRadius: "4px", marginBottom: "12px" }} />
+      <div style={{ marginTop: "auto", borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: "12px", display: "flex", justifyContent: "space-between" }}>
+        <motion.div animate={{ opacity: [0.1, 0.3, 0.1] }} transition={{ repeat: Infinity, duration: 1.5 }} style={{ width: "30%", height: "24px", background: "rgba(255,255,255,0.1)", borderRadius: "4px" }} />
+        <motion.div animate={{ opacity: [0.1, 0.3, 0.1] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.2 }} style={{ width: "20%", height: "24px", background: "rgba(255,255,255,0.1)", borderRadius: "100px" }} />
+      </div>
+    </div>
+  );
+}
 
 // ─── ENTRY CARD ──────────────────────────────────────────────────────────────
 function EntryCard({ entry, index, onSelect }: { entry: any; index: number; onSelect: () => void }) {
@@ -107,8 +152,8 @@ function EntryCard({ entry, index, onSelect }: { entry: any; index: number; onSe
     >
       <div style={{ position: "absolute", top: 0, left: "20px", right: "20px", height: "2px", background: `linear-gradient(90deg, transparent, ${tier.color}, transparent)`, borderRadius: "0 0 4px 4px", opacity: hovered ? 1 : 0.4, transition: "opacity 0.3s" }} />
 
-      <div style={{ marginBottom: "12px", color: "rgba(255,255,255,0.85)", display: "flex", alignItems: "center" }}>
-        {entry.cover}
+      <div style={{ height: "200px", marginBottom: "12px", borderRadius: "12px", overflow: "hidden", boxShadow: "0 4px 12px rgba(0,0,0,0.5)" }}>
+        <OptimizedImage src={entry.cover_image} alt={entry.title} />
       </div>
 
       <div style={{ display: "inline-flex", alignItems: "center", gap: "4px", background: `${cat.color}18`, border: `1px solid ${cat.color}40`, borderRadius: "100px", padding: "3px 8px", marginBottom: "10px" }}>
@@ -124,7 +169,6 @@ function EntryCard({ entry, index, onSelect }: { entry: any; index: number; onSe
         <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "12px", color: "rgba(255,255,255,0.35)", letterSpacing: "0.06em" }}>
           {entry.status} {entry.year ? `· ${entry.year}` : ""}
         </span>
-        {/* 🔥 Ajout du petit badge Trailer sur la carte si le lien existe */}
         {entry.trailer_url && (
           <span style={{ ...tagStyle, color: "#f87171", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)" }}>
             ▶ Trailer
@@ -151,9 +195,12 @@ export default function BibliothequePage() {
   const [oeuvres, setOeuvres] = useState<any[]>([]); 
   const [loading, setLoading] = useState(true);
   const [dossierBash, setDossierBash] = useState(DOSSIER_BASH_DATA);
+  
   const [activeCategory, setActiveCategory] = useState<Category>("Tout");
   const [activeTier, setActiveTier] = useState<Tier | "Tous">("Tous");
   const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("recent"); // Nouvel état pour le tri
+
   const [isMobile, setIsMobile] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<any | null>(null);
 
@@ -215,19 +262,30 @@ export default function BibliothequePage() {
     category: dbEntry.type || "Anime",
     tier: dbEntry.tier || "A définir",
     year: dbEntry.year || new Date(dbEntry.created_at).getFullYear(),
-    cover: <img src={dbEntry.cover_image} alt={dbEntry.title} style={{ width: "100%", height: "200px", objectFit: "cover", borderRadius: "12px", boxShadow: "0 4px 12px rgba(0,0,0,0.5)" }} />,
+    cover_image: dbEntry.cover_image,
     status: dbEntry.status || "Terminé",
     note: dbEntry.score || 0,
     synopsis: dbEntry.synopsis,
     avis_guilde: dbEntry.avis_guilde,
-    trailer_url: dbEntry.trailer_url
+    trailer_url: dbEntry.trailer_url,
+    created_at: dbEntry.created_at // Requis pour le tri
   }));
 
-  const filtered = mappedEntries.filter((e) => {
+  // Application des filtres
+  let filtered = mappedEntries.filter((e) => {
     const matchCat = activeCategory === "Tout" || e.category === activeCategory;
     const matchTier = activeTier === "Tous" || e.tier === activeTier;
     const matchSearch = e.title.toLowerCase().includes(searchTerm.toLowerCase());
     return matchCat && matchTier && matchSearch;
+  });
+
+  // Application du tri
+  filtered.sort((a, b) => {
+    if (sortBy === "recent") return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    if (sortBy === "oldest") return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    if (sortBy === "note") return b.note - a.note;
+    if (sortBy === "alpha") return a.title.localeCompare(b.title);
+    return 0;
   });
 
   const entriesByTier = TIERS.map((tier) => ({
@@ -322,10 +380,11 @@ export default function BibliothequePage() {
                         category: "Anime",
                         tier: index === 0 ? "Chef-d'œuvre" : "A définir",
                         year: 2026,
-                        cover: <img src={anime.cover} alt={anime.title} style={{ width: "100%", height: "200px", objectFit: "cover", borderRadius: "12px", boxShadow: "0 4px 12px rgba(0,0,0,0.5)" }} />,
+                        cover_image: anime.cover,
                         status: "Saison Printemps",
                         note: "✨", 
                         avis_guilde: anime.review,
+                        trailer_url: anime.trailer_url,
                         synopsis: "Cette œuvre n'a pas encore sa fiche complète dans la base de données de la Guilde. Fais confiance à l'avis du Bash en attendant !"
                       });
                     }
@@ -359,7 +418,7 @@ export default function BibliothequePage() {
                     justifyContent: "center" 
                   }}>
                     {anime.cover ? (
-                      <img src={anime.cover} alt={anime.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      <OptimizedImage src={anime.cover} alt={anime.title} />
                     ) : (
                       <span style={{ color: "rgba(255,255,255,0.2)", fontStyle: "italic", fontSize: "12px" }}>Chargement...</span>
                     )}
@@ -390,6 +449,20 @@ export default function BibliothequePage() {
                         </p>
                       ))}
                     </div>
+
+                    {anime.trailer_url && (
+                      <div style={{ marginTop: "20px" }}>
+                        <a 
+                          href={anime.trailer_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()} 
+                          style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "10px 20px", background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.3)", borderRadius: "10px", fontFamily: "'Barlow Condensed', sans-serif", fontSize: "14px", fontWeight: 900, color: "#f87171", textTransform: "uppercase", letterSpacing: "0.1em", textDecoration: "none", transition: "all 0.2s" }}
+                        >
+                          <Youtube size={18} /> Voir le Trailer
+                        </a>
+                      </div>
+                    )}
                     
                     <div style={{ 
                       marginTop: "24px", 
@@ -424,12 +497,12 @@ export default function BibliothequePage() {
             <span style={{ fontSize: "12px", fontWeight: 900, color: "#c9a84c", letterSpacing: "0.3em", textTransform: "uppercase" }}>TIER LIST OTAKU</span>
           </motion.div>
 
-          {/* FILTERS */}
+          {/* FILTERS & SORT */}
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: "12px", marginBottom: "40px", flexWrap: "wrap" }}
+            style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: "12px", marginBottom: "40px", flexWrap: "wrap", alignItems: isMobile ? "stretch" : "center" }}
           >
             <div style={{ position: "relative", flex: 1, minWidth: "200px" }}>
               <Search size={15} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.3)" }} />
@@ -442,6 +515,17 @@ export default function BibliothequePage() {
               )}
             </div>
 
+            {/* Nouveau menu de Tri */}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", padding: "8px 14px", borderRadius: "100px" }}>
+              <ArrowUpDown size={14} color="rgba(255,255,255,0.5)" />
+              <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{ background: "transparent", border: "none", color: "#fff", fontFamily: "'Barlow Condensed', sans-serif", fontSize: "14px", outline: "none", cursor: "pointer", textTransform: "uppercase", fontWeight: 700 }}>
+                <option value="recent" style={{background: "#050508"}}>Plus récents</option>
+                <option value="oldest" style={{background: "#050508"}}>Plus anciens</option>
+                <option value="note" style={{background: "#050508"}}>Mieux notés</option>
+                <option value="alpha" style={{background: "#050508"}}>De A à Z</option>
+              </select>
+            </div>
+
             <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
               {CATEGORIES.map((cat) => (
                 <button key={cat} onClick={() => setActiveCategory(cat)}
@@ -450,27 +534,15 @@ export default function BibliothequePage() {
                 </button>
               ))}
             </div>
-
-            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-              {(["Tous", ...TIERS] as const).map((t) => {
-                const cfg = t !== "Tous" ? tierConfig[t as Tier] : null;
-                const isActive = activeTier === t;
-                return (
-                  <button key={t} onClick={() => setActiveTier(t as Tier | "Tous")}
-                    style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "12px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", padding: "8px 14px", borderRadius: "100px", cursor: "pointer", background: isActive ? (cfg ? cfg.color : "#c9a84c") : "rgba(255,255,255,0.04)", color: isActive ? "#000" : (cfg ? cfg.color : "rgba(255,255,255,0.5)"), border: `1px solid ${isActive ? (cfg ? cfg.color : "#c9a84c") : (cfg ? cfg.color + "30" : "rgba(255,255,255,0.08)")}`, transition: "all 0.2s" }}>
-                    {t}
-                  </button>
-                );
-              })}
-            </div>
           </motion.div>
 
-          {/* RÉSULTATS SUPABASE */}
+          {/* RÉSULTATS SUPABASE AVEC SKELETONS */}
           <AnimatePresence mode="wait">
-            <motion.div key={`${activeCategory}-${activeTier}-${searchTerm}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
+            <motion.div key={`${activeCategory}-${activeTier}-${searchTerm}-${sortBy}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
               {loading ? (
-                <div style={{ textAlign: "center", padding: "60px 0", color: "#c9a84c", fontSize: "20px", fontStyle: "italic", fontWeight: "bold" }}>
-                  Chargement de la Bibliothèque...
+                // Skeletons affichés pendant le chargement
+                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(auto-fill, minmax(220px, 1fr))", gap: isMobile ? "10px" : "16px" }}>
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => <SkeletonCard key={i} />)}
                 </div>
               ) : entriesByTier.length === 0 ? (
                 <div style={{ textAlign: "center", padding: "60px 0", color: "rgba(255,255,255,0.3)", fontSize: "20px", fontStyle: "italic" }}>
@@ -525,8 +597,8 @@ export default function BibliothequePage() {
               <div style={{ position: "absolute", top: 0, left: "20px", right: "20px", height: "3px", background: `linear-gradient(90deg, transparent, ${tierConfig[selectedEntry.tier as Tier].color}, transparent)`, borderRadius: "0 0 4px 4px" }} />
 
               <div style={{ marginBottom: "16px", color: "rgba(255,255,255,0.9)", display: "flex", justifyContent: "center" }}>
-                <div style={{ width: "180px", borderRadius: "12px", overflow: "hidden", border: `1px solid ${tierConfig[selectedEntry.tier as Tier].color}40`, boxShadow: `0 10px 30px ${tierConfig[selectedEntry.tier as Tier].color}20` }}>
-                  {selectedEntry.cover}
+                <div style={{ width: "180px", height: "250px", borderRadius: "12px", overflow: "hidden", border: `1px solid ${tierConfig[selectedEntry.tier as Tier].color}40`, boxShadow: `0 10px 30px ${tierConfig[selectedEntry.tier as Tier].color}20` }}>
+                  <OptimizedImage src={selectedEntry.cover_image} alt={selectedEntry.title} />
                 </div>
               </div>
 
@@ -566,7 +638,6 @@ export default function BibliothequePage() {
                 {selectedEntry.synopsis || "Aucun synopsis disponible pour cette œuvre."}
               </p>
 
-              {/* 🔥 BOUTON YOUTUBE AJOUTÉ ICI */}
               {selectedEntry.trailer_url && (
                 <a 
                   href={selectedEntry.trailer_url} 
@@ -579,6 +650,14 @@ export default function BibliothequePage() {
                   <Youtube size={18} /> Voir le Trailer
                 </a>
               )}
+
+              {/* 🔥 NOUVEAU : BOUTON D'ÉDITION DIRECT VERS L'ADMIN */}
+              <Link 
+                href="/admin-biblio"
+                style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", width: "100%", padding: "14px", background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.3)", borderRadius: "12px", fontFamily: "'Barlow Condensed', sans-serif", fontSize: "16px", fontWeight: 900, color: "#c9a84c", textTransform: "uppercase", letterSpacing: "0.1em", cursor: "pointer", textDecoration: "none", marginBottom: "12px", transition: "all 0.2s" }}
+              >
+                <Pencil size={18} /> Éditer la Fiche
+              </Link>
 
               <button onClick={() => setSelectedEntry(null)} style={{ width: "100%", padding: "14px", background: tierConfig[selectedEntry.tier as Tier].color, border: "none", borderRadius: "12px", fontFamily: "'Barlow Condensed', sans-serif", fontSize: "16px", fontWeight: 900, color: "#000", textTransform: "uppercase", letterSpacing: "0.1em", cursor: "pointer" }}>
                 FERMER

@@ -6,7 +6,7 @@ import { useIsMobile } from "../hooks/useIsMobile";
 
 interface GuildeHeaderProps {
   // J'ai ajouté tes nouvelles pages ici pour éviter les erreurs TypeScript
-  activePage: "membres" | "birthdays" | "fighters" | "bibliotheque" | "wanted" | "bons-plans";
+  activePage: "membres" | "birthdays" | "fighters" | "bibliotheque" | "wanted" | "bons-plans" | "atelier";
   accentColor?: string;
   bgColor?: string;
   textColor?: string;

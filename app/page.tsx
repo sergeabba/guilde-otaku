@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import Link from "next/link";
 import { members, Rank, Member } from "../data/members";
 import MemberCard from "./components/MemberCard";
 import MemberModal from "./components/MemberModal";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, User, Sword } from "lucide-react";
+import { Search, User, Sword, Sparkles, ArrowRight, Palette } from "lucide-react";
 import { rankAccents, rankBg, rankLogos, darkRanks } from "./config/ranks";
 import GuildeHeader from "./components/GuildeHeader";
 
@@ -172,7 +173,7 @@ export default function HomePage() {
             flexDirection: isMobile ? "column" : "row",
             justifyContent: "space-between",
             alignItems: isMobile ? "flex-start" : "flex-end",
-            marginBottom: isMobile ? "40px" : "80px",
+            marginBottom: isMobile ? "30px" : "40px",
             gap: "20px",
           }}>
             <motion.div layout style={{ position: "relative" }}>
@@ -211,6 +212,55 @@ export default function HomePage() {
               />
             </div>
           </div>
+
+          {/* ── NOUVEAU : BANNIÈRE DE L'ATELIER (Au coeur de la page d'accueil) ── */}
+          <Link href="/atelier" style={{ textDecoration: "none", display: "block", marginBottom: isMobile ? "40px" : "60px" }}>
+            <motion.div
+              whileHover={{ scale: 1.015, boxShadow: `0 20px 40px ${accent}30` }}
+              whileTap={{ scale: 0.98 }}
+              style={{
+                position: "relative",
+                overflow: "hidden",
+                background: isDark ? `linear-gradient(135deg, ${accent}15 0%, rgba(255,255,255,0.02) 100%)` : `linear-gradient(135deg, ${accent}30 0%, rgba(255,255,255,0.8) 100%)`,
+                border: `1px solid ${accent}40`,
+                borderRadius: "24px",
+                padding: isMobile ? "24px" : "32px 40px",
+                display: "flex",
+                flexDirection: isMobile ? "column" : "row",
+                alignItems: isMobile ? "flex-start" : "center",
+                justifyContent: "space-between",
+                gap: "20px",
+                backdropFilter: "blur(12px)",
+              }}
+            >
+              {/* Effet de lueur interne */}
+              <div style={{ position: "absolute", right: "-10%", top: "-50%", width: "300px", height: "300px", background: `radial-gradient(circle, ${accent}20 0%, transparent 70%)`, filter: "blur(40px)", pointerEvents: "none" }} />
+              
+              <div style={{ display: "flex", alignItems: "center", gap: isMobile ? "16px" : "24px", position: "relative", zIndex: 1 }}>
+                {/* Icône encadrée */}
+                <div style={{ width: isMobile ? "48px" : "64px", height: isMobile ? "48px" : "64px", borderRadius: "16px", background: `${accent}20`, display: "flex", alignItems: "center", justifyContent: "center", border: `1px solid ${accent}50`, flexShrink: 0 }}>
+                  <Palette size={isMobile ? 24 : 32} color={accent} />
+                </div>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                    <Sparkles size={14} color={accent} />
+                    <span style={{ fontSize: "12px", fontWeight: 800, color: accent, letterSpacing: "0.2em", textTransform: "uppercase" }}>Nouveau</span>
+                  </div>
+                  <h3 style={{ fontSize: isMobile ? "24px" : "32px", fontWeight: 900, color: theme.text, textTransform: "uppercase", fontStyle: "italic", lineHeight: 1, margin: 0 }}>
+                    L'Atelier de la Guilde
+                  </h3>
+                  <p style={{ fontSize: isMobile ? "14px" : "16px", color: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)", fontWeight: 500, margin: "8px 0 0 0" }}>
+                    Découvre notre galerie d'Art générée par Intelligence Artificielle.
+                  </p>
+                </div>
+              </div>
+
+              {/* Bouton d'action */}
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "12px 24px", background: accent, borderRadius: "100px", color: "#000", fontWeight: 900, fontSize: "14px", textTransform: "uppercase", letterSpacing: "0.1em", flexShrink: 0, alignSelf: isMobile ? "stretch" : "auto", justifyContent: "center", position: "relative", zIndex: 1 }}>
+                Explorer l'Atelier <ArrowRight size={16} />
+              </div>
+            </motion.div>
+          </Link>
 
           {/* ── GRILLE DES MEMBRES ── */}
           <AnimatePresence mode="wait">
@@ -270,7 +320,7 @@ export default function HomePage() {
         isMobile={isMobile}
       />
 
-      {/* ── BOUTON FLOTTANT SWITCH RÉEL / ANIME (unique toggle conservé) ── */}
+      {/* ── BOUTON FLOTTANT SWITCH RÉEL / ANIME ── */}
       <motion.div
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
