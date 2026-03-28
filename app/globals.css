@@ -75,14 +75,14 @@ html, body {
   outline: none;
 }
 
-/* ─── TOUCH TARGETS MINIMUM ─────────────────────────────────────────────────── */
-/* Tous les boutons et liens ont un minimum de 44×44px pour les doigts */
-button, a, [role="button"] {
-  min-height: 44px;
-  min-width: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+/* Touch targets — uniquement sur mobile, et sans casser les layouts */
+@media (pointer: coarse) {
+  button:not(.no-min),
+  a:not(.no-min),
+  [role="button"]:not(.no-min) {
+    min-height: 44px;
+    min-width: 44px;
+  }
 }
 /* Exception : les boutons décoratifs sans zone cliquable critique */
 button.no-min, a.no-min {

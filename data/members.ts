@@ -355,7 +355,7 @@ export const members: Member[] = [
     birthday: "23 Décembre", 
     bio: "Nouveau venu dans la Guilde sous le pseudo d'Armandstone, ce gars chill de 21 ans s'est vite intégré. Très proche de Traicy ( huum ), Côté culture, il a des goûts pointus : il valide le génie de Senku, et la classe de Nicky Larson.", 
     photo: "/photos/armand.jpg", 
-    animeChar: "/anime/arman_anime.jpg", 
+    animeChar: "/anime/armand_anime.jpg",
     color: "#E91E8C", 
     stats: { force: 95, vitesse: 85, technique: 88 },
     special: { 
