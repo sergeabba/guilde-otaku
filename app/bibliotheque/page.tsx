@@ -95,7 +95,7 @@ function EntryCard({ entry, index, onSelect }: { entry: any; index: number; onSe
       onMouseLeave={() => setHovered(false)}
       onClick={onSelect}
       style={{
-        ...cardHoverStyle(hovered, tier.color + "60"),
+       ...cardHoverStyle(hovered, (tier.color + "60") as any),
         cursor: "pointer",
         boxShadow: hovered ? tier.glow : "none",
         backdropFilter: "blur(12px)",
