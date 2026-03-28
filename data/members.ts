@@ -9,6 +9,19 @@ export type Rank =
   | "Fantôme"
   | "Revenant";
 
+/** Ordre d’affichage des filtres rang (aligné sur le type `Rank`). */
+export const RANK_FILTER_ORDER = [
+  "Fondateur",
+  "Monarque",
+  "Ex Monarque",
+  "Ordre Céleste",
+  "New G dorée",
+  "Futurs Espoirs",
+  "Vieux Briscard",
+  "Fantôme",
+  "Revenant",
+] as const satisfies readonly Rank[];
+
 export interface FighterStats {
   force: number;
   vitesse: number;
