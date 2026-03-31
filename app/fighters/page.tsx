@@ -145,15 +145,15 @@ function ArenaFighter({ member, side, viewMode, onClear, isMobile }: { member: M
           </div>
         )}
 
-        {/* Ligne 4: Special Move (Caché sur mobile) */}
-        {special && !isMobile && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "8px", background: "rgba(255,255,255,0.03)", padding: "10px 16px", borderRadius: "12px", borderLeft: L ? `2px solid ${C.main}` : "none", borderRight: !L ? `2px solid ${C.main}` : "none", backdropFilter: "blur(10px)" }}>
-             <div style={{ display: "flex", alignItems: "center", gap: "8px", justifyContent: L ? "flex-start" : "flex-end" }}>
-               {L && <Flame size={14} color={C.light} />}
-               <span style={{ fontFamily: fontHud, fontSize: "18px", color: C.light, letterSpacing: "1px" }}>{special.name}</span>
-               {!L && <Flame size={14} color={C.light} />}
+        {/* Ligne 4: Special Move */}
+        {special && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "2px", marginTop: isMobile ? "2px" : "8px", background: "rgba(255,255,255,0.03)", padding: isMobile ? "6px 10px" : "10px 16px", borderRadius: "12px", borderLeft: L ? `2px solid ${C.main}` : "none", borderRight: !L ? `2px solid ${C.main}` : "none", backdropFilter: "blur(10px)" }}>
+             <div style={{ display: "flex", alignItems: "center", gap: isMobile ? "4px" : "8px", justifyContent: L ? "flex-start" : "flex-end" }}>
+               {L && <Flame size={isMobile ? 12 : 14} color={C.light} />}
+               <span style={{ fontFamily: fontHud, fontSize: isMobile ? "14px" : "18px", color: C.light, letterSpacing: "1px", lineHeight: 1 }}>{special.name}</span>
+               {!L && <Flame size={isMobile ? 12 : 14} color={C.light} />}
              </div>
-             <span style={{ fontFamily: fontMono, fontSize: "11px", color: "rgba(255,255,255,0.5)", textAlign: L ? "left" : "right" }}>{special.effect}</span>
+             <span style={{ fontFamily: fontMono, fontSize: isMobile ? "9px" : "11px", color: "rgba(255,255,255,0.6)", textAlign: L ? "left" : "right", lineHeight: 1.2 }}>{special.effect}</span>
           </div>
         )}
 
@@ -273,7 +273,7 @@ export default function FightersPage() {
           {showRoster && (
             <motion.section 
               initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 50, position: "absolute", zIndex: -1 }} transition={{ duration: 0.3 }}
-              style={{ flex: 1, display: "flex", flexDirection: "column", background: "radial-gradient(circle at center top, #0a0a0f 0%, #050508 100%)", position: "relative", zIndex: 10 }}
+              style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", background: "radial-gradient(circle at center top, #0a0a0f 0%, #050508 100%)", position: "relative", zIndex: 10 }}
             >
               
               {/* Filtres (Glassmorphism) */}

@@ -22,7 +22,7 @@ const DOSSIER_BASH_DATA = [
     searchQuery: "Touken Ranbu Kai", // Approximation de recherche pour "Agents of the Four season"
     title: "Agents of the Four Season",
     date: "28 Mars 2026",
-    tag: "L'INCONTOURNABLE 🌸",
+    tag: "L'INCONTOURNABLE",
     color: "#4ade80",
     review: "De quoi ça parle ?\nAu commencement n'existait que l'Hiver qui, incapable de supporter la solitude, choisit de se couper une partie de son essence pour donner naissance au Printemps. Par la volonté de la Terre Mère, il se coupa à nouveau une partie de son essence pour engendrer l'Été et l'Automne, inaugurant ainsi le cycle des quatre saisons.\n\nFace à leur désespoir, les humains se portèrent volontaires pour accomplir leur devoir en échange de la paix. Les Quatre Saisons confièrent alors leurs pouvoirs à un petit groupe d'humains : les Agents des Quatre Saisons.\n\nDe l'oeuvre se dégage une certaine poésie, le ton des couleurs, la nature tout ou presque dans cet anime appelle à la contemplation et à la beauté, très bien balancée par des scènes d'actions d'une beauté et d'une fluidité incroyable. Wit studio a fait un taf monstre. Un incontournable de la saison !",
     cover: "https://images.unsplash.com/photo-1618336753974-aae8e04506aa?q=80&w=800&auto=format&fit=crop",
@@ -32,7 +32,7 @@ const DOSSIER_BASH_DATA = [
     searchQuery: "Miss Maid", // The Food Diary of Miss Maid
     title: "The Food Diary of Miss Maid",
     date: "02 Avril 2026",
-    tag: "ANIME ASMR 🍵",
+    tag: "ANIME ASMR",
     color: "#f472b6",
     review: "Pour moi ce sera l'anime Asmr de la saison. Je ne vais pas entrer dans le synopsis car il est anecdotique dans ce genre d'oeuvre. On suivra juste la routine gustative (et non culinaire) d'une servante.\n\nLe ton de l'anime est chill et coloré et on suivra des personnages manger tout au long de la série. Entre nourriture et petite tranche de vie, c'est un anime à dévorer sans modération ! (La réalisation est cependant sommaire, mais c'est un détail).",
     cover: "https://images.unsplash.com/photo-1618336753974-aae8e04506aa?q=80&w=800&auto=format&fit=crop",
@@ -42,7 +42,7 @@ const DOSSIER_BASH_DATA = [
     searchQuery: "Go For It Nakamura",
     title: "Go For It, Nakamura-kun!",
     date: "02 Avril 2026",
-    tag: "ROMANCE BL ❤️",
+    tag: "ROMANCE BL",
     color: "#60a5fa",
     review: "Je préviens avant de commencer : c'est réellement une romance entre deux hommes. On suivra Nakamura, un jeune homme amoureux de son camarade de classe Hirose, qui tentera tant bien que mal d'entamer une romance avec lui... mais il est un peu empoté, timide et super maladroit.\n\nLe rendu est super bien. Il oscille entre le tendre, le mignon et l'adorable tout en explorant la complexité des relations avec une certaine justesse. Le chara design rappelle étrangement les romances de l'époque, avec un rendu moderne et chaleureux. Pour les amoureux de YAOI et de BL, c'est un incontournable de la saison !",
     cover: "https://images.unsplash.com/photo-1618336753974-aae8e04506aa?q=80&w=800&auto=format&fit=crop",
@@ -52,7 +52,7 @@ const DOSSIER_BASH_DATA = [
     searchQuery: "Always a Catch",
     title: "Always a Catch",
     date: "02 Avril 2026",
-    tag: "ROMANCE FLUIDE ✨",
+    tag: "ROMANCE FLUIDE",
     color: "#ffd700",
     review: "Le synopsis est tout simple : Maria était destinée à devenir l'héritière de sa famille, mais la naissance de son petit-frère l'oblige à céder sa place. Elle décide de partir étudier dans un pays voisin dans l'espoir de trouver un mari. Cependant, à son arrivée, le prince annonce la rupture de leurs fiançailles. Le problème ? Maria ne se souvient même pas s'être fiancée à lui...\n\nIl n'y a pratiquement rien à dire sur le fond, par contre sur la forme c'est étrangement super fluide. La production a l'air super modeste, mais c'est une oeuvre qui va plaire aux amoureux de romance du genre, même si ça restera un anime moyen.",
     cover: "https://images.unsplash.com/photo-1618336753974-aae8e04506aa?q=80&w=800&auto=format&fit=crop",
@@ -62,17 +62,17 @@ const DOSSIER_BASH_DATA = [
     searchQuery: "Kirio Fan Club",
     title: "Kirio Fan Club",
     date: "02 Avril 2026",
-    tag: "LOUFOQUE & COLORÉ 🤣",
+    tag: "LOUFOQUE & COLORÉ",
     color: "#a78bfa",
     review: "Je l'ai choisi pour son synopsis, ça sera forcément un truc particulier et c'est super coloré. On suivra AIMI et NAMI, deux camarades de classes qui ont toutes les deux un crush sur Kirio (dont on ne voit jamais le visage d'ailleurs).\n\nElles vont enchainer les trucs étranges et loufoques et leur obsession deviendra le prétexte à une rivalité étrange entre deux filles qui ne parlent que du même mec. Leur relation est quelquefois touchante et étrange. Ce qui est sûr, c'est que ça sera particulier de voir le point de vue de ces deux femmes. Je pense qu'ici on va surtout rire !",
     cover: "https://images.unsplash.com/photo-1618336753974-aae8e04506aa?q=80&w=800&auto=format&fit=crop",
     trailer_url: "https://www.youtube.com/results?search_query=Kirio+Fan+Club+anime+trailer"
   },
   {
-    searchQuery: "Haibara",
+    searchQuery: "Haibara's Teenage New Game",
     title: "Haibara Teenage New Game",
     date: "02 Avril 2026",
-    tag: "REVANCHE TEMPORELLE ⏳",
+    tag: "REVANCHE TEMPORELLE",
     color: "#38bdf8",
     review: "Je vous le donne en mille, c'est une redite de l'excellent ReLife. Natsuki Haibara, étudiant victime d'anxiété sociale, regrette amèrement ses années lycée (il était gros et s'est fait recaler par sa crush). Un jour il fait le souhait de retourner dans le passé et bim, il se retrouve un mois avant sa rentrée au lycée pour changer sa destinée.\n\nOn est clairement sur du school-life/voyage temporel. C'est toujours intéressant de voir un gars prendre sa revanche sur la vie. La réalisation est sommaire mais la bande son est bonne. J'aime beaucoup l'opening, il sera dans mon top 10 à coup sûr. Bref, un anime à ne pas négliger !",
     cover: "https://images.unsplash.com/photo-1618336753974-aae8e04506aa?q=80&w=800&auto=format&fit=crop",
@@ -209,6 +209,7 @@ export default function BibliothequePage() {
     const updated = await Promise.all(
       DOSSIER_BASH_DATA.map(async (item) => {
         try {
+          // 1. Essayer TMDB
           if (apiKey) {
             const res = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&language=fr-FR&query=${encodeURIComponent(item.searchQuery)}`);
             const json = await res.json();
@@ -218,6 +219,7 @@ export default function BibliothequePage() {
             }
           }
           
+          // 2. Essayer MangaDex
           const mdRes = await fetch(`https://api.mangadex.org/manga?title=${encodeURIComponent(item.searchQuery)}&includes[]=cover_art&limit=1`);
           const mdJson = await mdRes.json();
           if (mdJson.data && mdJson.data.length > 0) {
@@ -227,6 +229,22 @@ export default function BibliothequePage() {
                return { ...item, cover: `https://uploads.mangadex.org/covers/${mdJson.data[0].id}/${coverFileName}` };
             }
           }
+          
+          // 3. Fallback ultime sur AniList pour les animes manquants/récents (comme Haibara)
+          const aliRes = await fetch("https://graphql.anilist.co", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              query: `query($search: String) { Media(search: $search, sort: SEARCH_MATCH) { coverImage { extraLarge } } }`,
+              variables: { search: item.searchQuery },
+            }),
+          });
+          const aliJson = await aliRes.json();
+          const fetchedCover = aliJson?.data?.Media?.coverImage?.extraLarge;
+          if (fetchedCover) {
+            return { ...item, cover: fetchedCover };
+          }
+
           return { ...item, cover: fallback };
         } catch {
           return { ...item, cover: fallback };
@@ -359,7 +377,7 @@ export default function BibliothequePage() {
                   }}
                 >
                   {/* Affiche */}
-                  <div style={{ flexShrink: 0, width: isMobile ? "100%" : "300px", height: isMobile ? "350px" : "420px", borderRadius: "16px", overflow: "hidden", border: `1px solid ${anime.color}40`, boxShadow: `0 10px 30px ${anime.color}20`, background: colors.bgCard, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ flexShrink: 0, width: isMobile ? "100%" : "320px", height: isMobile ? "auto" : "480px", aspectRatio: isMobile ? "2/3" : "auto", borderRadius: "16px", overflow: "hidden", border: `1px solid ${anime.color}40`, boxShadow: `0 20px 40px ${anime.color}30`, background: colors.bgCard, display: "flex", alignItems: "center", justifyContent: "center" }}>
                     {anime.cover
                       ? <OptimizedImage src={anime.cover} alt={anime.title} />
                       : <span style={{ ...typography.meta, fontStyle: "italic" }}>Chargement...</span>
@@ -367,25 +385,25 @@ export default function BibliothequePage() {
                   </div>
 
                   {/* Texte */}
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", marginBottom: "12px" }}>
-                      <span style={{ fontFamily: font, fontSize: "11px", fontWeight: 800, color: anime.color, letterSpacing: "0.15em", textTransform: "uppercase", background: `${anime.color}15`, border: `1px solid ${anime.color}30`, padding: "4px 12px", borderRadius: "100px" }}>
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", marginBottom: "16px" }}>
+                      <span style={{ fontFamily: font, fontSize: "12px", fontWeight: 800, color: anime.color, letterSpacing: "0.15em", textTransform: "uppercase", background: `${anime.color}15`, border: `1px solid ${anime.color}30`, padding: "6px 14px", borderRadius: "100px" }}>
                         {anime.tag}
                       </span>
                       <span style={{ ...typography.meta, display: "flex", alignItems: "center", gap: "4px" }}>
-                        <Calendar size={12} style={{ display: "inline", verticalAlign: "middle" }} />
+                        <Calendar size={14} style={{ display: "inline", verticalAlign: "middle" }} />
                         {anime.date}
                       </span>
                     </div>
 
-                    <h2 style={{ fontSize: isMobile ? "28px" : "44px", fontWeight: 900, lineHeight: 1, textTransform: "uppercase", fontStyle: "italic", marginBottom: "20px", color: colors.textPrimary }}>
+                    <h2 style={{ fontFamily: "'Outfit', sans-serif", fontSize: isMobile ? "32px" : "48px", fontWeight: 900, lineHeight: 1.1, textTransform: "uppercase", fontStyle: "italic", marginBottom: "24px", color: colors.textPrimary, letterSpacing: "-0.02em" }}>
                       {anime.title}
                     </h2>
 
-                    <div style={{ position: "relative", paddingLeft: "24px", borderLeft: `3px solid ${anime.color}50`, marginBottom: "20px" }}>
-                      <Quote size={20} color={`${anime.color}40`} style={{ position: "absolute", top: 0, left: "-11px", background: index === 0 ? "none" : colors.bg, padding: "2px" }} />
+                    <div style={{ position: "relative", paddingLeft: "28px", borderLeft: `4px solid ${anime.color}50`, marginBottom: "24px" }}>
+                      <Quote size={24} color={`${anime.color}60`} style={{ position: "absolute", top: -4, left: "-14px", background: index === 0 ? "none" : colors.bg, padding: "2px" }} />
                       {anime.review.split("\n\n").map((para, pi) => (
-                        <p key={pi} style={{ ...typography.body, color: "rgba(255,255,255,0.8)", marginBottom: pi === anime.review.split("\n\n").length - 1 ? 0 : "16px" }}>
+                        <p key={pi} style={{ fontFamily: "'Outfit', sans-serif", fontSize: isMobile ? "16px" : "18px", fontWeight: 500, lineHeight: 1.7, color: "rgba(255,255,255,0.9)", marginBottom: pi === anime.review.split("\n\n").length - 1 ? 0 : "20px" }}>
                           {para}
                         </p>
                       ))}
@@ -554,15 +572,17 @@ export default function BibliothequePage() {
               {/* Avis guilde */}
               {selectedEntry.avis_guilde && (
                 <div style={{ marginBottom: "24px", padding: "20px", background: colors.goldLight, borderLeft: `4px solid ${colors.gold}`, borderRadius: "0 12px 12px 0" }}>
-                  <p style={{ fontFamily: font, fontSize: "11px", color: colors.gold, fontWeight: 800, letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: "8px" }}>L'Avis de la Guilde</p>
-                  <p style={{ ...typography.body, color: "rgba(255,255,255,0.9)", fontStyle: "italic" }}>"{selectedEntry.avis_guilde}"</p>
+                  <p style={{ fontFamily: font, fontSize: "14px", color: colors.gold, fontWeight: 800, letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: "12px" }}>L'Avis de la Guilde</p>
+                  <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: isMobile ? "16px" : "18px", fontWeight: 500, lineHeight: 1.7, color: "rgba(255,255,255,0.9)", fontStyle: "italic" }}>"{selectedEntry.avis_guilde}"</p>
                 </div>
               )}
 
               {/* Synopsis */}
-              <p style={{ ...typography.body, marginBottom: "28px", padding: "15px", background: colors.bgCard, borderRadius: "12px", border: `1px solid ${colors.border}` }}>
-                {selectedEntry.synopsis || "Aucun synopsis disponible pour cette œuvre."}
-              </p>
+              <div style={{ marginBottom: "28px", padding: "20px", background: colors.bgCard, borderRadius: "12px", border: `1px solid ${colors.border}` }}>
+                <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: isMobile ? "15px" : "16px", fontWeight: 400, lineHeight: 1.6, color: "rgba(255,255,255,0.8)" }}>
+                  {selectedEntry.synopsis || "Aucun synopsis disponible pour cette œuvre."}
+                </p>
+              </div>
 
               {/* Trailer */}
               {selectedEntry.trailer_url && (
