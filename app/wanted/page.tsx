@@ -48,7 +48,7 @@ export default function WantedPage() {
       m.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
       m.rank.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [searchTerm]);
+  }, [searchTerm, members]);
 
   // Reset l'index si la recherche change
   useEffect(() => {

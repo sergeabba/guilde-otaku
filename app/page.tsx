@@ -47,7 +47,7 @@ export default function HomePage() {
       const matchesSearch = m.name.toLowerCase().includes(searchTerm.toLowerCase());
       return matchesRank && matchesSearch;
     });
-  }, [activeRank, searchTerm]);
+  }, [activeRank, searchTerm, members]);
 
   // ─── VIEW TOGGLE mémoïsé pour éviter les re-renders inutiles ───────────────
   const ViewToggle = useMemo(() => (
