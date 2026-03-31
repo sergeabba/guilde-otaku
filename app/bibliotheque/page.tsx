@@ -7,6 +7,16 @@ import GuildeHeader from "../components/GuildeHeader";
 import OptimizedImage, { SkeletonCard } from "../components/OptimizedImage";
 import { supabase } from "../../lib/supabase";
 import { colors, typography, components, font, filterPillStyle, cardHoverStyle } from "../../outputs/styles/tokens";
+import { 
+  fetchBestCover, 
+  coverCache, 
+  cleanSearchQuery, 
+  fetchFromAniList, 
+  fetchFromTMDB, 
+  fetchFromMangaDex, 
+  FALLBACK_COVER, 
+  delay 
+} from "../../lib/cover-fetch";
 import {
   Star, BookOpen, Tv, Gamepad2, Film, Quote, Flame, Gem, Meh,
   TrendingDown, Search, X, Clock, Calendar, Youtube, ArrowUpDown, Pencil
@@ -65,7 +75,7 @@ const DOSSIER_BASH_DATA = [
     tag: "BIJOU SLICE OF LIFE",
     color: "#fbbf24",
     review: "On suit une femme amoureuse des livres, qui se réincarne dans le corps d'une enfant dans un monde où le taux d'analphabétisation est très haut. Pour assouvir sa soif de lecture elle va elle-même se mettre à créer des livres !\n\nL'œuvre est apparemment un pur bijou, il a eu pas mal de distinctions assez intéressantes. C'est le slice of life le plus impressionnant de la saison, c'est juste magnifique, j'ai pas d'autres mots, c'est juste grandiose, l'animation est incroyable. C'est un anime feel-good, il a l'air super chill et mignon.",
-    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx171018-0h8X9U8X9U8X.jpg",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx171110-7zOdInS6DQNL.jpg",
     trailer_url: "https://www.youtube.com/results?search_query=Ascendance+of+a+Bookworm+Season+4+trailer"
   },
   {
@@ -155,7 +165,7 @@ const DOSSIER_BASH_DATA = [
     tag: "ROMANCE & DÉBAUCHE",
     color: "#f87171",
     review: "Botan, jeune étudiante de 20 ans, découvre l'alcool après sa rencontre avec Ibuki, la responsable du dortoir. Au cours de soirées mi-éméchées mi-heureuses, elles deviennent 'drinking buddies'. C'est aussi rafraîchissant qu'une bière et tout mignon. Si vous aimez le vin et les romances entre lesbiennes, c'est pour vous !",
-    cover: "https://images.unsplash.com/photo-1594913785162-e6785b4d7023?q=80&w=800&auto=format&fit=crop", 
+    cover: "", 
     trailer_url: "https://www.youtube.com/results?search_query=Botan+Kamiina+Fully+Blossoms+When+Drunk+trailer"
   },
   {
@@ -165,7 +175,7 @@ const DOSSIER_BASH_DATA = [
     tag: "LE ONE PIECE DU VIN",
     color: "#7c2d12",
     review: "C'est le One Piece du vin. On suit le monde viticole qui débute avec la mort de Kanzaki, célèbre critique œnologique. Son héritage ne revient pas directement à son fils Shizuku : il devra identifier 12 vins exceptionnels, les 12 apôtres.\n\nOn suivra des confrontations intéressantes entre amateurs du vin, qui à l'aide de leurs palais divins devront retrouver les vins en question. Shizuku lui malheureusement est dégoûté par le vin, ce qui fera que ça sera intéressant de voir comment il fera. Un grand cru de cette saison.",
-    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx162804-KxV8oKzP9vL1.jpg",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx202508-dk6LEyevJYUY.jpg",
     trailer_url: "https://www.youtube.com/results?search_query=The+Drops+of+God+anime+trailer"
   },
   {
@@ -195,7 +205,7 @@ const DOSSIER_BASH_DATA = [
     tag: "ÉTRANGE & PÂTE À MODELER",
     color: "#4b5563",
     review: "Je sais absolument pas c'est quoi cette merde, mais j'en parle parce que je dois finir la rubrique mais c'est trop étrange, c'est juste une histoire de carie, de démon, le tout en pâte à modeler/slow motion, du fond des enfers.",
-    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx183201-P9vL1KxV8oKz.jpg",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx205772-kb2YOaXFfPAB.png",
     trailer_url: "https://www.youtube.com/results?search_query=Candy+Caries+anime+trailer"
   },
   {
@@ -205,7 +215,7 @@ const DOSSIER_BASH_DATA = [
     tag: "L'INCONTOURNABLE",
     color: "#4ade80",
     review: "De quoi ça parle ?\nAu commencement n'existait que l'Hiver qui, incapable de supporter la solitude, choisit de se couper une partie de son essence pour donner naissance au Printemps. Par la volonté de la Terre Mère, il se coupa à nouveau une partie de son essence pour engendrer l'Été et l'Automne.\n\nDe l'oeuvre se dégage une certaine poésie, le ton des couleurs, la nature tout ou presque dans cet anime appelle à la contemplation et à la beauté. Un incontournable de la saison !",
-    cover: "https://images.unsplash.com/photo-1618336753974-aae8e04506aa?q=80&w=800&auto=format&fit=crop",
+    cover: "",
     trailer_url: "https://www.youtube.com/results?search_query=Agents+of+the+Four+season+Dance+of+spring+trailer"
   },
   {
@@ -215,7 +225,7 @@ const DOSSIER_BASH_DATA = [
     tag: "ANIME ASMR",
     color: "#f472b6",
     review: "Pour moi ce sera l'anime Asmr de la saison. On suivra juste la routine gustative (et non culinaire) d'une servante.\n\nLe ton de l'anime est chill et coloré et on suivra des personnages manger tout au long de la série. Entre nourriture et petite tranche de vie, c'est un anime à dévorer sans modération !",
-    cover: "https://meitabe-anime.com/assets/img/top/kv.webp",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx197868-sm5jcjPKWhNL.png",
     trailer_url: "https://www.youtube.com/results?search_query=The+Food+Diary+of+Miss+Maid+trailer"
   },
   {
@@ -225,7 +235,7 @@ const DOSSIER_BASH_DATA = [
     tag: "ROMANCE BL",
     color: "#60a5fa",
     review: "Je préviens avant de commencer : c'est réellement une romance entre deux hommes. On suivra Nakamura, un jeune homme amoureux de son camarade de classe Hirose, qui tentera tant bien que mal d'entamer une romance avec lui...\n\nLe rendu est super bien. Il oscille entre le tendre, le mignon et l'adorable tout en explorant la complexité des relations avec une certaine justesse. Pour les amoureux de YAOI et de BL, c'est un incontournable !",
-    cover: "https://images.unsplash.com/photo-1618336753974-aae8e04506aa?q=80&w=800&auto=format&fit=crop",
+    cover: "",
     trailer_url: "https://www.youtube.com/results?search_query=Go+For+It+Nakamura+trailer"
   },
   {
@@ -235,7 +245,7 @@ const DOSSIER_BASH_DATA = [
     tag: "ROMANCE FLUIDE",
     color: "#ffd700",
     review: "Le synopsis est tout simple : Maria était destinée à devenir l'héritière de sa famille, mais la naissance de son petit-frère l'oblige à céder sa place. Elle décide de partir étudier dans un pays voisin dans l'espoir de trouver un mari. Cependant, à son arrivée, le prince annonce la rupture de leurs fiançailles.\n\nLa production a l'air super modeste, mais c'est une oeuvre qui va plaire aux amoureux de romance du genre, même si ça restera un anime moyen.",
-    cover: "https://images.unsplash.com/photo-1618336753974-aae8e04506aa?q=80&w=800&auto=format&fit=crop",
+    cover: "",
     trailer_url: "https://www.youtube.com/results?search_query=Always+a+catch+anime+trailer"
   },
   {
@@ -245,7 +255,7 @@ const DOSSIER_BASH_DATA = [
     tag: "LOUFOQUE & COLORÉ",
     color: "#a78bfa",
     review: "On suivra AIMI et NAMI, deux camarades de classes qui ont toutes les deux un crush sur Kirio (dont on ne voit jamais le visage d'ailleurs). Elles vont enchainer les trucs étranges et loufoques et leur obsession deviendra le prétexte à une rivalité étrange entre deux filles qui ne parlent que du même mec.\n\nCe qui est sûr, c'est que ça sera particulier de voir le point de vue de ces deux femmes. Je pense qu'ici on va surtout rire !",
-    cover: "https://images.unsplash.com/photo-1618336753974-aae8e04506aa?q=80&w=800&auto=format&fit=crop",
+    cover: "",
     trailer_url: "https://www.youtube.com/results?search_query=Kirio+Fan+Club+anime+trailer"
   },
   {
@@ -255,7 +265,7 @@ const DOSSIER_BASH_DATA = [
     tag: "REVANCHE TEMPORELLE",
     color: "#38bdf8",
     review: "On est clairement sur du school-life/voyage temporel. C'est toujours intéressant de voir un gars prendre sa revanche sur la vie. La réalisation est sommaire mais la bande son est bonne. J'aime beaucoup l'opening, il sera dans mon top 10 à coup sûr. Bref, un anime à ne pas négliger !",
-    cover: "https://images.unsplash.com/photo-1618336753974-aae8e04506aa?q=80&w=800&auto=format&fit=crop",
+    cover: "",
     trailer_url: "https://www.youtube.com/results?search_query=Haibara+Teenage+New+Game+anime+trailer"
   }
 ];
@@ -383,78 +393,72 @@ export default function BibliothequePage() {
   };
 
   const fetchDossierCovers = async () => {
-    const fallback = "https://images.unsplash.com/photo-1618336753974-aae8e04506aa?q=80&w=800&auto=format&fit=crop";
-    const apiKey = process.env.NEXT_PUBLIC_TMDB_API_KEY;
+    // On traite les items par lots de 6 pour respecter le rate-limit AniList
+    const BATCH_SIZE = 6;
+    const BATCH_DELAY = 1200; // ms entre chaque lot
 
-    const updated = await Promise.all(
-      DOSSIER_BASH_DATA.map(async (item) => {
-        // PRIORITÉ 0 : Image en dur définie localement (Cela s'appliquera pour Bookworm, Drops of God et Candy Caries)
-        if (item.cover && item.cover.trim() !== "") {
-          return item;
-        }
+    const updated = [...DOSSIER_BASH_DATA];
 
-        // --- NETTOYAGE DE LA REQUÊTE ---
-        // On enlève les mots qui perturbent les API comme "anime", "season X", etc.
-        let cleanQuery = item.searchQuery
-          .replace(/anime/gi, "")
-          .replace(/season \d+/gi, "")
-          .replace(/s\d+/gi, "")
-          .trim();
+    for (let i = 0; i < updated.length; i += BATCH_SIZE) {
+      const batch = updated.slice(i, i + BATCH_SIZE);
 
-        try {
-          // PRIORITÉ 1 : AniList (Le boss final pour les animes)
-          const aliRes = await fetch("https://graphql.anilist.co", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              // On ajoute 'type: ANIME' pour éviter de récupérer une pochette de Light Novel
-              query: `query($search: String) { Media(search: $search, type: ANIME, sort: SEARCH_MATCH) { coverImage { extraLarge } } }`,
-              variables: { search: cleanQuery },
-            }),
-          });
-          const aliJson = await aliRes.json();
-          const fetchedCover = aliJson?.data?.Media?.coverImage?.extraLarge;
-          
-          if (fetchedCover) {
-            return { ...item, cover: fetchedCover };
+      const results = await Promise.all(
+        batch.map(async (item, batchIndex) => {
+          const globalIndex = i + batchIndex;
+
+          // SKIP : Si une cover est déjà définie en dur dans les données
+          if (item.cover && item.cover.trim() !== "") {
+            return item;
           }
 
-          // PRIORITÉ 2 : TMDB (Excellent Fallback pour les œuvres plus "mainstream" ou live-action)
-          if (apiKey) {
-            const res = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&language=fr-FR&query=${encodeURIComponent(cleanQuery)}`);
-            const json = await res.json();
-            
-            if (json.results && json.results.length > 0) {
-              // On prend le résultat le plus populaire
-              const bestMatch = json.results
-                .filter((x: any) => (x.media_type === "tv" || x.media_type === "movie") && x.poster_path)
-                .sort((a: any, b: any) => b.popularity - a.popularity)[0];
+          // Vérifier le cache mémoire
+          if (coverCache.has(item.searchQuery)) {
+            return { ...item, cover: coverCache.get(item.searchQuery)! };
+          }
 
-              if (bestMatch) {
-                return { ...item, cover: `https://image.tmdb.org/t/p/w780${bestMatch.poster_path}` };
-              }
+          const cleanQuery = cleanSearchQuery(item.searchQuery);
+
+          // Cascade : AniList → TMDB → MangaDex → Fallback
+          let cover: string | null = null;
+
+          // 1. AniList
+          cover = await fetchFromAniList(cleanQuery);
+
+          // 2. TMDB (si AniList n'a rien)
+          if (!cover) {
+            // On essaie aussi avec le titre court (item.title)
+            cover = await fetchFromTMDB(cleanQuery);
+            if (!cover && item.title !== cleanQuery) {
+              cover = await fetchFromTMDB(item.title);
             }
           }
-          
-          // PRIORITÉ 3 : MangaDex (Si c'est purement un manga sans adaptation anime trouvée)
-          const mdRes = await fetch(`https://api.mangadex.org/manga?title=${encodeURIComponent(cleanQuery)}&includes[]=cover_art&limit=1`);
-          const mdJson = await mdRes.json();
-          if (mdJson.data && mdJson.data.length > 0) {
-            const coverRel = mdJson.data[0].relationships.find((r: any) => r.type === "cover_art");
-            const coverFileName = coverRel?.attributes?.fileName;
-            if (coverFileName) {
-               return { ...item, cover: `https://uploads.mangadex.org/covers/${mdJson.data[0].id}/${coverFileName}` };
-            }
+
+          // 3. MangaDex (dernier recours)
+          if (!cover) {
+            cover = await fetchFromMangaDex(cleanQuery);
           }
-          
-          // Si les 3 API échouent, on met l'image de fallback par défaut
-          return { ...item, cover: fallback };
-        } catch {
-          return { ...item, cover: fallback };
-        }
-      })
-    );
-    setDossierBash(updated);
+
+          // 4. Fallback ultime
+          const finalCover = cover || FALLBACK_COVER;
+
+          // Stocker en cache
+          coverCache.set(item.searchQuery, finalCover);
+
+          return { ...item, cover: finalCover };
+        })
+      );
+
+      // Mettre à jour le state progressivement (les images apparaissent au fur et à mesure)
+      results.forEach((result, batchIndex) => {
+        updated[i + batchIndex] = result;
+      });
+      setDossierBash([...updated]);
+
+      // Attendre entre les lots (sauf pour le dernier)
+      if (i + BATCH_SIZE < updated.length) {
+        await delay(BATCH_DELAY);
+      }
+    }
   };
 
   const mappedEntries = oeuvres.map((d) => ({
