@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { members, Rank, Member } from "../data/members";
 import MemberCard from "./components/MemberCard";
@@ -9,22 +9,17 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search, User, Sword, Sparkles, ArrowRight, Palette } from "lucide-react";
 import { rankAccents, rankBg, rankLogos, darkRanks } from "./config/ranks";
 import GuildeHeader from "./components/GuildeHeader";
+import { useIsMobile } from "./hooks/useIsMobile";
+import type { ViewMode } from "./types";
 
-export type ViewMode = "real" | "anime";
+export type { ViewMode }; // ré-exporté pour rétro-compat si importé ailleurs
 
 export default function HomePage() {
   const [activeRank, setActiveRank] = useState<Rank | "Tous">("Tous");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("anime");
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  const isMobile = useIsMobile(); // ← hook centralisé
 
   const theme  = rankBg[activeRank] ?? rankBg["Tous"];
   const accent = rankAccents[activeRank as Rank | "Tous"];
@@ -83,15 +78,7 @@ export default function HomePage() {
       }}
     >
 
-      {/* ── ANIMATIONS CSS GLOBALES ── */}
-      <style>{`
-        @keyframes floatSlow {
-          0%   { transform: translate(0px,   0px)   scale(1);   }
-          33%  { transform: translate(30px,  -50px) scale(1.1); }
-          66%  { transform: translate(-20px,  20px) scale(0.9); }
-          100% { transform: translate(0px,   0px)   scale(1);   }
-        }
-      `}</style>
+      {/* floatSlow est défini dans globals.css — pas besoin de le rédéfinir ici */}
 
       {/* ── ARRIÈRE-PLAN MESH GRADIENT ── */}
       <AnimatePresence>
@@ -317,7 +304,6 @@ export default function HomePage() {
         member={selectedMember}
         onClose={() => setSelectedMember(null)}
         viewMode={viewMode}
-        isMobile={isMobile}
       />
 
       {/* ── BOUTON FLOTTANT SWITCH RÉEL / ANIME ── */}

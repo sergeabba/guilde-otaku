@@ -3,11 +3,11 @@
 import { useState, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import Link from "next/link";
 import { members, Member, Rank, RANK_FILTER_ORDER } from "../../data/members";
 import { Shuffle, ChevronLeft, Zap, Shield, Trophy, Flame } from "lucide-react";
-
-type ViewMode = "real" | "anime";
+import GuildeHeader from "../components/GuildeHeader";
+import { useIsMobile } from "../hooks/useIsMobile";
+import type { ViewMode } from "../types";
 
 const fontHud = "'Bebas Neue', 'Impact', sans-serif";
 const fontMono = "ui-monospace, 'Cascadia Code', monospace";
@@ -254,22 +254,24 @@ export default function FightersPage() {
       <div className="scanlines" />
 
       {/* ── HEADER ── */}
-      <header style={{ height: "60px", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", background: "#000", borderBottom: "1px solid #333", zIndex: 100 }}>
-        <Link href="/" style={{ fontFamily: fontHud, fontSize: "16px", color: "#888", textDecoration: "none", display: "flex", alignItems: "center", gap: "5px" }}>
-          <ChevronLeft size={18} /> GUILDE
-        </Link>
-        <h1 style={{ fontFamily: fontHud, fontSize: "28px", color: "#fff", letterSpacing: "4px", margin: 0, textShadow: "0 0 10px rgba(255,255,255,0.3)" }}>MEMBER SELECT</h1>
-        <div style={{ display: "flex", gap: "4px", background: "#111", padding: "4px", borderRadius: "4px" }}>
-          {(["real", "anime"] as ViewMode[]).map((m) => (
-            <button key={m} onClick={() => setViewMode(m)} style={{ padding: "4px 12px", border: "none", cursor: "pointer", fontFamily: fontHud, fontSize: "14px", background: viewMode === m ? "#fff" : "transparent", color: viewMode === m ? "#000" : "#666", transition: "all 0.2s" }}>
-              {m.toUpperCase()}
-            </button>
-          ))}
-        </div>
-      </header>
+      <GuildeHeader
+        activePage="fighters"
+        bgColor="rgba(0,0,0,0.95)"
+        textColor="#fff"
+        accentColor="#fff"
+        rightSlot={
+          <div style={{ display: "flex", gap: "4px", background: "#111", padding: "4px", borderRadius: "4px" }}>
+            {(["real", "anime"] as ViewMode[]).map((m) => (
+              <button key={m} onClick={() => setViewMode(m)} style={{ padding: "4px 12px", border: "none", cursor: "pointer", fontFamily: fontHud, fontSize: "14px", background: viewMode === m ? "#fff" : "transparent", color: viewMode === m ? "#000" : "#666", transition: "all 0.2s" }}>
+                {m.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        }
+      />
 
-      {/* ── ARENA (Moitié Supérieure) ── */}
-      <section className="speed-bg" style={{ flex: "0 0 55vh", position: "relative", display: "flex", borderBottom: "4px solid #fff", overflow: "hidden", backgroundBlendMode: "overlay", backgroundColor: "#0a0a0a" }}>
+      {/* ── ARENA (Hauteur adaptative mobile/desktop) ── */}
+      <section className="speed-bg" style={{ flex: "0 0 min(55vh, 350px)", position: "relative", display: "flex", borderBottom: "4px solid #fff", overflow: "hidden", backgroundBlendMode: "overlay", backgroundColor: "#0a0a0a" }}>
         
         {/* Flash blanc quand les 2 sont sélectionnés */}
         <AnimatePresence>

@@ -3,12 +3,12 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { members, Member, Rank } from "../../data/members";
-import Link from "next/link";
 import MemberModal from "../components/MemberModal";
 import { Gift, Crown } from "lucide-react";
 import { rankAccents } from "../config/ranks";
 import { useIsMobile } from "../hooks/useIsMobile";
 import GuildeHeader from "../components/GuildeHeader";
+import { parseBirthday } from "../types"; // ← centralisé, plus de duplication
 
 // On définit le type localement pour éviter les erreurs d'importation croisées
 type ViewMode = "real" | "anime";
@@ -38,20 +38,6 @@ const monthThemes: Record<number, { accent: string; bg: string; dark: boolean }>
   12: { accent: "#34d399", bg: "linear-gradient(135deg, #f0fdf9 0%, #ccfbf1 100%)", dark: false },
 };
 
-function parseBirthday(birthday: string): { day: number; month: number } | null {
-  const clean = birthday.trim().toLowerCase();
-  const monthMap: Record<string, number> = {
-    "janvier": 1, "février": 2, "fevrier": 2, "mars": 3, "avril": 4,
-    "mai": 5, "juin": 6, "juillet": 7, "août": 8, "aout": 8,
-    "septembre": 9, "octobre": 10, "novembre": 11, "décembre": 12, "decembre": 12,
-  };
-  const parts = clean.split(" ");
-  if (parts.length < 2) return null;
-  const day = parseInt(parts[0]);
-  const month = monthMap[parts[1]];
-  if (!day || !month) return null;
-  return { day, month };
-}
 
 function getDaysUntil(day: number, month: number): number {
   const now = new Date();
@@ -135,7 +121,7 @@ export default function BirthdaysPage() {
         }
       `}</style>
 
-      {/* HEADER RESPONSIVE UNIFIÉ ET DYNAMIQUE */}
+      {/* keyframes dans globals.css — pas besoin de les redéfinir inline */}
       <GuildeHeader 
         activePage="birthdays" 
         accentColor={themeAccent}
@@ -332,7 +318,7 @@ export default function BirthdaysPage() {
         </footer>
       </div>
 
-      <MemberModal member={selectedMember} onClose={() => setSelectedMember(null)} viewMode={viewMode} isMobile={isMobile} />
+      <MemberModal member={selectedMember} onClose={() => setSelectedMember(null)} viewMode={viewMode} />
     </motion.main>
   );
 }

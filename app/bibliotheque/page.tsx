@@ -19,44 +19,64 @@ type Tier = "Chef-d'œuvre" | "Pépite" | "Bof" | "Surcoté" | "A définir";
 // ─── DOSSIER BASH ────────────────────────────────────────────────────────────
 const DOSSIER_BASH_DATA = [
   {
-    searchQuery: "Snowball Earth",
-    title: "Snowball Earth",
-    date: "03 Avril 2026",
-    tag: "COUP DE CŒUR ABSOLU ✦",
+    searchQuery: "Touken Ranbu Kai", // Approximation de recherche pour "Agents of the Four season"
+    title: "Agents of the Four Season",
+    date: "28 Mars 2026",
+    tag: "L'INCONTOURNABLE 🌸",
     color: "#4ade80",
-    review: "J'ai juste pas d'autres mots pour décrire ce que j'ai senti devant ce bail : c'est juste ÉPIQUE. On suit Tetsuo, un garçon timide, et son robot géant Yukio qui combattent des monstres spatiaux. Après la bataille finale, Tetsuo retourne sur Terre et la trouve recouverte de glace.\n\nCe sera une histoire touchante sur l'amitié, la survie, la résilience et le dépassement de soi. L'œuvre est recommandée par ONE et Hideo Kojima. L'animation donne terriblement envie. Mention spéciale pour l'opening de TUKI et l'ending de Ai Higuchi qui seront dans mon top de la saison !",
-    cover: "",
-    trailer_url: "https://www.youtube.com/results?search_query=Snowball+Earth+manga+trailer"
+    review: "De quoi ça parle ?\nAu commencement n'existait que l'Hiver qui, incapable de supporter la solitude, choisit de se couper une partie de son essence pour donner naissance au Printemps. Par la volonté de la Terre Mère, il se coupa à nouveau une partie de son essence pour engendrer l'Été et l'Automne, inaugurant ainsi le cycle des quatre saisons.\n\nFace à leur désespoir, les humains se portèrent volontaires pour accomplir leur devoir en échange de la paix. Les Quatre Saisons confièrent alors leurs pouvoirs à un petit groupe d'humains : les Agents des Quatre Saisons.\n\nDe l'oeuvre se dégage une certaine poésie, le ton des couleurs, la nature tout ou presque dans cet anime appelle à la contemplation et à la beauté, très bien balancée par des scènes d'actions d'une beauté et d'une fluidité incroyable. Wit studio a fait un taf monstre. Un incontournable de la saison !",
+    cover: "https://images.unsplash.com/photo-1618336753974-aae8e04506aa?q=80&w=800&auto=format&fit=crop",
+    trailer_url: "https://www.youtube.com/results?search_query=Agents+of+the+Four+season+Dance+of+spring+trailer"
   },
   {
-    searchQuery: "Reincarnation no Kaben",
-    title: "Petals of Reincarnation",
+    searchQuery: "Miss Maid", // The Food Diary of Miss Maid
+    title: "The Food Diary of Miss Maid",
     date: "02 Avril 2026",
-    tag: "L'ANIME À SUIVRE 🎯",
+    tag: "ANIME ASMR 🍵",
     color: "#f472b6",
-    review: "On suivra TOUYA Senji, un lycéen qui ne recherche qu'une seule chose : son talent. Il se fait secourir par Haito qui lui explique qu'il peut retrouver le talent d'une de ses anciennes vies : la réincarnation.\n\nPourquoi j'en parle depuis longtemps ? La D.A est sublime et épurée. L'histoire est super intéressante car il va affronter des figures historiques (Newton, Hitler, Nostradamus...). Si l'animation suit, on tient là un anime super prometteur qui fera du bruit.",
-    cover: "",
-    trailer_url: "https://www.youtube.com/results?search_query=Petals+of+Reincarnation+anime+trailer"
+    review: "Pour moi ce sera l'anime Asmr de la saison. Je ne vais pas entrer dans le synopsis car il est anecdotique dans ce genre d'oeuvre. On suivra juste la routine gustative (et non culinaire) d'une servante.\n\nLe ton de l'anime est chill et coloré et on suivra des personnages manger tout au long de la série. Entre nourriture et petite tranche de vie, c'est un anime à dévorer sans modération ! (La réalisation est cependant sommaire, mais c'est un détail).",
+    cover: "https://images.unsplash.com/photo-1618336753974-aae8e04506aa?q=80&w=800&auto=format&fit=crop",
+    trailer_url: "https://www.youtube.com/results?search_query=The+Food+Diary+of+Miss+Maid+trailer"
   },
   {
-    searchQuery: "Killed in Action Detective",
-    title: "Killed Again, Mr. Detective",
+    searchQuery: "Go For It Nakamura",
+    title: "Go For It, Nakamura-kun!",
     date: "02 Avril 2026",
-    tag: "INTRIGUANT 🔍",
+    tag: "ROMANCE BL ❤️",
     color: "#60a5fa",
-    review: "Killed Again, Mr Detective va ouvrir le bal. Le concept est particulier : on suit un jeune lycéen doté d'une capacité exceptionnelle : il peut revenir à la vie après avoir été tué. Il se retrouvera impliqué dans des affaires louches et mourra plein de fois.\n\nLe plot de départ est suffisamment consistant pour 13 épisodes. La bande-son est sympa, avec des morceaux de jazz et une ambiance film policier à l'ancienne.",
-    cover: "",
-    trailer_url: "https://www.youtube.com/results?search_query=Killed+Again+Mr+Detective+trailer"
+    review: "Je préviens avant de commencer : c'est réellement une romance entre deux hommes. On suivra Nakamura, un jeune homme amoureux de son camarade de classe Hirose, qui tentera tant bien que mal d'entamer une romance avec lui... mais il est un peu empoté, timide et super maladroit.\n\nLe rendu est super bien. Il oscille entre le tendre, le mignon et l'adorable tout en explorant la complexité des relations avec une certaine justesse. Le chara design rappelle étrangement les romances de l'époque, avec un rendu moderne et chaleureux. Pour les amoureux de YAOI et de BL, c'est un incontournable de la saison !",
+    cover: "https://images.unsplash.com/photo-1618336753974-aae8e04506aa?q=80&w=800&auto=format&fit=crop",
+    trailer_url: "https://www.youtube.com/results?search_query=Go+For+It+Nakamura+trailer"
   },
   {
-    searchQuery: "Monster Eater",
-    title: "Monster EATER",
+    searchQuery: "Always a Catch",
+    title: "Always a Catch",
     date: "02 Avril 2026",
-    tag: "LE PLUS SINGULIER 👽",
+    tag: "ROMANCE FLUIDE ✨",
     color: "#ffd700",
-    review: "L'anime le plus singulier de la saison. L'animation est étrange, on a l'impression de voir des planches bouger... Mais le scénario est cool : Rudd, un aventurier faible, se fait trahir et se retrouve forcé de manger des monstres, ce qui le rend surpuissant !\n\nTrope basique d'un isekai sur un gars qui devient cheaté, c'est toujours intéressant. Le webtoon d'origine semble assez prometteur, donc pourquoi pas !",
-    cover: "",
-    trailer_url: "https://www.youtube.com/results?search_query=Monster+Eater+anime+trailer"
+    review: "Le synopsis est tout simple : Maria était destinée à devenir l'héritière de sa famille, mais la naissance de son petit-frère l'oblige à céder sa place. Elle décide de partir étudier dans un pays voisin dans l'espoir de trouver un mari. Cependant, à son arrivée, le prince annonce la rupture de leurs fiançailles. Le problème ? Maria ne se souvient même pas s'être fiancée à lui...\n\nIl n'y a pratiquement rien à dire sur le fond, par contre sur la forme c'est étrangement super fluide. La production a l'air super modeste, mais c'est une oeuvre qui va plaire aux amoureux de romance du genre, même si ça restera un anime moyen.",
+    cover: "https://images.unsplash.com/photo-1618336753974-aae8e04506aa?q=80&w=800&auto=format&fit=crop",
+    trailer_url: "https://www.youtube.com/results?search_query=Always+a+catch+anime+trailer"
+  },
+  {
+    searchQuery: "Kirio Fan Club",
+    title: "Kirio Fan Club",
+    date: "02 Avril 2026",
+    tag: "LOUFOQUE & COLORÉ 🤣",
+    color: "#a78bfa",
+    review: "Je l'ai choisi pour son synopsis, ça sera forcément un truc particulier et c'est super coloré. On suivra AIMI et NAMI, deux camarades de classes qui ont toutes les deux un crush sur Kirio (dont on ne voit jamais le visage d'ailleurs).\n\nElles vont enchainer les trucs étranges et loufoques et leur obsession deviendra le prétexte à une rivalité étrange entre deux filles qui ne parlent que du même mec. Leur relation est quelquefois touchante et étrange. Ce qui est sûr, c'est que ça sera particulier de voir le point de vue de ces deux femmes. Je pense qu'ici on va surtout rire !",
+    cover: "https://images.unsplash.com/photo-1618336753974-aae8e04506aa?q=80&w=800&auto=format&fit=crop",
+    trailer_url: "https://www.youtube.com/results?search_query=Kirio+Fan+Club+anime+trailer"
+  },
+  {
+    searchQuery: "Haibara",
+    title: "Haibara Teenage New Game",
+    date: "02 Avril 2026",
+    tag: "REVANCHE TEMPORELLE ⏳",
+    color: "#38bdf8",
+    review: "Je vous le donne en mille, c'est une redite de l'excellent ReLife. Natsuki Haibara, étudiant victime d'anxiété sociale, regrette amèrement ses années lycée (il était gros et s'est fait recaler par sa crush). Un jour il fait le souhait de retourner dans le passé et bim, il se retrouve un mois avant sa rentrée au lycée pour changer sa destinée.\n\nOn est clairement sur du school-life/voyage temporel. C'est toujours intéressant de voir un gars prendre sa revanche sur la vie. La réalisation est sommaire mais la bande son est bonne. J'aime beaucoup l'opening, il sera dans mon top 10 à coup sûr. Bref, un anime à ne pas négliger !",
+    cover: "https://images.unsplash.com/photo-1618336753974-aae8e04506aa?q=80&w=800&auto=format&fit=crop",
+    trailer_url: "https://www.youtube.com/results?search_query=Haibara+Teenage+New+Game+anime+trailer"
   }
 ];
 
@@ -183,23 +203,33 @@ export default function BibliothequePage() {
   };
 
   const fetchDossierCovers = async () => {
+    const fallback = "https://images.unsplash.com/photo-1618336753974-aae8e04506aa?q=80&w=800&auto=format&fit=crop";
+    const apiKey = process.env.NEXT_PUBLIC_TMDB_API_KEY;
+
     const updated = await Promise.all(
       DOSSIER_BASH_DATA.map(async (item) => {
         try {
-          const res  = await fetch("https://graphql.anilist.co", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              query: `query($search: String) { Media(search: $search, sort: SEARCH_MATCH) { coverImage { extraLarge } } }`,
-              variables: { search: item.searchQuery },
-            }),
-          });
-          const json        = await res.json();
-          const fetchedCover = json?.data?.Media?.coverImage?.extraLarge;
-          const fallback     = "https://images.unsplash.com/photo-1618336753974-aae8e04506aa?q=80&w=800&auto=format&fit=crop";
-          return { ...item, cover: fetchedCover || fallback };
+          if (apiKey) {
+            const res = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&language=fr-FR&query=${encodeURIComponent(item.searchQuery)}`);
+            const json = await res.json();
+            const tmdbItem = json.results?.find((x: any) => x.media_type === "tv" || x.media_type === "movie");
+            if (tmdbItem && tmdbItem.poster_path) {
+              return { ...item, cover: `https://image.tmdb.org/t/p/w780${tmdbItem.poster_path}` };
+            }
+          }
+          
+          const mdRes = await fetch(`https://api.mangadex.org/manga?title=${encodeURIComponent(item.searchQuery)}&includes[]=cover_art&limit=1`);
+          const mdJson = await mdRes.json();
+          if (mdJson.data && mdJson.data.length > 0) {
+            const coverRel = mdJson.data[0].relationships.find((r: any) => r.type === "cover_art");
+            const coverFileName = coverRel?.attributes?.fileName;
+            if (coverFileName) {
+               return { ...item, cover: `https://uploads.mangadex.org/covers/${mdJson.data[0].id}/${coverFileName}` };
+            }
+          }
+          return { ...item, cover: fallback };
         } catch {
-          return item;
+          return { ...item, cover: fallback };
         }
       })
     );

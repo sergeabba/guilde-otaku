@@ -1,33 +1,15 @@
 "use client";
 
 // ─── app/components/BirthdayBanner.tsx ───────────────────────────────────────
-// Améliorations v2 :
-//   1. AnimatePresence propre sur le X (était cassé avant)
-//   2. Touch target du bouton X : 44×44px (était 26×26)
-//   3. Gradient animé plus fluide (via className)
-//   4. Support de plusieurs anniversaires le même jour
-//   5. Accessible (aria-label sur le bouton fermer)
+// Affiche une bannière le jour de l'anniversaire d'un ou plusieurs membres.
+// parseBirthday centralisé dans app/types pour éviter la duplication.
 
 import { useEffect, useState } from "react";
 import { members } from "../../data/members";
 import Link from "next/link";
 import { Gift, ChevronRight, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-
-function parseBirthday(birthday: string): { day: number; month: number } | null {
-  const clean = birthday.trim().toLowerCase();
-  const monthMap: Record<string, number> = {
-    janvier: 1, février: 2, fevrier: 2, mars: 3, avril: 4,
-    mai: 5, juin: 6, juillet: 7, août: 8, aout: 8,
-    septembre: 9, octobre: 10, novembre: 11, décembre: 12, decembre: 12,
-  };
-  const parts = clean.split(" ");
-  if (parts.length < 2) return null;
-  const day = parseInt(parts[0]);
-  const month = monthMap[parts[1]];
-  if (!day || !month) return null;
-  return { day, month };
-}
+import { parseBirthday } from "../types"; // ← centralisé
 
 export default function BirthdayBanner() {
   const [birthdayMembers, setBirthdayMembers] = useState<typeof members>([]);

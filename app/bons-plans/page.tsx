@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Link from "next/link";
 import { Tv, BookOpen, Globe, ExternalLink, Search, Film } from "lucide-react";
+import GuildeHeader from "../components/GuildeHeader"; // ← ajouté
 
 // --- LES CATÉGORIES ---
 const categories = ["Tout", "Animes", "Scans", "Films/Séries", "Utiles"];
@@ -138,14 +138,8 @@ export default function BonsPlansPage() {
       <div style={{ position: "absolute", inset: 0, opacity: 0.1, backgroundImage: "radial-gradient(circle at 50% 0%, #c9a84c 0%, transparent 60%)", zIndex: 0, pointerEvents: "none" }} />
       <div style={{ position: "absolute", inset: 0, opacity: 0.05, backgroundImage: "repeating-linear-gradient(0deg, #1a1a1a 0, #1a1a1a 1px, transparent 1px, transparent 20px)", zIndex: 0, pointerEvents: "none" }} />
 
-      <div style={{ position: "relative", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 32px", background: "linear-gradient(to bottom, rgba(0,0,0,0.9), transparent)" }}>
-        <Link href="/" style={{ color: "#fff", textDecoration: "none", fontSize: "15px", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.15em" }}>← Retour Guilde</Link>
-        <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", display: "flex", alignItems: "center" }}>
-          <span style={{ fontSize: "13px", fontWeight: 800, color: "#c9a84c", letterSpacing: "0.3em", textTransform: "uppercase", display: "none" }} className="md:block">
-            LE COFFRE DU DON
-          </span>
-        </div>
-      </div>
+      {/* Navigation unifiée */}
+      <GuildeHeader activePage="bons-plans" />
 
       <main style={{ flex: 1, padding: "40px 5%", position: "relative", zIndex: 10, maxWidth: "1200px", margin: "0 auto", width: "100%" }}>
         
@@ -188,7 +182,7 @@ export default function BonsPlansPage() {
           ))}
         </div>
 
-        <motion.div layout style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "20px" }}>
+        <motion.div layout style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "16px" }}>
           <AnimatePresence>
             {filteredLinks.map((link) => (
               <motion.a

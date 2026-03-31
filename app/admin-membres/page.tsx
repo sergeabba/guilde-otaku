@@ -2,19 +2,56 @@
 
 import { useState, useRef } from "react";
 import { members } from "../../data/members";
-import { Upload, Check, X, Image as ImageIcon, User, Sword } from "lucide-react";
+import { Upload, Check, X, Image as ImageIcon, User, Sword, Lock } from "lucide-react";
+import { useIsMobile } from "../hooks/useIsMobile";
+
+const ADMIN_PASSWORD = "1111";
 
 type PhotoType = "photo" | "anime";
 
 export default function AdminMembresPage() {
+  const isMobile = useIsMobile();
+  const [authed, setAuthed]         = useState(false);
+  const [pwInput, setPwInput]       = useState("");
+  const [pwError, setPwError]       = useState(false);
   const [selectedMember, setSelectedMember] = useState<number | null>(null);
-  const [photoType, setPhotoType] = useState<PhotoType>("photo");
-  const [dragOver, setDragOver] = useState(false);
-  const [preview, setPreview] = useState<string | null>(null);
-  const [file, setFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [result, setResult] = useState<{ url: string; success: boolean } | null>(null);
+  const [photoType, setPhotoType]   = useState<PhotoType>("photo");
+  const [dragOver, setDragOver]     = useState(false);
+  const [preview, setPreview]       = useState<string | null>(null);
+  const [file, setFile]             = useState<File | null>(null);
+  const [uploading, setUploading]   = useState(false);
+  const [result, setResult]         = useState<{ url: string; success: boolean } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // ─── GARDE MOT DE PASSE ───────────────────────────────────────────────────────
+  if (!authed) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#050508", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Barlow Condensed', sans-serif" }}>
+        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "20px", padding: "48px 40px", width: "min(400px, 90vw)", textAlign: "center" }}>
+          <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.3)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px" }}>
+            <Lock size={24} color="#c9a84c" />
+          </div>
+          <p style={{ fontSize: "11px", fontWeight: 800, color: "#c9a84c", letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: "8px" }}>ESPACE ADMIN</p>
+          <h1 style={{ fontSize: "32px", fontWeight: 900, color: "#fff", textTransform: "uppercase", fontStyle: "italic", lineHeight: 1, marginBottom: "32px" }}>ACCÈS RESTREINT</h1>
+          <input
+            type="password"
+            value={pwInput}
+            onChange={e => { setPwInput(e.target.value); setPwError(false); }}
+            onKeyDown={e => { if (e.key === "Enter") { if (pwInput === ADMIN_PASSWORD) setAuthed(true); else setPwError(true); } }}
+            placeholder="Mot de passe..."
+            style={{ width: "100%", padding: "14px 16px", background: "rgba(255,255,255,0.05)", border: `1px solid ${pwError ? "#f87171" : "rgba(255,255,255,0.1)"}`, borderRadius: "10px", color: "#fff", fontFamily: "'Barlow Condensed', sans-serif", fontSize: "18px", textAlign: "center", letterSpacing: "0.3em", outline: "none", marginBottom: "12px", boxSizing: "border-box" }}
+          />
+          {pwError && <p style={{ color: "#f87171", fontSize: "13px", fontWeight: 700, marginBottom: "12px" }}>Mot de passe incorrect</p>}
+          <button
+            onClick={() => { if (pwInput === ADMIN_PASSWORD) setAuthed(true); else setPwError(true); }}
+            style={{ width: "100%", padding: "14px", background: "#c9a84c", border: "none", borderRadius: "10px", color: "#000", fontFamily: "'Barlow Condensed', sans-serif", fontSize: "16px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em", cursor: "pointer" }}
+          >
+            ENTRER
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const member = selectedMember !== null ? members.find(m => m.id === selectedMember) : null;
 
@@ -66,7 +103,7 @@ export default function AdminMembresPage() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#050508", color: "#fff", fontFamily: "'Barlow Condensed', sans-serif", padding: "60px 40px" }}>
+    <div style={{ minHeight: "100vh", background: "#050508", color: "#fff", fontFamily: "'Barlow Condensed', sans-serif", padding: isMobile ? "40px 16px" : "60px 40px" }}>
       <style>{`
         .drop-zone { transition: all 0.2s; }
         .drop-zone:hover { border-color: rgba(201,168,76,0.5) !important; background: rgba(201,168,76,0.03) !important; }

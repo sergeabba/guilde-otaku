@@ -4,10 +4,50 @@ import { useState } from "react";
 import { supabase } from "../../lib/supabase";
 import {
   Search, Star, Check, X, Tv, BookOpen, Film, Gamepad2,
-  Loader2, Image as ImageIcon, FileText, Youtube, MessageSquare,
+  Loader2, Image as ImageIcon, FileText, Youtube, MessageSquare, Lock,
 } from "lucide-react";
-import Link from "next/link";
-import { colors, typography, components, font, filterPillStyle } from "../../outputs/styles/tokens";
+import { useIsMobile } from "../hooks/useIsMobile";
+
+const ADMIN_PASSWORD = "1111";
+
+// ─── TOKENS (inline pour éviter l'import fragile depuis outputs/styles) ──────────
+const font = "'Barlow Condensed', sans-serif";
+const colors = {
+  bg:            "#050508",
+  gold:          "#c9a84c",
+  goldBorder:    "rgba(201,168,76,0.3)",
+  goldLight:     "rgba(201,168,76,0.04)",
+  goldGlow:      "rgba(201,168,76,0.4)",
+  border:        "rgba(255,255,255,0.07)",
+  bgCard:        "rgba(255,255,255,0.03)",
+  bgHover:       "rgba(255,255,255,0.06)",
+  textPrimary:   "#fff",
+  textSecondary: "rgba(255,255,255,0.5)",
+  textMuted:     "rgba(255,255,255,0.3)",
+  danger:        "#f87171",
+  youtube:       "#f87171",
+};
+const typography = {
+  overline: { fontFamily: font, fontSize: "11px", fontWeight: 800, letterSpacing: "0.3em", textTransform: "uppercase" as const, color: colors.gold },
+  label:    { display: "block" as const, fontFamily: font, fontSize: "11px", fontWeight: 800, color: colors.textMuted, letterSpacing: "0.2em", textTransform: "uppercase" as const, marginBottom: "12px" },
+  body:     { fontFamily: font, fontSize: "15px", fontWeight: 500, color: colors.textSecondary, lineHeight: 1.6 },
+  meta:     { fontFamily: font, fontSize: "12px", fontWeight: 500, color: colors.textMuted },
+};
+const components = {
+  card:      { background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: "20px" },
+  tag:       { fontFamily: font, fontSize: "11px", fontWeight: 700, color: colors.textMuted, background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: "100px", padding: "3px 10px" } as React.CSSProperties,
+  input:     { width: "100%", padding: "12px 14px", background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: "10px", color: colors.textPrimary, fontFamily: font, fontSize: "15px", outline: "none", boxSizing: "border-box" as const },
+  btnPrimary:   { display: "flex" as const, alignItems: "center" as const, gap: "8px", padding: "12px 20px", background: colors.gold, border: "none", borderRadius: "10px", color: "#000", fontFamily: font, fontSize: "14px", fontWeight: 900, textTransform: "uppercase" as const, letterSpacing: "0.08em", cursor: "pointer" },
+  btnSecondary: { display: "flex" as const, alignItems: "center" as const, gap: "8px", padding: "12px 16px", background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: "10px", color: colors.textSecondary, fontFamily: font, fontSize: "14px", fontWeight: 700, cursor: "pointer" },
+};
+const filterPillStyle = (active: boolean): React.CSSProperties => ({
+  fontFamily: font, fontSize: "13px", fontWeight: active ? 800 : 600,
+  letterSpacing: "0.1em", textTransform: "uppercase",
+  padding: "8px 18px", borderRadius: "100px", border: "none", cursor: "pointer",
+  background: active ? colors.gold : colors.bgCard,
+  color: active ? "#000" : colors.textSecondary,
+  transition: "all 0.2s",
+});
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 type MediaType = "Anime" | "Manga" | "Film/Série" | "Jeu Vidéo";
@@ -54,36 +94,95 @@ function stripHtml(html: string): string {
     .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/\n{3,}/g, "\n\n").trim();
 }
 
-// ─── ANILIST QUERY ────────────────────────────────────────────────────────────
-const ANILIST_QUERY = `
-  query ($search: String, $type: MediaType) {
-    Page(page: 1, perPage: 10) {
-      media(search: $search, type: $type, sort: SEARCH_MATCH) {
-        id title { romaji english native }
-        type format status
-        description(asHtml: false)
-        startDate { year }
-        episodes chapters averageScore
-        coverImage { extraLarge large color }
-        bannerImage genres
-        trailer { id site }
-        studios(isMain: true) { nodes { name } }
-      }
-    }
-  }
-`;
+// ─── FONCTIONS DE RECHERCHE HYBRIDES (Français + HD) ─────────────────────────
 
-async function searchAniList(search: string, type?: "ANIME" | "MANGA"): Promise<AniListResult[]> {
-  const variables: any = { search };
-  if (type) variables.type = type;
-  const res  = await fetch("https://graphql.anilist.co", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({ query: ANILIST_QUERY, variables }),
-  });
+async function searchTMDB(query: string): Promise<AniListResult[]> {
+  const apiKey = process.env.NEXT_PUBLIC_TMDB_API_KEY;
+  if (!apiKey) throw new Error("API Key TMDB manquante (.env.local)");
+  
+  const res = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&language=fr-FR&query=${encodeURIComponent(query)}`);
   const json = await res.json();
-  if (json.errors) throw new Error("Erreur GraphQL AniList");
-  return json?.data?.Page?.media ?? [];
+  if (!json.results) return [];
+
+  return json.results
+    .filter((item: any) => item.media_type === "tv" || item.media_type === "movie")
+    .map((item: any) => {
+      const isMovie = item.media_type === "movie";
+      const titleFr = isMovie ? item.title : item.name;
+      const titleOrig = isMovie ? item.original_title : item.original_name;
+      const date = isMovie ? item.release_date : item.first_air_date;
+      
+      return {
+        id: item.id,
+        title: { romaji: titleOrig, english: titleFr, native: titleOrig },
+        type: "ANIME" as const,
+        format: isMovie ? "MOVIE" : "TV",
+        status: "FINISHED",
+        description: item.overview || null,
+        startDate: { year: date ? parseInt(date.substring(0, 4)) : null },
+        episodes: null,
+        chapters: null,
+        averageScore: item.vote_average ? item.vote_average * 10 : null, // Convertir de 10 à 100
+        coverImage: {
+          extraLarge: item.poster_path ? `https://image.tmdb.org/t/p/w780${item.poster_path}` : "",
+          large: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : "",
+          color: null,
+        },
+        bannerImage: item.backdrop_path ? `https://image.tmdb.org/t/p/w1280${item.backdrop_path}` : null,
+        genres: [], // Il faudrait fiare un map, vide pour l'instant (non affiché sur la carte)
+        studios: { nodes: [] }, // TMDB ne les renvoie pas dans le search
+        trailer: null, // Nécessite un extra-fetch, laissé null.
+      };
+    });
+}
+
+async function searchMangaDex(query: string): Promise<AniListResult[]> {
+  const res = await fetch(`https://api.mangadex.org/manga?title=${encodeURIComponent(query)}&includes[]=cover_art&limit=5`);
+  const json = await res.json();
+  if (!json.data) return [];
+
+  return json.data.map((item: any) => {
+    const attrs = item.attributes;
+    const title = attrs.title["fr"] || attrs.title["en"] || attrs.title["ja-ro"] || "Inconnu";
+    const desc = attrs.description["fr"] || attrs.description["en"] || null;
+    
+    // cover via relationships
+    const coverRel = item.relationships.find((r: any) => r.type === "cover_art");
+    const coverFileName = coverRel?.attributes?.fileName;
+    // Cover HD originale
+    const extraLarge = coverFileName ? `https://uploads.mangadex.org/covers/${item.id}/${coverFileName}` : "";
+    const large = coverFileName ? `https://uploads.mangadex.org/covers/${item.id}/${coverFileName}.512.jpg` : "";
+
+    return {
+      id: parseInt(item.id.substring(0, 8), 16) || Math.floor(Math.random() * 1000000), // Fake ID compatible avec le nombre
+      title: { romaji: title, english: title, native: title },
+      type: "MANGA" as const,
+      format: "MANGA",
+      status: attrs.status ? attrs.status.toUpperCase() : "FINISHED",
+      description: desc,
+      startDate: { year: attrs.year || null },
+      episodes: null,
+      chapters: null,
+      averageScore: null,
+      coverImage: { extraLarge, large, color: null },
+      bannerImage: null,
+      genres: attrs.tags?.filter((t: any) => t.attributes?.group === "genre").map((t: any) => t.attributes?.name?.en) || [],
+      studios: { nodes: [] },
+      trailer: null,
+    };
+  });
+}
+
+async function searchHybrid(search: string, type?: "ANIME" | "MANGA"): Promise<AniListResult[]> {
+  let results: AniListResult[] = [];
+  if (!type || type === "ANIME") {
+    try { const tmdb = await searchTMDB(search); results = [...results, ...tmdb]; } catch(e) { console.error(e); }
+  }
+  if (!type || type === "MANGA") {
+    try { const mdex = await searchMangaDex(search); results = [...results, ...mdex]; } catch(e) { console.error(e); }
+  }
+  if (results.length === 0) throw new Error("Erreur de connexion aux bases distantes.");
+  return results;
 }
 
 // ─── RESULT CARD ─────────────────────────────────────────────────────────────
@@ -143,6 +242,11 @@ function ResultCard({ anime, isSelected, onSelect }: { anime: AniListResult; isS
 
 // ─── PAGE ────────────────────────────────────────────────────────────────────
 export default function AdminBiblio() {
+  const isMobile = useIsMobile();
+  const [authed,      setAuthed]      = useState(false);
+  const [pwInput,     setPwInput]     = useState("");
+  const [pwError,     setPwError]     = useState(false);
+
   const [query,       setQuery]       = useState("");
   const [searchType,  setSearchType]  = useState<"ANIME" | "MANGA" | "ALL">("ALL");
   const [results,     setResults]     = useState<AniListResult[]>([]);
@@ -159,17 +263,47 @@ export default function AdminBiblio() {
   const [saving,         setSaving]         = useState(false);
   const [saveSuccess,    setSaveSuccess]    = useState(false);
 
+  // ─── GARDE MOT DE PASSE ──────────────────────────────────────────────────────
+  if (!authed) {
+    return (
+      <div style={{ minHeight: "100vh", background: colors.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font }}>
+        <div style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: "20px", padding: "48px 40px", width: "min(400px, 90vw)", textAlign: "center" }}>
+          <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: "rgba(201,168,76,0.1)", border: `1px solid ${colors.goldBorder}`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px" }}>
+            <Lock size={24} color={colors.gold} />
+          </div>
+          <p style={{ ...typography.overline, marginBottom: "8px" }}>ESPACE ADMIN</p>
+          <h1 style={{ fontSize: "32px", fontWeight: 900, color: colors.textPrimary, textTransform: "uppercase", fontStyle: "italic", lineHeight: 1, marginBottom: "32px" }}>ACCÈS RESTREINT</h1>
+          <input
+            type="password"
+            value={pwInput}
+            onChange={e => { setPwInput(e.target.value); setPwError(false); }}
+            onKeyDown={e => { if (e.key === "Enter") { if (pwInput === ADMIN_PASSWORD) setAuthed(true); else setPwError(true); } }}
+            placeholder="Mot de passe..."
+            style={{ width: "100%", padding: "14px 16px", background: colors.bgCard, border: `1px solid ${pwError ? colors.danger : colors.border}`, borderRadius: "10px", color: colors.textPrimary, fontFamily: font, fontSize: "18px", textAlign: "center", letterSpacing: "0.3em", outline: "none", marginBottom: "12px", boxSizing: "border-box" }}
+          />
+          {pwError && <p style={{ color: colors.danger, fontSize: "13px", fontWeight: 700, marginBottom: "12px" }}>Mot de passe incorrect</p>}
+          <button
+            onClick={() => { if (pwInput === ADMIN_PASSWORD) setAuthed(true); else setPwError(true); }}
+            style={{ ...components.btnPrimary, width: "100%", padding: "14px", justifyContent: "center", fontSize: "16px" }}
+          >
+            ENTRER
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
     setSearching(true); setSearchError(null); setSelected(null); setSaveSuccess(false);
     try {
       const type = searchType === "ALL" ? undefined : searchType;
-      const data = await searchAniList(query.trim(), type);
+      const data = await searchHybrid(query.trim(), type);
       setResults(data);
       if (data.length === 0) setSearchError("Aucun résultat trouvé. Essaie un autre titre.");
     } catch {
-      setSearchError("Erreur de connexion à AniList.");
+      setSearchError("Erreur de connexion à la base de données distante.");
     }
     setSearching(false);
   };
@@ -223,7 +357,7 @@ export default function AdminBiblio() {
   const labelStyle  = typography.label;
 
   return (
-    <div style={{ minHeight: "100vh", background: colors.bg, color: colors.textPrimary, fontFamily: font, padding: "60px 40px" }}>
+    <div style={{ minHeight: "100vh", background: colors.bg, color: colors.textPrimary, fontFamily: font, padding: isMobile ? "32px 16px" : "60px 40px" }}>
       <style>{`
         input::placeholder, textarea::placeholder { color: ${colors.textMuted}; font-family: ${font}; }
         input:focus, textarea:focus { outline: 2px solid ${colors.goldGlow} !important; }

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { members } from "../../data/members";
-import Link from "next/link";
 import { Volume2, VolumeX, ChevronLeft, ChevronRight, User, Sword, Search, Play, Pause } from "lucide-react";
+import GuildeHeader from "../components/GuildeHeader"; // ← ajouté
 
 type ViewMode = "real" | "anime";
 
@@ -55,19 +55,15 @@ export default function WantedPage() {
     setIsPlaying(!isPlaying);
   };
 
-  const next = () => { setImgError(false); setCurrent((c) => (c + 1) % filteredMembers.length); };
-  const prev = () => { setImgError(false); setCurrent((c) => (c - 1 + filteredMembers.length) % filteredMembers.length); };
+  const next = useCallback(() => { setImgError(false); setCurrent((c) => (c + 1) % filteredMembers.length); }, [filteredMembers.length]);
+  const prev = useCallback(() => { setImgError(false); setCurrent((c) => (c - 1 + filteredMembers.length) % filteredMembers.length); }, [filteredMembers.length]);
 
-  // Effet Diaporama (Autoplay)
+  // Effet Diaporama (Autoplay) — CORRIGÉ : next est dans les deps via useCallback
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isAutoPlay && filteredMembers.length > 1) {
-      interval = setInterval(() => {
-        next();
-      }, 4000); // Change toutes les 4 secondes (rythme dynamique)
-    }
+    if (!isAutoPlay || filteredMembers.length <= 1) return;
+    const interval = setInterval(next, 4000);
     return () => clearInterval(interval);
-  }, [isAutoPlay, filteredMembers.length]);
+  }, [isAutoPlay, filteredMembers.length, next]);
 
   // Navigation clavier
   useEffect(() => {
@@ -89,35 +85,28 @@ export default function WantedPage() {
       background: "radial-gradient(ellipse at center, #1a1008 0%, #0d0a04 100%)",
       display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "flex-start",
-      padding: "90px 20px 140px", // Plus de padding en bas pour la liste
+      paddingBottom: "140px",
       position: "relative", overflow: "hidden",
     }}>
 
       <audio ref={audioRef} src="/wanted.mp3" loop />
 
-      {/* --- BARRE DE NAVIGATION ET RECHERCHE --- */}
-      <div style={{
-        position: "fixed", top: 0, left: 0, right: 0, zIndex: 50,
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "16px 32px", gap: "16px", flexWrap: "wrap",
-        background: "linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,0,0,0.4), transparent)",
-      }}>
-        <Link href="/" style={{
-          fontFamily: "'Barlow Condensed', sans-serif", fontSize: "13px", fontWeight: 700,
-          color: "rgba(255,255,255,0.4)", textDecoration: "none",
-          letterSpacing: "0.1em", textTransform: "uppercase",
-        }}>← Guilde</Link>
+      {/* Navigation unifiée */}
+      <div style={{ width: "100%", position: "relative", zIndex: 50 }}>
+        <GuildeHeader activePage="wanted" accentColor="#c9a84c" bgColor="rgba(13,10,4,0.85)" textColor="#fff" />
+      </div>
 
         {/* BARRE DE RECHERCHE CENTRALE */}
+        {/* BARRE DE RECHERCHE */}
         <div style={{
           display: "flex", alignItems: "center", background: "rgba(255,255,255,0.05)",
           border: "1px solid rgba(255,255,255,0.1)", borderRadius: "100px",
           padding: "6px 16px", width: "min(300px, 100%)",
         }}>
           <Search size={14} color="rgba(255,255,255,0.4)" style={{ marginRight: "8px" }} />
-          <input 
-            type="text" 
-            placeholder="Rechercher une prime..." 
+          <input
+            type="text"
+            placeholder="Rechercher une prime..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
@@ -128,28 +117,34 @@ export default function WantedPage() {
           />
         </div>
 
-        {/* CONTRÔLES DROITE (Switch + Son + Autoplay) */}
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          
-          <div style={{ display: "flex", alignItems: "center", background: "rgba(255,255,255,0.08)", borderRadius: "100px", padding: "4px", gap: "2px" }}>
-            {(["real", "anime"] as ViewMode[]).map((mode) => (
-              <button
-                key={mode} onClick={() => setViewMode(mode)}
-                style={{
-                  fontFamily: "'Barlow Condensed', sans-serif", fontSize: "11px", fontWeight: 700,
-                  letterSpacing: "0.1em", textTransform: "uppercase", padding: "6px 14px", borderRadius: "100px",
-                  border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px",
-                  background: viewMode === mode ? "#c9a84c" : "transparent",
-                  color: viewMode === mode ? "#fff" : "rgba(255,255,255,0.4)",
-                  boxShadow: viewMode === mode ? `0 2px 8px rgba(201,168,76,0.5)` : "none",
-                }}
-              >
-                {mode === "real" ? <User size={13} strokeWidth={2.5} /> : <Sword size={13} strokeWidth={2.5} />}
-                {mode === "real" ? "Réel" : "Anime"}
-              </button>
-            ))}
-          </div>
+      {/* ── CONTRÔLES ── */}
+      <div style={{
+        width: "100%", padding: "12px 20px", zIndex: 10,
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        gap: "12px", flexWrap: "wrap",
+      }}>
+        {/* Switch Réel/Anime */}
+        <div style={{ display: "flex", alignItems: "center", background: "rgba(255,255,255,0.08)", borderRadius: "100px", padding: "4px", gap: "2px" }}>
+          {(["real", "anime"] as ViewMode[]).map((mode) => (
+            <button
+              key={mode} onClick={() => setViewMode(mode)}
+              style={{
+                fontFamily: "'Barlow Condensed', sans-serif", fontSize: "11px", fontWeight: 700,
+                letterSpacing: "0.1em", textTransform: "uppercase", padding: "6px 14px", borderRadius: "100px",
+                border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px",
+                background: viewMode === mode ? "#c9a84c" : "transparent",
+                color: viewMode === mode ? "#fff" : "rgba(255,255,255,0.4)",
+                boxShadow: viewMode === mode ? `0 2px 8px rgba(201,168,76,0.5)` : "none",
+              }}
+            >
+              {mode === "real" ? <User size={13} strokeWidth={2.5} /> : <Sword size={13} strokeWidth={2.5} />}
+              {mode === "real" ? "Réel" : "Anime"}
+            </button>
+          ))}
+        </div>
 
+        <div style={{ display: "flex", gap: "8px" }}>
+          {/* Autoplay */}
           <button onClick={() => setIsAutoPlay(!isAutoPlay)} style={{
             background: isAutoPlay ? "#c9a84c" : "rgba(255,255,255,0.08)", border: "none",
             borderRadius: "50%", width: "36px", height: "36px",
@@ -159,6 +154,7 @@ export default function WantedPage() {
             {isAutoPlay ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" style={{ marginLeft: "2px" }} />}
           </button>
 
+          {/* Son */}
           <button onClick={toggleSound} style={{
             background: "rgba(255,255,255,0.08)", border: "none",
             borderRadius: "50%", width: "36px", height: "36px",
