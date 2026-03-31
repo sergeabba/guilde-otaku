@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { members, Member, Rank, RANK_FILTER_ORDER } from "../../data/members";
-import { Shuffle, Shield, Trophy, Flame } from "lucide-react";
+import { Rank, RANK_FILTER_ORDER, type Member } from "../../data/members";
+import { Shuffle, Shield, Trophy, Flame, Loader2 } from "lucide-react";
 import GuildeHeader from "../components/GuildeHeader";
 import { useIsMobile } from "../hooks/useIsMobile";
 import type { ViewMode } from "../types";
+import { supabase } from "../../lib/supabase";
 
 const fontHud = "'Bebas Neue', 'Impact', sans-serif";
 const fontMono = "ui-monospace, 'Cascadia Code', monospace";
@@ -166,10 +167,25 @@ function ArenaFighter({ member, side, viewMode, onClear, isMobile }: { member: M
 // COMPOSANT PRINCIPAL
 // ──────────────────────────────────────────────────────────
 export default function FightersPage() {
+  const [members, setMembers] = useState<Member[]>([]);
   const [p1, setP1] = useState<Member | null>(null);
   const [p2, setP2] = useState<Member | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("anime");
   const [filterRank, setFilterRank] = useState<Rank | "Tous">("Tous");
+  
+  useEffect(() => {
+    const loadFighters = async () => {
+      const { data } = await supabase.from("fighters").select("*").order("id", { ascending: true });
+      if (data) {
+        setMembers(data.map(m => ({
+          ...m,
+          animeChar: m.animechar,
+          rankJP: m.rankjp
+        })));
+      }
+    };
+    loadFighters();
+  }, []);
   
   const isMobile = useIsMobile();
   const both = !!(p1 && p2);
