@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     siteName: "Guilde Otaku",
     images: [
       {
-        url: "https://images.unsplash.com/photo-1618336753974-aae8e04506aa?q=80&w=1200&auto=format&fit=crop", // Image de couverture générique HD
+        url: "https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=1200&auto=format&fit=crop", // Image plus thématique Anime/Manga
         width: 1200,
         height: 630,
         alt: "Aperçu de la Bibliothèque",
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "La Bibliothèque | Guilde Otaku",
     description: "Découvrez les verdicts définitifs de la Guilde Otaku.",
-    images: ["https://images.unsplash.com/photo-1618336753974-aae8e04506aa?q=80&w=1200&auto=format&fit=crop"],
+    images: ["https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=1200&auto=format&fit=crop"],
   },
 };
 
