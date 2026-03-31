@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Lock, BookOpen, User, Flame, ArrowRight, ShieldAlert } from "lucide-react";
+import { Lock, BookOpen, User, Flame, ArrowRight, ShieldAlert, Palette } from "lucide-react";
 import { colors, typography, font } from "../../outputs/styles/tokens";
 import GuildeHeader from "../components/GuildeHeader";
 
@@ -121,6 +121,19 @@ export default function AdminHubPage() {
             </p>
             <Link href="/admin-membres" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.05)", border: `1px solid rgba(56,189,248,0.3)`, padding: "12px 24px", borderRadius: "100px", color: "#38bdf8", textDecoration: "none", fontWeight: 700, fontSize: "14px", textTransform: "uppercase", letterSpacing: "0.1em" }}>
               Gérer Membres <ArrowRight size={16} />
+            </Link>
+          </motion.div>
+
+          {/* Carte Atelier */}
+          <motion.div whileHover={{ scale: 1.02 }} style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: "24px", padding: "32px", position: "relative", overflow: "hidden" }}>
+            <div style={{ position: "absolute", top: 0, right: 0, background: "rgba(201, 168, 76, 0.1)", width: "150px", height: "150px", filter: "blur(50px)", borderRadius: "50%" }} />
+            <Palette size={32} color={colors.gold} style={{ marginBottom: "20px" }} />
+            <h2 style={{ fontFamily: font, fontSize: "28px", fontWeight: 900, marginBottom: "12px", textTransform: "uppercase" }}>L'Atelier Visuel</h2>
+            <p style={{ ...typography.body, color: colors.textSecondary, marginBottom: "32px" }}>
+              Gérez la galerie d'art générée par IA. Ajoutez vos dernières créations ou retirez les anciennes d'un seul clic.
+            </p>
+            <Link href="/admin-atelier" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.05)", border: `1px solid ${colors.goldBorder}`, padding: "12px 24px", borderRadius: "100px", color: colors.gold, textDecoration: "none", fontWeight: 700, fontSize: "14px", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+              Gérer l'Atelier <ArrowRight size={16} />
             </Link>
           </motion.div>
 

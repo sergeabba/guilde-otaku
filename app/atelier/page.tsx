@@ -7,9 +7,16 @@ import { Sparkles, X, ChevronLeft, ChevronRight, ZoomIn, Cpu, Image as ImageIcon
 
 // ─── HOOK ─────────────────────────────────────────────────────────────────────
 interface AtelierImage {
+  id: string | null;
   filename: string;
   url: string;
   title: string;
+  description: string;
+  prompt: string;
+  category: string;
+  universe: string;
+  accent: string;
+  size: string;
 }
 
 function useAtelierImages() {
@@ -27,20 +34,7 @@ function useAtelierImages() {
 }
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
-const ACCENT_POOL = [
-  "#8b5cf6", // violet
-  "#3b82f6", // blue
-  "#10b981", // emerald
-  "#f59e0b", // amber
-  "#ef4444", // red
-  "#ec4899", // pink
-  "#6366f1", // indigo
-  "#14b8a6", // teal
-];
-
-const SIZE_POOL = ["large","tall","wide","normal","normal","normal","tall","wide"] as const;
-
-const CATEGORIES = ["Tout", "Création", "Portrait", "Scène"];
+const CATEGORIES = ["Tout", "Création", "Portrait", "Scène", "VFX"];
 
 // ─── CSS PREMIUM ───────────────────────────────────────────────────────────────
 const CSS = `
@@ -294,18 +288,11 @@ const CSS = `
 `;
 
 // ─── COMPONENTS ───────────────────────────────────────────────────────────────
-function CategoryBadge({ cat, accent }: { cat: string; accent: string }) {
-  return (
-    <span className="card-cat" style={{ color: accent, background: `${accent}1A`, borderColor: `${accent}4D` }}>
-      {cat}
-    </span>
-  );
-}
-
-function BentoCard({ work, index, onClick }: { work: ReturnType<typeof buildWork>; index: number; onClick: () => void }) {
+function BentoCard({ work, index, onClick }: { work: AtelierImage; index: number; onClick: () => void }) {
+  const bentoClass = `cell-${work.size === "small" ? "normal" : work.size}`;
   return (
     <motion.div
-      className={`bento-card cell-${work.size}`}
+      className={`bento-card ${bentoClass}`}
       onClick={onClick}
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
@@ -313,12 +300,14 @@ function BentoCard({ work, index, onClick }: { work: ReturnType<typeof buildWork
       transition={{ duration: 0.6, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
     >
       <div className="card-top-bar" style={{ background: `linear-gradient(90deg, ${work.accent}, transparent)` }} />
-      <span className="card-num">#{String(work.id).padStart(2, "0")}</span>
+      <span className="card-num">#{index + 1}</span>
       
-      <img src={work.image} alt={work.title} loading="lazy" />
+      <img src={work.url} alt={work.title} loading="lazy" />
       
       <div className="card-overlay">
-        <CategoryBadge cat={work.category} accent={work.accent} />
+        <span className="card-cat" style={{ color: work.accent, background: `${work.accent}1A`, borderColor: `${work.accent}4D` }}>
+          {work.category}
+        </span>
         <div className="card-title">{work.title}</div>
         <div className="card-universe">{work.universe}</div>
       </div>
@@ -328,7 +317,7 @@ function BentoCard({ work, index, onClick }: { work: ReturnType<typeof buildWork
 }
 
 function Modal({ works, currentIdx, onClose, onPrev, onNext }: {
-  works: ReturnType<typeof buildWork>[];
+  works: AtelierImage[];
   currentIdx: number;
   onClose: () => void;
   onPrev: () => void;
@@ -367,8 +356,8 @@ function Modal({ works, currentIdx, onClose, onPrev, onNext }: {
         <div className="modal-img-wrap">
           <AnimatePresence mode="wait">
             <motion.img
-              key={work.id}
-              src={work.image}
+              key={work.filename}
+              src={work.url}
               alt={work.title}
               initial={{ opacity: 0, scale: 1.05 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -384,7 +373,9 @@ function Modal({ works, currentIdx, onClose, onPrev, onNext }: {
           <button className="modal-close" onClick={onClose}><X size={20} /></button>
           
           <div style={{ paddingRight: '40px' }}>
-            <CategoryBadge cat={work.category} accent={work.accent} />
+            <span className="card-cat" style={{ color: work.accent, background: `${work.accent}1A`, borderColor: `${work.accent}4D` }}>
+              {work.category}
+            </span>
             <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: "clamp(32px, 4vw, 48px)", lineHeight: 0.9, marginTop: "12px", letterSpacing: "0.02em" }}>
               {work.title}
             </h2>
@@ -392,6 +383,12 @@ function Modal({ works, currentIdx, onClose, onPrev, onNext }: {
               {work.universe}
             </p>
           </div>
+
+          {work.description && (
+             <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "16px", lineHeight: 1.6, margin: "10px 0" }}>
+                {work.description}
+             </p>
+          )}
 
           <div style={{ height: "1px", background: `linear-gradient(90deg, ${work.accent}50, transparent)`, margin: "8px 0" }} />
 
@@ -403,9 +400,9 @@ function Modal({ works, currentIdx, onClose, onPrev, onNext }: {
           <div className="meta-grid">
             {[
               { label: "Créateur", value: "IA Otaku" },
+              { label: "Fichier", value: work.filename },
               { label: "Catégorie", value: work.category },
               { label: "Année", value: "2025" },
-              { label: "Identifiant", value: `#${String(work.id).padStart(3, "0")}` },
             ].map(({ label, value }) => (
               <div key={label} className="meta-item">
                 <div className="meta-label">{label}</div>
@@ -418,15 +415,6 @@ function Modal({ works, currentIdx, onClose, onPrev, onNext }: {
             <span style={{ fontSize: "14px", fontWeight: 600, color: "rgba(255,255,255,0.4)" }}>
               {currentIdx + 1} / {works.length}
             </span>
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", maxWidth: "60%", justifyContent: "flex-end" }}>
-              {works.map((w, i) => (
-                <div key={w.id} style={{
-                  width: i === currentIdx ? "24px" : "8px", height: "8px", borderRadius: "4px",
-                  background: i === currentIdx ? work.accent : "rgba(255,255,255,0.2)",
-                  transition: "all 0.3s"
-                }}/>
-              ))}
-            </div>
           </div>
         </div>
       </motion.div>
@@ -434,23 +422,6 @@ function Modal({ works, currentIdx, onClose, onPrev, onNext }: {
   );
 }
 
-// ─── HELPER ───────────────────────────────────────────────────────────────────
-function buildWork(img: AtelierImage, index: number) {
-  // Infer category somewhat randomly or based on name for demo purpose, since they are all IA
-  const isPortrait = img.title.toLowerCase().includes("portrait") || img.title.toLowerCase().includes("face");
-  const cat = isPortrait ? "Portrait" : (index % 3 === 0 ? "Scène" : "Création");
-  
-  return {
-    id: index + 1,
-    title: img.title,
-    category: cat,
-    universe: "Guilde Otaku",
-    prompt: `Génération visuelle avancée : ${img.title}, détails ultra-réalistes, style cinématique, éclairage dramatique.`,
-    image: img.url,
-    accent: ACCENT_POOL[index % ACCENT_POOL.length],
-    size: SIZE_POOL[index % SIZE_POOL.length],
-  };
-}
 
 // ─── PAGE PRINCIPALE ──────────────────────────────────────────────────────────
 export default function AtelierPage() {
@@ -463,11 +434,10 @@ export default function AtelierPage() {
   const heroY = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
-  const allWorks = images.map((img, i) => buildWork(img, i));
-  const filtered = activeFilter === "Tout" ? allWorks : allWorks.filter(w => w.category === activeFilter);
+  const filtered = activeFilter === "Tout" ? images : images.filter(w => w.category === activeFilter);
 
-  const openModal = (work: ReturnType<typeof buildWork>) => {
-    const idx = filtered.findIndex(w => w.id === work.id);
+  const openModal = (work: AtelierImage) => {
+    const idx = filtered.findIndex(w => w.filename === work.filename);
     setModalIdx(idx);
   };
 
@@ -514,7 +484,7 @@ export default function AtelierPage() {
         <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 clamp(20px, 5vw, 64px)" }}>
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.6 }} className="stats-bar">
             {[
-              { num: loading ? "-" : allWorks.length, label: "Œuvres uniques" },
+              { num: loading ? "-" : images.length, label: "Œuvres uniques" },
               { num: "Midjourney", label: "Moteur IA" },
               { num: "4K+", label: "Résolution" },
               { num: "2025", label: "Collection" },
@@ -555,7 +525,7 @@ export default function AtelierPage() {
             <AnimatePresence mode="popLayout">
               <motion.div key={activeFilter} className="bento" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
                 {filtered.map((work, i) => (
-                  <BentoCard key={work.id} work={work} index={i} onClick={() => openModal(work)} />
+                  <BentoCard key={work.filename} work={work} index={i} onClick={() => openModal(work)} />
                 ))}
               </motion.div>
             </AnimatePresence>
