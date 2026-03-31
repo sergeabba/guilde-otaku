@@ -49,8 +49,8 @@ const DOSSIER_BASH_DATA = [
     trailer_url: "https://www.youtube.com/results?search_query=I+Made+Friends+with+the+Second+Prettiest+in+My+Class+trailer"
   },
   {
-    searchQuery: "Pardon the Intrusion I'm Home",
-    title: "Pardon the Intrusion, I'M Home",
+    searchQuery: "Tadaima, Ojamasaremasu!",
+    title: "Pardon the Intrusion, I'm Home!",
     date: "07 Avril 2026",
     tag: "HAREM INVERSÉ",
     color: "#4ade80",
@@ -79,9 +79,9 @@ const DOSSIER_BASH_DATA = [
     trailer_url: "https://www.youtube.com/results?search_query=Needy+Girl+Overdose+anime+trailer"
   },
   {
-    searchQuery: "Onegai AIpri",
-    title: "Onegai AIpri",
-    date: "04 Avril 2026",
+    searchQuery: "Himitsu no AiPri",
+    title: "Onegai AiPri",
+    date: "05 Avril 2026",
     tag: "IDOLS & MAGICAL GIRLS",
     color: "#f472b6",
     review: "C'est juste des idols/magical girl. C'est un peu trop coloré même pour moi, mais vu que je pense que c'est le seul anime du genre, je le cite.",
@@ -99,7 +99,7 @@ const DOSSIER_BASH_DATA = [
     trailer_url: "https://www.youtube.com/results?search_query=Ghost+Concert+Missing+songs+trailer"
   },
   {
-    searchQuery: "Megami Isekai ni MegaOre",
+    searchQuery: "Megami Isekai Tensei Nani ni Naritai Desu ka Ore Yuusha no Rokkotsu de",
     title: "MegaOre",
     date: "07 Avril 2026",
     tag: "ISEKAI ABSURDE",
@@ -139,8 +139,8 @@ const DOSSIER_BASH_DATA = [
     trailer_url: "https://www.youtube.com/results?search_query=The+Warrior+Princess+and+the+Barbaric+Prince+trailer"
   },
   {
-    searchQuery: "Kujima Why Sing When You Can Warble",
-    title: "Kujima : Why Sing, When You Can Warble",
+    searchQuery: "Kujima Utaeba Ie Hororo",
+    title: "Kujima : Why Sing, When You Can Warble?",
     date: "09 Avril 2026",
     tag: "COMÉDIE ABSURDE",
     color: "#d97706",
