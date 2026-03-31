@@ -34,6 +34,7 @@ const navLinks = [
   { id: "fighters",     label: "Fighters",      href: "/fighters"    },
   { id: "bons-plans",   label: "Bons Plans",    href: "/bons-plans"  },
   { id: "bibliotheque", label: "Bibliothèque",  href: "/bibliotheque"},
+  { id: "atelier",      label: "Atelier",       href: "/atelier"     },
 ];
 
 export default function GuildeHeader({

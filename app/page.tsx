@@ -7,7 +7,7 @@ import { supabase } from "../lib/supabase";
 import MemberCard from "./components/MemberCard";
 import MemberModal from "./components/MemberModal";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, User, Sword, Sparkles, ArrowRight, Palette } from "lucide-react";
+import { Search, User, Sword, Sparkles, ArrowRight, Palette, Flame } from "lucide-react";
 import { rankAccents, rankBg, rankLogos, darkRanks } from "./config/ranks";
 import GuildeHeader from "./components/GuildeHeader";
 import { useIsMobile } from "./hooks/useIsMobile";
@@ -215,6 +215,55 @@ export default function HomePage() {
               />
             </div>
           </div>
+
+          {/* ── BANNIÈRE CHRONIQUE DU BASH ── */}
+          <Link href="/bibliotheque" style={{ textDecoration: "none", display: "block", marginBottom: "24px" }}>
+            <motion.div
+              whileHover={{ scale: 1.015, boxShadow: "0 20px 40px rgba(74, 222, 128, 0.2)" }}
+              whileTap={{ scale: 0.98 }}
+              style={{
+                position: "relative",
+                overflow: "hidden",
+                background: isDark ? "linear-gradient(135deg, rgba(74, 222, 128, 0.15) 0%, rgba(255,255,255,0.02) 100%)" : "linear-gradient(135deg, rgba(74, 222, 128, 0.2) 0%, rgba(255,255,255,0.8) 100%)",
+                border: "1px solid rgba(74, 222, 128, 0.3)",
+                borderRadius: "24px",
+                padding: isMobile ? "24px" : "32px 40px",
+                display: "flex",
+                flexDirection: isMobile ? "column" : "row",
+                alignItems: isMobile ? "flex-start" : "center",
+                justifyContent: "space-between",
+                gap: "20px",
+                backdropFilter: "blur(12px)",
+              }}
+            >
+              {/* Image de fond subtile */}
+              <div style={{ position: "absolute", inset: 0, opacity: 0.15, zIndex: 0 }}>
+                <img src="https://image.tmdb.org/t/p/original/lvndABJgYFihAGocI1hPgqv7yxu.jpg" alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: isMobile ? "16px" : "24px", position: "relative", zIndex: 1 }}>
+                <div style={{ width: isMobile ? "48px" : "64px", height: isMobile ? "48px" : "64px", borderRadius: "16px", background: "rgba(74, 222, 128, 0.2)", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid rgba(74, 222, 128, 0.4)", flexShrink: 0 }}>
+                  <Sword size={isMobile ? 24 : 32} color="#4ade80" />
+                </div>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                    <Flame size={14} color="#4ade80" />
+                    <span style={{ fontSize: "12px", fontWeight: 800, color: "#4ade80", letterSpacing: "0.2em", textTransform: "uppercase" }}>Saison Printemps 2026</span>
+                  </div>
+                  <h3 style={{ fontSize: isMobile ? "24px" : "32px", fontWeight: 900, color: theme.text, textTransform: "uppercase", fontStyle: "italic", lineHeight: 1, margin: 0 }}>
+                    La Chronique du Bash
+                  </h3>
+                  <p style={{ fontSize: isMobile ? "14px" : "16px", color: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)", fontWeight: 500, margin: "8px 0 0 0" }}>
+                    Les verdicts définitifs de la Guilde sur les animes et mangas.
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "12px 24px", background: "#4ade80", borderRadius: "100px", color: "#000", fontWeight: 900, fontSize: "14px", textTransform: "uppercase", letterSpacing: "0.1em", flexShrink: 0, alignSelf: isMobile ? "stretch" : "auto", justifyContent: "center", position: "relative", zIndex: 1 }}>
+                Accéder aux Chroniques <ArrowRight size={16} />
+              </div>
+            </motion.div>
+          </Link>
 
           {/* ── NOUVEAU : BANNIÈRE DE L'ATELIER (Au coeur de la page d'accueil) ── */}
           <Link href="/atelier" style={{ textDecoration: "none", display: "block", marginBottom: isMobile ? "40px" : "60px" }}>
