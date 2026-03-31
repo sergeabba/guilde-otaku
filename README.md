@@ -1,5 +1,11 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+Améliorations apportées
+- Intégration TailwindCSS complète avec config minimale et base pour l’UI moderne.
+- Source de données robuste: fallback local + fetch via Supabase, avec un adaptateur pour basculer facilement en mode démo sans backend.
+- Refactor mineur pour meilleure organisation du code et préparation à des tests.
+- Tests et tooling: configuration de base pour Jest (fichiers de config et tests exemples) et un plan de tests pour les règles de domaine UI.
+
 ## Getting Started
 
 First, run the development server:

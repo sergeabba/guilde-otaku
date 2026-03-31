@@ -36,6 +36,8 @@ export default function AdminAtelier() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const [dbStatus, setDbStatus] = useState<"connected" | "error">("connected");
+  const [dbError, setDbError] = useState<string | null>(null);
 
   // État d'édition
   const [editingItem, setEditingItem] = useState<any>(null);
@@ -55,8 +57,11 @@ export default function AdminAtelier() {
       const res = await fetch("/api/atelier");
       const data = await res.json();
       setImages(data.images || []);
-    } catch (e) {
-      console.error(e);
+      setDbStatus(data.db_status || "connected");
+      setDbError(data.db_error || null);
+    } catch (e: any) {
+      setDbStatus("error");
+      setDbError(e.message);
     }
     setLoading(false);
   };
@@ -163,13 +168,67 @@ export default function AdminAtelier() {
           </div>
         </div>
 
-        {/* Zone SQL Alert */}
-        <div style={{ background: "rgba(201,168,76,0.05)", border: `1px solid ${colors.goldBorder}`, borderRadius: "16px", padding: "16px", marginBottom: "32px", display: "flex", gap: "12px", alignItems: "center" }}>
-          <Palette size={20} color={colors.gold} />
-          <p style={{ fontSize: "13px", color: colors.gold, margin: 0, fontWeight: 600 }}>
-             Note : Assurez-vous d'avoir créé la table <code style={{ background: "rgba(0,0,0,0.3)", padding: "2px 4px", borderRadius: "4px" }}>atelier</code> sur Supabase pour activer toutes les fonctionnalités d'édition.
-          </p>
-        </div>
+        {/* Zone SQL Alert - Visible only if DB error */}
+        {dbStatus === "error" && (
+          <div style={{ background: "rgba(248,113,113,0.05)", border: `1px solid rgba(248,113,113,0.3)`, borderRadius: "16px", padding: "24px", marginBottom: "32px" }}>
+            <div style={{ display: "flex", gap: "12px", alignItems: "center", marginBottom: "16px" }}>
+              <Palette size={20} color={colors.danger} />
+              <p style={{ fontSize: "14px", color: colors.danger, margin: 0, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                Configuration Database Requise
+              </p>
+            </div>
+            <p style={{ fontSize: "14px", color: colors.textSecondary, marginBottom: "20px", lineHeight: 1.5 }}>
+              La table <code style={{ background: "rgba(255,255,255,0.05)", padding: "2px 4px", borderRadius: "4px", color: "#fff" }}>atelier</code> est introuvable sur votre Supabase. 
+              Exécutez le SQL suivant dans votre éditeur Supabase pour activer la sauvegarde des métadonnées :
+            </p>
+            <pre style={{ 
+              background: "#000", padding: "16px", borderRadius: "12px", fontSize: "12px", color: "#34d399", 
+              overflowX: "auto", border: "1px solid rgba(255,255,255,0.1)", marginBottom: "16px", fontFamily: "monospace" 
+            }}>
+{`CREATE TABLE atelier (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    filename TEXT UNIQUE NOT NULL,
+    title TEXT,
+    description TEXT,
+    prompt TEXT,
+    category TEXT,
+    universe TEXT DEFAULT 'Guilde Otaku',
+    accent TEXT DEFAULT '#8b5cf6',
+    size TEXT DEFAULT 'small'
+);`}
+            </pre>
+            <button 
+              onClick={() => {
+                navigator.clipboard.writeText(`CREATE TABLE atelier (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    filename TEXT UNIQUE NOT NULL,
+    title TEXT,
+    description TEXT,
+    prompt TEXT,
+    category TEXT,
+    universe TEXT DEFAULT 'Guilde Otaku',
+    accent TEXT DEFAULT '#8b5cf6',
+    size TEXT DEFAULT 'small'
+);`);
+                alert("SQL copié !");
+              }}
+              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", padding: "8px 16px", borderRadius: "8px", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}
+            >
+              Copier le SQL
+            </button>
+          </div>
+        )}
+
+        {dbStatus === "connected" && (
+          <div style={{ background: "rgba(52,211,153,0.05)", border: `1px solid rgba(52,211,153,0.2)`, borderRadius: "16px", padding: "12px 20px", marginBottom: "32px", display: "flex", gap: "12px", alignItems: "center" }}>
+            <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#34d399", boxShadow: "0 0 10px #34d399" }} />
+            <p style={{ fontSize: "13px", color: "#34d399", margin: 0, fontWeight: 600 }}>
+              Base de données connectée. La table 'atelier' est prête.
+            </p>
+          </div>
+        )}
 
         {/* Upload Zone */}
         <div 

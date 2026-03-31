@@ -3,15 +3,15 @@
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { Rank, Member } from "../data/members";
-import { supabase } from "../lib/supabase";
 import MemberCard from "./components/MemberCard";
 import MemberModal from "./components/MemberModal";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, User, Sword, Sparkles, ArrowRight, Palette, Flame } from "lucide-react";
+import { Search, User, Sword, Sparkles, ArrowRight, Palette, Flame, AlertCircle, Loader2 } from "lucide-react";
 import { rankAccents, rankBg, rankLogos, darkRanks } from "./config/ranks";
 import GuildeHeader from "./components/GuildeHeader";
 import { useIsMobile } from "./hooks/useIsMobile";
 import type { ViewMode } from "./types";
+import { fetchMembers } from "./utils/dataAdapter";
 
 export type { ViewMode }; // ré-exporté pour rétro-compat si importé ailleurs
 
@@ -21,20 +21,32 @@ export default function HomePage() {
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("anime");
   const [members, setMembers] = useState<Member[]>([]);
-  const isMobile = useIsMobile(); // ← hook centralisé
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
-    const fetchMembers = async () => {
-      const { data } = await supabase.from("fighters").select("*").order("id", { ascending: true });
-      if (data) {
-        setMembers(data.map(m => ({
-          ...m,
-          animeChar: m.animechar,
-          rankJP: m.rankjp
-        })));
+    let cancelled = false;
+    const load = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await fetchMembers();
+        if (!cancelled) {
+          setMembers(data);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "Erreur inconnue lors du chargement");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
-    fetchMembers();
+    load();
+    return () => { cancelled = true; };
   }, []);
 
   const theme  = rankBg[activeRank] ?? rankBg["Tous"];
@@ -171,6 +183,45 @@ export default function HomePage() {
         {/* ── MAIN ── */}
         <main style={{ maxWidth: "1400px", margin: "0 auto", padding: isMobile ? "30px 15px" : "60px 40px" }}>
 
+          {/* ── LOADING STATE ── */}
+          {loading && (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "50vh", gap: "20px" }}>
+              <Loader2 size={48} color={accent} className="animate-spin" />
+              <p style={{ fontSize: "18px", fontWeight: 700, color: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.5)" }}>
+                Chargement des membres...
+              </p>
+            </div>
+          )}
+
+          {/* ── ERROR STATE ── */}
+          {error && !loading && (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "50vh", gap: "20px", padding: "40px" }}>
+              <AlertCircle size={64} color="#ef4444" />
+              <p style={{ fontSize: "18px", fontWeight: 700, color: "#ef4444" }}>
+                {error}
+              </p>
+              <button
+                onClick={() => window.location.reload()}
+                style={{
+                  padding: "12px 32px",
+                  borderRadius: "12px",
+                  border: "none",
+                  background: accent,
+                  color: "#fff",
+                  fontWeight: 900,
+                  fontSize: "16px",
+                  cursor: "pointer",
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                }}
+              >
+                Réessayer
+              </button>
+            </div>
+          )}
+
+          {/* ── CONTENT (hidden during loading/error) ── */}
+          {!loading && !error && (
+            <>
           <div style={{
             display: "flex",
             flexDirection: isMobile ? "column" : "row",
@@ -362,6 +413,8 @@ export default function HomePage() {
               })}
             </motion.div>
           </AnimatePresence>
+            </>
+          )}
         </main>
       </div>
 

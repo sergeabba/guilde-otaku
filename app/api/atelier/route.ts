@@ -14,12 +14,22 @@ export async function GET() {
     const files = await readdir(dir);
     
     // Récupérer les métadonnées depuis Supabase
-    const { data: dbMeta } = await supabase.from("atelier").select("*");
+    let dbMeta: any[] | null = null;
+    let dbError: any = null;
+    
+    try {
+      const result = await supabase.from("atelier").select("*");
+      dbMeta = result.data;
+      dbError = result.error;
+    } catch (err: any) {
+      dbError = err;
+    }
+
     const metaMap = new Map(dbMeta?.map((m: any) => [m.filename, m]));
 
     const images = files
       .filter(f => IMAGE_EXTENSIONS.some(ext => f.toLowerCase().endsWith(ext)))
-      .map((f, index) => {
+      .map((f, _index) => {
         const meta = metaMap.get(f);
         return {
           id: meta?.id || null,
@@ -36,10 +46,14 @@ export async function GET() {
         };
       });
 
-    return NextResponse.json({ images });
+    return NextResponse.json({ 
+      images, 
+      db_status: dbError ? "error" : "connected",
+      db_error: dbError?.message || (dbError ? "Table 'atelier' manquante ou inaccessible" : null)
+    });
   } catch (err: any) {
     console.error("API GET Error:", err.message);
-    return NextResponse.json({ images: [] });
+    return NextResponse.json({ images: [], db_status: "error", db_error: err.message });
   }
 }
 
@@ -56,13 +70,17 @@ export async function POST(req: Request) {
     
     await writeFile(filePath, buffer);
 
-    // Initialiser en base de données
+    // Initialiser en base de données (optionnel lors de l'upload)
     const title = file.name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " ").replace(/\b\w/g, c => c.toUpperCase());
-    await supabase.from("atelier").upsert({ 
-      filename: file.name, 
-      title, 
-      category: file.name.toLowerCase().includes("portrait") ? "Portrait" : "Création" 
-    });
+    try {
+      await supabase.from("atelier").upsert({ 
+        filename: file.name, 
+        title, 
+        category: file.name.toLowerCase().includes("portrait") ? "Portrait" : "Création" 
+      }, { onConflict: 'filename' });
+    } catch(e) {
+      console.warn("DB update failed during upload, likely table missing.");
+    }
 
     return NextResponse.json({ success: true, filename: file.name });
   } catch (err: any) {
