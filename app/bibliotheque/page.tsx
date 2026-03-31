@@ -65,7 +65,7 @@ const DOSSIER_BASH_DATA = [
     tag: "BIJOU SLICE OF LIFE",
     color: "#fbbf24",
     review: "On suit une femme amoureuse des livres, qui se réincarne dans le corps d'une enfant dans un monde où le taux d'analphabétisation est très haut. Pour assouvir sa soif de lecture elle va elle-même se mettre à créer des livres !\n\nL'œuvre est apparemment un pur bijou, il a eu pas mal de distinctions assez intéressantes. C'est le slice of life le plus impressionnant de la saison, c'est juste magnifique, j'ai pas d'autres mots, c'est juste grandiose, l'animation est incroyable. C'est un anime feel-good, il a l'air super chill et mignon.",
-    cover: "https://cdn.animenewsnetwork.com/thumbnails/max600x600/cms/news.9/233207/bookworm.jpg",
+    cover: "",
     trailer_url: "https://www.youtube.com/results?search_query=Ascendance+of+a+Bookworm+Season+4+trailer"
   },
   {
@@ -155,7 +155,7 @@ const DOSSIER_BASH_DATA = [
     tag: "ROMANCE & DÉBAUCHE",
     color: "#f87171",
     review: "Botan, jeune étudiante de 20 ans, découvre l'alcool après sa rencontre avec Ibuki, la responsable du dortoir. Au cours de soirées mi-éméchées mi-heureuses, elles deviennent 'drinking buddies'. C'est aussi rafraîchissant qu'une bière et tout mignon. Si vous aimez le vin et les romances entre lesbiennes, c'est pour vous !",
-    cover: "https://tantei-anime.jp/assets/img/top/kv.jpg", // Image représentative de l'ambiance Yuri/Alcool
+    cover: "https://images.unsplash.com/photo-1594913785162-e6785b4d7023?q=80&w=800&auto=format&fit=crop", // TODO: Remplacer par officiel local
     trailer_url: "https://www.youtube.com/results?search_query=Botan+Kamiina+Fully+Blossoms+When+Drunk+trailer"
   },
   {
@@ -165,7 +165,7 @@ const DOSSIER_BASH_DATA = [
     tag: "LE ONE PIECE DU VIN",
     color: "#7c2d12",
     review: "C'est le One Piece du vin. On suit le monde viticole qui débute avec la mort de Kanzaki, célèbre critique œnologique. Son héritage ne revient pas directement à son fils Shizuku : il devra identifier 12 vins exceptionnels, les 12 apôtres.\n\nOn suivra des confrontations intéressantes entre amateurs du vin, qui à l'aide de leurs palais divins devront retrouver les vins en question. Shizuku lui malheureusement est dégoûté par le vin, ce qui fera que ça sera intéressant de voir comment il fera. Un grand cru de cette saison.",
-    cover: "https://cdn.animenewsnetwork.com/thumbnails/max600x600/cms/news.9/234770/73e86520de635d234faab0bfaa270476-905x1280.jpg",
+    cover: "",
     trailer_url: "https://www.youtube.com/results?search_query=The+Drops+of+God+anime+trailer"
   },
   {
@@ -195,7 +195,7 @@ const DOSSIER_BASH_DATA = [
     tag: "ÉTRANGE & PÂTE À MODELER",
     color: "#4b5563",
     review: "Je sais absolument pas c'est quoi cette merde, mais j'en parle parce que je dois finir la rubrique mais c'est trop étrange, c'est juste une histoire de carie, de démon, le tout en pâte à modeler/slow motion, du fond des enfers.",
-    cover: "https://preview.redd.it/candy-caries-key-visual-v0-y14r84zk93cg1.png?auto=webp&s=a07f2a816cf7902e8baf8b8285deb621ff191d71",
+    cover: "",
     trailer_url: "https://www.youtube.com/results?search_query=Candy+Caries+anime+trailer"
   },
   {
@@ -388,6 +388,11 @@ export default function BibliothequePage() {
 
     const updated = await Promise.all(
       DOSSIER_BASH_DATA.map(async (item) => {
+        // PRIORITÉ : Si une image est déjà définie en dur (ou stockée localement), on l'utilise directement.
+        if (item.cover && item.cover.trim() !== "") {
+          return item;
+        }
+
         try {
           // Extraire l'année pour le filtrage (ex: "2026")
           const releaseYearMatch = item.date.match(/\d{4}/);
