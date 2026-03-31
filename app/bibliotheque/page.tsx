@@ -209,13 +209,51 @@ export default function BibliothequePage() {
     const updated = await Promise.all(
       DOSSIER_BASH_DATA.map(async (item) => {
         try {
-          // 1. Essayer TMDB
+          // Extraire l'année pour le filtrage (ex: "2026")
+          const releaseYearMatch = item.date.match(/\d{4}/);
+          const targetYear = releaseYearMatch ? parseInt(releaseYearMatch[0]) : null;
+
+          // 1. Essayer TMDB avec un système de scoring intelligent
           if (apiKey) {
             const res = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&language=fr-FR&query=${encodeURIComponent(item.searchQuery)}`);
             const json = await res.json();
-            const tmdbItem = json.results?.find((x: any) => x.media_type === "tv" || x.media_type === "movie");
-            if (tmdbItem && tmdbItem.poster_path) {
-              return { ...item, cover: `https://image.tmdb.org/t/p/w780${tmdbItem.poster_path}` };
+            
+            if (json.results && json.results.length > 0) {
+              const scoredResults = json.results
+                .filter((x: any) => x.media_type === "tv" || x.media_type === "movie")
+                .map((x: any) => {
+                  let score = 0;
+                  const name = x.name || x.title || "";
+                  const originalName = x.original_name || x.original_title || "";
+                  
+                  // Titre correspondant ?
+                  if (name.toLowerCase() === item.title.toLowerCase() || name.toLowerCase() === item.searchQuery.toLowerCase()) score += 10;
+                  else if (name.toLowerCase().includes(item.searchQuery.toLowerCase())) score += 5;
+                  
+                  if (originalName.toLowerCase() === item.searchQuery.toLowerCase()) score += 8;
+
+                  // Animation (ID 16 sur TMDB) ?
+                  if (x.genre_ids?.includes(16)) score += 5;
+
+                  // Langue japonaise (Anime) ?
+                  if (x.original_language === "ja") score += 5;
+
+                  // Année correspondante ?
+                  const releaseDate = x.first_air_date || x.release_date;
+                  if (releaseDate && targetYear) {
+                    const resYear = parseInt(releaseDate.split("-")[0]);
+                    if (resYear === targetYear) score += 5;
+                    else if (Math.abs(resYear - targetYear) <= 1) score += 2;
+                  }
+
+                  return { ...x, score };
+                })
+                .sort((a: any, b: any) => b.score - a.score);
+
+              const bestMatch = scoredResults[0] as any;
+              if (bestMatch && bestMatch.score >= 5 && bestMatch.poster_path) {
+                return { ...item, cover: `https://image.tmdb.org/t/p/w780${bestMatch.poster_path}` };
+              }
             }
           }
           
@@ -230,7 +268,7 @@ export default function BibliothequePage() {
             }
           }
           
-          // 3. Fallback ultime sur AniList pour les animes manquants/récents (comme Haibara)
+          // 3. Fallback ultime sur AniList (Très précis pour les animes)
           const aliRes = await fetch("https://graphql.anilist.co", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
