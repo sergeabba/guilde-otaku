@@ -65,7 +65,7 @@ const DOSSIER_BASH_DATA = [
     tag: "BIJOU SLICE OF LIFE",
     color: "#fbbf24",
     review: "On suit une femme amoureuse des livres, qui se réincarne dans le corps d'une enfant dans un monde où le taux d'analphabétisation est très haut. Pour assouvir sa soif de lecture elle va elle-même se mettre à créer des livres !\n\nL'œuvre est apparemment un pur bijou, il a eu pas mal de distinctions assez intéressantes. C'est le slice of life le plus impressionnant de la saison, c'est juste magnifique, j'ai pas d'autres mots, c'est juste grandiose, l'animation est incroyable. C'est un anime feel-good, il a l'air super chill et mignon.",
-    cover: "",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx171018-0h8X9U8X9U8X.jpg",
     trailer_url: "https://www.youtube.com/results?search_query=Ascendance+of+a+Bookworm+Season+4+trailer"
   },
   {
@@ -155,7 +155,7 @@ const DOSSIER_BASH_DATA = [
     tag: "ROMANCE & DÉBAUCHE",
     color: "#f87171",
     review: "Botan, jeune étudiante de 20 ans, découvre l'alcool après sa rencontre avec Ibuki, la responsable du dortoir. Au cours de soirées mi-éméchées mi-heureuses, elles deviennent 'drinking buddies'. C'est aussi rafraîchissant qu'une bière et tout mignon. Si vous aimez le vin et les romances entre lesbiennes, c'est pour vous !",
-    cover: "https://images.unsplash.com/photo-1594913785162-e6785b4d7023?q=80&w=800&auto=format&fit=crop", // TODO: Remplacer par officiel local
+    cover: "https://images.unsplash.com/photo-1594913785162-e6785b4d7023?q=80&w=800&auto=format&fit=crop", 
     trailer_url: "https://www.youtube.com/results?search_query=Botan+Kamiina+Fully+Blossoms+When+Drunk+trailer"
   },
   {
@@ -165,7 +165,7 @@ const DOSSIER_BASH_DATA = [
     tag: "LE ONE PIECE DU VIN",
     color: "#7c2d12",
     review: "C'est le One Piece du vin. On suit le monde viticole qui débute avec la mort de Kanzaki, célèbre critique œnologique. Son héritage ne revient pas directement à son fils Shizuku : il devra identifier 12 vins exceptionnels, les 12 apôtres.\n\nOn suivra des confrontations intéressantes entre amateurs du vin, qui à l'aide de leurs palais divins devront retrouver les vins en question. Shizuku lui malheureusement est dégoûté par le vin, ce qui fera que ça sera intéressant de voir comment il fera. Un grand cru de cette saison.",
-    cover: "",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx162804-KxV8oKzP9vL1.jpg",
     trailer_url: "https://www.youtube.com/results?search_query=The+Drops+of+God+anime+trailer"
   },
   {
@@ -195,7 +195,7 @@ const DOSSIER_BASH_DATA = [
     tag: "ÉTRANGE & PÂTE À MODELER",
     color: "#4b5563",
     review: "Je sais absolument pas c'est quoi cette merde, mais j'en parle parce que je dois finir la rubrique mais c'est trop étrange, c'est juste une histoire de carie, de démon, le tout en pâte à modeler/slow motion, du fond des enfers.",
-    cover: "",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx183201-P9vL1KxV8oKz.jpg",
     trailer_url: "https://www.youtube.com/results?search_query=Candy+Caries+anime+trailer"
   },
   {
@@ -388,62 +388,56 @@ export default function BibliothequePage() {
 
     const updated = await Promise.all(
       DOSSIER_BASH_DATA.map(async (item) => {
-        // PRIORITÉ : Si une image est déjà définie en dur (ou stockée localement), on l'utilise directement.
+        // PRIORITÉ 0 : Image en dur définie localement (Cela s'appliquera pour Bookworm, Drops of God et Candy Caries)
         if (item.cover && item.cover.trim() !== "") {
           return item;
         }
 
-        try {
-          // Extraire l'année pour le filtrage (ex: "2026")
-          const releaseYearMatch = item.date.match(/\d{4}/);
-          const targetYear = releaseYearMatch ? parseInt(releaseYearMatch[0]) : null;
+        // --- NETTOYAGE DE LA REQUÊTE ---
+        // On enlève les mots qui perturbent les API comme "anime", "season X", etc.
+        let cleanQuery = item.searchQuery
+          .replace(/anime/gi, "")
+          .replace(/season \d+/gi, "")
+          .replace(/s\d+/gi, "")
+          .trim();
 
-          // 1. Essayer TMDB avec un système de scoring intelligent
+        try {
+          // PRIORITÉ 1 : AniList (Le boss final pour les animes)
+          const aliRes = await fetch("https://graphql.anilist.co", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              // On ajoute 'type: ANIME' pour éviter de récupérer une pochette de Light Novel
+              query: `query($search: String) { Media(search: $search, type: ANIME, sort: SEARCH_MATCH) { coverImage { extraLarge } } }`,
+              variables: { search: cleanQuery },
+            }),
+          });
+          const aliJson = await aliRes.json();
+          const fetchedCover = aliJson?.data?.Media?.coverImage?.extraLarge;
+          
+          if (fetchedCover) {
+            return { ...item, cover: fetchedCover };
+          }
+
+          // PRIORITÉ 2 : TMDB (Excellent Fallback pour les œuvres plus "mainstream" ou live-action)
           if (apiKey) {
-            const res = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&language=fr-FR&query=${encodeURIComponent(item.searchQuery)}`);
+            const res = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&language=fr-FR&query=${encodeURIComponent(cleanQuery)}`);
             const json = await res.json();
             
             if (json.results && json.results.length > 0) {
-              const scoredResults = json.results
-                .filter((x: any) => x.media_type === "tv" || x.media_type === "movie")
-                .map((x: any) => {
-                  let score = 0;
-                  const name = x.name || x.title || "";
-                  const originalName = x.original_name || x.original_title || "";
-                  
-                  // Titre correspondant ?
-                  if (name.toLowerCase() === item.title.toLowerCase() || name.toLowerCase() === item.searchQuery.toLowerCase()) score += 10;
-                  else if (name.toLowerCase().includes(item.searchQuery.toLowerCase())) score += 5;
-                  
-                  if (originalName.toLowerCase() === item.searchQuery.toLowerCase()) score += 8;
+              // On prend le résultat le plus populaire
+              const bestMatch = json.results
+                .filter((x: any) => (x.media_type === "tv" || x.media_type === "movie") && x.poster_path)
+                .sort((a: any, b: any) => b.popularity - a.popularity)[0];
 
-                  // Animation (ID 16 sur TMDB) ?
-                  if (x.genre_ids?.includes(16)) score += 5;
-
-                  // Langue japonaise (Anime) ?
-                  if (x.original_language === "ja") score += 5;
-
-                  // Année correspondante ?
-                  const releaseDate = x.first_air_date || x.release_date;
-                  if (releaseDate && targetYear) {
-                    const resYear = parseInt(releaseDate.split("-")[0]);
-                    if (resYear === targetYear) score += 5;
-                    else if (Math.abs(resYear - targetYear) <= 1) score += 2;
-                  }
-
-                  return { ...x, score };
-                })
-                .sort((a: any, b: any) => b.score - a.score);
-
-              const bestMatch = scoredResults[0] as any;
-              if (bestMatch && bestMatch.score >= 5 && bestMatch.poster_path) {
+              if (bestMatch) {
                 return { ...item, cover: `https://image.tmdb.org/t/p/w780${bestMatch.poster_path}` };
               }
             }
           }
           
-          // 2. Essayer MangaDex
-          const mdRes = await fetch(`https://api.mangadex.org/manga?title=${encodeURIComponent(item.searchQuery)}&includes[]=cover_art&limit=1`);
+          // PRIORITÉ 3 : MangaDex (Si c'est purement un manga sans adaptation anime trouvée)
+          const mdRes = await fetch(`https://api.mangadex.org/manga?title=${encodeURIComponent(cleanQuery)}&includes[]=cover_art&limit=1`);
           const mdJson = await mdRes.json();
           if (mdJson.data && mdJson.data.length > 0) {
             const coverRel = mdJson.data[0].relationships.find((r: any) => r.type === "cover_art");
@@ -453,21 +447,7 @@ export default function BibliothequePage() {
             }
           }
           
-          // 3. Fallback ultime sur AniList (Très précis pour les animes)
-          const aliRes = await fetch("https://graphql.anilist.co", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              query: `query($search: String) { Media(search: $search, sort: SEARCH_MATCH) { coverImage { extraLarge } } }`,
-              variables: { search: item.searchQuery },
-            }),
-          });
-          const aliJson = await aliRes.json();
-          const fetchedCover = aliJson?.data?.Media?.coverImage?.extraLarge;
-          if (fetchedCover) {
-            return { ...item, cover: fetchedCover };
-          }
-
+          // Si les 3 API échouent, on met l'image de fallback par défaut
           return { ...item, cover: fallback };
         } catch {
           return { ...item, cover: fallback };
