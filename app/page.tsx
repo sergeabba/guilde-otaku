@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
-import { members, Rank, Member } from "../data/members";
+import { Rank, Member } from "../data/members";
+import { supabase } from "../lib/supabase";
 import MemberCard from "./components/MemberCard";
 import MemberModal from "./components/MemberModal";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,7 +20,22 @@ export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("anime");
+  const [members, setMembers] = useState<Member[]>([]);
   const isMobile = useIsMobile(); // ← hook centralisé
+
+  useEffect(() => {
+    const fetchMembers = async () => {
+      const { data } = await supabase.from("fighters").select("*").order("id", { ascending: true });
+      if (data) {
+        setMembers(data.map(m => ({
+          ...m,
+          animeChar: m.animechar,
+          rankJP: m.rankjp
+        })));
+      }
+    };
+    fetchMembers();
+  }, []);
 
   const theme  = rankBg[activeRank] ?? rankBg["Tous"];
   const accent = rankAccents[activeRank as Rank | "Tous"];

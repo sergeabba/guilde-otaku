@@ -5,27 +5,32 @@
 // parseBirthday centralisé dans app/types pour éviter la duplication.
 
 import { useEffect, useState } from "react";
-import { members } from "../../data/members";
+import { supabase } from "../../lib/supabase";
 import Link from "next/link";
 import { Gift, ChevronRight, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { parseBirthday } from "../types"; // ← centralisé
 
 export default function BirthdayBanner() {
-  const [birthdayMembers, setBirthdayMembers] = useState<typeof members>([]);
+  const [birthdayMembers, setBirthdayMembers] = useState<any[]>([]);
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
-    const now = new Date();
-    const todayDay = now.getDate();
-    const todayMonth = now.getMonth() + 1;
+    const fetchBirthdays = async () => {
+      const now = new Date();
+      const todayDay = now.getDate();
+      const todayMonth = now.getMonth() + 1;
 
-    const celebrating = members.filter((m) => {
-      const parsed = parseBirthday(m.birthday);
-      return parsed && parsed.day === todayDay && parsed.month === todayMonth;
-    });
-
-    setBirthdayMembers(celebrating);
+      const { data } = await supabase.from("fighters").select("*");
+      if (data) {
+        const celebrating = data.filter((m) => {
+          const parsed = parseBirthday(m.birthday);
+          return parsed && parsed.day === todayDay && parsed.month === todayMonth;
+        });
+        setBirthdayMembers(celebrating);
+      }
+    };
+    fetchBirthdays();
   }, []);
 
   if (birthdayMembers.length === 0) return null;

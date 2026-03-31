@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { members } from "../../data/members";
+import { supabase } from "../../lib/supabase";
 import { Volume2, VolumeX, ChevronLeft, ChevronRight, User, Sword, Search, Play, Pause } from "lucide-react";
 import GuildeHeader from "../components/GuildeHeader"; // ← ajouté
 
@@ -24,8 +24,23 @@ export default function WantedPage() {
   const [imgError, setImgError] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("real");
   const [searchTerm, setSearchTerm] = useState("");
+  const [members, setMembers] = useState<any[]>([]);
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    const fetchMembers = async () => {
+      const { data } = await supabase.from("fighters").select("*").order("id", { ascending: true });
+      if (data) {
+        setMembers(data.map(m => ({
+          ...m,
+          animeChar: m.animechar,
+          rankJP: m.rankjp
+        })));
+      }
+    };
+    fetchMembers();
+  }, []);
 
   // --- FILTRAGE ET RECHERCHE ---
   const filteredMembers = useMemo(() => {

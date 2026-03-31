@@ -11,10 +11,15 @@ import { Rank, RANK_FILTER_ORDER } from "../../data/members";
 export default function AdminFightersPage() {
   const [auth, setAuth] = useState(false);
   const [password, setPassword] = useState("");
+  const [checking, setChecking] = useState(true);
   const [fighters, setFighters] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+
+  // Upload state
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [uploadingAnime, setUploadingAnime] = useState(false);
 
   // Formulaire d'édition
   const [formName, setFormName] = useState("");
@@ -36,15 +41,51 @@ export default function AdminFightersPage() {
   const [formSpecialName, setFormSpecialName] = useState("");
   const [formSpecialEffect, setFormSpecialEffect] = useState("");
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const isAuth = sessionStorage.getItem("guilde_admin_auth") === "true";
+      if (isAuth) setAuth(true);
+      setChecking(false);
+    }
+  }, []);
+
   const checkAuth = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === "1111") setAuth(true);
-    else alert("Mot de passe incorrect");
+    if (password === "1111") {
+      sessionStorage.setItem("guilde_admin_auth", "true");
+      setAuth(true);
+    } else {
+      alert("Mot de passe incorrect");
+    }
   };
 
   useEffect(() => {
     if (auth) fetchFighters();
   }, [auth]);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'photo' | 'anime') => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+    const filePath = `fighters/${fileName}`;
+
+    if (type === 'photo') setUploadingPhoto(true);
+    else setUploadingAnime(true);
+
+    const { error: uploadError } = await supabase.storage.from('guilde-images').upload(filePath, file);
+    
+    if (uploadError) {
+      alert("Erreur upload: " + uploadError.message);
+    } else {
+      const { data } = supabase.storage.from('guilde-images').getPublicUrl(filePath);
+      if (type === 'photo') setFormPhoto(data.publicUrl);
+      else setFormAnimechar(data.publicUrl);
+    }
+
+    if (type === 'photo') setUploadingPhoto(false);
+    else setUploadingAnime(false);
+  };
 
   const fetchFighters = async () => {
     const { data } = await supabase.from("fighters").select("*").order("id", { ascending: false });
@@ -120,6 +161,8 @@ export default function AdminFightersPage() {
     fetchFighters();
   };
 
+  if (checking) return null;
+
   if (!auth) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: colors.bg }}>
@@ -191,7 +234,7 @@ export default function AdminFightersPage() {
                   <div><label style={{ fontSize: "12px", color: colors.textSecondary }}>Nom complet</label><input required value={formName} onChange={e => setFormName(e.target.value)} style={{ width: "100%", padding: "10px", background: colors.bgCard, border: `1px solid ${colors.border}`, color: "#fff", borderRadius: "8px" }} /></div>
                   <div><label style={{ fontSize: "12px", color: colors.textSecondary }}>Rang</label>
                     <select value={formRank} onChange={(e) => setFormRank(e.target.value as Rank)} style={{ width: "100%", padding: "10px", background: colors.bgCard, border: `1px solid ${colors.border}`, color: "#fff", borderRadius: "8px" }}>
-                      {RANK_FILTER_ORDER.map(r => <option key={r} value={r}>{r}</option>)}
+                      {RANK_FILTER_ORDER.map(r => <option key={r} value={r} style={{ background: colors.bg, color: "#fff" }}>{r}</option>)}
                     </select>
                   </div>
                 </div>
@@ -208,8 +251,26 @@ export default function AdminFightersPage() {
 
                 {/* Images */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-                  <div><label style={{ fontSize: "12px", color: colors.textSecondary }}>Image Réelle (/photos/...)</label><input required value={formPhoto} onChange={e => setFormPhoto(e.target.value)} style={{ width: "100%", padding: "10px", background: colors.bgCard, border: `1px solid ${colors.border}`, color: "#fff", borderRadius: "8px" }} /></div>
-                  <div><label style={{ fontSize: "12px", color: colors.textSecondary }}>Image Anime (/anime/...)</label><input required value={formAnimechar} onChange={e => setFormAnimechar(e.target.value)} style={{ width: "100%", padding: "10px", background: colors.bgCard, border: `1px solid ${colors.border}`, color: "#fff", borderRadius: "8px" }} /></div>
+                  <div>
+                    <label style={{ fontSize: "12px", color: colors.textSecondary }}>Image Réelle</label>
+                    <div style={{ display: "flex", gap: "8px", flexDirection: "column" }}>
+                      <input required value={formPhoto} onChange={e => setFormPhoto(e.target.value)} style={{ width: "100%", padding: "10px", background: colors.bgCard, border: `1px solid ${colors.border}`, color: "#fff", borderRadius: "8px" }} />
+                      <label style={{ cursor: "pointer", fontSize: "12px", background: "rgba(255,255,255,0.1)", padding: "8px", borderRadius: "6px", textAlign: "center", border: `1px solid ${colors.border}` }}>
+                        {uploadingPhoto ? "Upload en cours..." : "Ou uploader un fichier"}
+                        <input type="file" accept="image/*" onChange={(e) => handleFileUpload(e, 'photo')} style={{ display: "none" }} disabled={uploadingPhoto} />
+                      </label>
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: "12px", color: colors.textSecondary }}>Image Anime</label>
+                    <div style={{ display: "flex", gap: "8px", flexDirection: "column" }}>
+                      <input required value={formAnimechar} onChange={e => setFormAnimechar(e.target.value)} style={{ width: "100%", padding: "10px", background: colors.bgCard, border: `1px solid ${colors.border}`, color: "#fff", borderRadius: "8px" }} />
+                      <label style={{ cursor: "pointer", fontSize: "12px", background: "rgba(255,255,255,0.1)", padding: "8px", borderRadius: "6px", textAlign: "center", border: `1px solid ${colors.border}` }}>
+                        {uploadingAnime ? "Upload en cours..." : "Ou uploader un fichier"}
+                        <input type="file" accept="image/*" onChange={(e) => handleFileUpload(e, 'anime')} style={{ display: "none" }} disabled={uploadingAnime} />
+                      </label>
+                    </div>
+                  </div>
                 </div>
 
                 <hr style={{ borderColor: colors.border }} />

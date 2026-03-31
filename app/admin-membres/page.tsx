@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { members } from "../../data/members";
 import { Upload, Check, X, Image as ImageIcon, User, Sword, Lock } from "lucide-react";
 import { useIsMobile } from "../hooks/useIsMobile";
@@ -12,6 +12,7 @@ type PhotoType = "photo" | "anime";
 export default function AdminMembresPage() {
   const isMobile = useIsMobile();
   const [authed, setAuthed]         = useState(false);
+  const [checking, setChecking]     = useState(true);
   const [pwInput, setPwInput]       = useState("");
   const [pwError, setPwError]       = useState(false);
   const [selectedMember, setSelectedMember] = useState<number | null>(null);
@@ -24,6 +25,16 @@ export default function AdminMembresPage() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   // ─── GARDE MOT DE PASSE ───────────────────────────────────────────────────────
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const isAuth = sessionStorage.getItem("guilde_admin_auth") === "true";
+      if (isAuth) setAuthed(true);
+      setChecking(false);
+    }
+  }, []);
+
+  if (checking) return null;
+
   if (!authed) {
     return (
       <div style={{ minHeight: "100vh", background: "#050508", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Barlow Condensed', sans-serif" }}>
@@ -37,13 +48,13 @@ export default function AdminMembresPage() {
             type="password"
             value={pwInput}
             onChange={e => { setPwInput(e.target.value); setPwError(false); }}
-            onKeyDown={e => { if (e.key === "Enter") { if (pwInput === ADMIN_PASSWORD) setAuthed(true); else setPwError(true); } }}
+            onKeyDown={e => { if (e.key === "Enter") { if (pwInput === ADMIN_PASSWORD) { sessionStorage.setItem("guilde_admin_auth", "true"); setAuthed(true); } else setPwError(true); } }}
             placeholder="Mot de passe..."
             style={{ width: "100%", padding: "14px 16px", background: "rgba(255,255,255,0.05)", border: `1px solid ${pwError ? "#f87171" : "rgba(255,255,255,0.1)"}`, borderRadius: "10px", color: "#fff", fontFamily: "'Barlow Condensed', sans-serif", fontSize: "18px", textAlign: "center", letterSpacing: "0.3em", outline: "none", marginBottom: "12px", boxSizing: "border-box" }}
           />
           {pwError && <p style={{ color: "#f87171", fontSize: "13px", fontWeight: 700, marginBottom: "12px" }}>Mot de passe incorrect</p>}
           <button
-            onClick={() => { if (pwInput === ADMIN_PASSWORD) setAuthed(true); else setPwError(true); }}
+            onClick={() => { if (pwInput === ADMIN_PASSWORD) { sessionStorage.setItem("guilde_admin_auth", "true"); setAuthed(true); } else setPwError(true); }}
             style={{ width: "100%", padding: "14px", background: "#c9a84c", border: "none", borderRadius: "10px", color: "#000", fontFamily: "'Barlow Condensed', sans-serif", fontSize: "16px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em", cursor: "pointer" }}
           >
             ENTRER

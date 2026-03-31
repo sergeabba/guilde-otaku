@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { members, Member, Rank } from "../../data/members";
+import { Member, Rank } from "../../data/members";
+import { supabase } from "../../lib/supabase";
 import MemberModal from "../components/MemberModal";
 import { Gift, Crown } from "lucide-react";
 import { rankAccents } from "../config/ranks";
@@ -53,7 +54,22 @@ export default function BirthdaysPage() {
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [activeMonth, setActiveMonth] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("anime");
+  const [members, setMembers] = useState<Member[]>([]);
   const isMobile = useIsMobile();
+
+  useEffect(() => {
+    const fetchMembers = async () => {
+      const { data } = await supabase.from("fighters").select("*").order("id", { ascending: true });
+      if (data) {
+        setMembers(data.map(m => ({
+          ...m,
+          animeChar: m.animechar,
+          rankJP: m.rankjp
+        })));
+      }
+    };
+    fetchMembers();
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 60_000);

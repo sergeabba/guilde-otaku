@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import {
   Search, Star, Check, X, Tv, BookOpen, Film, Gamepad2,
-  Loader2, Image as ImageIcon, FileText, Youtube, MessageSquare, Lock,
+  Loader2, Image as ImageIcon, FileText, Youtube, MessageSquare, Lock, Trash2, List
 } from "lucide-react";
 import { useIsMobile } from "../hooks/useIsMobile";
 
@@ -244,8 +244,35 @@ function ResultCard({ anime, isSelected, onSelect }: { anime: AniListResult; isS
 export default function AdminBiblio() {
   const isMobile = useIsMobile();
   const [authed,      setAuthed]      = useState(false);
+  const [checking,    setChecking]    = useState(true);
   const [pwInput,     setPwInput]     = useState("");
   const [pwError,     setPwError]     = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const isAuth = sessionStorage.getItem("guilde_admin_auth") === "true";
+      if (isAuth) setAuthed(true);
+      setChecking(false);
+    }
+  }, []);
+
+  const [currentView,   setCurrentView] = useState<"ADD" | "MANAGE">("ADD");
+  const [libraryItems,  setLibraryItems] = useState<any[]>([]);
+
+  const fetchLibrary = async () => {
+    const { data } = await supabase.from("bibliotheque").select("*").order("created_at", { ascending: false });
+    if (data) setLibraryItems(data);
+  };
+
+  useEffect(() => {
+    if (authed) fetchLibrary();
+  }, [authed]);
+
+  const handleDelete = async (id: string, title: string) => {
+    if (!confirm(`Supprimer définitivement l'œuvre "${title}" ?`)) return;
+    await supabase.from("bibliotheque").delete().eq("id", id);
+    fetchLibrary();
+  };
 
   const [query,       setQuery]       = useState("");
   const [searchType,  setSearchType]  = useState<"ANIME" | "MANGA" | "ALL">("ALL");
@@ -264,6 +291,8 @@ export default function AdminBiblio() {
   const [saveSuccess,    setSaveSuccess]    = useState(false);
 
   // ─── GARDE MOT DE PASSE ──────────────────────────────────────────────────────
+  if (checking) return null;
+  
   if (!authed) {
     return (
       <div style={{ minHeight: "100vh", background: colors.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font }}>
@@ -277,13 +306,13 @@ export default function AdminBiblio() {
             type="password"
             value={pwInput}
             onChange={e => { setPwInput(e.target.value); setPwError(false); }}
-            onKeyDown={e => { if (e.key === "Enter") { if (pwInput === ADMIN_PASSWORD) setAuthed(true); else setPwError(true); } }}
+            onKeyDown={e => { if (e.key === "Enter") { if (pwInput === ADMIN_PASSWORD) { sessionStorage.setItem("guilde_admin_auth", "true"); setAuthed(true); } else setPwError(true); } }}
             placeholder="Mot de passe..."
             style={{ width: "100%", padding: "14px 16px", background: colors.bgCard, border: `1px solid ${pwError ? colors.danger : colors.border}`, borderRadius: "10px", color: colors.textPrimary, fontFamily: font, fontSize: "18px", textAlign: "center", letterSpacing: "0.3em", outline: "none", marginBottom: "12px", boxSizing: "border-box" }}
           />
           {pwError && <p style={{ color: colors.danger, fontSize: "13px", fontWeight: 700, marginBottom: "12px" }}>Mot de passe incorrect</p>}
           <button
-            onClick={() => { if (pwInput === ADMIN_PASSWORD) setAuthed(true); else setPwError(true); }}
+            onClick={() => { if (pwInput === ADMIN_PASSWORD) { sessionStorage.setItem("guilde_admin_auth", "true"); setAuthed(true); } else setPwError(true); }}
             style={{ ...components.btnPrimary, width: "100%", padding: "14px", justifyContent: "center", fontSize: "16px" }}
           >
             ENTRER
@@ -367,16 +396,55 @@ export default function AdminBiblio() {
       <div style={{ maxWidth: "800px", margin: "0 auto" }}>
 
         {/* HEADER */}
-        <div style={{ marginBottom: "48px" }}>
-          <p style={{ ...typography.overline, marginBottom: "8px" }}>GUILDE OTAKU · ESPACE ADMIN</p>
-          <h1 style={{ fontSize: "clamp(40px,8vw,72px)", fontWeight: 900, fontStyle: "italic", lineHeight: 0.9, textTransform: "uppercase", marginBottom: "12px" }}>
-            GÉRER LA<br /><span style={{ color: colors.gold }}>BIBLIOTHÈQUE</span>
-          </h1>
-          <p style={{ ...typography.body, maxWidth: "480px" }}>
-            Recherche via <strong style={{ color: colors.gold }}>AniList GraphQL</strong> — couvertures HD, genres, studios, trailers et métadonnées complètes.
-          </p>
+        <div style={{ marginBottom: "48px", display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "20px" }}>
+          <div>
+            <p style={{ ...typography.overline, marginBottom: "8px" }}>GUILDE OTAKU · ESPACE ADMIN</p>
+            <h1 style={{ fontSize: "clamp(40px,8vw,72px)", fontWeight: 900, fontStyle: "italic", lineHeight: 0.9, textTransform: "uppercase", marginBottom: "12px" }}>
+              GÉRER LA<br /><span style={{ color: colors.gold }}>BIBLIOTHÈQUE</span>
+            </h1>
+            <p style={{ ...typography.body, maxWidth: "480px" }}>
+              Recherche HD via AniList ou Gestion des entrées existantes.
+            </p>
+          </div>
+          
+          <div style={{ display: "flex", gap: "8px", background: colors.bgCard, padding: "6px", borderRadius: "12px", border: `1px solid ${colors.border}` }}>
+            <button onClick={() => setCurrentView("ADD")} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "10px 16px", borderRadius: "8px", border: "none", cursor: "pointer", fontFamily: font, fontWeight: 700, fontSize: "14px", background: currentView === "ADD" ? colors.gold : "transparent", color: currentView === "ADD" ? "#000" : colors.textSecondary }}>
+              <Search size={16} /> Ajouter
+            </button>
+            <button onClick={() => setCurrentView("MANAGE")} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "10px 16px", borderRadius: "8px", border: "none", cursor: "pointer", fontFamily: font, fontWeight: 700, fontSize: "14px", background: currentView === "MANAGE" ? colors.gold : "transparent", color: currentView === "MANAGE" ? "#000" : colors.textSecondary }}>
+              <List size={16} /> Gérer
+            </button>
+          </div>
         </div>
 
+        {currentView === "MANAGE" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <h2 style={{ fontFamily: font, fontSize: "20px", fontWeight: 900, color: colors.gold, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "12px" }}>Œuvres Enregistrées ({libraryItems.length})</h2>
+            {libraryItems.length === 0 ? (
+              <p style={{ color: colors.textSecondary, fontFamily: font }}>La bibliothèque est vide.</p>
+            ) : (
+              libraryItems.map(item => (
+                <div key={item.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", background: colors.bgCard, borderRadius: "12px", border: `1px solid ${colors.border}` }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                    <div style={{ width: "40px", height: "56px", borderRadius: "6px", overflow: "hidden", border: `1px solid ${colors.border}`, flexShrink: 0 }}>
+                      <img src={item.cover_image || ""} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    </div>
+                    <div>
+                      <h3 style={{ margin: 0, fontFamily: font, fontSize: "18px", fontWeight: 800 }}>{item.title}</h3>
+                      <p style={{ margin: 0, ...typography.meta }}>{item.type} • {item.tier}</p>
+                    </div>
+                  </div>
+                  <button onClick={() => handleDelete(item.id, item.title)} style={{ background: "rgba(248,113,113,0.1)", border: "none", borderRadius: "8px", padding: "10px", color: colors.danger, cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {currentView === "ADD" && (
+          <>
         {/* SUCCÈS */}
         {saveSuccess && (
           <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "18px 20px", background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.3)", borderRadius: "12px", marginBottom: "32px" }}>
@@ -582,6 +650,10 @@ export default function AdminBiblio() {
             </div>
           </div>
         )}
+
+          </>
+        )}
+
       </div>
     </div>
   );

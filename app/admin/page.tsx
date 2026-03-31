@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Lock, BookOpen, User, Flame, ArrowRight, ShieldAlert } from "lucide-react";
@@ -11,16 +11,28 @@ export default function AdminHubPage() {
   const [password, setPassword] = useState("");
   const [auth, setAuth] = useState(false);
   const [errorLine, setErrorLine] = useState(false);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const isAuth = sessionStorage.getItem("guilde_admin_auth") === "true";
+      if (isAuth) setAuth(true);
+      setChecking(false);
+    }
+  }, []);
 
   const checkAuth = (e: React.FormEvent) => {
     e.preventDefault();
     if (password === "1111") {
+      sessionStorage.setItem("guilde_admin_auth", "true");
       setAuth(true);
     } else {
       setErrorLine(true);
       setTimeout(() => setErrorLine(false), 2000);
     }
   };
+
+  if (checking) return null; // Attendre la vérification du token
 
   if (!auth) {
     return (
@@ -96,6 +108,19 @@ export default function AdminHubPage() {
             </p>
             <Link href="/admin-fighters" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.05)", border: `1px solid rgba(248,113,113,0.3)`, padding: "12px 24px", borderRadius: "100px", color: "#f87171", textDecoration: "none", fontWeight: 700, fontSize: "14px", textTransform: "uppercase", letterSpacing: "0.1em" }}>
               Entrer dans l'Arène <ArrowRight size={16} />
+            </Link>
+          </motion.div>
+
+          {/* Carte Membres */}
+          <motion.div whileHover={{ scale: 1.02 }} style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: "24px", padding: "32px", position: "relative", overflow: "hidden" }}>
+            <div style={{ position: "absolute", top: 0, right: 0, background: "rgba(56, 189, 248, 0.1)", width: "150px", height: "150px", filter: "blur(50px)", borderRadius: "50%" }} />
+            <User size={32} color="#38bdf8" style={{ marginBottom: "20px" }} />
+            <h2 style={{ fontFamily: font, fontSize: "28px", fontWeight: 900, marginBottom: "12px", textTransform: "uppercase" }}>Trombinoscope Membres</h2>
+            <p style={{ ...typography.body, color: colors.textSecondary, marginBottom: "32px" }}>
+              L'ancienne page d'administration des membres. Nous recommandons de gérer via l'Arène désormais, mais le trombinoscope reste disponible.
+            </p>
+            <Link href="/admin-membres" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.05)", border: `1px solid rgba(56,189,248,0.3)`, padding: "12px 24px", borderRadius: "100px", color: "#38bdf8", textDecoration: "none", fontWeight: 700, fontSize: "14px", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+              Gérer Membres <ArrowRight size={16} />
             </Link>
           </motion.div>
 
