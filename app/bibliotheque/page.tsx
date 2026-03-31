@@ -29,13 +29,13 @@ const DOSSIER_BASH_DATA = [
     trailer_url: "https://www.youtube.com/results?search_query=Agents+of+the+Four+season+Dance+of+spring+trailer"
   },
   {
-    searchQuery: "Miss Maid", // The Food Diary of Miss Maid
+    searchQuery: "Maid-san wa Taberu dake", // Nom japonais précis pour éviter les confusions (ex: Miss Maid)
     title: "The Food Diary of Miss Maid",
     date: "02 Avril 2026",
     tag: "ANIME ASMR",
     color: "#f472b6",
     review: "Pour moi ce sera l'anime Asmr de la saison. Je ne vais pas entrer dans le synopsis car il est anecdotique dans ce genre d'oeuvre. On suivra juste la routine gustative (et non culinaire) d'une servante.\n\nLe ton de l'anime est chill et coloré et on suivra des personnages manger tout au long de la série. Entre nourriture et petite tranche de vie, c'est un anime à dévorer sans modération ! (La réalisation est cependant sommaire, mais c'est un détail).",
-    cover: "https://images.unsplash.com/photo-1618336753974-aae8e04506aa?q=80&w=800&auto=format&fit=crop",
+    cover: "https://meitabe-anime.com/assets/img/top/kv.webp",
     trailer_url: "https://www.youtube.com/results?search_query=The+Food+Diary+of+Miss+Maid+trailer"
   },
   {
