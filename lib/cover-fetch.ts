@@ -11,13 +11,42 @@ export const coverCache = new Map<string, string>();
 export const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
- * PRIORITÉ 1 : AniList (meilleure source pour les animes)
- * - Utilise Page pour obtenir plusieurs résultats
- * - Prend le premier résultat ANIME avec une cover
- * - Récupère bannerImage en bonus (utile pour le hero)
+ * Calcule un score de similarité entre deux chaînes (0 à 1)
+ * Utilisé pour valider que le résultat AniList correspond bien à la recherche
  */
-export async function fetchFromAniList(query: string): Promise<string | null> {
-  const cached = coverCache.get(`anilist-${query}`);
+function titleSimilarity(a: string, b: string): number {
+  const normalize = (s: string) =>
+    s.toLowerCase()
+      .replace(/[^a-z0-9\s]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const na = normalize(a);
+  const nb = normalize(b);
+
+  if (na === nb) return 1;
+  if (na.includes(nb) || nb.includes(na)) return 0.8;
+
+  // Jaccard similarity sur les mots
+  const wordsA = new Set(na.split(" ").filter(w => w.length > 1));
+  const wordsB = new Set(nb.split(" ").filter(w => w.length > 1));
+  if (wordsA.size === 0 || wordsB.size === 0) return 0;
+
+  let intersection = 0;
+  for (const w of wordsA) {
+    if (wordsB.has(w)) intersection++;
+  }
+  const union = new Set([...wordsA, ...wordsB]).size;
+  return intersection / union;
+}
+
+/**
+ * PRIORITÉ 0 : AniList par ID (100% fiable)
+ * Quand on connaît l'ID AniList exact, on fetch directement par ID.
+ */
+export async function fetchFromAniListById(id: number): Promise<string | null> {
+  const cacheKey = `anilist-id-${id}`;
+  const cached = coverCache.get(cacheKey);
   if (cached) return cached;
 
   try {
@@ -26,11 +55,69 @@ export async function fetchFromAniList(query: string): Promise<string | null> {
       headers: { "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({
         query: `
+          query ($id: Int) {
+            Media(id: $id) {
+              id
+              coverImage { extraLarge large }
+            }
+          }
+        `,
+        variables: { id },
+      }),
+    });
+
+    if (!res.ok) return null;
+
+    const json = await res.json();
+    const media = json?.data?.Media;
+    if (!media) return null;
+
+    const cover = media.coverImage?.extraLarge || media.coverImage?.large;
+    if (cover) {
+      coverCache.set(cacheKey, cover);
+      return cover;
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * PRIORITÉ 1 : AniList par recherche textuelle (meilleure source pour les animes)
+ * - Utilise Page pour obtenir plusieurs résultats
+ * - Valide la similarité du titre pour éviter les faux positifs
+ * - Essaie d'abord avec type ANIME, puis sans restriction de type
+ */
+export async function fetchFromAniList(query: string): Promise<string | null> {
+  const cached = coverCache.get(`anilist-${query}`);
+  if (cached) return cached;
+
+  // Essai 1 : recherche type ANIME
+  let cover = await _searchAniList(query, "ANIME");
+
+  // Essai 2 : recherche sans restriction de type (pour les mangas adaptés, etc.)
+  if (!cover) {
+    cover = await _searchAniList(query, null);
+  }
+
+  return cover;
+}
+
+async function _searchAniList(query: string, type: string | null): Promise<string | null> {
+  try {
+    const typeFilter = type ? `, type: ${type}` : "";
+    const res = await fetch("https://graphql.anilist.co", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({
+        query: `
           query ($search: String!) {
-            Page(perPage: 5) {
-              media(search: $search, type: ANIME, sort: SEARCH_MATCH) {
+            Page(perPage: 8) {
+              media(search: $search${typeFilter}, sort: SEARCH_MATCH) {
                 id
-                title { romaji english }
+                title { romaji english native }
                 coverImage { extraLarge large }
               }
             }
@@ -47,13 +134,44 @@ export async function fetchFromAniList(query: string): Promise<string | null> {
 
     if (!results || results.length === 0) return null;
 
-    // On prend le premier résultat qui a une cover extraLarge ou large
+    // Chercher le meilleur match par similarité de titre
+    let bestMatch: { cover: string; score: number } | null = null;
+
     for (const media of results) {
       const cover = media.coverImage?.extraLarge || media.coverImage?.large;
-      if (cover) {
-        coverCache.set(`anilist-${query}`, cover);
-        return cover;
+      if (!cover) continue;
+
+      // Calculer la similarité avec chaque variante du titre
+      const titles = [
+        media.title?.english,
+        media.title?.romaji,
+        media.title?.native,
+      ].filter(Boolean) as string[];
+
+      let maxSim = 0;
+      for (const t of titles) {
+        const sim = titleSimilarity(query, t);
+        if (sim > maxSim) maxSim = sim;
       }
+
+      // Seuil minimum de similarité : 0.25 (au moins quelques mots en commun)
+      if (maxSim >= 0.25 && (!bestMatch || maxSim > bestMatch.score)) {
+        bestMatch = { cover, score: maxSim };
+      }
+    }
+
+    // Si aucun match suffisamment similaire, prendre le premier résultat
+    // (le tri SEARCH_MATCH d'AniList est généralement bon)
+    if (!bestMatch && results.length > 0) {
+      const firstCover = results[0].coverImage?.extraLarge || results[0].coverImage?.large;
+      if (firstCover) {
+        bestMatch = { cover: firstCover, score: 0 };
+      }
+    }
+
+    if (bestMatch) {
+      coverCache.set(`anilist-${query}`, bestMatch.cover);
+      return bestMatch.cover;
     }
 
     return null;
@@ -175,31 +293,46 @@ export async function fetchFromMangaDex(query: string): Promise<string | null> {
 }
 
 /**
- * Nettoie un titre de recherche pour maximiser les chances de match
+ * Nettoie un titre de recherche pour maximiser les chances de match.
+ * Moins agressif que l'ancienne version : garde les mots importants
+ * comme "Season" et les caractères japonais.
  */
 export function cleanSearchQuery(raw: string): string {
   return raw
-    .replace(/\banime\b/gi, "")
-    .replace(/\bseason\s*\d+\b/gi, "")
-    .replace(/\bS\d+\b/gi, "")
-    .replace(/\b(trailer|official|pv)\b/gi, "")
-    .replace(/[^\w\s'-]/g, " ")  // retire les caractères spéciaux
+    .replace(/\b(trailer|official|pv|opening|ending|op|ed)\b/gi, "")
+    .replace(/[()[\]{}]/g, " ")   // retire les parenthèses/crochets
     .replace(/\s+/g, " ")         // normalise les espaces
     .trim();
 }
 
 /**
- * Fonction maîtresse qui essaie toutes les sources dans l'ordre
+ * Fonction maîtresse qui essaie toutes les sources dans l'ordre.
+ * Supporte un anilistId optionnel pour un fetch direct (100% fiable).
  */
-export async function fetchBestCover(query: string): Promise<string> {
+export async function fetchBestCover(query: string, anilistId?: number): Promise<string> {
+  // Priorité 0 : fetch par ID AniList (le plus fiable)
+  if (anilistId) {
+    const byId = await fetchFromAniListById(anilistId);
+    if (byId) return byId;
+  }
+
   const clean = cleanSearchQuery(query);
   
+  // Priorité 1 : recherche AniList par texte
   const aniList = await fetchFromAniList(clean);
   if (aniList) return aniList;
+
+  // Essayer aussi avec le query brut si le nettoyage a changé quelque chose
+  if (clean !== query) {
+    const aniListRaw = await fetchFromAniList(query);
+    if (aniListRaw) return aniListRaw;
+  }
   
+  // Priorité 2 : TMDB
   const tmdb = await fetchFromTMDB(clean);
   if (tmdb) return tmdb;
   
+  // Priorité 3 : MangaDex
   const mangaDex = await fetchFromMangaDex(clean);
   if (mangaDex) return mangaDex;
   
