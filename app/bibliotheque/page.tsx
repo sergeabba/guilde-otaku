@@ -118,13 +118,15 @@ const DOSSIER_BASH_DATA = [
     trailer_url: "https://www.youtube.com/results?search_query=Ghost+Concert+Missing+songs+trailer"
   },
   {
-    searchQuery: "MegaOre",
+    searchQuery: "Megami Isekai Tensei Nani ni Naritai Desu ka Ore Yuusha no Rokkotsu de",
+    anilistId: 206951,
     title: "MegaOre",
     date: "07 Avril 2026",
     tag: "ISEKAI ABSURDE",
     color: "#8b5cf6",
     review: "On suit l'histoire d'un homme qui meurt et se réincarne en... côte humaine ! Mais attention, pas n'importe laquelle, la côte d'un héros qui a un harem et qui est super beau.\n\nOn a une parodie exacerbée de l'état du marché de l'isekai moderne, l'œuvre détourne avec humour et sans aucune subtilité tous les clichés du genre. Visuellement, c'est l'anime le plus absurde de la saison, tantôt des marionnettes, tantôt des power rangers... Soit ça sera l'anime le plus drôle, soit le plus étrange.",
-    cover: "",
+    localCover: "/covers/dossier-bash/206951/cover.jpg",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx206951-qiHcrw7pwzuq.jpg",
     trailer_url: "https://www.youtube.com/results?search_query=Megami+Isekai+ni+MegaOre+trailer"
   },
   {
@@ -234,7 +236,8 @@ const DOSSIER_BASH_DATA = [
     tag: "L'INCONTOURNABLE",
     color: "#4ade80",
     review: "De quoi ça parle ?\nAu commencement n'existait que l'Hiver qui, incapable de supporter la solitude, choisit de se couper une partie de son essence pour donner naissance au Printemps. Par la volonté de la Terre Mère, il se coupa à nouveau une partie de son essence pour engendrer l'Été et l'Automne.\n\nDe l'oeuvre se dégage une certaine poésie, le ton des couleurs, la nature tout ou presque dans cet anime appelle à la contemplation et à la beauté. Un incontournable de la saison !",
-    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx190143-UV3GarNkmbMi.jpg",
+    localCover: "/covers/dossier-bash/190143/cover.jpg",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx190143-UV3GarNkmbMi.jpg",
     trailer_url: "https://www.youtube.com/results?search_query=Agents+of+the+Four+season+Dance+of+spring+trailer"
   },
   {
@@ -256,7 +259,8 @@ const DOSSIER_BASH_DATA = [
     tag: "ROMANCE BL",
     color: "#60a5fa",
     review: "Je préviens avant de commencer : c'est réellement une romance entre deux hommes. On suivra Nakamura, un jeune homme amoureux de son camarade de classe Hirose, qui tentera tant bien que mal d'entamer une romance avec lui...\n\nLe rendu est super bien. Il oscille entre le tendre, le mignon et l'adorable tout en explorant la complexité des relations avec une certaine justesse. Pour les amoureux de YAOI et de BL, c'est un incontournable !",
-    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx180228-vNwpaK5X7osA.png",
+    localCover: "/covers/dossier-bash/180228/cover.jpg",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx180228-vNwpaK5X7osA.png",
     trailer_url: "https://www.youtube.com/results?search_query=Go+For+It+Nakamura+trailer"
   },
   {
@@ -430,7 +434,11 @@ export default function BibliothequePage() {
         batch.map(async (item, batchIndex) => {
           const globalIndex = i + batchIndex;
 
-          // SKIP : Si une cover est déjà définie en dur dans les données
+          // SKIP : Si une cover locale ou distante est déjà définie en dur dans les données
+          if ("localCover" in item && typeof item.localCover === "string" && item.localCover.trim() !== "") {
+            return { ...item, cover: item.localCover };
+          }
+
           if (item.cover && item.cover.trim() !== "") {
             return item;
           }
@@ -440,26 +448,31 @@ export default function BibliothequePage() {
             return { ...item, cover: coverCache.get(item.searchQuery)! };
           }
 
-          const cleanQuery = cleanSearchQuery(item.searchQuery);
-
-          // Cascade : AniList → TMDB → MangaDex → Fallback
+          // Cascade : AniList ID → AniList Search → TMDB → MangaDex → Fallback
           let cover: string | null = null;
 
-          // 1. AniList
-          cover = await fetchFromAniList(cleanQuery);
-
-          // 2. TMDB (si AniList n'a rien)
-          if (!cover) {
-            // On essaie aussi avec le titre court (item.title)
-            cover = await fetchFromTMDB(cleanQuery);
-            if (!cover && item.title !== cleanQuery) {
-              cover = await fetchFromTMDB(item.title);
-            }
+          // 0. AniList par ID (100% fiable si disponible)
+          if ('anilistId' in item && (item as any).anilistId) {
+            cover = await fetchFromAniListById((item as any).anilistId);
           }
 
-          // 3. MangaDex (dernier recours)
+          // 1. AniList par recherche texte
           if (!cover) {
-            cover = await fetchFromMangaDex(cleanQuery);
+            const cleanQuery = cleanSearchQuery(item.searchQuery);
+            cover = await fetchFromAniList(cleanQuery);
+
+            // 2. TMDB (si AniList n'a rien)
+            if (!cover) {
+              cover = await fetchFromTMDB(cleanQuery);
+              if (!cover && item.title !== cleanQuery) {
+                cover = await fetchFromTMDB(item.title);
+              }
+            }
+
+            // 3. MangaDex (dernier recours)
+            if (!cover) {
+              cover = await fetchFromMangaDex(cleanQuery);
+            }
           }
 
           // 4. Fallback ultime
@@ -543,7 +556,7 @@ export default function BibliothequePage() {
       <div style={{ position: "relative", zIndex: 10 }}>
 
         {/* ── HERO ── */}
-        <motion.section ref={heroRef} style={{ y: heroY, opacity: heroOpacity }}>
+        <motion.section ref={heroRef} style={{ position: "relative", y: heroY, opacity: heroOpacity }}>
           <div style={{ padding: isMobile ? "60px 20px 40px" : "90px 48px 60px", maxWidth: "1100px", margin: "0 auto" }}>
             <motion.p initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}
               style={{ ...typography.overline, marginBottom: "16px" }}>

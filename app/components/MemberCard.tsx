@@ -60,6 +60,7 @@ export default function MemberCard({ member, index, viewMode, onClick, isMobile 
               src={photoSrc}
               alt={member.name}
               fill
+              sizes={isMobile ? "50vw" : "(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 230px"}
               priority={index < 4}
               className="object-cover object-top"
               onError={onError}

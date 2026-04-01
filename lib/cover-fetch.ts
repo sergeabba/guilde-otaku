@@ -160,15 +160,8 @@ async function _searchAniList(query: string, type: string | null): Promise<strin
       }
     }
 
-    // Si aucun match suffisamment similaire, prendre le premier résultat
-    // (le tri SEARCH_MATCH d'AniList est généralement bon)
-    if (!bestMatch && results.length > 0) {
-      const firstCover = results[0].coverImage?.extraLarge || results[0].coverImage?.large;
-      if (firstCover) {
-        bestMatch = { cover: firstCover, score: 0 };
-      }
-    }
-
+    // Si AniList ne trouve rien d'assez proche, on laisse les fallbacks
+    // (TMDB/MangaDex) prendre le relais au lieu de forcer un faux positif.
     if (bestMatch) {
       coverCache.set(`anilist-${query}`, bestMatch.cover);
       return bestMatch.cover;
@@ -216,15 +209,16 @@ export async function fetchFromTMDB(query: string): Promise<string | null> {
         `https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&language=en-US&query=${encodeURIComponent(query)}&include_adult=false`
       );
       json = await res.json();
-      const multiMatch = json.results
-        ?.filter((r: any) => r.poster_path && (r.media_type === "tv" || r.media_type === "movie"))
-        .sort((a: any, b: any) => (b.popularity ?? 0) - (a.popularity ?? 0))[0];
+      match = findBestTMDBMatch(
+        json.results?.filter((r: any) => r.media_type === "tv" || r.media_type === "movie"),
+        query
+      );
+    }
 
-      if (multiMatch) {
-        const cover = `https://image.tmdb.org/t/p/w780${multiMatch.poster_path}`;
-        coverCache.set(`tmdb-${query}`, cover);
-        return cover;
-      }
+    if (match) {
+      const cover = `https://image.tmdb.org/t/p/w780${match.poster_path}`;
+      coverCache.set(`tmdb-${query}`, cover);
+      return cover;
     }
 
     if (match) {
@@ -250,15 +244,38 @@ function findBestTMDBMatch(results: any[] | undefined, query: string): any | nul
   const withPoster = results.filter((r: any) => r.poster_path);
   if (withPoster.length === 0) return null;
 
-  // Priorité : résultats du genre Animation (16)
-  const animationResults = withPoster.filter((r: any) =>
-    r.genre_ids?.includes(16)
-  );
+  const scored = withPoster
+    .map((result: any) => {
+      const titles = [
+        result.name,
+        result.original_name,
+        result.title,
+        result.original_title,
+      ].filter(Boolean) as string[];
 
-  // Si on a des résultats Animation, on prend le plus populaire parmi eux
-  // Sinon, on prend le plus populaire tout court
-  const pool = animationResults.length > 0 ? animationResults : withPoster;
-  return pool.sort((a: any, b: any) => (b.popularity ?? 0) - (a.popularity ?? 0))[0];
+      let similarity = 0;
+      for (const title of titles) {
+        similarity = Math.max(similarity, titleSimilarity(query, title));
+      }
+
+      return {
+        result,
+        similarity,
+        isAnimation: result.genre_ids?.includes(16) ? 1 : 0,
+        popularity: result.popularity ?? 0,
+      };
+    })
+    .filter((entry) => entry.similarity >= 0.2);
+
+  if (scored.length === 0) return null;
+
+  scored.sort((a, b) => {
+    if (b.similarity !== a.similarity) return b.similarity - a.similarity;
+    if (b.isAnimation !== a.isAnimation) return b.isAnimation - a.isAnimation;
+    return b.popularity - a.popularity;
+  });
+
+  return scored[0].result;
 }
 
 /**
