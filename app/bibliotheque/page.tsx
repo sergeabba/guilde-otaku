@@ -7,17 +7,6 @@ import GuildeHeader from "../components/GuildeHeader";
 import OptimizedImage, { SkeletonCard } from "../components/OptimizedImage";
 import { supabase } from "../../lib/supabase";
 import { colors, typography, components, font, filterPillStyle, cardHoverStyle } from "../../outputs/styles/tokens";
-import { 
-  fetchBestCover, 
-  coverCache, 
-  cleanSearchQuery, 
-  fetchFromAniList, 
-  fetchFromAniListById,
-  fetchFromTMDB, 
-  fetchFromMangaDex, 
-  FALLBACK_COVER, 
-  delay 
-} from "../../lib/cover-fetch";
 import {
   Star, BookOpen, Tv, Gamepad2, Film, Quote, Flame, Gem, Meh,
   TrendingDown, Search, X, Clock, Calendar, Youtube, ArrowUpDown, Pencil
@@ -170,7 +159,7 @@ const DOSSIER_BASH_DATA = [
     tag: "COMÉDIE ABSURDE",
     color: "#d97706",
     review: "On suit un échoué au bac qui découvre Kujima, une espèce d'oiseau géant qui parle. Il décide de le recueillir, au début juste pour l'hiver, et on suivra le quotidien de cette famille étrange.\n\nEn vrai c'est super bon délire, c'est une comédie qui ne se prend pas au sérieux, c'est très absurde, mais ça peut et ça va plaire aux gens. La prod est sympa au passage.",
-    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx177508-Wfbz6iF9LlP2.png",
+    cover: "https://a.storyblok.com/f/178900/707x1000/614f8589aa/kujima_why_sing_when_you_can_warble_key_art.jpg/m/filters:quality(95)format(webp)",
     trailer_url: "https://www.youtube.com/results?search_query=Kujima+Why+Sing+When+You+Can+Warble+trailer"
   },
   {
@@ -236,8 +225,7 @@ const DOSSIER_BASH_DATA = [
     tag: "L'INCONTOURNABLE",
     color: "#4ade80",
     review: "De quoi ça parle ?\nAu commencement n'existait que l'Hiver qui, incapable de supporter la solitude, choisit de se couper une partie de son essence pour donner naissance au Printemps. Par la volonté de la Terre Mère, il se coupa à nouveau une partie de son essence pour engendrer l'Été et l'Automne.\n\nDe l'oeuvre se dégage une certaine poésie, le ton des couleurs, la nature tout ou presque dans cet anime appelle à la contemplation et à la beauté. Un incontournable de la saison !",
-    localCover: "/covers/dossier-bash/190143/cover.jpg",
-    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx190143-UV3GarNkmbMi.jpg",
+    cover: "https://www.nautiljon.com/images/manga/00/33/agents_of_the_four_seasons_-_la_danse_du_printemps_23733.webp",
     trailer_url: "https://www.youtube.com/results?search_query=Agents+of+the+Four+season+Dance+of+spring+trailer"
   },
   {
@@ -259,8 +247,7 @@ const DOSSIER_BASH_DATA = [
     tag: "ROMANCE BL",
     color: "#60a5fa",
     review: "Je préviens avant de commencer : c'est réellement une romance entre deux hommes. On suivra Nakamura, un jeune homme amoureux de son camarade de classe Hirose, qui tentera tant bien que mal d'entamer une romance avec lui...\n\nLe rendu est super bien. Il oscille entre le tendre, le mignon et l'adorable tout en explorant la complexité des relations avec une certaine justesse. Pour les amoureux de YAOI et de BL, c'est un incontournable !",
-    localCover: "/covers/dossier-bash/180228/cover.jpg",
-    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx180228-vNwpaK5X7osA.png",
+    cover: "https://m.media-amazon.com/images/M/MV5BMmRjYmZjMGItMGQ1Mi00OTZmLThmMTItYjMxZWZhNWNjNjczXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg",
     trailer_url: "https://www.youtube.com/results?search_query=Go+For+It+Nakamura+trailer"
   },
   {
@@ -389,7 +376,7 @@ function EntryCard({ entry, index, onSelect }: { entry: any; index: number; onSe
 export default function BibliothequePage() {
   const [oeuvres, setOeuvres]           = useState<any[]>([]);
   const [loading, setLoading]           = useState(true);
-  const [dossierBash, setDossierBash]   = useState(DOSSIER_BASH_DATA);
+  const [dossierBash] = useState(DOSSIER_BASH_DATA);
   const [activeCategory, setActiveCategory] = useState<Category>("Tout");
   const [activeTier, setActiveTier]     = useState<Tier | "Tous">("Tous");
   const [searchTerm, setSearchTerm]     = useState("");
@@ -407,7 +394,6 @@ export default function BibliothequePage() {
     handleResize();
     window.addEventListener("resize", handleResize);
     fetchOeuvres();
-    fetchDossierCovers();
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
@@ -420,83 +406,6 @@ export default function BibliothequePage() {
     setLoading(false);
   };
 
-  const fetchDossierCovers = async () => {
-    // On traite les items par lots de 6 pour respecter le rate-limit AniList
-    const BATCH_SIZE = 6;
-    const BATCH_DELAY = 1200; // ms entre chaque lot
-
-    const updated = [...DOSSIER_BASH_DATA];
-
-    for (let i = 0; i < updated.length; i += BATCH_SIZE) {
-      const batch = updated.slice(i, i + BATCH_SIZE);
-
-      const results = await Promise.all(
-        batch.map(async (item, batchIndex) => {
-          const globalIndex = i + batchIndex;
-
-          // SKIP : Si une cover locale ou distante est déjà définie en dur dans les données
-          if ("localCover" in item && typeof item.localCover === "string" && item.localCover.trim() !== "") {
-            return { ...item, cover: item.localCover };
-          }
-
-          if (item.cover && item.cover.trim() !== "") {
-            return item;
-          }
-
-          // Vérifier le cache mémoire
-          if (coverCache.has(item.searchQuery)) {
-            return { ...item, cover: coverCache.get(item.searchQuery)! };
-          }
-
-          // Cascade : AniList ID → AniList Search → TMDB → MangaDex → Fallback
-          let cover: string | null = null;
-
-          // 0. AniList par ID (100% fiable si disponible)
-          if ('anilistId' in item && (item as any).anilistId) {
-            cover = await fetchFromAniListById((item as any).anilistId);
-          }
-
-          // 1. AniList par recherche texte
-          if (!cover) {
-            const cleanQuery = cleanSearchQuery(item.searchQuery);
-            cover = await fetchFromAniList(cleanQuery);
-
-            // 2. TMDB (si AniList n'a rien)
-            if (!cover) {
-              cover = await fetchFromTMDB(cleanQuery);
-              if (!cover && item.title !== cleanQuery) {
-                cover = await fetchFromTMDB(item.title);
-              }
-            }
-
-            // 3. MangaDex (dernier recours)
-            if (!cover) {
-              cover = await fetchFromMangaDex(cleanQuery);
-            }
-          }
-
-          // 4. Fallback ultime
-          const finalCover = cover || FALLBACK_COVER;
-
-          // Stocker en cache
-          coverCache.set(item.searchQuery, finalCover);
-
-          return { ...item, cover: finalCover };
-        })
-      );
-
-      // Mettre à jour le state progressivement (les images apparaissent au fur et à mesure)
-      results.forEach((result, batchIndex) => {
-        updated[i + batchIndex] = result;
-      });
-      setDossierBash([...updated]);
-
-      // Attendre entre les lots (sauf pour le dernier)
-      if (i + BATCH_SIZE < updated.length) {
-        await delay(BATCH_DELAY);
-      }
-    }
-  };
 
   const mappedEntries = oeuvres.map((d) => ({
     id:          d.id,

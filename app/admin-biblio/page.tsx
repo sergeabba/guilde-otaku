@@ -274,6 +274,56 @@ export default function AdminBiblio() {
     fetchLibrary();
   };
 
+  const handleSyncCovers = async () => {
+    setSyncingCovers(true);
+    setSyncMessage(null);
+
+    try {
+      const res = await fetch("/api/bibliotheque-sync-covers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ force: false }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Erreur de synchronisation");
+      }
+
+      setSyncMessage(`${data.updated} cover${data.updated > 1 ? "s" : ""} synchronisée${data.updated > 1 ? "s" : ""}.`);
+      fetchLibrary();
+    } catch (error) {
+      setSyncMessage(error instanceof Error ? error.message : "Erreur inconnue");
+    } finally {
+      setSyncingCovers(false);
+    }
+  };
+
+  const handleSyncOneCover = async (id: string, title: string) => {
+    setSyncingItemId(id);
+    setSyncMessage(null);
+
+    try {
+      const res = await fetch("/api/bibliotheque-sync-covers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, force: true }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || `Erreur de synchronisation pour ${title}`);
+      }
+
+      setSyncMessage(`Cover resynchronisée pour ${title}.`);
+      fetchLibrary();
+    } catch (error) {
+      setSyncMessage(error instanceof Error ? error.message : "Erreur inconnue");
+    } finally {
+      setSyncingItemId(null);
+    }
+  };
+
   const [query,       setQuery]       = useState("");
   const [searchType,  setSearchType]  = useState<"ANIME" | "MANGA" | "ALL">("ALL");
   const [results,     setResults]     = useState<AniListResult[]>([]);
@@ -289,6 +339,9 @@ export default function AdminBiblio() {
   const [note,           setNote]           = useState<number>(0);
   const [saving,         setSaving]         = useState(false);
   const [saveSuccess,    setSaveSuccess]    = useState(false);
+  const [syncingCovers,  setSyncingCovers]  = useState(false);
+  const [syncMessage,    setSyncMessage]    = useState<string | null>(null);
+  const [syncingItemId,  setSyncingItemId]  = useState<string | null>(null);
 
   // ─── GARDE MOT DE PASSE ──────────────────────────────────────────────────────
   if (checking) return null;
@@ -354,36 +407,78 @@ export default function AdminBiblio() {
   const handleSave = async () => {
     if (!selected) return;
     setSaving(true);
-    const title  = selected.title.english || selected.title.romaji;
-    const studio = selected.studios?.nodes?.[0]?.name ?? null;
-    const { error } = await supabase.from("bibliotheque").insert({
-      title,
-      type:         mediaType,
-      cover_image:  selected.coverImage?.extraLarge || selected.coverImage?.large,
-      banner_image: selected.bannerImage ?? null,
-      score:        note,
-      tier,
-      status:       selected.status === "FINISHED" ? "Terminé" : selected.status === "RELEASING" ? "En cours" : "À venir",
-      synopsis:     frenchSynopsis.trim() || (selected.description ? stripHtml(selected.description) : ""),
-      avis_guilde:  avisGuilde.trim() || null,
-      trailer_url:  trailerUrl.trim() || null,
-      year:         selected.startDate?.year ?? null,
-      episodes:     selected.episodes ?? selected.chapters ?? null,
-      genres:       selected.genres ?? [],
-      studio,
-    });
-    setSaving(false);
-    if (error) { alert("❌ Erreur : " + error.message); }
-    else {
+
+    try {
+      const title  = selected.title.english || selected.title.romaji;
+      const studio = selected.studios?.nodes?.[0]?.name ?? null;
+
+      const resolveResponse = await fetch("/api/resolve-cover", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          anilistId: selected.id,
+          coverUrl: selected.coverImage?.extraLarge || selected.coverImage?.large || null,
+          bannerUrl: selected.bannerImage ?? null,
+        }),
+      });
+
+      const resolved = await resolveResponse.json();
+      if (!resolveResponse.ok) {
+        throw new Error(resolved.error || "Impossible de préparer les assets");
+      }
+
+      const { error } = await supabase.from("bibliotheque").insert({
+        title,
+        type:         mediaType,
+        cover_image:  resolved.coverUrl,
+        banner_image: resolved.bannerUrl,
+        score:        note,
+        tier,
+        status:       selected.status === "FINISHED" ? "Terminé" : selected.status === "RELEASING" ? "En cours" : "À venir",
+        synopsis:     frenchSynopsis.trim() || (selected.description ? stripHtml(selected.description) : ""),
+        avis_guilde:  avisGuilde.trim() || null,
+        trailer_url:  trailerUrl.trim() || null,
+        year:         selected.startDate?.year ?? null,
+        episodes:     selected.episodes ?? selected.chapters ?? null,
+        genres:       selected.genres ?? [],
+        studio,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
       setSaveSuccess(true);
       setSelected(null); setResults([]); setQuery("");
       setFrenchSynopsis(""); setAvisGuilde(""); setTrailerUrl("");
+      fetchLibrary();
+    } catch (error) {
+      alert("❌ Erreur : " + (error instanceof Error ? error.message : "Erreur inconnue"));
+    } finally {
+      setSaving(false);
     }
   };
 
   // ─── STYLES DÉRIVÉS DES TOKENS ──────────────────────────────────────────
   const sectionCard: React.CSSProperties = { ...components.card, padding: "28px", marginBottom: "32px" };
   const labelStyle  = typography.label;
+
+  const getCoverStatus = (coverUrl?: string | null) => {
+    if (!coverUrl) {
+      return { label: "Aucune cover", color: colors.danger, bg: "rgba(248,113,113,0.08)", border: "rgba(248,113,113,0.25)" };
+    }
+
+    if (coverUrl.includes("/storage/v1/object/public/bibliotheque-assets/")) {
+      return { label: "Supabase Storage", color: "#34d399", bg: "rgba(52,211,153,0.08)", border: "rgba(52,211,153,0.25)" };
+    }
+
+    if (/^https?:\/\//.test(coverUrl)) {
+      return { label: "Source externe", color: colors.gold, bg: colors.goldLight, border: colors.goldBorder };
+    }
+
+    return { label: "Locale / legacy", color: "#60a5fa", bg: "rgba(96,165,250,0.08)", border: "rgba(96,165,250,0.25)" };
+  };
 
   return (
     <div style={{ minHeight: "100vh", background: colors.bg, color: colors.textPrimary, fontFamily: font, padding: isMobile ? "32px 16px" : "60px 40px" }}>
@@ -419,26 +514,59 @@ export default function AdminBiblio() {
 
         {currentView === "MANAGE" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            <h2 style={{ fontFamily: font, fontSize: "20px", fontWeight: 900, color: colors.gold, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "12px" }}>Œuvres Enregistrées ({libraryItems.length})</h2>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+              <h2 style={{ fontFamily: font, fontSize: "20px", fontWeight: 900, color: colors.gold, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "12px" }}>Œuvres Enregistrées ({libraryItems.length})</h2>
+              <button onClick={handleSyncCovers} disabled={syncingCovers} style={{ ...components.btnSecondary, opacity: syncingCovers ? 0.6 : 1, cursor: syncingCovers ? "not-allowed" : "pointer" }}>
+                {syncingCovers ? <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> : <ImageIcon size={16} />}
+                {syncingCovers ? "Synchronisation..." : "Synchroniser les covers"}
+              </button>
+            </div>
+            {syncMessage && <p style={{ ...typography.meta, color: syncMessage.includes("Erreur") ? colors.danger : "#34d399" }}>{syncMessage}</p>}
             {libraryItems.length === 0 ? (
               <p style={{ color: colors.textSecondary, fontFamily: font }}>La bibliothèque est vide.</p>
             ) : (
-              libraryItems.map(item => (
-                <div key={item.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", background: colors.bgCard, borderRadius: "12px", border: `1px solid ${colors.border}` }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                    <div style={{ width: "40px", height: "56px", borderRadius: "6px", overflow: "hidden", border: `1px solid ${colors.border}`, flexShrink: 0 }}>
-                      <img src={item.cover_image || ""} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              libraryItems.map(item => {
+                const coverStatus = getCoverStatus(item.cover_image);
+
+                return (
+                  <div key={item.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", background: colors.bgCard, borderRadius: "12px", border: `1px solid ${colors.border}` }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                      <div style={{ width: "40px", height: "56px", borderRadius: "6px", overflow: "hidden", border: `1px solid ${colors.border}`, flexShrink: 0 }}>
+                        <img src={item.cover_image || ""} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      </div>
+                      <div>
+                        <h3 style={{ margin: 0, fontFamily: font, fontSize: "18px", fontWeight: 800 }}>{item.title}</h3>
+                        <p style={{ margin: 0, ...typography.meta }}>{item.type} • {item.tier}</p>
+                        <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", marginTop: "8px", padding: "4px 10px", borderRadius: "999px", background: coverStatus.bg, border: `1px solid ${coverStatus.border}` }}>
+                          <ImageIcon size={12} color={coverStatus.color} />
+                          <span style={{ fontFamily: font, fontSize: "11px", fontWeight: 800, color: coverStatus.color, letterSpacing: "0.08em", textTransform: "uppercase" }}>{coverStatus.label}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <h3 style={{ margin: 0, fontFamily: font, fontSize: "18px", fontWeight: 800 }}>{item.title}</h3>
-                      <p style={{ margin: 0, ...typography.meta }}>{item.type} • {item.tier}</p>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <button
+                        onClick={() => handleSyncOneCover(item.id, item.title)}
+                        disabled={syncingItemId === item.id}
+                        title={syncingItemId === item.id ? `Synchronisation de ${item.title}` : `Resynchroniser la cover de ${item.title}`}
+                        aria-label={syncingItemId === item.id ? `Synchronisation de ${item.title}` : `Resynchroniser la cover de ${item.title}`}
+                        style={{ background: "rgba(52,211,153,0.1)", border: "none", borderRadius: "8px", padding: isMobile ? "10px" : "10px 12px", color: "#34d399", cursor: syncingItemId === item.id ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: isMobile ? "0" : "6px", opacity: syncingItemId === item.id ? 0.6 : 1, fontFamily: font, fontSize: "12px", fontWeight: 800 }}
+                      >
+                        {syncingItemId === item.id ? <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> : <ImageIcon size={16} />}
+                        {!isMobile && <span>{syncingItemId === item.id ? "Sync..." : "Resync"}</span>}
+                      </button>
+                      <button
+                        onClick={() => handleDelete(item.id, item.title)}
+                        title={`Supprimer ${item.title}`}
+                        aria-label={`Supprimer ${item.title}`}
+                        style={{ background: "rgba(248,113,113,0.1)", border: "none", borderRadius: "8px", padding: isMobile ? "10px" : "10px 12px", color: colors.danger, cursor: "pointer", display: "flex", alignItems: "center", gap: isMobile ? "0" : "6px", fontFamily: font, fontSize: "12px", fontWeight: 800 }}
+                      >
+                        <Trash2 size={16} />
+                        {!isMobile && <span>Supprimer</span>}
+                      </button>
                     </div>
                   </div>
-                  <button onClick={() => handleDelete(item.id, item.title)} style={{ background: "rgba(248,113,113,0.1)", border: "none", borderRadius: "8px", padding: "10px", color: colors.danger, cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}>
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         )}

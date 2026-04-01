@@ -71,22 +71,43 @@ export default function BulkImportPage() {
     let count = 0;
 
     for (const item of toSave) {
-      const { error } = await supabase.from("bibliotheque").insert({
-        title: item.media.title,
-        type: item.media.type,
-        cover_image: item.media.cover,
-        banner_image: item.media.banner ?? null,
-        score: item.note,
-        tier: item.tier,
-        status: item.media.status,
-        synopsis: item.overrideSynopsis.trim() || item.media.synopsis,
-        year: item.media.year,
-        episodes: item.media.episodes,
-        genres: item.media.genres,
-        studio: item.media.studio,
-        trailer_url: item.media.trailerUrl,
-      });
-      if (!error) count++;
+      try {
+        const resolveResponse = await fetch("/api/resolve-cover", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: item.media.title,
+            anilistId: item.media.id,
+            coverUrl: item.media.cover,
+            bannerUrl: item.media.banner ?? null,
+          }),
+        });
+
+        const resolved = await resolveResponse.json();
+        if (!resolveResponse.ok) {
+          throw new Error(resolved.error || "Impossible de préparer la cover");
+        }
+
+        const { error } = await supabase.from("bibliotheque").insert({
+          title: item.media.title,
+          type: item.media.type,
+          cover_image: resolved.coverUrl,
+          banner_image: resolved.bannerUrl,
+          score: item.note,
+          tier: item.tier,
+          status: item.media.status,
+          synopsis: item.overrideSynopsis.trim() || item.media.synopsis,
+          year: item.media.year,
+          episodes: item.media.episodes,
+          genres: item.media.genres,
+          studio: item.media.studio,
+          trailer_url: item.media.trailerUrl,
+        });
+
+        if (!error) count++;
+      } catch {
+        // on passe au suivant
+      }
     }
 
     setSavedCount(count);

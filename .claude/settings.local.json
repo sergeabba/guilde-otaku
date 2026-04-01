@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm:*)"
+      "Bash(npm:*)",
+      "Bash(node:*)",
+      "Bash(set -a)",
+      "Bash(. \"C:/Users/hp/trombinoscope/.env.local\")"
     ]
   }
 }
