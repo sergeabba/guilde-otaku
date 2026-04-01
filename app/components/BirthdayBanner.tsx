@@ -2,63 +2,76 @@
 
 // ─── app/components/BirthdayBanner.tsx ───────────────────────────────────────
 // Affiche une bannière le jour de l'anniversaire d'un ou plusieurs membres.
-// parseBirthday centralisé dans app/types pour éviter la duplication.
+// v2 — Améliorations :
+//   1. Typage strict (SupabaseMemberRow au lieu de any[])
+//   2. role="alert" + aria-live="polite" pour les lecteurs d'écran
+//   3. Optimisation : select("id,name,birthday") au lieu de select("*")
+//   4. isTodayBirthday() centralisé depuis app/types
+//   5. Gestion d'erreur Supabase explicite
 
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import Link from "next/link";
 import { Gift, ChevronRight, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { parseBirthday } from "../types"; // ← centralisé
+import { isTodayBirthday } from "../types";
+
+// Type minimal pour la bannière (on ne sélectionne que les colonnes nécessaires)
+interface BirthdayMember {
+  id:       number;
+  name:     string;
+  birthday: string;
+}
 
 export default function BirthdayBanner() {
-  const [birthdayMembers, setBirthdayMembers] = useState<any[]>([]);
+  const [birthdayMembers, setBirthdayMembers] = useState<BirthdayMember[]>([]);
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
     const fetchBirthdays = async () => {
-      const now = new Date();
-      const todayDay = now.getDate();
-      const todayMonth = now.getMonth() + 1;
+      // On ne sélectionne que les colonnes nécessaires → requête plus légère
+      const { data, error } = await supabase
+        .from("fighters")
+        .select("id, name, birthday");
 
-      const { data } = await supabase.from("fighters").select("*");
-      if (data) {
-        const celebrating = data.filter((m) => {
-          const parsed = parseBirthday(m.birthday);
-          return parsed && parsed.day === todayDay && parsed.month === todayMonth;
-        });
-        setBirthdayMembers(celebrating);
-      }
+      if (error || !data) return;
+
+      const celebrating = (data as BirthdayMember[]).filter(
+        (m) => m.birthday && isTodayBirthday(m.birthday)
+      );
+      setBirthdayMembers(celebrating);
     };
+
     fetchBirthdays();
   }, []);
 
-  if (birthdayMembers.length === 0) return null;
-
-  // Prénom uniquement pour la bannière
+  // Prénom uniquement pour la bannière (plus lisible)
   const names = birthdayMembers
     .map((m) => m.name.split(" ")[0])
     .join(" & ");
 
   return (
     <AnimatePresence>
-      {isVisible && (
+      {isVisible && birthdayMembers.length > 0 && (
         <motion.div
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: "auto", opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
           transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
           style={{ overflow: "hidden", position: "relative", zIndex: 9999 }}
+          // ✅ Accessibilité : annonce la bannière aux lecteurs d'écran
+          role="alert"
+          aria-live="polite"
+          aria-atomic="true"
         >
           <div
             className="animate-gradient"
             style={{
-              background:
-                "linear-gradient(90deg, #f03e3e, #ec4899, #f03e3e)",
+              background: "linear-gradient(90deg, #f03e3e, #ec4899, #f03e3e)",
               backgroundSize: "200% auto",
               color: "#fff",
-              padding: "0 56px 0 20px", // padding droit pour le bouton X
-              height: "44px",           // hauteur fixe = touch target
+              padding: "0 56px 0 20px",
+              height: "44px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -67,6 +80,7 @@ export default function BirthdayBanner() {
           >
             <Link
               href="/birthdays"
+              className="no-min"
               style={{
                 textDecoration: "none",
                 color: "inherit",
@@ -75,12 +89,9 @@ export default function BirthdayBanner() {
                 gap: "10px",
                 flexWrap: "wrap",
                 justifyContent: "center",
-                // Annule le min-height du reset globals.css pour ce lien inline
-                minHeight: "unset",
-                minWidth: "unset",
               }}
             >
-              <Gift size={16} />
+              <Gift size={16} aria-hidden="true" />
               <span
                 style={{
                   fontSize: "14px",
@@ -90,7 +101,8 @@ export default function BirthdayBanner() {
                   fontFamily: "'Barlow Condensed', sans-serif",
                 }}
               >
-                C'est l'anniversaire de {names} aujourd'hui !
+                🎂 C'est l'anniversaire de{" "}
+                <strong>{names}</strong> aujourd'hui !
               </span>
               <span
                 style={{
@@ -105,7 +117,7 @@ export default function BirthdayBanner() {
                   fontFamily: "'Barlow Condensed', sans-serif",
                 }}
               >
-                FÊTER ÇA <ChevronRight size={12} />
+                FÊTER ÇA <ChevronRight size={12} aria-hidden="true" />
               </span>
             </Link>
 
@@ -113,11 +125,11 @@ export default function BirthdayBanner() {
             <button
               onClick={() => setIsVisible(false)}
               aria-label="Fermer la bannière d'anniversaire"
+              className="no-min"
               style={{
                 position: "absolute",
                 right: 0,
                 top: 0,
-                // ✅ 44×44px touch target
                 width: "44px",
                 height: "44px",
                 display: "flex",
@@ -128,18 +140,11 @@ export default function BirthdayBanner() {
                 color: "rgba(255,255,255,0.7)",
                 cursor: "pointer",
                 transition: "color 0.2s",
-                // Annule le min-height du reset
-                minHeight: "unset",
-                minWidth: "unset",
               }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.color = "#fff")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.color = "rgba(255,255,255,0.7)")
-              }
+              onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.7)")}
             >
-              <X size={16} />
+              <X size={16} aria-hidden="true" />
             </button>
           </div>
         </motion.div>
