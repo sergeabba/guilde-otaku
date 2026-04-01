@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { supabase } from "../../../lib/supabase";
+import { findDossierBashEntry } from "../../../lib/dossier-bash";
 import { Search, Check, X, Loader2, AlertCircle, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 
@@ -88,6 +89,8 @@ export default function BulkImportPage() {
           throw new Error(resolved.error || "Impossible de préparer la cover");
         }
 
+        const dossierMeta = findDossierBashEntry(item.media.title);
+
         const { error } = await supabase.from("bibliotheque").insert({
           title: item.media.title,
           type: item.media.type,
@@ -102,6 +105,10 @@ export default function BulkImportPage() {
           genres: item.media.genres,
           studio: item.media.studio,
           trailer_url: item.media.trailerUrl,
+          dossier_bash: !!dossierMeta,
+          dossier_bash_tag: dossierMeta?.tag ?? null,
+          dossier_bash_date: dossierMeta?.date ?? null,
+          dossier_bash_color: dossierMeta?.color ?? null,
         });
 
         if (!error) count++;

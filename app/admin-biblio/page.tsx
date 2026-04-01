@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
+import { DOSSIER_BASH_DATA, findDossierBashEntry, normalizeDossierBashKey } from "../../lib/dossier-bash";
 import {
   Search, Star, Check, X, Tv, BookOpen, Film, Gamepad2,
   Loader2, Image as ImageIcon, FileText, Youtube, MessageSquare, Lock, Trash2, List
@@ -264,6 +265,13 @@ export default function AdminBiblio() {
     if (data) setLibraryItems(data);
   };
 
+  const dossierBashKeys = new Set(
+    DOSSIER_BASH_DATA.flatMap((entry) => [
+      normalizeDossierBashKey(entry.title),
+      normalizeDossierBashKey(entry.searchQuery),
+    ])
+  );
+
   useEffect(() => {
     if (authed) fetchLibrary();
   }, [authed]);
@@ -324,6 +332,31 @@ export default function AdminBiblio() {
     }
   };
 
+  const handleSyncDossierBash = async () => {
+    setSyncingDossierBash(true);
+    setSyncMessage(null);
+
+    try {
+      const res = await fetch("/api/bibliotheque-sync-dossier-bash", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ force: false }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Erreur de synchronisation Dossier Bash");
+      }
+
+      setSyncMessage(`${data.updated} entrée${data.updated > 1 ? "s" : ""} Dossier Bash synchronisée${data.updated > 1 ? "s" : ""}.`);
+      fetchLibrary();
+    } catch (error) {
+      setSyncMessage(error instanceof Error ? error.message : "Erreur inconnue");
+    } finally {
+      setSyncingDossierBash(false);
+    }
+  };
+
   const [query,       setQuery]       = useState("");
   const [searchType,  setSearchType]  = useState<"ANIME" | "MANGA" | "ALL">("ALL");
   const [results,     setResults]     = useState<AniListResult[]>([]);
@@ -340,6 +373,7 @@ export default function AdminBiblio() {
   const [saving,         setSaving]         = useState(false);
   const [saveSuccess,    setSaveSuccess]    = useState(false);
   const [syncingCovers,  setSyncingCovers]  = useState(false);
+  const [syncingDossierBash, setSyncingDossierBash] = useState(false);
   const [syncMessage,    setSyncMessage]    = useState<string | null>(null);
   const [syncingItemId,  setSyncingItemId]  = useState<string | null>(null);
 
@@ -428,6 +462,8 @@ export default function AdminBiblio() {
         throw new Error(resolved.error || "Impossible de préparer les assets");
       }
 
+      const dossierMeta = findDossierBashEntry(title);
+
       const { error } = await supabase.from("bibliotheque").insert({
         title,
         type:         mediaType,
@@ -443,6 +479,10 @@ export default function AdminBiblio() {
         episodes:     selected.episodes ?? selected.chapters ?? null,
         genres:       selected.genres ?? [],
         studio,
+        dossier_bash: !!dossierMeta,
+        dossier_bash_tag: dossierMeta?.tag ?? null,
+        dossier_bash_date: dossierMeta?.date ?? null,
+        dossier_bash_color: dossierMeta?.color ?? null,
       });
 
       if (error) {
@@ -516,10 +556,16 @@ export default function AdminBiblio() {
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
               <h2 style={{ fontFamily: font, fontSize: "20px", fontWeight: 900, color: colors.gold, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "12px" }}>Œuvres Enregistrées ({libraryItems.length})</h2>
-              <button onClick={handleSyncCovers} disabled={syncingCovers} style={{ ...components.btnSecondary, opacity: syncingCovers ? 0.6 : 1, cursor: syncingCovers ? "not-allowed" : "pointer" }}>
-                {syncingCovers ? <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> : <ImageIcon size={16} />}
-                {syncingCovers ? "Synchronisation..." : "Synchroniser les covers"}
-              </button>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                <button onClick={handleSyncDossierBash} disabled={syncingDossierBash} style={{ ...components.btnSecondary, opacity: syncingDossierBash ? 0.6 : 1, cursor: syncingDossierBash ? "not-allowed" : "pointer" }}>
+                  {syncingDossierBash ? <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> : <List size={16} />}
+                  {syncingDossierBash ? "Sync Bash..." : "Synchroniser Dossier Bash"}
+                </button>
+                <button onClick={handleSyncCovers} disabled={syncingCovers} style={{ ...components.btnSecondary, opacity: syncingCovers ? 0.6 : 1, cursor: syncingCovers ? "not-allowed" : "pointer" }}>
+                  {syncingCovers ? <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> : <ImageIcon size={16} />}
+                  {syncingCovers ? "Synchronisation..." : "Synchroniser les covers"}
+                </button>
+              </div>
             </div>
             {syncMessage && <p style={{ ...typography.meta, color: syncMessage.includes("Erreur") ? colors.danger : "#34d399" }}>{syncMessage}</p>}
             {libraryItems.length === 0 ? (
@@ -527,6 +573,7 @@ export default function AdminBiblio() {
             ) : (
               libraryItems.map(item => {
                 const coverStatus = getCoverStatus(item.cover_image);
+                const isDossierBash = item.dossier_bash === true || dossierBashKeys.has(normalizeDossierBashKey(item.title));
 
                 return (
                   <div key={item.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", background: colors.bgCard, borderRadius: "12px", border: `1px solid ${colors.border}` }}>
@@ -537,9 +584,16 @@ export default function AdminBiblio() {
                       <div>
                         <h3 style={{ margin: 0, fontFamily: font, fontSize: "18px", fontWeight: 800 }}>{item.title}</h3>
                         <p style={{ margin: 0, ...typography.meta }}>{item.type} • {item.tier}</p>
-                        <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", marginTop: "8px", padding: "4px 10px", borderRadius: "999px", background: coverStatus.bg, border: `1px solid ${coverStatus.border}` }}>
-                          <ImageIcon size={12} color={coverStatus.color} />
-                          <span style={{ fontFamily: font, fontSize: "11px", fontWeight: 800, color: coverStatus.color, letterSpacing: "0.08em", textTransform: "uppercase" }}>{coverStatus.label}</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", marginTop: "8px" }}>
+                          {isDossierBash && (
+                            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "4px 10px", borderRadius: "999px", background: "rgba(201,168,76,0.08)", border: `1px solid ${colors.goldBorder}` }}>
+                              <span style={{ fontFamily: font, fontSize: "11px", fontWeight: 800, color: colors.gold, letterSpacing: "0.08em", textTransform: "uppercase" }}>Dossier Bash</span>
+                            </div>
+                          )}
+                          <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "4px 10px", borderRadius: "999px", background: coverStatus.bg, border: `1px solid ${coverStatus.border}` }}>
+                            <ImageIcon size={12} color={coverStatus.color} />
+                            <span style={{ fontFamily: font, fontSize: "11px", fontWeight: 800, color: coverStatus.color, letterSpacing: "0.08em", textTransform: "uppercase" }}>{coverStatus.label}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
