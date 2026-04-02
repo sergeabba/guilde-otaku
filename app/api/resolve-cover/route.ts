@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { resolveAndCacheMediaAssets } from "../../../lib/cover-automation";
 
 export async function POST(req: NextRequest) {
   try {
+    const { resolveAndCacheMediaAssets } = await import("../../../lib/cover-automation");
     const body = await req.json();
     const title = typeof body?.title === "string" ? body.title.trim() : "";
     const anilistId = typeof body?.anilistId === "number" ? body.anilistId : undefined;

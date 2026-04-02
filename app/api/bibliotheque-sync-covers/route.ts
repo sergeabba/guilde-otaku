@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { resolveAndCacheMediaAssets } from "../../../lib/cover-automation";
 import { supabase } from "../../../lib/supabase";
 
 export async function POST(req: NextRequest) {
   try {
+    const { resolveAndCacheMediaAssets } = await import("../../../lib/cover-automation");
     const body = await req.json().catch(() => ({}));
     const force = body?.force === true;
     const targetId = body?.id ?? null;
