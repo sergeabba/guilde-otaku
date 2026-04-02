@@ -15,16 +15,23 @@ const CONTENT_TYPE_TO_EXTENSION: Record<string, string> = {
 };
 const STORAGE_PREFIX = "bibliotheque";
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-  throw new Error("SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY manquant pour la pipeline cover");
-}
-
-const supabaseStorage = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-  auth: { persistSession: false },
-});
-
+let supabaseStorage: ReturnType<typeof createClient> | null = null;
 let bucketChecked = false;
 let bucketWritable = false;
+
+function getSupabaseStorage() {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error("SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY manquant pour la pipeline cover");
+  }
+
+  if (!supabaseStorage) {
+    supabaseStorage = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false },
+    });
+  }
+
+  return supabaseStorage;
+}
 
 function slugify(value: string) {
   return value
@@ -83,7 +90,7 @@ function isSupabaseStorageUrl(url: string | null) {
 async function ensureBucketWritable() {
   if (bucketChecked) return bucketWritable;
 
-  const { data, error } = await supabaseStorage.storage.listBuckets();
+  const { data, error } = await getSupabaseStorage().storage.listBuckets();
   bucketWritable = !error && !!data?.some((bucket) => bucket.name === SUPABASE_STORAGE_BUCKET);
   bucketChecked = true;
 
@@ -102,12 +109,12 @@ async function existingSupabaseUrl(folder: string, baseName: string) {
 
   for (const extension of ALLOWED_EXTENSIONS) {
     const fileName = `${baseName}${extension}`;
-    const { data: listData, error } = await supabaseStorage.storage
+    const { data: listData, error } = await getSupabaseStorage().storage
       .from(SUPABASE_STORAGE_BUCKET)
       .list(listPath, { search: fileName });
 
     if (!error && listData?.some((item) => item.name === fileName)) {
-      return supabaseStorage.storage
+      return getSupabaseStorage().storage
         .from(SUPABASE_STORAGE_BUCKET)
         .getPublicUrl(`${listPath}/${fileName}`).data.publicUrl;
     }
@@ -139,7 +146,7 @@ async function uploadAssetToSupabase(options: {
   const objectPath = `${STORAGE_PREFIX}/${normalizedFolder}/${baseName}${extension}`;
   const fileBuffer = Buffer.from(await response.arrayBuffer());
 
-  const { error } = await supabaseStorage.storage
+  const { error } = await getSupabaseStorage().storage
     .from(SUPABASE_STORAGE_BUCKET)
     .upload(objectPath, fileBuffer, {
       upsert: force,
@@ -155,7 +162,7 @@ async function uploadAssetToSupabase(options: {
     throw new Error(error.message);
   }
 
-  return supabaseStorage.storage
+  return getSupabaseStorage().storage
     .from(SUPABASE_STORAGE_BUCKET)
     .getPublicUrl(objectPath).data.publicUrl;
 }
