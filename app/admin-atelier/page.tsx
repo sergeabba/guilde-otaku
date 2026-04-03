@@ -7,8 +7,8 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-
-const ADMIN_PASSWORD = "1111";
+import { ADMIN_PASSWORD } from "../../lib/constants";
+import type { AtelierItem, SupabaseAtelierRow } from "../types";
 
 // --- STYLES (Matching admin-biblio) ---
 const font = "'Barlow Condensed', sans-serif";
@@ -32,7 +32,7 @@ export default function AdminAtelier() {
   const [pwInput, setPwInput] = useState("");
   const [pwError, setPwError] = useState(false);
 
-  const [images, setImages] = useState<any[]>([]);
+  const [images, setImages] = useState<SupabaseAtelierRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);

@@ -82,8 +82,10 @@ export function useBreakpoint(): Breakpoint {
 
   useEffect(() => {
     update();
-    window.addEventListener("resize", update, { passive: true });
-    return () => window.removeEventListener("resize", update);
+    let timeout: NodeJS.Timeout;
+    const handler = () => { clearTimeout(timeout); timeout = setTimeout(update, 150); };
+    window.addEventListener("resize", handler, { passive: true });
+    return () => { clearTimeout(timeout); window.removeEventListener("resize", handler); };
   }, [update]);
 
   return bp;

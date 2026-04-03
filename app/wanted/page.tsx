@@ -4,9 +4,15 @@ import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../../lib/supabase";
 import { Volume2, VolumeX, ChevronLeft, ChevronRight, User, Sword, Search, Play, Pause } from "lucide-react";
-import GuildeHeader from "../components/GuildeHeader"; // ← ajouté
+import GuildeHeader from "../components/GuildeHeader";
+import type { SupabaseMemberRow } from "../types";
 
 type ViewMode = "real" | "anime";
+
+interface WantedMember extends SupabaseMemberRow {
+  animeChar: string;
+  rankJP: string;
+}
 
 function getPrime(id: number): string {
   const bases = [50, 80, 120, 150, 200, 250, 300, 400, 500, 750, 800, 999];
@@ -24,7 +30,7 @@ export default function WantedPage() {
   const [imgError, setImgError] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("real");
   const [searchTerm, setSearchTerm] = useState("");
-  const [members, setMembers] = useState<any[]>([]);
+  const [members, setMembers] = useState<WantedMember[]>([]);
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
 

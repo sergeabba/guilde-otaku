@@ -14,7 +14,7 @@ export const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
  * Calcule un score de similarité entre deux chaînes (0 à 1)
  * Utilisé pour valider que le résultat AniList correspond bien à la recherche
  */
-function titleSimilarity(a: string, b: string): number {
+export function titleSimilarity(a: string, b: string): number {
   const normalize = (s: string) =>
     s.toLowerCase()
       .replace(/[^a-z0-9\s]/g, "")
@@ -213,12 +213,6 @@ export async function fetchFromTMDB(query: string): Promise<string | null> {
         json.results?.filter((r: any) => r.media_type === "tv" || r.media_type === "movie"),
         query
       );
-    }
-
-    if (match) {
-      const cover = `https://image.tmdb.org/t/p/w780${match.poster_path}`;
-      coverCache.set(`tmdb-${query}`, cover);
-      return cover;
     }
 
     if (match) {

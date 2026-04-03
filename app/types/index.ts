@@ -89,16 +89,17 @@ export interface AtelierItem {
 
 // ─── SUPABASE RAW ROW (table atelier) ────────────────────────────────────────
 export interface SupabaseAtelierRow {
-  id:          number;
-  filename:    string;
-  url:         string;
-  title:       string;
-  description?: string;
-  prompt?:     string;
-  category?:   string;
-  universe?:   string;
-  accent?:     string;
-  size?:       string;
+  id:             number;
+  filename:       string;
+  url:            string;
+  title:          string;
+  description?:   string;
+  prompt?:        string;
+  category?:      string;
+  universe?:      string;
+  accent?:        string;
+  size?:          string;
+  has_db_record?: boolean;
 }
 
 // ─── PARSE BIRTHDAY ───────────────────────────────────────────────────────────

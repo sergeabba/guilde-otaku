@@ -8,8 +8,7 @@ import {
   Loader2, Image as ImageIcon, FileText, Youtube, MessageSquare, Lock, Trash2, List
 } from "lucide-react";
 import { useIsMobile } from "../hooks/useIsMobile";
-
-const ADMIN_PASSWORD = "1111";
+import { ADMIN_PASSWORD } from "../../lib/constants";
 
 // ─── TOKENS (inline pour éviter l'import fragile depuis outputs/styles) ──────────
 const font = "'Barlow Condensed', sans-serif";

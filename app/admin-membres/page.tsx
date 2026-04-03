@@ -4,8 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { members } from "../../data/members";
 import { Upload, Check, X, User, Sword, Lock } from "lucide-react";
 import { useIsMobile } from "../hooks/useIsMobile";
-
-const ADMIN_PASSWORD = "1111";
+import { ADMIN_PASSWORD } from "../../lib/constants";
 
 type PhotoType = "photo" | "anime";
 

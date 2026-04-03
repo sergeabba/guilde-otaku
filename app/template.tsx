@@ -7,6 +7,8 @@
 //
 // ► Placer ce fichier directement dans : app/template.tsx
 
+"use client";
+
 import { motion } from "framer-motion";
 
 export default function Template({ children }: { children: React.ReactNode }) {

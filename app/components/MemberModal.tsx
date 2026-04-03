@@ -69,12 +69,11 @@ export default function MemberModal({ member, onClose, viewMode }: {
   // Bloquer le scroll du body + focus trap à l'ouverture
   useEffect(() => {
     if (member) {
+      const original = document.body.style.overflow;
       document.body.style.overflow = "hidden";
       setTimeout(() => closeButtonRef.current?.focus(), 100);
-    } else {
-      document.body.style.overflow = "";
+      return () => { document.body.style.overflow = original; };
     }
-    return () => { document.body.style.overflow = ""; };
   }, [member]);
 
   const isAnime = localMode === "anime";

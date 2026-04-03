@@ -1,30 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-function titleSimilarity(a: string, b: string): number {
-  const normalize = (s: string) =>
-    s.toLowerCase()
-      .replace(/[^a-z0-9\s]/g, "")
-      .replace(/\s+/g, " ")
-      .trim();
-
-  const na = normalize(a);
-  const nb = normalize(b);
-
-  if (na === nb) return 1;
-  if (na.includes(nb) || nb.includes(na)) return 0.8;
-
-  const wordsA = new Set(na.split(" ").filter(w => w.length > 1));
-  const wordsB = new Set(nb.split(" ").filter(w => w.length > 1));
-  if (wordsA.size === 0 || wordsB.size === 0) return 0;
-
-  let intersection = 0;
-  for (const w of wordsA) {
-    if (wordsB.has(w)) intersection++;
-  }
-
-  const union = new Set([...wordsA, ...wordsB]).size;
-  return intersection / union;
-}
+import { titleSimilarity } from "../../../lib/cover-fetch";
 
 const QUERY = `
   query ($search: String) {

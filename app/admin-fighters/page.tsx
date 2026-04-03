@@ -7,12 +7,14 @@ import GuildeHeader from "../components/GuildeHeader";
 import { colors, typography, font } from "../../outputs/styles/tokens";
 import { Trash, Pencil, Plus, Flame, Activity, X, Upload } from "lucide-react";
 import { Rank, RANK_FILTER_ORDER } from "../../data/members";
+import { ADMIN_PASSWORD } from "../../lib/constants";
+import type { SupabaseMemberRow } from "../types";
 
 export default function AdminFightersPage() {
   const [auth, setAuth] = useState(false);
   const [password, setPassword] = useState("");
   const [checking, setChecking] = useState(true);
-  const [fighters, setFighters] = useState<any[]>([]);
+  const [fighters, setFighters] = useState<SupabaseMemberRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -51,7 +53,7 @@ export default function AdminFightersPage() {
 
   const checkAuth = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === "1111") {
+    if (password === ADMIN_PASSWORD) {
       sessionStorage.setItem("guilde_admin_auth", "true");
       setAuth(true);
     } else {
@@ -119,11 +121,11 @@ export default function AdminFightersPage() {
     setLoading(false);
   };
 
-  const openForm = (f: any = null) => {
+  const openForm = (f: SupabaseMemberRow | null = null) => {
     if (f) {
       setEditingId(f.id);
       setFormName(f.name);
-      setFormRank(f.rank);
+      setFormRank(f.rank as Rank);
       setFormBirthday(f.birthday);
       setFormBio(f.bio || "");
       setFormPhoto(f.photo || "");

@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Lock, BookOpen, User, Flame, ArrowRight, ShieldAlert, Palette } from "lucide-react";
 import { colors, typography, font } from "../../outputs/styles/tokens";
 import GuildeHeader from "../components/GuildeHeader";
+import { ADMIN_PASSWORD } from "../../lib/constants";
 
 export default function AdminHubPage() {
   const [password, setPassword] = useState("");
@@ -23,7 +24,7 @@ export default function AdminHubPage() {
 
   const checkAuth = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === "1111") {
+    if (password === ADMIN_PASSWORD) {
       sessionStorage.setItem("guilde_admin_auth", "true");
       setAuth(true);
     } else {

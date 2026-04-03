@@ -49,12 +49,10 @@ export default function GuildeHeader({
   return (
     <motion.header
       initial={{ y: -60, opacity: 0 }}
-      animate={{ y: 0,   opacity: 1 }}
+      animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      className="sticky top-0 z-[100]"
       style={{
-        position: "sticky",
-        top: 0,
-        zIndex: 100,
         background: bgColor,
         backdropFilter: "blur(24px)",
         WebkitBackdropFilter: "blur(24px)",
@@ -63,51 +61,29 @@ export default function GuildeHeader({
     >
       {/* ── LIGNE 1 : Logo + rightSlot ──────────────────────────────────────── */}
       <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: isMobile ? "0 16px" : "0 48px",
-          height: "56px",
-        }}
+        className={`flex items-center justify-between ${isMobile ? "px-4" : "px-12"} h-14`}
       >
         {/* LOGO */}
         <Link
           href="/"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            textDecoration: "none",
-            flexShrink: 0,
-          }}
+          className="flex items-center gap-3 no-underline shrink-0"
         >
           <img
             src="/logo.png"
-            style={{ height: "34px", filter: "brightness(1.1)" }}
+            className="h-[34px] brightness-[1.1]"
             alt="Logo Guilde Otaku"
             loading="eager"
           />
           <div>
             <div
-              style={{
-                fontSize: isMobile ? "16px" : "19px",
-                fontWeight: 900,
-                color: textColor,
-                lineHeight: 1,
-                fontFamily: "'Barlow Condensed', sans-serif",
-              }}
+              className="font-guilde font-black leading-none"
+              style={{ fontSize: isMobile ? "16px" : "19px", color: textColor }}
             >
               GUILDE OTAKU
             </div>
             <div
-              style={{
-                fontSize: "9px",
-                fontWeight: 700,
-                color: accentColor,
-                letterSpacing: "0.22em",
-                fontFamily: "'Barlow Condensed', sans-serif",
-              }}
+              className="font-guilde font-semibold tracking-widest"
+              style={{ fontSize: "9px", color: accentColor }}
             >
               DEPUIS 2020
             </div>
@@ -116,7 +92,7 @@ export default function GuildeHeader({
 
         {/* rightSlot (toggle Réel/Anime, etc.) */}
         {rightSlot && (
-          <div style={{ flexShrink: 0, marginLeft: "12px" }}>
+          <div className="shrink-0 ml-3">
             {rightSlot}
           </div>
         )}
@@ -124,44 +100,23 @@ export default function GuildeHeader({
 
       {/* ── LIGNE 2 : Navigation ────────────────────────────────────────────── */}
       <nav
-        style={{
-          display: "flex",
-          alignItems: "center",
-          overflowX: "auto",
-          WebkitOverflowScrolling: "touch",
-          scrollbarWidth: "none",
-          padding: isMobile ? "0 8px 0" : "0 40px",
-          gap: 0,
-          borderTop: "1px solid rgba(255,255,255,0.04)",
-        }}
+        className={`flex items-center overflow-x-auto scrollbar-hide ${isMobile ? "px-2" : "px-10"} border-t border-white/[0.04]`}
       >
         {navLinks.map((link) => {
           const isActive = activePage === link.id;
+          const inactiveColor = textColor === "#111" ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.4)";
           return (
             <Link
               key={link.id}
               href={link.href}
+              className="flex items-center relative no-underline uppercase whitespace-nowrap shrink-0 font-guilde font-black tracking-wide transition-[color] duration-200"
               style={{
-                display: "flex",
-                alignItems: "center",
                 padding: isMobile ? "0 10px" : "0 14px",
                 height: "42px",
-                position: "relative",
-                textDecoration: "none",
-                fontFamily: "'Barlow Condensed', sans-serif",
                 fontSize: isMobile ? "13px" : "14px",
-                fontWeight: 900,
-                letterSpacing: "0.05em",
-                textTransform: "uppercase",
-                color: isActive
-                  ? accentColor
-                  : textColor === "#111"
-                  ? "rgba(0,0,0,0.4)"
-                  : "rgba(255,255,255,0.4)",
-                transition: "color 0.25s ease",
-                whiteSpace: "nowrap",
-                flexShrink: 0,
+                color: isActive ? accentColor : inactiveColor,
               }}
+              aria-current={isActive ? "page" : undefined}
             >
               {link.label}
 
@@ -169,14 +124,11 @@ export default function GuildeHeader({
               {isActive && (
                 <motion.div
                   layoutId="nav-indicator"
+                  className="absolute bottom-0 h-[2px] rounded-t"
                   style={{
-                    position: "absolute",
-                    bottom: 0,
                     left: isMobile ? "10px" : "14px",
                     right: isMobile ? "10px" : "14px",
-                    height: "2px",
                     background: accentColor,
-                    borderRadius: "2px 2px 0 0",
                   }}
                   transition={{ type: "spring", stiffness: 380, damping: 30 }}
                 />

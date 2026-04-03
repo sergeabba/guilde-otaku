@@ -8,6 +8,7 @@ import OptimizedImage, { SkeletonCard } from "../components/OptimizedImage";
 import { supabase } from "../../lib/supabase";
 import { DOSSIER_BASH_DATA, normalizeDossierBashKey } from "../../lib/dossier-bash";
 import { colors, typography, components, font, filterPillStyle, cardHoverStyle } from "../../outputs/styles/tokens";
+import type { BiblioEntry, SupabaseBiblioRow, BiblioCategory, BiblioTier } from "../types";
 import {
   Star, BookOpen, Tv, Gamepad2, Film, Quote, Flame, Gem, Meh,
   TrendingDown, Search, X, Clock, Calendar, Youtube, ArrowUpDown, Pencil
@@ -106,7 +107,7 @@ function EntryCard({ entry, index, onSelect }: { entry: any; index: number; onSe
 
 // ─── PAGE ────────────────────────────────────────────────────────────────────
 export default function BibliothequePage() {
-  const [oeuvres, setOeuvres]           = useState<any[]>([]);
+  const [oeuvres, setOeuvres]           = useState<SupabaseBiblioRow[]>([]);
   const [loading, setLoading]           = useState(true);
   const [dossierBash, setDossierBash]   = useState(DOSSIER_BASH_DATA);
   const [activeCategory, setActiveCategory] = useState<Category>("Tout");
@@ -114,7 +115,7 @@ export default function BibliothequePage() {
   const [searchTerm, setSearchTerm]     = useState("");
   const [sortBy, setSortBy]             = useState("recent");
   const [isMobile, setIsMobile]         = useState(false);
-  const [selectedEntry, setSelectedEntry] = useState<any | null>(null);
+  const [selectedEntry, setSelectedEntry] = useState<BiblioEntry | null>(null);
 
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
@@ -173,13 +174,13 @@ export default function BibliothequePage() {
   };
 
 
-  const mappedEntries = oeuvres.map((d) => ({
+  const mappedEntries: BiblioEntry[] = oeuvres.map((d) => ({
     id:          d.id,
     title:       d.title,
-    category:    d.type || "Anime",
-    tier:        d.tier || "A définir",
+    category:    (d.type as BiblioCategory | undefined) || "Anime",
+    tier:        (d.tier as BiblioTier | undefined) || "A définir",
     year:        d.year || new Date(d.created_at).getFullYear(),
-    cover_image: d.cover_image,
+    cover_image: d.cover_image || "",
     status:      d.status || "Terminé",
     note:        d.score || 0,
     synopsis:    d.synopsis,
@@ -196,9 +197,9 @@ export default function BibliothequePage() {
   });
 
   filtered.sort((a, b) => {
-    if (sortBy === "recent")  return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-    if (sortBy === "oldest")  return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-    if (sortBy === "note")    return b.note - a.note;
+    if (sortBy === "recent")  return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+    if (sortBy === "oldest")  return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
+    if (sortBy === "note")    return (Number(b.note) || 0) - (Number(a.note) || 0);
     if (sortBy === "alpha")   return a.title.localeCompare(b.title);
     return 0;
   });
@@ -267,10 +268,11 @@ export default function BibliothequePage() {
                       const normalizedTitle = normalizeDossierBashKey(e.title);
                       return normalizedTitle.includes(normalizeDossierBashKey(anime.searchQuery)) || normalizedTitle === normalizeDossierBashKey(anime.title);
                     });
-                    setSelectedEntry(dbMatch ?? {
+                    setSelectedEntry({
+                      id: -1,
                       title:       anime.title,
-                      category:    "Anime",
-                      tier:        index === 0 ? "Chef-d'œuvre" : "A définir",
+                      category:    "Anime" as BiblioCategory,
+                      tier:        index === 0 ? "Chef-d'œuvre" : ("A définir" as BiblioTier),
                       year:        2026,
                       cover_image: anime.cover,
                       status:      "Saison Printemps",
