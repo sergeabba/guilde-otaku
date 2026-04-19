@@ -35,6 +35,7 @@ export default function AdminAtelier() {
   const [images, setImages] = useState<SupabaseAtelierRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number; name: string } | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [dbStatus, setDbStatus] = useState<"connected" | "error">("connected");
   const [dbError, setDbError] = useState<string | null>(null);
@@ -72,24 +73,38 @@ export default function AdminAtelier() {
 
   const handleUpload = async (files: File[]) => {
     setUploading(true);
-    const formData = new FormData();
-    for (const file of files) {
+    let successCount = 0;
+    let failCount = 0;
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      setUploadProgress({ current: i + 1, total: files.length, name: file.name });
+
+      const formData = new FormData();
       formData.append("files", file);
+
+      try {
+        const res = await fetch("/api/atelier", {
+          method: "POST",
+          body: formData,
+        });
+        const data = await res.json();
+        if (data.success || data.results?.[0]?.success) {
+          successCount++;
+        } else {
+          failCount++;
+          console.error(`Upload failed for ${file.name}:`, data.error || data.results?.[0]?.error);
+        }
+      } catch (e) {
+        failCount++;
+        console.error(`Network error for ${file.name}:`, e);
+      }
     }
 
-    try {
-      const res = await fetch("/api/atelier", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      if (data.success) {
-        fetchImages();
-      } else {
-        alert(data.summary || data.error || "Erreur d'upload");
-      }
-    } catch (e) {
-      alert("Erreur réseau");
+    setUploadProgress(null);
+    fetchImages();
+    if (failCount > 0) {
+      alert(`${successCount} image(s) uploadée(s), ${failCount} échouée(s)`);
     }
     setUploading(false);
   };
@@ -255,7 +270,14 @@ export default function AdminAtelier() {
               <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }}>
                 <Loader2 size={48} color={colors.gold} />
               </motion.div>
-              <p style={{ color: colors.gold, fontWeight: 700 }}>Upload en cours...</p>
+              {uploadProgress ? (
+                <>
+                  <p style={{ color: colors.gold, fontWeight: 700 }}>Upload {uploadProgress.current}/{uploadProgress.total}</p>
+                  <p style={{ color: colors.textSecondary, fontSize: "13px" }}>{uploadProgress.name}</p>
+                </>
+              ) : (
+                <p style={{ color: colors.gold, fontWeight: 700 }}>Upload en cours...</p>
+              )}
             </div>
           ) : (
             <>
