@@ -1,20 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { supabase } from "../../../lib/supabase";
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-function getClient() {
-  if (!SUPABASE_URL || !SERVICE_KEY) return null;
+function getAdminClient() {
   return createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 }
 
 export async function GET() {
-  const sb = getClient();
-  if (!sb) return NextResponse.json({ error: "Supabase non configuré" }, { status: 500 });
-
   try {
-    const { data, error } = await sb
+    const { data, error } = await supabase
       .from("film_semaine")
       .select("*")
       .order("week_date", { ascending: false });
@@ -32,10 +29,8 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const sb = getClient();
-  if (!sb) return NextResponse.json({ error: "Supabase non configuré" }, { status: 500 });
-
   try {
+    const sb = getAdminClient();
     const body = await req.json();
     const { data, error } = await sb
       .from("film_semaine")
@@ -66,10 +61,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const sb = getClient();
-  if (!sb) return NextResponse.json({ error: "Supabase non configuré" }, { status: 500 });
-
   try {
+    const sb = getAdminClient();
     const body = await req.json();
     const id = req.nextUrl.searchParams.get("id");
     if (!id) return NextResponse.json({ error: "id requis" }, { status: 400 });
@@ -94,10 +87,8 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const sb = getClient();
-  if (!sb) return NextResponse.json({ error: "Supabase non configuré" }, { status: 500 });
-
   try {
+    const sb = getAdminClient();
     const id = req.nextUrl.searchParams.get("id");
     if (!id) return NextResponse.json({ error: "id requis" }, { status: 400 });
 
