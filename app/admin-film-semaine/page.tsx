@@ -6,7 +6,7 @@ import { useIsMobile } from "../hooks/useIsMobile";
 import { ADMIN_PASSWORD } from "../../lib/constants";
 import {
   Search, Plus, Trash2, Eye, EyeOff, Film, Loader2, Lock,
-  Calendar, X, Check, Star, Clock,
+  Calendar, X, Check, Star, Clock, Trophy,
 } from "lucide-react";
 
 const font = "'Barlow Condensed', sans-serif";
@@ -54,6 +54,7 @@ interface FilmEntry {
   runtime: number | null;
   director: string | null;
   watched: boolean;
+  chosen?: boolean;
 }
 
 function getMonday(d: Date): string {
@@ -203,6 +204,18 @@ export default function AdminFilmSemainePage() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ watched: !film.watched }),
+      });
+      loadFilms();
+    } catch {
+    }
+  };
+
+  const toggleChosen = async (film: FilmEntry) => {
+    try {
+      await fetch(`/api/film-semaine?id=${film.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chosen: !film.chosen }),
       });
       loadFilms();
     } catch {
@@ -890,6 +903,40 @@ export default function AdminFilmSemainePage() {
                       {film.week_label} {film.year && `· ${film.year}`}
                     </div>
                   </div>
+                  <button
+                    onClick={() => toggleChosen(film)}
+                    title={film.chosen ? "Retirer le statut élu" : "Élire comme film de la semaine"}
+                    style={{
+                      background: film.chosen
+                        ? "rgba(240,160,48,0.15)"
+                        : colors.bgCard,
+                      border: film.chosen
+                        ? "1px solid rgba(240,160,48,0.3)"
+                        : `1px solid ${colors.border}`,
+                      borderRadius: "8px",
+                      padding: "6px 10px",
+                      cursor: "pointer",
+                      color: film.chosen ? "#f0a030" : colors.textMuted,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      fontFamily: font,
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                    }}
+                  >
+                    {film.chosen ? (
+                      <>
+                        <Trophy size={12} /> Élu
+                      </>
+                    ) : (
+                      <>
+                        <Trophy size={12} /> Élire
+                      </>
+                    )}
+                  </button>
                   <button
                     onClick={() => toggleWatched(film)}
                     title={film.watched ? "Marquer comme non vu" : "Marquer comme vu"}

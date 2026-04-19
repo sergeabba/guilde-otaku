@@ -69,6 +69,7 @@ export async function PATCH(req: NextRequest) {
 
     const updates: Record<string, any> = {};
     if (body.watched !== undefined) updates.watched = body.watched;
+    if (body.chosen !== undefined) updates.chosen = body.chosen;
     if (body.week_label !== undefined) updates.week_label = body.week_label;
     if (body.week_date !== undefined) updates.week_date = body.week_date;
 
