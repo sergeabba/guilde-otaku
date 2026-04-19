@@ -67,6 +67,22 @@ export async function PATCH(req: NextRequest) {
     const id = req.nextUrl.searchParams.get("id");
     if (!id) return NextResponse.json({ error: "id requis" }, { status: 400 });
 
+    if (body.chosen === true) {
+      const { data: current } = await sb
+        .from("film_semaine")
+        .select("week_date")
+        .eq("id", Number(id))
+        .single();
+
+      if (current) {
+        await sb
+          .from("film_semaine")
+          .update({ chosen: false })
+          .eq("week_date", current.week_date)
+          .neq("id", Number(id));
+      }
+    }
+
     const updates: Record<string, any> = {};
     if (body.watched !== undefined) updates.watched = body.watched;
     if (body.chosen !== undefined) updates.chosen = body.chosen;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { ADMIN_PASSWORD } from "../../lib/constants";
@@ -209,6 +209,17 @@ export default function AdminFilmSemainePage() {
     } catch {
     }
   };
+
+  const weeksList = useMemo(() => {
+    const map = new Map<string, FilmEntry[]>();
+    for (const f of films) {
+      if (!map.has(f.week_label)) map.set(f.week_label, []);
+      map.get(f.week_label)!.push(f);
+    }
+    return [...map.entries()].sort(([, a], [, b]) =>
+      new Date(b[0].week_date).getTime() - new Date(a[0].week_date).getTime()
+    );
+  }, [films]);
 
   const toggleChosen = async (film: FilmEntry) => {
     try {
@@ -835,74 +846,58 @@ export default function AdminFilmSemainePage() {
               <Loader2 size={32} className="animate-spin" color={accent} />
             </div>
           ) : films.length === 0 ? (
-            <p
-              style={{
-                color: colors.textMuted,
-                fontSize: "16px",
-                textAlign: "center",
-                padding: "40px 0",
-              }}
-            >
+            <p style={{ color: colors.textMuted, fontSize: "16px", textAlign: "center", padding: "40px 0" }}>
               Aucun film pour le moment.
             </p>
           ) : (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "2px",
-                borderRadius: "14px",
-                overflow: "hidden",
-              }}
-            >
-              {films.map((film) => (
-                <div
-                  key={film.id}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "12px",
-                    padding: "12px 16px",
-                    background: film.watched
-                      ? "rgba(34,197,94,0.04)"
-                      : colors.bgCard,
-                    borderBottom: `1px solid ${colors.border}`,
-                    transition: "background 0.2s",
-                  }}
-                >
-                  {film.poster_path && (
-                    <img
-                      src={`https://image.tmdb.org/t/p/w92${film.poster_path}`}
-                      alt=""
-                      style={{
-                        width: "36px",
-                        height: "54px",
-                        objectFit: "cover",
-                        borderRadius: "6px",
-                        flexShrink: 0,
-                      }}
-                    />
-                  )}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div
-                      style={{
-                        fontWeight: 800,
-                        fontSize: "14px",
-                        textTransform: "uppercase",
-                      }}
-                    >
-                      {film.title}
+            <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+              {weeksList.map(([weekLabel, weekFilms]) => {
+                const chosenFilm = weekFilms.find(f => f.chosen);
+                return (
+                  <div key={weekLabel}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px", paddingBottom: "8px", borderBottom: `1px solid ${colors.border}` }}>
+                      <h3 style={{ fontFamily: font, fontSize: "16px", fontWeight: 900, color: colors.textSecondary, textTransform: "uppercase", fontStyle: "italic" }}>
+                        {weekLabel}
+                      </h3>
+                      <span style={{ fontFamily: font, fontSize: "11px", color: colors.textMuted, fontWeight: 600 }}>
+                        {weekFilms.length} film{weekFilms.length > 1 ? "s" : ""}
+                      </span>
                     </div>
-                    <div
-                      style={{
-                        fontSize: "11px",
-                        color: colors.textMuted,
-                        marginTop: "2px",
-                      }}
-                    >
-                      {film.week_label} {film.year && `· ${film.year}`}
-                    </div>
-                  </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "2px", borderRadius: "12px", overflow: "hidden" }}>
+                      {weekFilms.map((film) => (
+                        <div
+                          key={film.id}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "12px",
+                            padding: "12px 16px",
+                            background: film.chosen
+                              ? "rgba(240,160,48,0.06)"
+                              : film.watched
+                              ? "rgba(34,197,94,0.04)"
+                              : colors.bgCard,
+                            borderBottom: `1px solid ${colors.border}`,
+                            borderLeft: film.chosen ? "3px solid #f0a030" : "3px solid transparent",
+                            transition: "background 0.2s",
+                          }}
+                        >
+                          {film.poster_path && (
+                            <img
+                              src={`https://image.tmdb.org/t/p/w92${film.poster_path}`}
+                              alt=""
+                              style={{ width: "36px", height: "54px", objectFit: "cover", borderRadius: "6px", flexShrink: 0 }}
+                            />
+                          )}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 800, fontSize: "14px", textTransform: "uppercase", display: "flex", alignItems: "center", gap: "6px" }}>
+                              {film.title}
+                              {film.chosen && <Trophy size={13} style={{ color: "#f0a030" }} />}
+                            </div>
+                            <div style={{ fontSize: "11px", color: colors.textMuted, marginTop: "2px" }}>
+                              {film.year && `${film.year} · `}{film.genres?.split(", ").slice(0, 2).join(", ")}
+                            </div>
+                          </div>
                   <button
                     onClick={() => toggleChosen(film)}
                     title={film.chosen ? "Retirer le statut élu" : "Élire comme film de la semaine"}
@@ -986,6 +981,10 @@ export default function AdminFilmSemainePage() {
                   </button>
                 </div>
               ))}
+            </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </section>
