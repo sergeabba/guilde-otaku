@@ -71,6 +71,33 @@ export default function AdminAtelier() {
     if (authed) fetchImages();
   }, [authed]);
 
+  const compressImage = (file: File, maxSize = 1920, quality = 0.85): Promise<Blob> => {
+    return new Promise((resolve) => {
+      if (!file.type.startsWith("image/")) { resolve(file); return; }
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > maxSize || h > maxSize) {
+          const ratio = Math.min(maxSize / w, maxSize / h);
+          w = Math.round(w * ratio);
+          h = Math.round(h * ratio);
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0, w, h);
+        canvas.toBlob(
+          (blob) => resolve(blob || file),
+          file.type === "image/png" ? "image/jpeg" : file.type,
+          quality
+        );
+      };
+      img.onerror = () => resolve(file);
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   const handleUpload = async (files: File[]) => {
     setUploading(true);
     let successCount = 0;
@@ -80,14 +107,21 @@ export default function AdminAtelier() {
       const file = files[i];
       setUploadProgress({ current: i + 1, total: files.length, name: file.name });
 
+      const compressed = await compressImage(file);
       const formData = new FormData();
-      formData.append("files", file);
+      formData.append("files", compressed, file.name.replace(/\.png$/i, ".jpg"));
 
       try {
         const res = await fetch("/api/atelier", {
           method: "POST",
           body: formData,
         });
+        if (!res.ok) {
+          failCount++;
+          const text = await res.text().catch(() => "");
+          console.error(`Upload HTTP ${res.status} for ${file.name}:`, text);
+          continue;
+        }
         const data = await res.json();
         if (data.success || data.results?.[0]?.success) {
           successCount++;
@@ -95,9 +129,9 @@ export default function AdminAtelier() {
           failCount++;
           console.error(`Upload failed for ${file.name}:`, data.error || data.results?.[0]?.error);
         }
-      } catch (e) {
+      } catch (e: any) {
         failCount++;
-        console.error(`Network error for ${file.name}:`, e);
+        console.error(`Network error for ${file.name}:`, e?.message || e);
       }
     }
 
