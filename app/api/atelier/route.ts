@@ -94,60 +94,65 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  if (!isAdmin(req)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
     return NextResponse.json({ error: "Supabase env vars missing" }, { status: 500 });
   }
 
   try {
     const formData = await req.formData();
-    const file = formData.get("file") as File | null;
-    if (!file) {
+    const files = formData.getAll("files") as File[];
+    if (files.length === 0) {
+      const singleFile = formData.get("file") as File | null;
+      if (singleFile) files.push(singleFile);
+    }
+    if (files.length === 0) {
       return NextResponse.json({ error: "Aucun fichier" }, { status: 400 });
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-    const finalName = file.name;
-
     const adminClient = getAdminClient();
+    const results: { filename: string; url: string; success: boolean; error?: string }[] = [];
 
-    // Upload to Supabase Storage
-    const { error: uploadError } = await adminClient.storage
-      .from(BUCKET)
-      .upload(finalName, buffer, {
-        contentType: file.type || "image/jpeg",
-        upsert: true,
-      });
+    for (const file of files) {
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const finalName = file.name;
 
-    if (uploadError) {
-      return NextResponse.json({ error: uploadError.message }, { status: 500 });
+      const { error: uploadError } = await adminClient.storage
+        .from(BUCKET)
+        .upload(finalName, buffer, {
+          contentType: file.type || "image/jpeg",
+          upsert: true,
+        });
+
+      if (uploadError) {
+        results.push({ filename: finalName, url: "", success: false, error: uploadError.message });
+        continue;
+      }
+
+      const title = finalName
+        .replace(/\.[^.]+$/, "")
+        .replace(/[-_]/g, " ")
+        .replace(/\b\w/g, (c) => c.toUpperCase());
+
+      await adminClient.from("atelier").upsert(
+        {
+          filename: finalName,
+          title,
+          category: finalName.toLowerCase().includes("portrait") ? "Portrait" : "Création",
+        },
+        { onConflict: "filename" }
+      );
+
+      const { data } = adminClient.storage.from(BUCKET).getPublicUrl(finalName);
+      results.push({ filename: finalName, url: data.publicUrl, success: true });
     }
 
-    // Upsert DB metadata
-    const title = finalName
-      .replace(/\.[^.]+$/, "")
-      .replace(/[-_]/g, " ")
-      .replace(/\b\w/g, (c) => c.toUpperCase());
-
-    await adminClient.from("atelier").upsert(
-      {
-        filename: finalName,
-        title,
-        category: finalName.toLowerCase().includes("portrait") ? "Portrait" : "Création",
-      },
-      { onConflict: "filename" }
-    );
-
-    const { data } = adminClient.storage.from(BUCKET).getPublicUrl(finalName);
+    const successCount = results.filter(r => r.success).length;
+    const failCount = results.filter(r => !r.success).length;
 
     return NextResponse.json({
-      success: true,
-      filename: finalName,
-      url: data.publicUrl,
+      success: failCount === 0,
+      results,
+      summary: `${successCount} uploadé(s)${failCount > 0 ? `, ${failCount} échoué(s)` : ""}`,
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Erreur inconnue";

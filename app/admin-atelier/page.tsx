@@ -70,18 +70,24 @@ export default function AdminAtelier() {
     if (authed) fetchImages();
   }, [authed]);
 
-  const handleUpload = async (file: File) => {
+  const handleUpload = async (files: File[]) => {
     setUploading(true);
     const formData = new FormData();
-    formData.append("file", file);
+    for (const file of files) {
+      formData.append("files", file);
+    }
 
     try {
       const res = await fetch("/api/atelier", {
         method: "POST",
         body: formData,
       });
-      if (res.ok) fetchImages();
-      else alert("Erreur d'upload");
+      const data = await res.json();
+      if (data.success) {
+        fetchImages();
+      } else {
+        alert(data.summary || data.error || "Erreur d'upload");
+      }
     } catch (e) {
       alert("Erreur réseau");
     }
@@ -234,7 +240,7 @@ export default function AdminAtelier() {
         <div 
           onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
           onDragLeave={() => setDragActive(false)}
-          onDrop={(e) => { e.preventDefault(); setDragActive(false); if (e.dataTransfer.files?.[0]) handleUpload(e.dataTransfer.files[0]); }}
+          onDrop={(e) => { e.preventDefault(); setDragActive(false); if (e.dataTransfer.files?.length) handleUpload(Array.from(e.dataTransfer.files)); }}
           style={{
             border: `2px dashed ${dragActive ? colors.gold : colors.border}`,
             background: dragActive ? colors.goldLight : "transparent",
@@ -243,7 +249,7 @@ export default function AdminAtelier() {
           }}
           onClick={() => document.getElementById("file-input")?.click()}
         >
-          <input id="file-input" type="file" hidden onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])} />
+          <input id="file-input" type="file" multiple accept="image/*" hidden onChange={(e) => { if (e.target.files?.length) { handleUpload(Array.from(e.target.files)); e.target.value = ""; } }} />
           {uploading ? (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" }}>
               <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }}>
@@ -254,8 +260,8 @@ export default function AdminAtelier() {
           ) : (
             <>
               <Upload size={48} color={colors.gold} style={{ marginBottom: "16px" }} />
-              <p style={{ fontSize: "20px", fontWeight: 700, marginBottom: "4px" }}>Cliquez ou déposez une nouvelle œuvre</p>
-              <p style={{ color: colors.textSecondary }}>SVG, PNG, JPG ou WebP (Max 10Mo)</p>
+              <p style={{ fontSize: "20px", fontWeight: 700, marginBottom: "4px" }}>Cliquez ou déposez vos œuvres</p>
+              <p style={{ color: colors.textSecondary }}>Sélection multiple possible · PNG, JPG, WebP (Max 10Mo)</p>
             </>
           )}
         </div>
