@@ -1,362 +1,842 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { Rank, RANK_FILTER_ORDER, type Member } from "../../data/members";
-import { Shuffle, Shield, Trophy, Flame, Loader2 } from "lucide-react";
+import { Dices, Swords, Crown, Flame, Shield, Wind } from "lucide-react";
 import GuildeHeader from "../components/GuildeHeader";
-import { useIsMobile } from "../hooks/useIsMobile";
+import { loadSlim } from "@tsparticles/slim";
+import Particles, { initParticlesEngine } from "@tsparticles/react";
+import type { Engine } from "@tsparticles/engine";
+
 import type { ViewMode } from "../types";
 import { supabase } from "../../lib/supabase";
 
-const fontHud = "'Bebas Neue', 'Impact', sans-serif";
-const fontMono = "ui-monospace, 'Cascadia Code', monospace";
+/* ─── Sound Manager ─── */
+class SoundManager {
+  private sounds: Record<string, Howl> = {};
+  private _muted = false;
 
-// Liquid Glass Palette Premium
-const P1 = { main: "#c9a84c", glow: "rgba(201,168,76,0.6)", dark: "#1a160c", border: "rgba(201,168,76,0.4)", light: "#e2c984" };
-const P2 = { main: "#38bdf8", glow: "rgba(56,189,248,0.6)", dark: "#061825", border: "rgba(56,189,248,0.4)", light: "#7dd3fc" };
+  constructor() {
+    if (typeof window !== "undefined") {
+      const { Howl } = require("howler");
+      this.sounds = {
+        hover: new Howl({ src: ["/sounds/hover.mp3"], volume: 0.15 }),
+        select: new Howl({ src: ["/sounds/select.mp3"], volume: 0.3 }),
+        confirm: new Howl({ src: ["/sounds/confirm.mp3"], volume: 0.4 }),
+        fight: new Howl({ src: ["/sounds/fight.mp3"], volume: 0.5 }),
+        hit: new Howl({ src: ["/sounds/hit.mp3"], volume: 0.35 }),
+        critical: new Howl({ src: ["/sounds/critical.mp3"], volume: 0.5 }),
+        ko: new Howl({ src: ["/sounds/ko.mp3"], volume: 0.6 }),
+        whoosh: new Howl({ src: ["/sounds/whoosh.mp3"], volume: 0.25 }),
+        round: new Howl({ src: ["/sounds/round.mp3"], volume: 0.4 }),
+        victory: new Howl({ src: ["/sounds/victory.mp3"], volume: 0.5 }),
+      };
+    }
+  }
 
-function pickSrc(m: Member, mode: ViewMode) {
-  return mode === "anime" ? m.animeChar : m.photo;
+  play(name: string) {
+    if (!this._muted && this.sounds[name]) this.sounds[name].play();
+  }
+
+  get muted() { return this._muted; }
+  set muted(v: boolean) { this._muted = v; }
 }
 
-// ──────────────────────────────────────────────────────────
-// HUD: BARRES DE VIE ET LOGO VS
-// ──────────────────────────────────────────────────────────
-function HudBar({ p1Active, p2Active, both, isMobile }: { p1Active: boolean; p2Active: boolean; both: boolean; isMobile: boolean }) {
+const sfx = typeof window !== "undefined" ? new SoundManager() : null;
+
+/* ─── Rank Colors ─── */
+const RC: Record<string, { main: string; glow: string; gradient: string; dark: string }> = {
+  "Fondateur": { main: "#FFD700", glow: "rgba(255,215,0,.6)", gradient: "linear-gradient(135deg,#FFD700,#FFA000)", dark: "#1a1500" },
+  "Monarque": { main: "#FFD700", glow: "rgba(255,215,0,.6)", gradient: "linear-gradient(135deg,#FFD700,#FF8C00)", dark: "#1a1500" },
+  "Ex Monarque": { main: "#FF6B35", glow: "rgba(255,107,53,.6)", gradient: "linear-gradient(135deg,#FF6B35,#D35400)", dark: "#1a0e00" },
+  "Ordre Céleste": { main: "#C084FC", glow: "rgba(192,132,252,.6)", gradient: "linear-gradient(135deg,#C084FC,#7C3AED)", dark: "#0e0a1e" },
+  "New G dorée": { main: "#F472B6", glow: "rgba(244,114,182,.6)", gradient: "linear-gradient(135deg,#F472B6,#BE185D)", dark: "#1a0a12" },
+  "Vieux Briscard": { main: "#34D399", glow: "rgba(52,211,153,.6)", gradient: "linear-gradient(135deg,#34D399,#059669)", dark: "#001a12" },
+  "Futurs Espoirs": { main: "#60A5FA", glow: "rgba(96,165,250,.6)", gradient: "linear-gradient(135deg,#60A5FA,#1D4ED8)", dark: "#051a35" },
+  "Revenant": { main: "#9CA3AF", glow: "rgba(156,163,175,.5)", gradient: "linear-gradient(135deg,#9CA3AF,#4B5563)", dark: "#111827" },
+  "Fantôme": { main: "#6B7280", glow: "rgba(107,114,128,.4)", gradient: "linear-gradient(135deg,#6B7280,#374151)", dark: "#0d1117" },
+};
+
+function rc(rank: string) { return RC[rank] ?? RC["Fondateur"]; }
+function pwr(m: Member) { const s = m.stats ?? { force: 80, vitesse: 80, technique: 80 }; return Math.round((s.force + s.vitesse + s.technique) / 3); }
+function img(m: Member, mode: ViewMode) { return mode === "anime" ? m.animeChar : m.photo; }
+
+type Phase = "select" | "intro" | "fight";
+
+/* ─── Global Styles ─── */
+function Styles() {
   return (
-    <div style={{ position: "absolute", top: isMobile ? 10 : 20, left: isMobile ? 10 : 20, right: isMobile ? 10 : 20, zIndex: 40, display: "flex", alignItems: "center", gap: isMobile ? "10px" : "20px" }}>
-      
-      {/* Barre P1 */}
-      <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
-        <div style={{ width: "100%", maxWidth: "500px", height: isMobile ? "12px" : "20px", background: "rgba(0,0,0,0.4)", backdropFilter: "blur(10px)", border: `1px solid ${P1.border}`, borderRadius: "100px", position: "relative", overflow: "hidden", boxShadow: `0 0 20px ${p1Active ? P1.glow : 'transparent'}` }}>
-          <motion.div initial={{ scaleX: 0 }} animate={{ scaleX: p1Active ? 1 : 0 }} transition={{ type: "spring", stiffness: 100 }} style={{ position: "absolute", inset: 0, transformOrigin: "right", background: `linear-gradient(to right, transparent, ${P1.main})`, borderRadius: "100px" }} />
-        </div>
-      </div>
+    <style jsx global>{`
+      @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;600;700;900&family=Orbitron:wght@400;500;700;900&display=swap');
 
-      {/* Centre: VS dynamique */}
-      <div style={{ position: "relative", width: isMobile ? "60px" : "100px", display: "flex", justifyContent: "center" }}>
-        <motion.div 
-          animate={both ? { scale: [1, 1.1, 1] } : { scale: 1 }} 
-          transition={{ duration: 1, repeat: both ? Infinity : 0, ease: "easeInOut" }}
-          style={{ fontFamily: fontHud, fontSize: isMobile ? "36px" : "56px", color: "#fff", textShadow: `0 0 20px #fff, 0 0 40px ${both ? P1.main : '#555'}`, lineHeight: 0.8, zIndex: 50 }}
-        >
-          VS
-        </motion.div>
-      </div>
+      @keyframes scanlines { 0%{transform:translateY(0)} 100%{transform:translateY(4px)} }
+      @keyframes hpPulse { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.5) saturate(2)} }
+      @keyframes comboPop { 0%,100%{transform:scale(1)} 50%{transform:scale(1.15)} }
+      @keyframes vsSlam { 0%{transform:scale(5) rotate(-15deg);opacity:0} 40%{transform:scale(.85) rotate(4deg);opacity:1} 60%{transform:scale(1.12) rotate(-2deg)} 80%{transform:scale(.97) rotate(1deg)} 100%{transform:scale(1) rotate(0);opacity:1} }
+      @keyframes screenShake { 0%,100%{transform:translate(0,0) rotate(0)} 10%{transform:translate(-15px,-5px) rotate(-3deg)} 20%{transform:translate(12px,8px) rotate(2deg)} 30%{transform:translate(-8px,-3px) rotate(-1deg)} 40%{transform:translate(5px,2px) rotate(1deg)} 50%{transform:translate(-3px,-1px)} }
+      @keyframes hitShake { 0%,100%{transform:translateX(0)} 10%{transform:translateX(-8px) rotate(-1deg)} 30%{transform:translateX(6px) rotate(1deg)} 50%{transform:translateX(-4px)} 70%{transform:translateX(3px)} }
+      @keyframes gridPulse { 0%,100%{opacity:.03} 50%{opacity:.08} }
+      @keyframes marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+      @keyframes glowCharge { 0%{background-position:200% center} 100%{background-position:-200% center} }
+      @keyframes electricPulse { 0%,100%{opacity:1;filter:brightness(1)} 50%{opacity:.85;filter:brightness(1.5)} }
+      @keyframes glitchText { 0%,90%,100%{transform:translate(0);filter:none} 92%{transform:translate(-2px,1px);filter:hue-rotate(90deg)} 94%{transform:translate(2px,-1px);filter:hue-rotate(-90deg)} 96%{transform:translate(-1px,-1px)} 98%{transform:translate(1px,1px);filter:hue-rotate(45deg)} }
 
-      {/* Barre P2 */}
-      <div style={{ flex: 1, display: "flex", justifyContent: "flex-start" }}>
-        <div style={{ width: "100%", maxWidth: "500px", height: isMobile ? "12px" : "20px", background: "rgba(0,0,0,0.4)", backdropFilter: "blur(10px)", border: `1px solid ${P2.border}`, borderRadius: "100px", position: "relative", overflow: "hidden", boxShadow: `0 0 20px ${p2Active ? P2.glow : 'transparent'}` }}>
-          <motion.div initial={{ scaleX: 0 }} animate={{ scaleX: p2Active ? 1 : 0 }} transition={{ type: "spring", stiffness: 100 }} style={{ position: "absolute", inset: 0, transformOrigin: "left", background: `linear-gradient(to left, transparent, ${P2.main})`, borderRadius: "100px" }} />
-        </div>
+      .hit-shake { animation: hitShake .3s ease-out; }
+      .ko-shake { animation: screenShake .5s ease-out; }
+      .custom-scroll::-webkit-scrollbar { width:3px; height:3px; }
+      .custom-scroll::-webkit-scrollbar-track { background:rgba(255,255,255,.02); }
+      .custom-scroll::-webkit-scrollbar-thumb { background:rgba(220,38,38,.4); border-radius:2px; }
+      .custom-scroll::-webkit-scrollbar-thumb:hover { background:rgba(220,38,38,.65); }
+
+      .r-pill { transition: all .2s ease; cursor: pointer; white-space: nowrap; }
+      .r-pill:hover { transform: translateY(-1px); }
+
+      .roster { display:grid; gap:5px; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); }
+      @media(min-width:480px){ .roster{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px;} }
+      @media(min-width:640px){ .roster{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:7px;} }
+      @media(min-width:1024px){ .roster{grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:8px;} }
+      @media(min-width:1400px){ .roster{grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:9px;} }
+    `}</style>
+  );
+}
+
+/* ─── Sparks Canvas ─── */
+function Sparks({ active, color = "#FFD700", intensity = 1 }: { active: boolean; color?: string; intensity?: number }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  const pts = useRef<Array<{ x: number; y: number; vx: number; vy: number; life: number; max: number; sz: number; c: string }>>([]);
+  const af = useRef(0);
+
+  useEffect(() => {
+    if (!active || !ref.current) return;
+    const c = ref.current, ctx = c.getContext("2d")!;
+    c.width = c.offsetWidth * 2; c.height = c.offsetHeight * 2; ctx.scale(2, 2);
+    const cols = [color, "#FF4500", "#FF6347", "#FFA500", "#fff"];
+
+    const animate = () => {
+      ctx.clearRect(0, 0, c.offsetWidth, c.offsetHeight);
+      for (let i = 0; i < Math.floor(3 * intensity); i++) {
+        pts.current.push({ x: Math.random() * c.offsetWidth, y: c.offsetHeight + 5, vx: (Math.random() - .5) * 4, vy: -(Math.random() * 6 + 2), life: 0, max: 30 + Math.random() * 40, sz: Math.random() * 3 + .5, c: cols[Math.floor(Math.random() * cols.length)] });
+      }
+      pts.current = pts.current.filter(p => {
+        p.life++; p.x += p.vx; p.y += p.vy; p.vy += .06; p.vx *= .99;
+        const a = 1 - p.life / p.max; if (a <= 0) return false;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.sz * a, 0, Math.PI * 2);
+        ctx.fillStyle = p.c; ctx.globalAlpha = a; ctx.fill(); ctx.globalAlpha = 1;
+        return true;
+      });
+      af.current = requestAnimationFrame(animate);
+    };
+    af.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(af.current);
+  }, [active, color, intensity]);
+
+  return <canvas ref={ref} className="absolute inset-0 pointer-events-none z-20" style={{ width: "100%", height: "100%" }} />;
+}
+
+/* ─── Glitch Text ─── */
+function GlitchText({ text, style: sx = {}, fast = false }: { text: string; style?: React.CSSProperties; fast?: boolean }) {
+  return (
+    <span className="relative inline-block" style={sx}>
+      <span className="relative z-10">{text}</span>
+      <span className="absolute top-0 left-0 z-0 opacity-60" style={{ color: "#ff0040", animation: "glitchText 4s infinite", clipPath: "polygon(0 0,100% 0,100% 45%,0 45%)" }} aria-hidden="true">{text}</span>
+      <span className="absolute top-0 left-0 z-0 opacity-60" style={{ color: "#00ffff", animation: "glitchText 4s .15s infinite reverse", clipPath: "polygon(0 55%,100% 55%,100% 100%,0 100%)" }} aria-hidden="true">{text}</span>
+    </span>
+  );
+}
+
+/* ─── Stat Bar ─── */
+function StatBar({ label, value, max = 100, color, icon, delay = 0 }: { label: string; value: number; max?: number; color: string; icon: React.ReactNode; delay?: number }) {
+  const [show, setShow] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setShow(true), delay); return () => clearTimeout(t); }, [delay]);
+  return (
+    <div className="flex items-center gap-2">
+      <div className="shrink-0 w-4 h-4" style={{ color }}>{icon}</div>
+      <span className="shrink-0 w-7 text-right" style={{ fontFamily: "'Orbitron',monospace", fontSize: "9px", color: "rgba(255,255,255,.4)", letterSpacing: "1px" }}>{label}</span>
+      <div className="flex-1 relative h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,.05)" }}>
+        <motion.div initial={{ width: 0 }} animate={{ width: show ? `${(value / max) * 100}%` : 0 }} transition={{ duration: .8, ease: "easeOut" }} className="h-full rounded-full" style={{ background: color }} />
       </div>
+      <span className="shrink-0 w-6 text-right text-xs font-bold tabular-nums" style={{ color }}>{value}</span>
     </div>
   );
 }
 
-// ──────────────────────────────────────────────────────────
-// PERSONNAGES DANS L'ARÈNE
-// ──────────────────────────────────────────────────────────
-function ArenaFighter({ member, side, viewMode, onClear, isMobile }: { member: Member; side: "left" | "right"; viewMode: ViewMode; onClear: () => void; isMobile: boolean }) {
-  const L = side === "left";
-  const C = L ? P1 : P2;
-  const imgSrc = pickSrc(member, viewMode);
-  const stats = member.stats;
-  const special = member.special;
+/* ════════════════════════════════════════════════════
+   FIGHT INTRO
+   ════════════════════════════════════════════════════ */
+function FightIntro({ p1, p2, mode, onFinish }: { p1: Member; p2: Member; mode: ViewMode; onFinish: () => void }) {
+  const [step, setStep] = useState<"slash" | "p1" | "vs" | "p2" | "fight">("slash");
+  const c1 = rc(p1.rank), c2 = rc(p2.rank);
+
+  useEffect(() => {
+    sfx?.play("whoosh");
+    const t = [
+      setTimeout(() => { setStep("p1"); sfx?.play("whoosh"); }, 500),
+      setTimeout(() => { setStep("vs"); sfx?.play("confirm"); }, 1800),
+      setTimeout(() => { setStep("p2"); sfx?.play("whoosh"); }, 2800),
+      setTimeout(() => { setStep("fight"); sfx?.play("fight"); }, 4200),
+      setTimeout(() => onFinish(), 5400),
+    ];
+    return () => t.forEach(clearTimeout);
+  }, [onFinish]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }} 
-      animate={{ opacity: 1, scale: 1 }} 
-      exit={{ opacity: 0, scale: 0.9, filter: "blur(10px)" }} 
-      transition={{ type: "spring", damping: 20, stiffness: 100 }}
-      style={{ 
-        flex: 1, position: "relative", height: "100%", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center",
-      }}
-    >
-      {/* Fond Liquid Glass / Mesh Gradient */}
-      <div style={{ position: "absolute", inset: "-20%", zIndex: 0, opacity: 0.5, background: `radial-gradient(circle at ${L ? '0% 50%' : '100% 50%'}, ${C.main}22, transparent 60%)` }} />
-      <div style={{ position: "absolute", inset: "-10%", zIndex: 0, opacity: 0.4, filter: "blur(30px) saturate(1.5)" }}>
-        <Image src={imgSrc} alt="bg" fill style={{ objectFit: "cover" }} />
-      </div>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-black overflow-hidden">
 
-      {/* Image du personnage */}
-      <div style={{ position: "absolute", top: isMobile ? "5%" : "15%", bottom: "0%", left: "0%", right: "0%", zIndex: 10, cursor: "pointer" }} onClick={onClear}>
-        <motion.div whileHover={{ scale: 1.05 }} transition={{ type: "spring", stiffness: 400 }} style={{ width: "100%", height: "100%", position: "relative" }}>
-          <Image 
-            src={imgSrc} 
-            alt={member.name} 
-            fill 
-            priority 
-            style={{ objectFit: "contain", objectPosition: "center bottom", filter: `drop-shadow(0 0 40px ${C.glow})` }} 
-          />
-        </motion.div>
-      </div>
+      {/* Diagonal split */}
+      {step !== "slash" && (
+        <motion.div initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: .3 }} className="absolute inset-0 origin-center" style={{ background: "linear-gradient(135deg,#07070f 0%,#0f0718 50%,#07070f 100%)" }} />
+      )}
 
-      {/* Typographie Géante Arrière-plan */}
-      <div style={{ position: "absolute", top: isMobile ? "20%" : "15%", [L ? "left" : "right"]: isMobile ? "5%" : "-5%", zIndex: 5, opacity: 0.15, textShadow: `0 0 20px ${C.main}` }}>
-        <span style={{ fontFamily: fontHud, fontSize: isMobile ? "80px" : "180px", color: "transparent", WebkitTextStroke: `1px rgba(255,255,255,0.8)`, whiteSpace: "nowrap", display: "block" }}>
-          {member.name.split(" ")[0]}
-        </span>
-      </div>
-
-      {/* Dégradé sombre pour l'incrustation */}
-      <div style={{ position: "absolute", bottom: 0, left: "-5%", right: "-5%", height: isMobile ? "80%" : "60%", background: "linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 40%, transparent 100%)", zIndex: 15, pointerEvents: "none" }} />
-
-      {/* ── BLOC D'INFORMATIONS ── */}
-      <motion.div 
-        initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1, type: "spring" }}
-        style={{ 
-          position: "absolute", bottom: isMobile ? "20px" : "30px", [L ? "left" : "right"]: isMobile ? "15px" : "40px", 
-          zIndex: 20, display: "flex", flexDirection: "column", gap: isMobile ? "6px" : "10px", 
-          alignItems: L ? "flex-start" : "flex-end", width: isMobile ? "calc(100% - 30px)" : "auto"
-        }}
-      >
-        
-        {/* Ligne 1 : Nom */}
-        <div style={{ display: "flex", gap: "12px", alignItems: "center", flexDirection: L ? "row" : "row-reverse" }}>
-          <span style={{ fontFamily: fontHud, fontSize: isMobile ? "32px" : "48px", color: "#fff", textTransform: "uppercase", letterSpacing: "1px", textShadow: `0 0 20px ${C.glow}`, lineHeight: 1 }}>{member.name}</span>
-        </div>
-
-        {/* Ligne 2 : Grade et Badge (Glassmorphism) */}
-        <div style={{ display: "flex", gap: "8px", flexDirection: L ? "row" : "row-reverse", flexWrap: "wrap", justifyContent: L ? "flex-start" : "flex-end" }}>
-          <div style={{ background: "rgba(255,255,255,0.05)", backdropFilter: "blur(10px)", border: `1px solid rgba(255,255,255,0.1)`, borderRadius: "100px", padding: "4px 12px", display: "flex", alignItems: "center", gap: "6px", boxShadow: `0 4px 20px rgba(0,0,0,0.5)` }}>
-            <Shield size={isMobile ? 12 : 14} color={C.light} />
-            <span style={{ fontFamily: fontHud, fontSize: "14px", color: "#fff", letterSpacing: "1px" }}>{member.rank}</span>
-          </div>
-          {member.badge && (
-            <div style={{ background: "rgba(255,255,255,0.05)", backdropFilter: "blur(10px)", border: `1px solid ${C.border}`, borderRadius: "100px", padding: "4px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
-              <Trophy size={isMobile ? 12 : 14} color={C.light} />
-              <span style={{ fontFamily: fontHud, fontSize: "14px", color: C.light, letterSpacing: "1px" }}>{member.badge.toUpperCase()}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Ligne 3 : Stats de combat rapides */}
-        {stats && (
-          <div style={{ display: "flex", gap: "6px", flexDirection: L ? "row" : "row-reverse", flexWrap: "wrap", justifyContent: L ? "flex-start" : "flex-end" }}>
-            {Object.entries(stats).map(([key, val]) => (
-              <div key={key} style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(5px)", border: `1px solid rgba(255,255,255,0.05)`, borderRadius: "8px", padding: "4px 10px", textAlign: "center", minWidth: isMobile ? "40px" : "50px" }}>
-                <span style={{ display: "block", color: "rgba(255,255,255,0.5)", fontSize: "9px", fontFamily: fontMono, textTransform: "uppercase", marginBottom: "2px" }}>{key}</span>
-                <span style={{ display: "block", fontFamily: fontHud, fontSize: "16px", color: "#fff" }}>{String(val)}</span>
+      {/* P1 left panel */}
+      {["p1", "vs", "p2", "fight"].includes(step) && (
+        <AnimatePresence>
+          <motion.div initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} transition={{ type: "spring", stiffness: 60, damping: 12 }}
+            className="absolute top-0 bottom-0 left-0 z-10 w-[50%]" style={{ clipPath: "polygon(0 0,100% 0,80% 100%,0 100%)" }}>
+            <div className="relative w-full h-full" style={{ background: `linear-gradient(135deg,${c1.dark},#030308)` }}>
+              {img(p1, mode) && (
+                <div className="absolute inset-0 flex items-end justify-center">
+                  <Image src={img(p1, mode)} alt={p1.name} fill={false} width={400} height={500} className="object-contain object-bottom" style={{ width: "80%", height: "90%", filter: `drop-shadow(0 0 50px ${c1.glow})` }} />
+                </div>
+              )}
+              <div className="absolute bottom-10 left-8 z-20">
+                <span style={{ fontFamily: "'Orbitron',monospace", fontSize: "10px", color: c1.main, letterSpacing: "3px" }}>PLAYER 1</span>
+                <h2 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(36px,6vw,80px)", color: "#fff", letterSpacing: "5px", lineHeight: .9, textShadow: `0 0 20px ${c1.glow}` }}>{p1.name.toUpperCase()}</h2>
+                <span style={{ fontFamily: "'Orbitron',monospace", fontSize: "9px", color: "rgba(255,255,255,.3)", letterSpacing: "2px" }}>{p1.rank}</span>
               </div>
-            ))}
-          </div>
-        )}
+              <Sparks active color={c1.main} intensity={.4} />
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      )}
 
-        {/* Ligne 4: Special Move */}
-        {special && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px", marginTop: isMobile ? "2px" : "8px", background: "rgba(255,255,255,0.03)", padding: isMobile ? "6px 10px" : "10px 16px", borderRadius: "12px", borderLeft: L ? `2px solid ${C.main}` : "none", borderRight: !L ? `2px solid ${C.main}` : "none", backdropFilter: "blur(10px)" }}>
-             <div style={{ display: "flex", alignItems: "center", gap: isMobile ? "4px" : "8px", justifyContent: L ? "flex-start" : "flex-end" }}>
-               {L && <Flame size={isMobile ? 12 : 14} color={C.light} />}
-               <span style={{ fontFamily: fontHud, fontSize: isMobile ? "14px" : "18px", color: C.light, letterSpacing: "1px", lineHeight: 1 }}>{special.name}</span>
-               {!L && <Flame size={isMobile ? 12 : 14} color={C.light} />}
-             </div>
-             <span style={{ fontFamily: fontMono, fontSize: isMobile ? "9px" : "11px", color: "rgba(255,255,255,0.6)", textAlign: L ? "left" : "right", lineHeight: 1.2 }}>{special.effect}</span>
-          </div>
-        )}
+      {/* P2 right panel */}
+      {["p2", "fight"].includes(step) && (
+        <AnimatePresence>
+          <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", stiffness: 60, damping: 12 }}
+            className="absolute top-0 bottom-0 right-0 z-10 w-[50%]" style={{ clipPath: "polygon(20% 0,100% 0,100% 100%,0 100%)" }}>
+            <div className="relative w-full h-full" style={{ background: `linear-gradient(225deg,${c2.dark},#030308)` }}>
+              {img(p2, mode) && (
+                <div className="absolute inset-0 flex items-end justify-center">
+                  <Image src={img(p2, mode)} alt={p2.name} fill={false} width={400} height={500} className="object-contain object-bottom" style={{ width: "80%", height: "90%", filter: `drop-shadow(0 0 50px ${c2.glow})`, transform: "scaleX(-1)" }} />
+                </div>
+              )}
+              <div className="absolute bottom-10 right-8 z-20 text-right">
+                <span style={{ fontFamily: "'Orbitron',monospace", fontSize: "10px", color: c2.main, letterSpacing: "3px" }}>PLAYER 2</span>
+                <h2 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(36px,6vw,80px)", color: "#fff", letterSpacing: "5px", lineHeight: .9, textShadow: `0 0 20px ${c2.glow}` }}>{p2.name.toUpperCase()}</h2>
+                <span style={{ fontFamily: "'Orbitron',monospace", fontSize: "9px", color: "rgba(255,255,255,.3)", letterSpacing: "2px" }}>{p2.rank}</span>
+              </div>
+              <Sparks active color={c2.main} intensity={.4} />
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      )}
 
-      </motion.div>
+      {/* VS */}
+      {step === "vs" && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center">
+          <div className="absolute inset-0" style={{ background: "linear-gradient(135deg,transparent 49.4%,#FFD700 49.4%,#FFD700 50.6%,transparent 50.6%)" }} />
+          <div style={{ animation: "vsSlam .8s cubic-bezier(.34,1.56,.64,1)" }}>
+            <span style={{ fontFamily: "'Orbitron',monospace", fontSize: "clamp(90px,22vw,260px)", fontWeight: 900, color: "#FFD700", textShadow: "0 0 40px rgba(255,215,0,.8),0 0 80px rgba(255,69,0,.5),0 8px 0 #7a5700", letterSpacing: "12px" }}>VS</span>
+          </div>
+        </div>
+      )}
+
+      {/* FIGHT */}
+      {step === "fight" && (
+        <div className="absolute inset-0 z-[60] flex items-center justify-center pointer-events-none">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 bg-white/90"
+            style={{ transition: "opacity .4s" }}
+            /* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */
+          />
+          <motion.div initial={{ scale: 4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 200, damping: 14, delay: .15 }}>
+            <GlitchText fast={false} text="FIGHT!" style={{ fontFamily: "'Orbitron',monospace", fontSize: "clamp(60px,16vw,200px)", fontWeight: 900, color: "#FFD700", textShadow: "0 0 40px rgba(255,215,0,.8),0 0 80px rgba(255,69,0,.5),0 8px 0 #7a5700", letterSpacing: "14px" }} />
+          </motion.div>
+        </div>
+      )}
     </motion.div>
   );
 }
 
-// ──────────────────────────────────────────────────────────
-// COMPOSANT PRINCIPAL
-// ──────────────────────────────────────────────────────────
-export default function FightersPage() {
-  const [members, setMembers] = useState<Member[]>([]);
-  const [p1, setP1] = useState<Member | null>(null);
-  const [p2, setP2] = useState<Member | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>("anime");
-  const [filterRank, setFilterRank] = useState<Rank | "Tous">("Tous");
-  
+/* ─── HP Bar ─── */
+function HPBar({ hp, color, glow, side, name, rank, combo }: { hp: number; color: string; glow: string; side: "left" | "right"; name: string; rank: string; combo: number }) {
+  const danger = hp <= 25;
+  const bc = danger ? "#FF1A1A" : color;
+  return (
+    <div className={`flex-1 ${side === "right" ? "text-right" : ""}`}>
+      <div className={`flex items-center gap-2 mb-1 ${side === "right" ? "justify-end" : ""}`}>
+        <div className="shrink-0 w-7 h-7 rounded flex items-center justify-center" style={{ background: `${color}15`, border: `1px solid ${color}30` }}>
+          <span style={{ fontFamily: "'Orbitron',monospace", fontSize: "8px", fontWeight: 700, color, letterSpacing: "1px" }}>{side === "left" ? "P1" : "P2"}</span>
+        </div>
+        <div>
+          <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(16px,2.5vw,22px)", color: "#fff", letterSpacing: "3px" }}>{name.toUpperCase()}</span>
+          <span className="ml-2" style={{ fontFamily: "'Orbitron',monospace", fontSize: "8px", color: `${color}70`, letterSpacing: "2px" }}>{rank.toUpperCase()}</span>
+        </div>
+      </div>
+      <div className="relative h-5 rounded-sm overflow-hidden" style={{ background: "rgba(0,0,0,.7)", border: `1px solid ${bc}20` }}>
+        <motion.div animate={{ width: `${hp}%` }} transition={{ type: "spring", stiffness: 140, damping: 18 }}
+          className="absolute top-0 bottom-0 rounded-sm"
+          style={{ [side === "right" ? "right" : "left"]: 0, background: danger ? "linear-gradient(90deg,#FF1A1A,#FF5500)" : `linear-gradient(90deg,${color}cc,${color})`, boxShadow: `0 0 10px ${glow}`, animation: danger ? "hpPulse .8s infinite" : undefined }}
+        >
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom,rgba(255,255,255,.25) 0%,transparent 55%)" }} />
+        </motion.div>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span style={{ fontFamily: "'Orbitron',monospace", fontSize: "10px", fontWeight: 900, color: "#fff", textShadow: "0 1px 4px #000" }}>{hp}</span>
+        </div>
+      </div>
+      <AnimatePresence>
+        {combo > 1 && (
+          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} className={`mt-1 ${side === "right" ? "text-right" : "text-left"}`}>
+            <span className="inline-block px-2 py-0.5 text-white font-bold rounded" style={{ fontFamily: "'Orbitron',monospace", fontSize: "10px", background: "linear-gradient(135deg,#FF4500,#DC2626)", boxShadow: "0 0 12px rgba(255,69,0,.5)", animation: "comboPop .4s infinite" }}>{combo} HIT</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════
+   ARENA
+   ════════════════════════════════════════════════════ */
+function Arena({ p1, p2, mode, onExit }: { p1: Member; p2: Member; mode: ViewMode; onExit: () => void }) {
+  const [hp1, setHp1] = useState(100);
+  const [hp2, setHp2] = useState(100);
+  const [hitFlash, setHitFlash] = useState<"left" | "right" | null>(null);
+  const [combo1, setCombo1] = useState(0);
+  const [combo2, setCombo2] = useState(0);
+  const [roundText, setRoundText] = useState<string | null>("ROUND 1");
+  const [winner, setWinner] = useState<Member | null>(null);
+  const [shake, setShake] = useState(false);
+  const c1 = rc(p1.rank), c2 = rc(p2.rank);
+
   useEffect(() => {
-    const loadFighters = async () => {
-      const { data } = await supabase.from("fighters").select("*").order("id", { ascending: true });
-      if (data) {
-        setMembers(data.map(m => ({
-          ...m,
-          animeChar: m.animechar,
-          rankJP: m.rankjp
-        })));
-      }
-    };
-    loadFighters();
+    sfx?.play("round");
+    const t0 = setTimeout(() => { setRoundText("FIGHT!"); sfx?.play("fight"); }, 1200);
+    const t1 = setTimeout(() => setRoundText(null), 2400);
+    return () => { clearTimeout(t0); clearTimeout(t1); };
   }, []);
-  
-  const isMobile = useIsMobile();
-  const both = !!(p1 && p2);
 
-  const select = useCallback((m: Member) => {
-    if (p1?.id === m.id) { setP1(null); return; }
-    if (p2?.id === m.id) { setP2(null); return; }
-    if (!p1) { setP1(m); return; }
-    if (!p2) { setP2(m); return; }
-  }, [p1, p2]);
+  useEffect(() => {
+    if (roundText || hp1 <= 0 || hp2 <= 0 || winner) return;
+    const s1 = p1.stats ?? { force: 80, vitesse: 80, technique: 80 };
+    const s2 = p2.stats ?? { force: 80, vitesse: 80, technique: 80 };
+    const t1 = s1.force + s1.vitesse + s1.technique;
+    const t2 = s2.force + s2.vitesse + s2.technique;
+    const b = t1 / (t1 + t2);
 
-  const random = () => {
-    const n = members.length;
-    if (n < 2) return;
-    let i = Math.floor(Math.random() * n);
-    let j = Math.floor(Math.random() * (n - 1));
-    if (j >= i) j++;
-    setP1(members[i]);
-    setP2(members[j]);
-  };
+    const iv = setInterval(() => {
+      const r = Math.random();
+      if (r < b * .7) {
+        const crit = Math.random() < s1.technique / 400;
+        const dmg = crit ? Math.round((s1.force / 100) * (Math.random() * 6 + 3) * 2.5 + 8) : Math.round((s1.force / 100) * (Math.random() * 6 + 3));
+        setHp2(p => Math.max(0, p - dmg));
+        setHitFlash("right"); setCombo2(c => c + 1); setCombo1(0);
+        if (crit) { setShake(true); sfx?.play("critical"); setTimeout(() => setShake(false), 350); } else sfx?.play("hit");
+        setTimeout(() => setHitFlash(null), 200);
+      } else if (r < (b + (1 - b)) * .7) {
+        const crit = Math.random() < s2.technique / 400;
+        const dmg = crit ? Math.round((s2.force / 100) * (Math.random() * 6 + 3) * 2.5 + 8) : Math.round((s2.force / 100) * (Math.random() * 6 + 3));
+        setHp1(p => Math.max(0, p - dmg));
+        setHitFlash("left"); setCombo1(c => c + 1); setCombo2(0);
+        if (crit) { setShake(true); sfx?.play("critical"); setTimeout(() => setShake(false), 350); } else sfx?.play("hit");
+        setTimeout(() => setHitFlash(null), 200);
+      } else { setCombo1(0); setCombo2(0); }
+    }, 700);
+    return () => clearInterval(iv);
+  }, [roundText, hp1, hp2, winner]);
 
-  const filtered = useMemo(() => members.filter((m) => filterRank === "Tous" || m.rank === filterRank), [filterRank]);
-
-  // Layout Mobile Dynamics
-  const showRoster = !isMobile || !both;
-  const showArena = !isMobile || both || (p1 || p2);
+  useEffect(() => {
+    if (hp1 <= 0 && !winner) { setWinner(p2); setShake(true); sfx?.play("ko"); setTimeout(() => setShake(false), 500); }
+    if (hp2 <= 0 && !winner) { setWinner(p1); setShake(true); sfx?.play("ko"); setTimeout(() => setShake(false), 500); }
+  }, [hp1, hp2, winner]);
 
   return (
-    <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#050508", overflow: "hidden", position: "relative" }}>
-      <style>{`
-        .hide-scroll::-webkit-scrollbar { display: none; }
-      `}</style>
-      
-      {/* ── HEADER ── */}
-      <GuildeHeader
-        activePage="fighters"
-        bgColor="rgba(5,5,8,0.8)"
-        textColor="#fff"
-        accentColor="#c9a84c"
-        rightSlot={
-          <div style={{ display: "flex", gap: "4px", background: "rgba(0,0,0,0.5)", padding: "4px", borderRadius: "100px", border: "1px solid rgba(255,255,255,0.05)" }}>
-            {(["real", "anime"] as ViewMode[]).map((m) => (
-              <button key={m} onClick={() => setViewMode(m)} style={{ padding: "4px 12px", border: "none", borderRadius: "100px", cursor: "pointer", fontFamily: fontHud, fontSize: "14px", background: viewMode === m ? "#c9a84c" : "transparent", color: viewMode === m ? "#000" : "rgba(255,255,255,0.5)", transition: "all 0.2s" }}>
+    <div className={`relative w-full h-screen overflow-hidden ${shake ? "ko-shake" : ""}`} style={{ background: "#050510" }}>
+      {/* Background */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 50% 70%,#100a20,#060612 45%,#050510)" }} />
+        <div className="absolute bottom-0 left-0 right-0 h-[40%]" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.015) 1px,transparent 1px)", backgroundSize: "40px 40px", perspective: "500px", transform: "rotateX(55deg)", transformOrigin: "bottom", animation: "gridPulse 4s infinite" }} />
+        <div className="absolute bottom-0 left-1/4 right-1/4 h-px" style={{ background: `linear-gradient(90deg,transparent,${c1.glow}40,${c2.glow}40,transparent)` }} />
+      </div>
+
+      {/* HUD */}
+      <div className="absolute top-0 left-0 right-0 z-40 px-4 sm:px-6 pt-4">
+        <div className="flex items-start gap-3 max-w-[1400px] mx-auto">
+          <HPBar hp={hp1} color={c1.main} glow={c1.glow} side="left" name={p1.name.split(" ")[0]} rank={p1.rank} combo={combo1} />
+          <div className="flex flex-col items-center pt-1">
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center" style={{ background: "rgba(0,0,0,.5)", border: "2px solid rgba(255,215,0,.25)" }}>
+              <span style={{ fontFamily: "'Orbitron',monospace", fontSize: "18px", fontWeight: 900, color: "#FFD700" }}>VS</span>
+            </div>
+          </div>
+          <HPBar hp={hp2} color={c2.main} glow={c2.glow} side="right" name={p2.name.split(" ")[0]} rank={p2.rank} combo={combo2} />
+        </div>
+      </div>
+
+      {/* Fighters */}
+      <div className="absolute inset-0 flex h-full items-end pb-8">
+        <motion.div initial={{ x: "-80%", opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 50, damping: 12, delay: .2 }} className="flex-1 relative flex items-end justify-center">
+          <div className={`relative ${hitFlash === "left" ? "hit-shake" : ""}`} style={{ width: "clamp(220px,30vw,420px)", height: "clamp(300px,55vh,600px)" }}>
+            {img(p1, mode) && (
+              <Image src={img(p1, mode)} alt={p1.name} fill={false} width={400} height={500} className="object-contain object-bottom" style={{ filter: hitFlash === "left" ? "brightness(3) saturate(0)" : `drop-shadow(0 0 30px ${c1.glow})`, transition: "filter .1s" }} />
+            )}
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[80%] h-4 rounded-full" style={{ background: `radial-gradient(ellipse,${c1.glow}25,transparent 70%)`, filter: "blur(8px)" }} />
+          </div>
+        </motion.div>
+        <div className="w-px h-[60%] self-center shrink-0" style={{ background: "linear-gradient(to bottom,transparent,rgba(255,255,255,.06),transparent)" }} />
+        <motion.div initial={{ x: "80%", opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 50, damping: 12, delay: .2 }} className="flex-1 relative flex items-end justify-center">
+          <div className={`relative ${hitFlash === "right" ? "hit-shake" : ""}`} style={{ width: "clamp(220px,30vw,420px)", height: "clamp(300px,55vh,600px)" }}>
+            {img(p2, mode) && (
+              <Image src={img(p2, mode)} alt={p2.name} fill={false} width={400} height={500} className="object-contain object-bottom" style={{ filter: hitFlash === "right" ? "brightness(3) saturate(0)" : `drop-shadow(0 0 30px ${c2.glow})`, transition: "filter .1s", transform: "scaleX(-1)" }} />
+            )}
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[80%] h-4 rounded-full" style={{ background: `radial-gradient(ellipse,${c2.glow}25,transparent 70%)`, filter: "blur(8px)" }} />
+          </div>
+        </motion.div>
+      </div>
+
+      <Sparks active={!winner && !roundText} color="#FF4500" intensity={.25} />
+
+      {/* Round text */}
+      <AnimatePresence>
+        {roundText && (
+          <motion.div initial={{ scale: 3, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: .3, opacity: 0, y: -50 }} transition={{ type: "spring", stiffness: 150, damping: 15 }} className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none">
+            <span style={{ fontFamily: "'Orbitron',monospace", fontSize: "clamp(48px,14vw,140px)", fontWeight: 900, color: "#FFD700", textShadow: "0 0 40px rgba(255,215,0,.6),0 0 80px rgba(255,69,0,.3),0 8px 0 #7a5700", letterSpacing: "10px" }}>{roundText}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* K.O. */}
+      <AnimatePresence>
+        {winner && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: .6 }} className="absolute inset-0 z-50 flex items-center justify-center">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+            <motion.div initial={{ scale: 0, rotate: -10 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 100, damping: 10, delay: .2 }} className="relative z-10 text-center">
+              <GlitchText text="K.O." style={{ fontFamily: "'Orbitron',monospace", fontSize: "clamp(80px,20vw,200px)", fontWeight: 900, color: "#FF1A1A", textShadow: "0 0 60px rgba(255,26,26,.8),0 0 120px rgba(255,0,0,.3),0 8px 0 #5c0000", letterSpacing: "14px" }} />
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .8 }}>
+                <div className="mt-4" style={{ color: rc(winner.rank).main, fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(28px,5vw,56px)", textShadow: `0 0 24px ${rc(winner.rank).glow}`, letterSpacing: "6px" }}>
+                  {winner.name.toUpperCase()}
+                </div>
+              </motion.div>
+              <button onClick={onExit} className="mt-6 px-8 py-2.5 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10" style={{ background: "rgba(255,215,0,.08)", border: "1px solid rgba(255,215,0,.3)" }}>
+                <span style={{ fontFamily: "'Orbitron',monospace", fontSize: "11px", color: "#FFD700", letterSpacing: "4px" }}>NOUVEAU COMBAT</span>
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Exit */}
+      <button onClick={onExit} className="absolute top-3 right-3 sm:top-4 sm:right-4 z-50 flex items-center gap-1.5 px-2.5 py-1.5 rounded cursor-pointer text-white/30 hover:text-white/60 transition-colors text-xs" style={{ fontFamily: "'Orbitron',monospace", fontSize: "9px", letterSpacing: "2px", background: "rgba(0,0,0,.5)", border: "1px solid rgba(255,255,255,.08)" }}>
+        RETOUR
+      </button>
+
+      {/* Scanlines */}
+      <div className="absolute inset-0 pointer-events-none z-30" style={{ backgroundImage: "repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.01) 2px,rgba(255,255,255,.01) 4px)", animation: "scanlines .1s linear infinite" }} />
+      <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,.4) 100%)" }} />
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════
+   FIGHTER CARD
+   ════════════════════════════════════════════════════ */
+function FighterCard({ member, mode, selected, idx, onSelect }: { member: Member; mode: ViewMode; selected: boolean; idx: number; onSelect: (m: Member) => void }) {
+  const [hov, setHov] = useState(false);
+  const c = rc(member.rank);
+  const power = pwr(member);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: .88 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: .22, delay: idx * .02, ease: "easeOut" }}
+      className="relative"
+      {...(selected ? { "aria-selected": true } : {})}
+    >
+      <button
+        onClick={() => onSelect(member)}
+        onMouseEnter={() => { setHov(true); sfx?.play("hover"); }}
+        onMouseLeave={() => setHov(false)}
+        className="relative w-full overflow-hidden cursor-pointer block rounded-md"
+        style={{
+          aspectRatio: "3 / 4",
+          border: selected ? `2px solid ${c.main}` : "1px solid rgba(255,255,255,.06)",
+          boxShadow: selected ? `0 0 16px ${c.glow}50, 0 0 32px ${c.glow}20` : hov ? `0 0 12px ${c.glow}20` : "none",
+          transition: "border-color .15s, box-shadow .2s",
+          background: "#08080f",
+        }}
+      >
+        {/* Portrait */}
+        {img(member, mode) && (
+          <Image src={img(member, mode)} alt={member.name} fill={false} width={200} height={260} className="object-cover"
+            style={{ width: "100%", height: "100%", filter: selected ? `brightness(1.15) drop-shadow(0 0 10px ${c.glow})` : hov ? "brightness(1)" : "brightness(.65) saturate(.7)", transition: "filter .2s" }}
+          />
+        )}
+
+        {/* Bottom gradient */}
+        <div className="absolute bottom-0 left-0 right-0 h-[60%]" style={{ background: `linear-gradient(to top,rgb(10,10,20) 0%,rgba(10,10,20,.6) 40%,transparent 100%)`, transition: "background .2s" }} />
+
+        {/* Rank stripe — bottom indicator */}
+        <div className="absolute bottom-0 left-0 right-0 h-[3px]" style={{ background: c.gradient, opacity: selected ? 1 : hov ? .8 : .25, transition: "opacity .2s" }} />
+
+        {/* Power score — top right badge */}
+        {(hov || selected) && (
+          <motion.div initial={{ opacity: 0, y: -3 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="absolute top-1.5 right-1.5 z-10">
+            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold" style={{ background: "rgba(0,0,0,.75)", fontFamily: "'Orbitron',monospace", color: c.main, letterSpacing: "1px", border: `1px solid ${c.main}30` }}>
+              {power}
+            </span>
+          </motion.div>
+        )}
+
+        {/* Name + rank bottom */}
+        <div className="absolute bottom-1 left-2 right-2 z-10">
+          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(12px,1.4vw,18px)", color: "#fff", letterSpacing: "1.5px", lineHeight: 1.1, textShadow: "0 2px 6px rgba(0,0,0,.8)" }}>
+            {member.name}
+          </div>
+          <div style={{ fontFamily: "'Orbitron',monospace", fontSize: "7px", color: c.main, letterSpacing: "1.5px", opacity: .8 }}>
+            {member.rank.toUpperCase()}
+          </div>
+        </div>
+
+        {/* Selected arrow */}
+        {selected && (
+          <motion.div className="absolute -top-[6px] left-1/2 -translate-x-1/2 z-20" animate={{ y: [0, -3, 0] }} transition={{ duration: .6, repeat: Infinity }}>
+            <div style={{ width: 0, height: 0, borderLeft: "5px solid transparent", borderRight: "5px solid transparent", borderTop: `6px solid ${c.main}`, filter: `drop-shadow(0 0 4px ${c.glow})` }} />
+          </motion.div>
+        )}
+      </button>
+    </motion.div>
+  );
+}
+
+/* ════════════════════════════════════════════════════
+   DETAIL PANEL
+   ════════════════════════════════════════════════════ */
+function DetailPanel({ member, mode }: { member: Member; mode: ViewMode }) {
+  const c = rc(member.rank);
+  const s = member.stats ?? { force: 80, vitesse: 80, technique: 80 };
+  const power = pwr(member);
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} transition={{ duration: .2 }}
+      className="rounded-xl overflow-hidden"
+      style={{ background: "rgba(8,8,20,.9)", border: `1px solid ${c.main}20`, backdropFilter: "blur(16px)" }}
+    >
+      {/* Top accent */}
+      <div className="h-[3px]" style={{ background: c.gradient }} />
+      <div className="flex flex-col sm:flex-row gap-4 p-4">
+        {/* Portrait */}
+        <div className="relative w-full h-48 sm:w-28 sm:h-36 rounded-lg overflow-hidden shrink-0">
+          {img(member, mode) && (
+            <Image src={img(member, mode)} alt={member.name} fill={false} width={160} height={200} className="object-cover"
+              style={{ width: "100%", height: "100%", filter: `drop-shadow(0 0 12px ${c.glow})` }}
+            />
+          )}
+          <div className="absolute inset-0" style={{ background: `linear-gradient(to top,rgba(10,10,25,.85),transparent 50%)` }} />
+          <div className="absolute bottom-2 left-2 flex items-center gap-2">
+            <span className="px-2 py-0.5 rounded text-xs font-bold" style={{ background: "rgba(0,0,0,.7)", border: `1px solid ${c.main}30`, fontFamily: "'Orbitron',monospace", color: c.main, letterSpacing: "1px" }}>
+              PWR {power}
+            </span>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="flex-1 min-w-0">
+          <h3 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(22px,3vw,30px)", color: "#fff", letterSpacing: "3px", lineHeight: 1, textShadow: `0 0 14px ${c.glow}20` }}>
+            {member.name.toUpperCase()}
+          </h3>
+          {member.rank && (
+            <span className="inline-block mt-1 px-2 py-0.5 rounded-sm text-[10px] font-bold" style={{ background: c.gradient, color: "#000", fontFamily: "'Orbitron',monospace", letterSpacing: "1px" }}>
+              {member.rank.toUpperCase()}
+            </span>
+          )}
+          {member.special && (
+            <div className="mt-1.5 flex items-center gap-1" style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: "12px", color: c.main }}>
+              <Flame size={11} />
+              <span>{member.special.name}</span>
+            </div>
+          )}
+
+          <div className="space-y-1.5 mt-3">
+            <StatBar label="FOR" value={s.force} color="#EF4444" icon={<Flame size={11} />} delay={0} />
+            <StatBar label="VIT" value={s.vitesse} color="#38BDF8" icon={<Wind size={11} />} delay={80} />
+            <StatBar label="TEC" value={s.technique} color="#A78BFA" icon={<Shield size={11} />} delay={160} />
+          </div>
+
+          {member.special?.effect && (
+            <div className="mt-2 px-2 py-1.5 rounded text-xs" style={{ background: "rgba(255,255,255,.02)", border: "1px solid rgba(255,255,255,.04)", color: "rgba(255,255,255,.35)", fontFamily: "'Barlow Condensed',sans-serif", lineHeight: 1.4 }}>
+              {member.special.effect}
+            </div>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ════════════════════════════════════════════════════
+   LOADING
+   ════════════════════════════════════════════════════ */
+function LoadingScreen() {
+  return (
+    <div className="min-h-screen flex items-center justify-center" style={{ background: "#050510" }}>
+      <div className="text-center">
+        <span style={{ fontFamily: "'Orbitron',monospace", fontSize: "clamp(24px,4vw,48px)", fontWeight: 900, color: "#DC2626", letterSpacing: "10px", textShadow: "0 0 20px rgba(220,38,38,.4)" }}>
+          LOADING
+        </span>
+        <div className="mt-4 mx-auto h-[2px] rounded-full overflow-hidden" style={{ width: 160, background: "rgba(255,255,255,.04)" }}>
+          <motion.div className="h-full rounded-full" style={{ width: "40%", background: "linear-gradient(90deg,#DC2626,#FFD700)" }}
+            animate={{ x: [-80, 240] }} transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════
+   CHARACTER SELECT
+   ════════════════════════════════════════════════════ */
+function CharacterSelect({ members, mode, setMode, selected, onSelect, onFight }: {
+  members: Member[]; mode: ViewMode; setMode: (m: ViewMode) => void;
+  selected: Member | null; onSelect: (m: Member) => void; onFight?: (m: Member) => void;
+}) {
+  const [filter, setFilter] = useState<Rank | "Tous">("Tous");
+  const [particlesReady, setParticlesReady] = useState(false);
+  const filtered = filter === "Tous" ? members : members.filter(m => m.rank === filter);
+
+  useEffect(() => {
+    initParticlesEngine(async (engine: Engine) => { await loadSlim(engine); }).then(() => setParticlesReady(true));
+  }, []);
+
+  return (
+    <div className="min-h-screen custom-scroll" style={{ background: "#050510" }}>
+      {/* Particles */}
+      {particlesReady && (
+        <motion.div className="fixed inset-0 pointer-events-none z-0">
+          {/* We'll use a simple canvas-less approach — subtle floating dots */}
+          {Array.from({ length: 20 }).map((_, i) => (
+            <motion.div key={i} className="absolute rounded-full" style={{ width: 2 + Math.random() * 2, height: 2 + Math.random() * 2, background: ["#DC2626", "#FFD700", "#FF4500"][i % 3], opacity: .15 + Math.random() * .15 }}
+              animate={{ y: [1200, 200], x: Math.random() * (typeof window !== "undefined" ? window.innerWidth : 1200) }}
+              transition={{ duration: 15 + Math.random() * 20, repeat: Infinity, ease: "linear", delay: -Math.random() * 15 }}
+            />
+          ))}
+        </motion.div>
+      )}
+
+      {/* Grid background */}
+      <div className="fixed inset-0 pointer-events-none z-0" style={{ backgroundImage: "linear-gradient(rgba(220,38,38,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(220,38,38,.02) 1px,transparent 1px)", backgroundSize: "60px 60px", animation: "gridPulse 5s infinite" }} />
+      <div className="fixed inset-0 pointer-events-none z-0" style={{ background: "radial-gradient(ellipse at 50% 20%,transparent 40%,rgba(5,5,16,.6) 100%)" }} />
+
+      {/* ─── Header ─── */}
+      <div className="sticky top-0 z-50 bg-[#050510]/95 backdrop-blur-md border-b border-white/[.04]">
+        <div className="max-w-[1600px] mx-auto px-4 py-3 flex items-center justify-between">
+          {/* Title */}
+          <div className="flex items-center gap-3">
+            <Swords size={18} style={{ color: "#DC2626" }} />
+            <span style={{ fontFamily: "'Orbitron',monospace", fontSize: "clamp(14px,2.5vw,20px)", fontWeight: 900, color: "#fff", letterSpacing: "5px" }}>
+              SELECT FIGHTER
+            </span>
+            {selected && (
+              <span className="ml-2 px-2 py-0.5 rounded text-[10px] font-bold animate-pulse" style={{ background: "rgba(220,38,38,.15)", border: "1px solid rgba(220,38,38,.3)", fontFamily: "'Orbitron',monospace", color: "#DC2626", letterSpacing: "1px" }}>
+                {selected.name.toUpperCase()}
+              </span>
+            )}
+          </div>
+
+          {/* Controls */}
+          <div className="flex items-center gap-2">
+            <button onClick={() => { sfx && (sfx.muted = !sfx.muted); }} className="p-2 rounded cursor-pointer text-white/30 hover:text-white/60 transition-colors">
+              {sfx?.muted ? <span style={{ fontFamily: "'Orbitron',monospace", fontSize: "9px" }}>MUTE</span> : <span style={{ fontFamily: "'Orbitron',monospace", fontSize: "9px" }}>SFX</span>}
+            </button>
+            {["real", "anime"].map((m) => (
+              <button key={m} onClick={() => { setMode(m as ViewMode); sfx?.play("select"); }}
+                className="px-3 py-1 rounded cursor-pointer text-[10px] font-bold transition-all duration-200"
+                style={{ fontFamily: "'Orbitron',monospace", letterSpacing: "1px", background: mode === m ? "rgba(220,38,38,.2)" : "transparent", color: mode === m ? "#DC2626" : "rgba(255,255,255,.25)", border: mode === m ? "1px solid rgba(220,38,38,.3)" : "1px solid transparent" }}>
                 {m.toUpperCase()}
               </button>
             ))}
           </div>
-        }
-      />
-
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", position: "relative" }}>
-        
-        {/* ── ARENA (Hauteur adaptative) ── */}
-        <AnimatePresence>
-          {showArena && (
-            <motion.section 
-              initial={{ height: 0, opacity: 0 }} 
-              animate={{ height: isMobile && both ? "100%" : isMobile ? "45%" : "60%", opacity: 1 }} 
-              exit={{ height: 0, opacity: 0 }} 
-              transition={{ type: "spring", stiffness: 100, damping: 20 }}
-              style={{ flex: isMobile && both ? 1 : `0 0 ${isMobile ? "45%" : "60%"}`, position: "relative", display: "flex", flexDirection: isMobile ? "column" : "row", borderBottom: "1px solid rgba(255,255,255,0.05)", overflow: "hidden", background: "#000" }}
-            >
-              
-              {/* Flash blanc quand les 2 sont sélectionnés */}
-              <AnimatePresence>
-                {both && <motion.div initial={{ opacity: 1 }} animate={{ opacity: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.8 }} style={{ position: "absolute", inset: 0, background: "#fff", zIndex: 90, pointerEvents: "none" }} />}
-              </AnimatePresence>
-
-              {(p1 || p2) && <HudBar p1Active={!!p1} p2Active={!!p2} both={both} isMobile={isMobile} />}
-              
-              <AnimatePresence mode="wait">
-                {p1 ? <ArenaFighter key={`p1-${p1.id}`} member={p1} side="left" viewMode={viewMode} onClear={() => setP1(null)} isMobile={isMobile} /> : <div style={{ flex: 1 }} />}
-              </AnimatePresence>
-
-              {/* Ligne de séparation */}
-              {isMobile ? (
-                <div style={{ position: "absolute", top: "50%", left: "-10%", right: "-10%", height: "2px", background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)", transform: "translateY(-50%) rotate(-5deg)", zIndex: 30, boxShadow: "0 0 20px rgba(0,0,0,1)" }} />
-              ) : (
-                <div style={{ position: "absolute", left: "50%", top: "-10%", bottom: "-10%", width: "2px", background: "linear-gradient(180deg, transparent, rgba(255,255,255,0.4), transparent)", transform: "translateX(-50%) rotate(10deg)", zIndex: 30, boxShadow: "0 0 20px rgba(0,0,0,1)" }} />
-              )}
-
-              <AnimatePresence mode="wait">
-                {p2 ? <ArenaFighter key={`p2-${p2.id}`} member={p2} side="right" viewMode={viewMode} onClear={() => setP2(null)} isMobile={isMobile} /> : <div style={{ flex: 1 }} />}
-              </AnimatePresence>
-
-              {/* Sur mobile, si les 2 persos sont choisis, bouton pour revenir à la sélection */}
-              {isMobile && both && (
-                 <button 
-                  onClick={() => { setP1(null); setP2(null); }}
-                  style={{ position: "absolute", bottom: "30px", left: "50%", transform: "translateX(-50%)", zIndex: 100, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "12px 24px", borderRadius: "100px", fontFamily: fontHud, fontSize: "18px", letterSpacing: "2px", boxShadow: "0 10px 30px rgba(0,0,0,0.5)" }}
-                 >
-                   REFAIRE UN MATCH
-                 </button>
-              )}
-            </motion.section>
-          )}
-        </AnimatePresence>
-
-        {/* ── ROSTER (Grille de Sélection) ── */}
-        <AnimatePresence>
-          {showRoster && (
-            <motion.section 
-              initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 50, position: "absolute", zIndex: -1 }} transition={{ duration: 0.3 }}
-              style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", background: "radial-gradient(circle at center top, #0a0a0f 0%, #050508 100%)", position: "relative", zIndex: 10 }}
-            >
-              
-              {/* Filtres (Glassmorphism) */}
-              <div className="hide-scroll" style={{ display: "flex", gap: "10px", padding: "15px 20px", overflowX: "auto", borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
-                {(["Tous", ...RANK_FILTER_ORDER] as (Rank | "Tous")[]).map((r) => (
-                  <button key={r} onClick={() => setFilterRank(r)} style={{ flexShrink: 0, fontFamily: fontHud, fontSize: "16px", letterSpacing: "1px", padding: "8px 24px", cursor: "pointer", background: filterRank === r ? "#c9a84c" : "rgba(255,255,255,0.02)", color: filterRank === r ? "#000" : "rgba(255,255,255,0.5)", border: `1px solid ${filterRank === r ? '#c9a84c' : 'rgba(255,255,255,0.05)'}`, borderRadius: "100px", transition: "all 0.2s" }}>
-                    {r === "Tous" ? "TOUS" : r.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-
-              {/* Grille */}
-              <div className="hide-scroll" style={{ flex: 1, overflowY: "auto", padding: "20px" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))", gap: "12px", maxWidth: "1200px", margin: "0 auto", paddingBottom: "40px" }}>
-                  
-                  <button onClick={random} style={{ height: "120px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "16px", color: "rgba(255,255,255,0.3)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "all 0.2s" }}>
-                     <Shuffle size={28} />
-                  </button>
-
-                  <AnimatePresence>
-                    {filtered.map((m) => {
-                      const isP1 = p1?.id === m.id;
-                      const isP2 = p2?.id === m.id;
-                      const sel = isP1 || isP2;
-                      const dimmed = both && !sel;
-
-                      return (
-                        <motion.button 
-                          layout
-                          initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
-                          key={m.id} 
-                          onClick={() => select(m)}
-                          whileHover={!dimmed ? { scale: 1.05, zIndex: 10, borderColor: "rgba(255,255,255,0.5)", boxShadow: "0 10px 30px rgba(0,0,0,0.5)" } : {}}
-                          whileTap={{ scale: 0.95 }}
-                          style={{ 
-                            position: "relative", height: "120px", padding: 0, cursor: dimmed ? "default" : "pointer", 
-                            border: isP1 ? `2px solid ${P1.main}` : isP2 ? `2px solid ${P2.main}` : "1px solid rgba(255,255,255,0.05)",
-                            borderRadius: "16px",
-                            opacity: dimmed ? 0.3 : 1, overflow: "hidden", background: "rgba(255,255,255,0.02)",
-                            boxShadow: isP1 ? `0 0 20px ${P1.glow}` : isP2 ? `0 0 20px ${P2.glow}` : "none",
-                            transition: "border-color 0.2s, opacity 0.3s"
-                          }}
-                        >
-                          <div style={{ position: "absolute", inset: 0 }}>
-                            <Image src={pickSrc(m, viewMode)} alt={m.name} fill sizes="100px" style={{ objectFit: "cover", objectPosition: "center", filter: dimmed ? "grayscale(100%) opacity(50%)" : "none" }} />
-                          </div>
-                          {/* Dégradé bas */}
-                          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.8), transparent 50%)", pointerEvents: "none" }} />
-                          <span style={{ position: "absolute", bottom: "8px", left: "0", right: "0", textAlign: "center", fontFamily: fontHud, fontSize: "14px", color: "#fff", letterSpacing: "1px" }}>
-                            {m.name.split(" ")[0]}
-                          </span>
-
-                          {sel && (
-                            <div style={{ position: "absolute", top: "-2px", left: "-2px", background: isP1 ? P1.main : P2.main, color: "#fff", fontFamily: fontHud, fontSize: "13px", padding: "4px 10px", borderBottomRightRadius: "12px", borderTopLeftRadius: "16px" }}>
-                              {isP1 ? "1P" : "2P"}
-                            </div>
-                          )}
-                        </motion.button>
-                      );
-                    })}
-                  </AnimatePresence>
-                </div>
-              </div>
-            </motion.section>
-          )}
-        </AnimatePresence>
+        </div>
       </div>
+
+      {/* Rank filter bar */}
+      <div className="sticky top-[56px] z-40 bg-[#050510]/90 backdrop-blur-md border-b border-white/[.03]">
+        <div className="max-w-[1600px] mx-auto px-4 py-2 flex gap-1.5 overflow-x-auto custom-scroll">
+          {(["Tous", ...RANK_FILTER_ORDER] as (Rank | "Tous")[]).map(r => {
+            const active = filter === r;
+            const col = r === "Tous" ? "#DC2626" : rc(r).main;
+            return (
+              <button key={r} onClick={() => { setFilter(r as Rank | "Tous"); sfx?.play("hover"); }}
+                className={`r-pill px-3 py-1 rounded-sm text-[10px] font-bold`}
+                style={{ fontFamily: "'Orbitron',monospace", letterSpacing: "1px", background: active ? `${col}18` : "transparent", color: active ? col : "rgba(255,255,255,.2)", border: `1px solid ${active ? col + "50" : "rgba(255,255,255,.04)"}`, boxShadow: active ? `0 0 12px ${col}30` : "none" }}>
+                {r === "Tous" ? "TOUS" : r}
+              </button>
+            );
+          })}
+          <span className="ml-auto text-[10px] shrink-0 self-center" style={{ fontFamily: "'Orbitron',monospace", color: "rgba(255,255,255,.15)", letterSpacing: "2px" }}>{filtered.length}</span>
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div className="max-w-[1600px] mx-auto px-4 pt-4 pb-24">
+        <div className="flex gap-5 flex-wrap lg:flex-nowrap">
+          {/* Grid */}
+          <div className={`min-w-0 flex-1 ${selected ? "lg:w-[calc(100%-340px)]" : ""}`}>
+            <div className="roster">
+              {filtered.map((m, i) => (
+                <FighterCard key={m.id} member={m} mode={mode} selected={selected?.id === m.id} idx={i} onSelect={onSelect} />
+              ))}
+
+              {/* Random */}
+              <motion.button initial={{ opacity: 0, scale: .88 }} animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: filtered.length * .02 + .1 }}
+                onClick={() => {
+                  const list = selected ? members.filter(m => m.id !== selected.id) : members;
+                  if (list.length) onSelect(list[Math.floor(Math.random() * list.length)]);
+                  sfx?.play("select");
+                }}
+                className="flex flex-col items-center justify-center cursor-pointer rounded-md border border-dashed border-red-600/15 hover:border-red-600/40 transition-colors"
+                style={{ aspectRatio: "3 / 4", background: "#08080f" }}
+              >
+                <motion.div animate={{ rotate: [0, 10, -10, 5, -5, 0] }} transition={{ duration: 1.8, repeat: Infinity, repeatDelay: 3 }}>
+                  <Dices size={20} style={{ color: "rgba(220,38,38,.25)" }} />
+                </motion.div>
+                <span className="mt-1 text-[9px] font-bold" style={{ fontFamily: "'Orbitron',monospace", color: "rgba(220,38,38,.2)", letterSpacing: "2px" }}>RANDOM</span>
+              </motion.button>
+            </div>
+          </div>
+
+          {/* Detail panel */}
+          {selected && (
+            <div className="hidden lg:block w-[320px] shrink-0">
+              <div className="sticky top-[120px]">
+                <AnimatePresence mode="wait">
+                  <DetailPanel key={selected.id} member={selected} mode={mode} />
+                </AnimatePresence>
+              </div>
+            </div>
+          )}
+
+          {!selected && (
+            <div className="hidden lg:block w-[320px] shrink-0">
+              <div className="sticky top-[120px] rounded-xl p-6 text-center" style={{ background: "rgba(8,8,20,.5)", border: "1px solid rgba(255,255,255,.03)" }}>
+                <Swords size={32} className="mx-auto mb-3 opacity-[.06]" />
+                <p style={{ fontFamily: "'Orbitron',monospace", fontSize: "9px", color: "rgba(255,255,255,.1)", letterSpacing: "2px" }}>
+                  SÉLECTIONNE<br />UN COMBATTANT
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Mobile detail */}
+        {selected && (
+          <div className="lg:hidden mt-4">
+            <DetailPanel member={selected} mode={mode} />
+          </div>
+        )}
+      </div>
+
+      {/* FIGHT BUTTON — fixed */}
+      <AnimatePresence>
+        {selected && onFight && (
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 30 }} transition={{ type: "spring", stiffness: 200, damping: 18 }}
+            className="fixed bottom-0 left-0 right-0 z-50"
+            style={{ background: "linear-gradient(to top,#050510 0%,#050510cc 70%,transparent 100%)", paddingTop: 20, paddingBottom: 16 }}
+          >
+            <div className="flex justify-center">
+              <motion.button onClick={() => onFight(selected)} whileHover={{ scale: 1.02 }} whileTap={{ scale: .97 }}
+                className="px-12 py-3 rounded-md cursor-pointer font-bold"
+                style={{ background: "linear-gradient(135deg,#DC2626,#991B1B)", fontFamily: "'Orbitron',monospace", fontSize: "clamp(13px,1.6vw,16px)", color: "#fff", letterSpacing: "6px", boxShadow: "0 0 24px rgba(220,38,38,.4),0 8px 32px rgba(0,0,0,.5)" }}>
+                <span className="flex items-center gap-3">
+                  <Swords size={15} />
+                  COMBATTRE
+                  <Swords size={15} style={{ transform: "scaleX(-1)" }} />
+                </span>
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════
+   MAIN PAGE
+   ════════════════════════════════════════════════════ */
+export default function FightersPage() {
+  const [members, setMembers] = useState<Member[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [mode, setMode] = useState<ViewMode>("anime");
+  const [selected, setSelected] = useState<Member | null>(null);
+  const [phase, setPhase] = useState<Phase>("select");
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase.from("fighters").select("*").order("id", { ascending: true });
+        if (error) throw new Error(error.message);
+        if (data && !cancelled) {
+          const mapped = data.map((m: any) => ({
+            id: m.id, name: m.name, rank: m.rank, birthday: m.birthday, bio: m.bio ?? "",
+            photo: m.photo ?? "", animeChar: m.animechar ?? "", color: m.color ?? "#FFD700",
+            badge: m.badge, rankJP: m.rankjp,
+            stats: m.stats ?? { force: 80, vitesse: 80, technique: 80 },
+            special: m.special ?? { name: "Inconnu", effect: "?" },
+          }));
+          setMembers(mapped);
+        }
+      } catch {
+        try { const { members: lm } = await import("../../data/members"); if (!cancelled) setMembers(lm); } catch { /* */ }
+      } finally { if (!cancelled) setLoading(false); }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const handleSelect = useCallback((m: Member) => {
+    if (selected?.id === m.id) { setSelected(null); }
+    else if (!selected) { setSelected(m); }
+    else if (m.id !== selected.id) {
+      const p2 = m;
+      const p1 = selected;
+      setSelected(null);
+      setPhase("intro");
+      // We need to store both fighters for intro
+      // Use a closure to pass them
+      handleIntro(p1, p2);
+    }
+  }, [selected]);
+
+  const [fightData, setFightData] = useState<{ p1: Member; p2: Member } | null>(null);
+
+  const handleIntro = useCallback((p1: Member, p2: Member) => { setFightData({ p1, p2 }); setPhase("intro"); }, []);
+  const handleIntroDone = useCallback(() => setPhase("fight"), []);
+  const handleFight = useCallback((fighter: Member) => {
+    if (members.length >= 2) {
+      const others = members.filter(m => m.id !== fighter.id);
+      const random = others[Math.floor(Math.random() * others.length)];
+      setFightData({ p1: fighter, p2: random });
+      setPhase("intro");
+    }
+  }, [members]);
+
+  if (loading) return <><Styles /><LoadingScreen /></>;
+
+  return (
+    <>
+      <Styles />
+      {phase === "select" && (
+        <CharacterSelect members={members} mode={mode} setMode={setMode} selected={selected} onSelect={handleSelect} onFight={handleFight} />
+      )}
+      {phase === "intro" && fightData && (
+        <FightIntro p1={fightData.p1} p2={fightData.p2} mode={mode} onFinish={handleIntroDone} />
+      )}
+      {phase === "fight" && fightData && (
+        <Arena p1={fightData.p1} p2={fightData.p2} mode={mode} onExit={() => { setFightData(null); setSelected(null); setPhase("select"); }} />
+      )}
+    </>
   );
 }

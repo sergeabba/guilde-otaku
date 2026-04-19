@@ -1,7 +1,15 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(/c/Python313/python.exe:*)",
+      "Bash(cmd.exe:*)",
+      "Bash([ -f \"$PY\" ])",
+      "Read(//c/Python313/**)",
+      "Bash(python3:*)",
+      "Bash(npx next:*)",
+      "Bash(npx tsc:*)",
+      "Bash(python .claude/skills/ui-ux-pro-max/scripts/search.py --help)"
     ]
   }
 }
