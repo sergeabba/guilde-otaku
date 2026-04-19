@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Lock, BookOpen, User, Flame, ArrowRight, ShieldAlert, Palette } from "lucide-react";
+import { Lock, BookOpen, User, Flame, ArrowRight, ShieldAlert, Palette, Film } from "lucide-react";
 import { colors, typography, font } from "../../outputs/styles/tokens";
 import GuildeHeader from "../components/GuildeHeader";
 import { ADMIN_PASSWORD } from "../../lib/constants";
@@ -135,6 +135,19 @@ export default function AdminHubPage() {
             </p>
             <Link href="/admin-atelier" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.05)", border: `1px solid ${colors.goldBorder}`, padding: "12px 24px", borderRadius: "100px", color: colors.gold, textDecoration: "none", fontWeight: 700, fontSize: "14px", textTransform: "uppercase", letterSpacing: "0.1em" }}>
               Gérer l'Atelier <ArrowRight size={16} />
+            </Link>
+          </motion.div>
+
+          {/* Carte Film de la Semaine */}
+          <motion.div whileHover={{ scale: 1.02 }} style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: "24px", padding: "32px", position: "relative", overflow: "hidden" }}>
+            <div style={{ position: "absolute", top: 0, right: 0, background: "rgba(229, 9, 20, 0.1)", width: "150px", height: "150px", filter: "blur(50px)", borderRadius: "50%" }} />
+            <Film size={32} color="#e50914" style={{ marginBottom: "20px" }} />
+            <h2 style={{ fontFamily: font, fontSize: "28px", fontWeight: 900, marginBottom: "12px", textTransform: "uppercase" }}>Film de la Semaine</h2>
+            <p style={{ ...typography.body, color: colors.textSecondary, marginBottom: "32px" }}>
+              Programmez les soirées cinéma de la Guilde. Recherchez un film sur TMDB, ajoutez-le à la semaine et marquez-le comme vu une fois regardé.
+            </p>
+            <Link href="/admin-film-semaine" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(229,9,20,0.3)", padding: "12px 24px", borderRadius: "100px", color: "#e50914", textDecoration: "none", fontWeight: 700, fontSize: "14px", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+              Gérer les Films <ArrowRight size={16} />
             </Link>
           </motion.div>
 
