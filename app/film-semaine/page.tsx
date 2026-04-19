@@ -646,9 +646,18 @@ export default function FilmSemainePage() {
 
   useEffect(() => {
     fetch("/api/film-semaine")
-      .then((r) => r.json())
+      .then(async (r) => {
+        const text = await r.text();
+        if (!text) return { films: [] };
+        try {
+          return JSON.parse(text);
+        } catch {
+          return { error: "Réponse serveur invalide" };
+        }
+      })
       .then((data) => {
         if (data.error) throw new Error(data.error);
+        if (data.needsSetup) throw new Error("SETUP_REQUIRED");
         setFilms(data.films ?? []);
         const currentWeeks = new Set<string>();
         const sorted = [...(data.films ?? [])].sort(
@@ -658,7 +667,7 @@ export default function FilmSemainePage() {
         if (sorted.length > 0) currentWeeks.add(sorted[0].week_label);
         setExpandedWeeks(currentWeeks);
       })
-      .catch((e) => setError(e.message))
+      .catch((e) => setError(e.message === "SETUP_REQUIRED" ? "SETUP_REQUIRED" : e.message))
       .finally(() => setLoading(false));
   }, []);
 
@@ -844,34 +853,63 @@ export default function FilmSemainePage() {
                 justifyContent: "center",
                 minHeight: "40vh",
                 gap: "16px",
+                padding: "0 20px",
+                textAlign: "center",
               }}
             >
-              <AlertCircle size={48} color="#f87171" />
-              <p
-                style={{
-                  fontFamily: font,
-                  fontSize: "16px",
-                  fontWeight: 700,
-                  color: "#f87171",
-                }}
-              >
-                {error}
-              </p>
-              <button
-                onClick={() => window.location.reload()}
-                style={{
-                  padding: "10px 24px",
-                  borderRadius: "10px",
-                  border: "none",
-                  background: accent,
-                  color: "#fff",
-                  fontWeight: 800,
-                  fontFamily: font,
-                  cursor: "pointer",
-                }}
-              >
-                Réessayer
-              </button>
+              <AlertCircle size={48} color={error === "SETUP_REQUIRED" ? accent : "#f87171"} />
+              {error === "SETUP_REQUIRED" ? (
+                <>
+                  <p style={{ fontFamily: font, fontSize: "20px", fontWeight: 900, color: accent, textTransform: "uppercase" }}>
+                    Table non créée
+                  </p>
+                  <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: "15px", color: "rgba(255,255,255,0.5)", maxWidth: "500px", lineHeight: 1.6 }}>
+                    La table <code style={{ background: "rgba(255,255,255,0.1)", padding: "2px 6px", borderRadius: "4px", fontSize: "13px" }}>film_semaine</code> n'existe pas encore dans Supabase. Exécute le script SQL dans le SQL Editor de Supabase pour la créer.
+                  </p>
+                  <a
+                    href="https://supabase.com/dashboard/project/cocotbrclgjfqmdcffag/sql/new"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      padding: "10px 24px",
+                      borderRadius: "10px",
+                      border: "none",
+                      background: accent,
+                      color: "#fff",
+                      fontWeight: 800,
+                      fontFamily: font,
+                      cursor: "pointer",
+                      textDecoration: "none",
+                      fontSize: "14px",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.1em",
+                    }}
+                  >
+                    Ouvrir Supabase SQL Editor
+                  </a>
+                </>
+              ) : (
+                <>
+                  <p style={{ fontFamily: font, fontSize: "16px", fontWeight: 700, color: "#f87171" }}>
+                    {error}
+                  </p>
+                  <button
+                    onClick={() => window.location.reload()}
+                    style={{
+                      padding: "10px 24px",
+                      borderRadius: "10px",
+                      border: "none",
+                      background: accent,
+                      color: "#fff",
+                      fontWeight: 800,
+                      fontFamily: font,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Réessayer
+                  </button>
+                </>
+              )}
             </div>
           ) : weeks.length === 0 ? (
             <div
