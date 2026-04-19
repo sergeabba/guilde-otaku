@@ -12,7 +12,8 @@ interface GuildeHeaderProps {
     | "bibliotheque"
     | "wanted"
     | "bons-plans"
-    | "atelier";
+    | "atelier"
+    | "film-semaine";
   accentColor?: string;
   bgColor?: string;
   textColor?: string;
@@ -24,8 +25,9 @@ const navLinks = [
   { id: "birthdays",    label: "Anniversaires", href: "/birthdays"   },
   { id: "wanted",       label: "Wanted",        href: "/wanted"      },
   { id: "fighters",     label: "Fighters",      href: "/fighters"    },
-  { id: "bons-plans",   label: "Bons Plans",    href: "/bons-plans"  },
+  { id: "film-semaine", label: "Film Semaine",  href: "/film-semaine"},
   { id: "bibliotheque", label: "Bibliothèque",  href: "/bibliotheque"},
+  { id: "bons-plans",   label: "Bons Plans",    href: "/bons-plans"  },
   { id: "atelier",      label: "Atelier",       href: "/atelier"     },
 ];
 
