@@ -3,17 +3,13 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 
-/* ─── Main Splash Component ──────────────────────────────────────────────────── */
 export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) {
   const [progress, setProgress] = useState(0);
   const [phase, setPhase] = useState<"loading" | "complete">("loading");
-  const [videoReady, setVideoReady] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  /* Start progress once video can play */
+  /* Start progress immediately (don't wait for video — avoids crash if blocked) */
   useEffect(() => {
-    if (!videoReady) return;
-
     const interval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
@@ -30,11 +26,24 @@ export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) 
         return Math.min(prev + speed + Math.random() * 0.6, 100);
       });
     }, 45);
-
     return () => clearInterval(interval);
-  }, [videoReady]);
+  }, []);
 
-  /* Auto dismiss after complete */
+  /* Try to unmute after user interaction / once video plays */
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const tryUnmute = () => {
+      video.muted = false;
+      video.volume = 1;
+    };
+
+    video.addEventListener("playing", tryUnmute, { once: true });
+    return () => video.removeEventListener("playing", tryUnmute);
+  }, []);
+
+  /* Auto dismiss */
   useEffect(() => {
     if (phase !== "complete") return;
     const t = setTimeout(onFinish, 900);
@@ -48,15 +57,14 @@ export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) 
       exit={{ opacity: 0 }}
       transition={{ duration: 0.9, ease: [0.4, 0, 0.2, 1] }}
     >
-      {/* ── Full-screen HD Video ─────────────────────────────────────────────────── */}
+      {/* ── Full-screen HD Video ── */}
       <video
         ref={videoRef}
-        src="/Ma vidéo.mp4"
+        src="/Ma%20vid%C3%A9o.mp4"
         autoPlay
+        muted          /* must start muted for autoplay to work on mobile */
         loop
         playsInline
-        /* muted={false} — son activé */
-        onCanPlay={() => setVideoReady(true)}
         style={{
           position: "absolute",
           inset: 0,
@@ -68,7 +76,7 @@ export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) 
         }}
       />
 
-      {/* ── Dark vignette overlay ────────────────────────────────────────────────── */}
+      {/* ── Dark vignette ── */}
       <div
         style={{
           position: "absolute",
@@ -80,32 +88,19 @@ export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) 
         }}
       />
 
-      {/* ── Loading bar (bottom) ─────────────────────────────────────────────────── */}
+      {/* ── Loading bar (bottom) ── */}
       <motion.div
         className="ft-loading-block"
         initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: videoReady ? 1 : 0, y: 0 }}
-        transition={{ duration: 0.6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.3 }}
         style={{ position: "relative", zIndex: 2 }}
       >
         <div className="ft-bar-track">
-          <motion.div
-            className="ft-bar-fill"
-            style={{ width: `${progress}%` }}
-          />
-          {/* Leading flame tip */}
-          <div
-            className="ft-bar-flame-tip"
-            style={{ left: `${Math.max(progress - 0.5, 0)}%` }}
-          />
-          {/* Glow dot */}
-          <div
-            className="ft-bar-glow-dot"
-            style={{ left: `${Math.max(progress - 0.5, 0)}%` }}
-          />
+          <div className="ft-bar-fill" style={{ width: `${progress}%` }} />
+          <div className="ft-bar-flame-tip" style={{ left: `${Math.max(progress - 0.5, 0)}%` }} />
+          <div className="ft-bar-glow-dot"  style={{ left: `${Math.max(progress - 0.5, 0)}%` }} />
         </div>
-
-        {/* Text row */}
         <div className="ft-bar-meta">
           <span className="ft-bar-percent">{Math.floor(progress)}%</span>
           <span className="ft-bar-label">
