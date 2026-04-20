@@ -348,9 +348,10 @@ body {
   inset: 0;
   z-index: 99999;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
   overflow: hidden;
+  padding-bottom: clamp(32px, 7vh, 72px);
 }
 
 /* ─── BACKGROUND ─────────────────────────────────────────────────────────────── */
@@ -629,10 +630,16 @@ body {
 
 /* ─── LOADING BAR ────────────────────────────────────────────────────────────── */
 .ft-loading-block {
-  width: min(420px, 82vw);
+  width: min(480px, 88vw);
   display: flex;
   flex-direction: column;
   gap: 14px;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 140, 0, 0.22);
+  border-radius: 16px;
+  padding: 20px 28px;
 }
 
 /* Track */
