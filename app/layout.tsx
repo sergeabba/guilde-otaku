@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 import BirthdayBanner from "./components/BirthdayBanner";
+import SplashWrapper from "./components/SplashWrapper";
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://guilde-otaku.vercel.app'), 
@@ -46,8 +47,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Elle s'affichera automatiquement sur toutes les pages le jour J */}
         <BirthdayBanner />
         
-        {/* Le reste du site */}
-        {children}
+        {/* === SPLASH SCREEN FAIRY TAIL === */}
+        <SplashWrapper>
+          {children}
+        </SplashWrapper>
       </body>
     </html>
   );
