@@ -445,27 +445,28 @@ body {
   transform-origin: center;
 }
 
-/* ─── TITRE PRINCIPAL ────────────────────────────────────────────────────────── */
+/* ─── TITRE PRINCIPAL — Cinzel Decorative (style Fairy Tail / Guilde fantasy) ── */
 .ft-title-main {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: clamp(44px, 11vw, 100px);
+  font-family: 'Cinzel Decorative', 'Barlow Condensed', serif;
+  font-size: clamp(26px, 6.5vw, 72px);
   font-weight: 900;
-  letter-spacing: 0.2em;
-  line-height: 0.9;
+  letter-spacing: 0.12em;
+  line-height: 1.1;
   color: transparent;
   background: linear-gradient(180deg,
-    #fff5cc  0%,
-    #ffd700 18%,
-    #ffaa00 48%,
-    #ff6000 76%,
+    #fff9e0  0%,
+    #ffd700 20%,
+    #ffaa00 50%,
+    #ff6000 78%,
     #cc1800 100%
   );
   -webkit-background-clip: text;
   background-clip: text;
   animation: title-inferno 2.8s ease-in-out infinite;
-  /* Évite le débordement horizontal sur mobile */
-  word-break: keep-all;
-  white-space: nowrap;
+  /* Autorise le retour à la ligne sur petits écrans */
+  word-break: break-word;
+  white-space: normal;
+  text-align: center;
 }
 
 @keyframes title-inferno {
@@ -628,8 +629,9 @@ body {
   }
 
   .ft-title-main {
-    font-size: clamp(36px, 14vw, 58px);
-    letter-spacing: 0.16em;
+    font-size: clamp(20px, 7vw, 36px);
+    letter-spacing: 0.08em;
+    line-height: 1.2;
   }
 
   .ft-title-sub {

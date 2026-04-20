@@ -3,6 +3,13 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
+/*
+  iOS Safari autoplay rules (2024):
+  - <video muted autoPlay playsInline> works most of the time
+  - BUT: Low Power Mode, cellular data, or certain iOS versions block it silently
+  - Solution: start the progress IMMEDIATELY via a timer, video sync is a bonus
+*/
+
 type Phase = "black" | "opening" | "playing" | "outro";
 
 export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) {
@@ -10,87 +17,99 @@ export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) 
   const [progress, setProgress] = useState(0);
   const videoRef   = useRef<HTMLVideoElement>(null);
   const timerRef   = useRef<ReturnType<typeof setInterval> | null>(null);
-  const videoLive  = useRef(false);
+  const doneRef    = useRef(false);
 
-  /* ── 1. Timeline des phases ──────────────────────────────────────────────── */
+  /* ── 1. Phase timeline ──────────────────────────────────────────────────── */
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase("opening"), 250);
-    const t2 = setTimeout(() => setPhase("playing"), 1350);
+    const t1 = setTimeout(() => setPhase("opening"), 200);
+    const t2 = setTimeout(() => setPhase("playing"), 1200);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
-  /* ── 2. Progression ─────────────────────────────────────────────────────── */
+  /* ── 2. Timer de progression — TOUJOURS actif dès "playing" ─────────────── */
+  /*
+      On n'attend PAS la vidéo. Le timer est la source principale.
+      Si la vidéo est disponible, elle accélère/ajuste la progression.
+      iOS ne peut pas crasher car il n'y a aucune dépendance à la vidéo.
+  */
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const stopTimer = () => {
-      if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
-    };
+    if (phase !== "playing") return;
 
     const startTimer = () => {
-      if (timerRef.current || videoLive.current) return;
+      if (timerRef.current) return;
       timerRef.current = setInterval(() => {
-        if (videoLive.current) { stopTimer(); return; }
         setProgress(p => {
-          if (p >= 100) { stopTimer(); setPhase("outro"); return 100; }
-          return Math.min(p + 0.5 + Math.random() * 0.3, 100);
+          if (p >= 100) {
+            if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+            if (!doneRef.current) { doneRef.current = true; setPhase("outro"); }
+            return 100;
+          }
+          // Vitesse variable : lent → moyen → lent en fin (simuler un vrai chargement)
+          const spd =
+            p < 15 ? 0.6 :
+            p < 45 ? 1.1 :
+            p < 75 ? 0.85 :
+            p < 92 ? 0.4 :
+            0.15;
+          return Math.min(p + spd + Math.random() * 0.25, 100);
         });
       }, 50);
     };
 
+    // Timer démarre immédiatement, indépendamment de la vidéo
+    startTimer();
+
+    return () => {
+      if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    };
+  }, [phase]);
+
+  /* ── 3. Sync vidéo (bonus — accélère la barre si la vidéo joue plus vite) ─ */
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
     const onTimeUpdate = () => {
-      const v = videoRef.current;
-      if (!v || !isFinite(v.duration) || v.duration <= 0) return;
-      videoLive.current = true;
-      stopTimer();
-      setProgress((v.currentTime / v.duration) * 100);
+      if (!isFinite(video.duration) || video.duration <= 0) return;
+      const videoPct = (video.currentTime / video.duration) * 100;
+      // N'avance la barre que si la vidéo est devant le timer
+      setProgress(p => videoPct > p ? videoPct : p);
     };
 
     const onEnded = () => {
-      videoLive.current = true;
-      stopTimer();
       setProgress(100);
-      setPhase("outro");
+      if (!doneRef.current) { doneRef.current = true; setPhase("outro"); }
     };
 
-    const onCanPlay = () => {
-      /* Tente unmute — ne crashe pas si refusé */
+    // Tente unmute une fois (iOS bloque, mais ça ne crashe pas)
+    const tryUnmute = () => {
       try { video.muted = false; video.volume = 1; } catch {}
     };
 
     video.addEventListener("timeupdate", onTimeUpdate);
     video.addEventListener("ended",      onEnded);
-    video.addEventListener("canplay",    onCanPlay);
-    video.addEventListener("error",      startTimer);
-
-    /* Safety : si la vidéo ne démarre pas dans 2 s, fallback timer */
-    const safe = setTimeout(() => { if (!videoLive.current) startTimer(); }, 2000);
+    video.addEventListener("playing",    tryUnmute, { once: true });
 
     return () => {
-      stopTimer();
-      clearTimeout(safe);
       video.removeEventListener("timeupdate", onTimeUpdate);
       video.removeEventListener("ended",      onEnded);
-      video.removeEventListener("canplay",    onCanPlay);
-      video.removeEventListener("error",      startTimer);
     };
   }, []);
 
-  /* ── 3. Fin du splash ───────────────────────────────────────────────────── */
+  /* ── 4. Fin du splash ───────────────────────────────────────────────────── */
   useEffect(() => {
     if (phase !== "outro") return;
-    const t = setTimeout(onFinish, 1000);
+    const t = setTimeout(onFinish, 950);
     return () => clearTimeout(t);
   }, [phase, onFinish]);
 
   /* ── Labels ─────────────────────────────────────────────────────────────── */
   const label =
-    phase === "outro" || progress >= 100 ? "Bienvenue dans la Guilde !" :
-    progress < 5  ? "Connexion en cours…"          :
-    progress < 35 ? "Chargement des membres…"      :
-    progress < 72 ? "Initialisation de la Guilde…" :
-                    "Presque prêt…";
+    progress >= 100 ? "Bienvenue dans la Guilde !" :
+    progress < 5    ? "Connexion en cours…"          :
+    progress < 35   ? "Chargement des membres…"      :
+    progress < 72   ? "Initialisation de la Guilde…" :
+                      "Presque prêt…";
 
   const showVideo = phase !== "black";
   const showUI    = phase === "playing" || phase === "outro";
@@ -104,7 +123,7 @@ export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) 
       transition={{ duration: 1.0, ease: [0.4, 0, 0.2, 1] }}
     >
 
-      {/* ── Vidéo plein écran ─────────────────────────────────────────────── */}
+      {/* ── Vidéo HD en fond (best-effort sur iOS) ───────────────────────── */}
       <div
         className="ft-video-wrapper"
         style={{
@@ -117,17 +136,18 @@ export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) 
           ref={videoRef}
           src="/Ma%20vid%C3%A9o.mp4"
           autoPlay
-          muted
-          playsInline
+          muted         /* requis iOS autoplay */
+          playsInline   /* requis iOS — évite le fullscreen natif */
           loop={false}
-          preload="auto"
+          preload="metadata"   /* "auto" peut être ignoré sur iOS cellulaire */
+          style={{ pointerEvents: "none" }}
         />
       </div>
 
       {/* ── Vignette cinématique ──────────────────────────────────────────── */}
       <div className="ft-vignette-video" />
 
-      {/* ── Barres letterbox haut/bas ─────────────────────────────────────── */}
+      {/* ── Barres letterbox ─────────────────────────────────────────────── */}
       <div className="ft-letterbox ft-letterbox--top" style={{
         transform: `scaleY(${phase === "black" ? 1 : 0})`,
         transition: "transform 0.95s cubic-bezier(0.76,0,0.24,1)",
@@ -137,77 +157,61 @@ export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) 
         transition: "transform 0.95s cubic-bezier(0.76,0,0.24,1)",
       }}/>
 
-      {/* ── Scène centrale (centre écran garanti par flex) ────────────────── */}
+      {/* ── Scène centrale ───────────────────────────────────────────────── */}
       <div className="ft-stage">
         <AnimatePresence mode="wait">
           {showUI && (
             <motion.div
               key="title"
               className="ft-title-block"
-              /* Entrée : snap depuis flou — style ouverture animé */
-              initial={{
-                opacity: 0,
-                scale: 1.55,
-                filter: "blur(28px)",
-                y: 0,
-              }}
-              animate={{
-                opacity: 1,
-                scale: 1,
-                filter: "blur(0px)",
-                y: 0,
-              }}
-              exit={{
-                opacity: 0,
-                scale: 0.92,
-                filter: "blur(10px)",
-              }}
-              transition={{
-                duration: 0.72,
-                ease: [0.16, 1, 0.3, 1],   /* expo.out — snap efficace */
-              }}
+              initial={{ opacity: 0, scale: 1.5, filter: "blur(24px)" }}
+              animate={{ opacity: 1, scale: 1,   filter: "blur(0px)"  }}
+              exit={{    opacity: 0, scale: 0.92, filter: "blur(8px)"  }}
+              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
             >
-              {/* Ligne décorative top */}
+              {/* Ligne dorée top */}
               <motion.div
                 className="ft-deco-line"
                 initial={{ scaleX: 0 }}
                 animate={{ scaleX: 1 }}
-                transition={{ delay: 0.45, duration: 0.6, ease: "easeOut" }}
+                transition={{ delay: 0.4, duration: 0.65, ease: "easeOut" }}
               />
 
+              {/* ✦ Titre principal — police Cinzel Decorative style guild fantasy */}
               <h1 className="ft-title-main">GUILDE OTAKU</h1>
 
+              {/* Sous-ligne avec lettre-espacement animé */}
               <motion.p
                 className="ft-title-sub"
-                initial={{ opacity: 0, letterSpacing: "0.12em" }}
-                animate={{ opacity: 1, letterSpacing: "0.38em" }}
-                transition={{ delay: 0.35, duration: 0.9, ease: "easeOut" }}
+                initial={{ opacity: 0, letterSpacing: "0.08em" }}
+                animate={{ opacity: 1, letterSpacing: "0.35em" }}
+                transition={{ delay: 0.3, duration: 1.0, ease: "easeOut" }}
               >
                 — La légende commence ici —
               </motion.p>
 
-              {/* Ligne décorative bottom */}
+              {/* Ligne dorée bottom */}
               <motion.div
                 className="ft-deco-line"
                 initial={{ scaleX: 0 }}
                 animate={{ scaleX: 1 }}
-                transition={{ delay: 0.5, duration: 0.6, ease: "easeOut" }}
+                transition={{ delay: 0.5, duration: 0.65, ease: "easeOut" }}
               />
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      {/* ── Barre de progression (bas d'écran) ───────────────────────────── */}
+      {/* ── Barre de progression ─────────────────────────────────────────── */}
       <AnimatePresence>
         {showUI && (
           <motion.div
             key="bar"
             className="ft-loading-block"
-            initial={{ opacity: 0, y: 48 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 44 }}
+            animate={{ opacity: 1, y: 0  }}
             exit={{ opacity: 0, y: 28 }}
-            transition={{ duration: 0.65, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.65, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
           >
             <div className="ft-bar-track">
               <div className="ft-bar-fill" style={{ width: `${progress}%` }} />
@@ -216,14 +220,13 @@ export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) 
               <div className="ft-bar-glow-dot"
                    style={{ left: `${Math.max(progress - 0.5, 0)}%` }} />
             </div>
-
             <div className="ft-bar-meta">
               <span className="ft-bar-percent">{Math.floor(progress)}%</span>
               <motion.span
                 key={label}
                 className="ft-bar-label"
                 initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
+                animate={{ opacity: 1, x: 0  }}
                 transition={{ duration: 0.3 }}
               >
                 {label}
