@@ -96,9 +96,39 @@ export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) 
     };
   }, []);
 
-  /* ── 4. Fin du splash ───────────────────────────────────────────────────── */
+  /* ── 4. Fade-out audio + fin du splash ──────────────────────────────── */
   useEffect(() => {
     if (phase !== "outro") return;
+
+    const video = videoRef.current;
+
+    /* — Fade-out du volume sur 900 ms (synchro avec le fondu visuel) —
+       30 étapes de 30 ms = 900 ms total.
+       Si la vidéo est mutée (iOS), on saute juste à 0 directement.        */
+    if (video && !video.muted) {
+      const STEPS    = 30;
+      const INTERVAL = 30;           // ms par étape  (30 × 30 = 900 ms)
+      const startVol = video.volume;
+      let step = 0;
+
+      const fade = setInterval(() => {
+        step++;
+        const ratio = 1 - step / STEPS;
+        if (step >= STEPS || ratio <= 0) {
+          video.volume = 0;
+          video.pause();
+          clearInterval(fade);
+        } else {
+          video.volume = startVol * ratio;
+        }
+      }, INTERVAL);
+
+      // Cleanup si le composant est démonté avant la fin
+      const done = setTimeout(onFinish, 1050);   // un peu plus long pour la fin du fade
+      return () => { clearInterval(fade); clearTimeout(done); };
+    }
+
+    // Fallback : pas de son -> on contrôle juste le timing
     const t = setTimeout(onFinish, 950);
     return () => clearTimeout(t);
   }, [phase, onFinish]);
