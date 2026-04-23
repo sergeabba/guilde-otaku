@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     siteName: "Guilde Otaku",
     images: [
       {
-        url: "/api/og?title=Bons%20Plans&subtitle=Archives%20%26%20Astuces%20Otaku",
+        url: "https://image.thum.io/get/width/1200/crop/630/delay/3000/noanimate/https://guilde-otaku.vercel.app/bons-plans",
         width: 1200,
         height: 630,
         alt: "Bons Plans Otaku - Guilde Otaku",
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Bons Plans | Guilde Otaku",
     description: "Les archives secrètes de la Guilde : streams, scans et astuces otaku.",
-    images: ["/api/og?title=Bons%20Plans&subtitle=Archives%20%26%20Astuces%20Otaku"],
+    images: ["https://image.thum.io/get/width/1200/crop/630/delay/3000/noanimate/https://guilde-otaku.vercel.app/bons-plans"],
   },
 };
 

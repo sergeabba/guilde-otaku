@@ -34,7 +34,13 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies();
-  const hasSeenSplash = cookieStore.get("guilde-splash-seen")?.value === "1";
+  
+  // Remplacé pour permettre de fetch headers() et de catch `thum.io` + `bots`
+  const headersList = await import("next/headers").then(m => m.headers());
+  const userAgent = headersList.get("user-agent")?.toLowerCase() || "";
+  const isBot = /bot|googlebot|crawler|spider|robot|crawling|thum|headless|lighthouse/i.test(userAgent);
+
+  const hasSeenSplash = isBot || cookieStore.get("guilde-splash-seen")?.value === "1";
 
   return (
     <html lang="fr" data-scroll-behavior="smooth">
