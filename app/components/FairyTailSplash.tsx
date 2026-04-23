@@ -21,10 +21,14 @@ export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) 
 
   /* ── 1. Phase timeline ──────────────────────────────────────────────────── */
   useEffect(() => {
+    if (phase !== "black") return;
     const t1 = setTimeout(() => setPhase("opening"), 200);
     const t2 = setTimeout(() => setPhase("playing"), 1200);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, []);
+    const safety = setTimeout(() => {
+      setPhase("outro");
+    }, 8000);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(safety); };
+  }, [phase]);
 
   /* ── 2. Timer de progression — TOUJOURS actif dès "playing" ─────────────── */
   /*
@@ -53,7 +57,7 @@ export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) 
             0.15;
           return Math.min(p + spd + Math.random() * 0.25, 100);
         });
-      }, 50);
+      }, 100);
     };
 
     // Timer démarre immédiatement, indépendamment de la vidéo

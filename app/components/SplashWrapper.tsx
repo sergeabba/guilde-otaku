@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { AnimatePresence } from "framer-motion";
 import FairyTailSplash from "./FairyTailSplash";
 
@@ -39,10 +39,10 @@ export default function SplashWrapper({ children }: { children: React.ReactNode 
     }
   }, []);
 
-  const handleFinish = () => {
+  const handleFinish = useCallback(() => {
     try { sessionStorage.setItem(SPLASH_KEY, "1"); } catch {}
     setState("done");
-  };
+  }, []);
 
   /* Pendant le SSR et avant hydration : fond noir neutre, évite le flash */
   if (state === "pending") {
