@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     siteName: "Guilde Otaku",
     images: [
       {
-        url: "/logo.png",
+        url: "/api/og?title=Anniversaires&subtitle=Le%20Calendrier%20Otaku",
         width: 1200,
         height: 630,
         alt: "Calendrier des Anniversaires - Guilde Otaku",
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Anniversaires | Guilde Otaku",
     description: "Le calendrier des anniversaires de la Guilde Otaku.",
-    images: ["/logo.png"],
+    images: ["/api/og?title=Anniversaires&subtitle=Le%20Calendrier%20Otaku"],
   },
 };
 

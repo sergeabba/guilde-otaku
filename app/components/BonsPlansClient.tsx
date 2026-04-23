@@ -34,10 +34,19 @@ const LinkCard = ({ link }: { link: SupabaseBonPlanRow }) => {
     fetch(`/api/link-preview?url=${encodeURIComponent(link.url)}`)
       .then(res => res.json())
       .then(data => {
-        if (data.image) setPreviewImage(data.image);
+        if (data.image) {
+          setPreviewImage(data.image);
+        } else {
+          // Fallback ultime : on prend un vrai screenshot de l'accueil du site via Thum.io
+          setPreviewImage(`https://image.thum.io/get/width/1200/crop/630/noanimate/${link.url}`);
+        }
         setLoadingPreview(false);
       })
-      .catch(() => setLoadingPreview(false));
+      .catch(() => {
+        // En cas d'erreur de notre API, on essaie quand même le screenshot
+        setPreviewImage(`https://image.thum.io/get/width/1200/crop/630/noanimate/${link.url}`);
+        setLoadingPreview(false);
+      });
   }, [link.url]);
 
   return (
@@ -77,20 +86,10 @@ const LinkCard = ({ link }: { link: SupabaseBonPlanRow }) => {
       {/* Ligne Accent en Haut */}
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "4px", background: link.color, opacity: 0.8, zIndex: 10 }} />
 
-      {/* Image de Couverture/Preview (OG:Image) */}
+      {/* Image de Couverture/Preview (OG:Image ou Screenshot) */}
       <div style={{ height: "180px", position: "relative", backgroundColor: "rgba(0,0,0,0.5)", overflow: "hidden" }}>
         <AnimatePresence mode="wait">
-          {previewImage ? (
-            <motion.img 
-              key="preview"
-              src={previewImage} 
-              alt="Website preview"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8 }}
-              style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", filter: "brightness(0.7) saturate(1.2)" }} 
-            />
-          ) : loadingPreview ? (
+          {loadingPreview ? (
             <motion.div 
               key="loading"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -100,6 +99,20 @@ const LinkCard = ({ link }: { link: SupabaseBonPlanRow }) => {
                 <ImageIcon size={32} color="rgba(255,255,255,0.2)" />
               </motion.div>
             </motion.div>
+          ) : previewImage ? (
+            <motion.img 
+              key="preview"
+              src={previewImage} 
+              alt="Website preview"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8 }}
+              onError={(e) => {
+                // Si la capture d'écran échoue aussi, on efface l'image
+                setPreviewImage(null);
+              }}
+              style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", filter: "brightness(0.7) saturate(1.2)" }} 
+            />
           ) : (
             <motion.div key="fallback" style={{ width: "100%", height: "100%", background: `linear-gradient(135deg, ${link.color}20 0%, #000 100%)` }} />
           )}

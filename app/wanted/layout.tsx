@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     siteName: "Guilde Otaku",
     images: [
       {
-        url: "/logo.png",
+        url: "/api/og?title=Avis%20de%20Recherche&subtitle=S%C3%A9lectionnez%20votre%20prime",
         width: 1200,
         height: 630,
         alt: "Wanted Posters - Guilde Otaku",
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Wanted | Guilde Otaku",
     description: "Les primes de la Guilde Otaku ! Wanted posters et mises à prix.",
-    images: ["/logo.png"],
+    images: ["/api/og?title=Avis%20de%20Recherche&subtitle=S%C3%A9lectionnez%20votre%20prime"],
   },
 };
 

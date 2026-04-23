@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     siteName: "Guilde Otaku",
     images: [
       {
-        url: "/logo.png",
+        url: "/api/og?title=Soir%C3%A9e%20Cin%C3%A9ma&subtitle=Le%20Film%20de%20la%20Semaine",
         width: 1200,
         height: 630,
         alt: "Film de la Semaine - Guilde Otaku",
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Film de la Semaine | Guilde Otaku",
     description: "Les films de la semaine de la Guilde Otaku. Soirées cinéma sur Discord.",
-    images: ["/logo.png"],
+    images: ["/api/og?title=Soir%C3%A9e%20Cin%C3%A9ma&subtitle=Le%20Film%20de%20la%20Semaine"],
   },
 };
 
