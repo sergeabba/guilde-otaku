@@ -26,7 +26,12 @@ const LinkCard = ({ link }: { link: SupabaseBonPlanRow }) => {
   const Icon = getFallbackIcon();
 
   // Déduire l'URL du logo Google S2
-  const domain = new URL(link.url).hostname;
+  let domain = "";
+  try {
+    domain = new URL(link.url).hostname;
+  } catch (e) {
+    domain = link.url; // fallback simple si 'url' n'est pas parsable en URL
+  }
   const logoUrl = link.logo || `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
 
   useEffect(() => {
@@ -174,8 +179,9 @@ export default function BonsPlansClient({ initialLinks }: { initialLinks: Supaba
 
   const filteredLinks = initialLinks.filter((link) => {
     const matchesCategory = activeCategory === "Tout" || link.category === activeCategory;
-    const matchesSearch = link.title.toLowerCase().includes(searchTerm.toLowerCase()) || link.desc.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesCategory && matchesSearch;
+    const titleMatch = (link.title || "").toLowerCase().includes(searchTerm.toLowerCase());
+    const descMatch = (link.desc || "").toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesCategory && (titleMatch || descMatch);
   });
 
   return (
