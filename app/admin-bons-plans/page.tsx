@@ -116,6 +116,31 @@ export default function AdminBonsPlansPage() {
     fetchLinks();
   };
 
+  const migrateOldLinks = async () => {
+    if (!confirm("Voulez-vous injecter définitivement vos anciens sites codés en dur dans Supabase ?")) return;
+    
+    // Le même tableau que dans dataAdapter
+    const oldLinks = [
+      { title: "Anime-Sama", desc: "La référence actuelle. Excellente plateforme de streaming anime communautaire.", url: "https://anime-sama.to/", category: "Animes", fallback_icon: "Tv", color: "#8b5cf6", logo: "https://www.google.com/s2/favicons?domain=anime-sama.to&sz=128" },
+      { title: "SushiScan", desc: "La meilleure base pour lire vos scans mangas en VF rapidement.", url: "https://sushiscan.net/", category: "Scans", fallback_icon: "BookOpen", color: "#f43f5e", logo: "https://www.google.com/s2/favicons?domain=sushiscan.net&sz=128" },
+      { title: "FRAnime", desc: "Site de stream anime très fluide, très complet et sans prise de tête.", url: "https://franime.fr/", category: "Animes", fallback_icon: "Tv", color: "#f97316", logo: "https://www.google.com/s2/favicons?domain=franime.fr&sz=128" },
+      { title: "VoirAnime", desc: "L'un des plus connus. Streaming d'animes très souvent mis à jour.", url: "https://voiranime.tv/", category: "Animes", fallback_icon: "Tv", color: "#3b82f6", logo: "https://www.google.com/s2/favicons?domain=voiranime.com&sz=128" },
+      { title: "Movix", desc: "Le bon plan du Don pour le streaming de vos Séries et Films classiques.", url: "https://movix.rodeo/", category: "Films/Séries", fallback_icon: "Film", color: "#eab308", logo: "https://www.google.com/s2/favicons?domain=movix.rodeo&sz=128" },
+      { title: "MovieBox", desc: "Excellente alternative de stream film pour vos soirées cinéma.", url: "https://moviebox.ph/", category: "Films/Séries", fallback_icon: "Film", color: "#14b8a6", logo: "https://www.google.com/s2/favicons?domain=moviebox.ph&sz=128" },
+      { title: "WiTV", desc: "La solution parfaite pour regarder la telé en Stream et tout le reste.", url: "https://witv.team/", category: "Utiles", fallback_icon: "Tv", color: "#f43f5e", logo: "https://www.google.com/s2/favicons?domain=witv.team&sz=128" },
+      { title: "Ygg", desc: "Le tracker de référence pour retrouver tous les torrents fr.", url: "https://ygg.gratis/", category: "Utiles", fallback_icon: "Globe", color: "#0ea5e9", logo: "https://www.google.com/s2/favicons?domain=ygg.gratis&sz=128" },
+      { title: "Crunchyroll", desc: "Le géant du streaming. Indispensable pour les simulcasts officiels.", url: "https://www.crunchyroll.com", category: "Animes", fallback_icon: "Tv", color: "#f97316", logo: "https://cdn.simpleicons.org/crunchyroll/f97316" },
+    ];
+
+    const { error } = await supabase.from("bons_plans").insert(oldLinks);
+    if (error) {
+      alert("Erreur lors de la migration : " + error.message);
+    } else {
+      alert("Anciens liens récupérés avec succès !");
+      fetchLinks();
+    }
+  };
+
   if (checking) return null;
 
   if (!auth) {
@@ -366,6 +391,30 @@ export default function AdminBonsPlansPage() {
               ))}
           </AnimatePresence>
         </div>
+
+        {!loading && links.length === 0 && (
+          <div style={{ textAlign: "center", marginTop: "100px" }}>
+            <Globe size={48} color="rgba(255,255,255,0.2)" style={{ margin: "0 auto 20px" }} />
+            <h2 style={{ fontSize: "24px", color: "rgba(255,255,255,0.4)", marginBottom: "30px", textTransform: "uppercase" }}>Aucun Bon Plan trouvé dans Supabase</h2>
+            <button
+              onClick={migrateOldLinks}
+              style={{
+                padding: "16px 32px",
+                background: "transparent",
+                border: `2px solid ${colors.gold}`,
+                color: colors.gold,
+                borderRadius: "100px",
+                fontFamily: font,
+                fontWeight: 900,
+                fontSize: "16px",
+                cursor: "pointer",
+                textTransform: "uppercase",
+              }}
+            >
+              Récupérer les Anciens Archvies Locales
+            </button>
+          </div>
+        )}
       </main>
 
       {/* ── FORM MODAL ── */}
