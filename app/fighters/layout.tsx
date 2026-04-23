@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     siteName: "Guilde Otaku",
     images: [
       {
-        url: "/logo.png",
+        url: "/api/og?title=Ar%C3%A8ne%20de%20Combat&subtitle=Duels%20L%C3%A9gendaires&image=https%3A%2F%2Fimage.tmdb.org%2Ft%2Fp%2Foriginal%2Fn43enHnUfE5CofB413W0I31NUXD.jpg",
         width: 1200,
         height: 630,
         alt: "Arène de Combat - Guilde Otaku",
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Arène | Guilde Otaku",
     description: "Sélectionne tes combattants et affronte les membres de la Guilde !",
-    images: ["/logo.png"],
+    images: ["/api/og?title=Ar%C3%A8ne%20de%20Combat&subtitle=Duels%20L%C3%A9gendaires&image=https%3A%2F%2Fimage.tmdb.org%2Ft%2Fp%2Foriginal%2Fn43enHnUfE5CofB413W0I31NUXD.jpg"],
   },
 };
 

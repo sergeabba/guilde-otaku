@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     siteName: "Guilde Otaku",
     images: [
       {
-        url: "/logo.png",
+        url: "/api/og?title=L'Atelier&subtitle=Galerie%20Expérimentale%20d'Intelligence%20Artificielle",
         width: 1200,
         height: 630,
         alt: "L'Atelier Visuel - Guilde Otaku",
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "L'Atelier | Guilde Otaku",
     description: "La galerie expérimentale de la Guilde Otaku. Créations visuelles par IA.",
-    images: ["/logo.png"],
+    images: ["/api/og?title=L'Atelier&subtitle=Galerie%20Expérimentale%20d'Intelligence%20Artificielle"],
   },
 };
 

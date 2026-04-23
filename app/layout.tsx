@@ -15,10 +15,10 @@ export const metadata: Metadata = {
     siteName: "Guilde Otaku",
     images: [
       {
-        url: "/logo.png",
+        url: "/api/og?title=Guilde%20Otaku&subtitle=Trombinoscope%20et%20archives%20légendaires",
         width: 1200,
         height: 630,
-        alt: "Guilde Otaku - Trombinoscope",
+        alt: "Guilde Otaku - Aperçu",
       },
     ],
     locale: "fr_FR",
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Guilde Otaku",
     description: "Le trombinoscope légendaire de la Guilde Otaku.",
-    images: ["/logo.png"],
+    images: ["/api/og?title=Guilde%20Otaku&subtitle=Trombinoscope%20et%20archives%20légendaires"],
   },
 };
 
