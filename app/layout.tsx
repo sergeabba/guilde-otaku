@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import "./globals.css";
 
 import BirthdayBanner from "./components/BirthdayBanner";
@@ -34,9 +34,7 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies();
-  
-  // Remplacé pour permettre de fetch headers() et de catch `thum.io` + `bots`
-  const headersList = await import("next/headers").then(m => m.headers());
+  const headersList = await headers();
   const userAgent = headersList.get("user-agent")?.toLowerCase() || "";
   const isBot = /bot|googlebot|crawler|spider|robot|crawling|thum|headless|lighthouse/i.test(userAgent);
 
