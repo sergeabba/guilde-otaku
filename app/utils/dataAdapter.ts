@@ -114,3 +114,43 @@ export async function fetchMemberById(id: number): Promise<Member | null> {
   const all = await fetchMembers();
   return all.find((m) => m.id === id) ?? null;
 }
+
+// ─── FETCH BONS PLANS ─────────────────────────────────────────────────────────
+
+import type { SupabaseBonPlanRow } from "../types";
+
+// ─── LOCAL FALLBACK BONS PLANS ────────────────────────────────────────────────
+const localBonsPlans: SupabaseBonPlanRow[] = [
+  { id: 101, title: "Anime-Sama", desc: "La référence actuelle. Excellente plateforme de streaming anime communautaire.", url: "https://anime-sama.to/", category: "Animes", logo: "https://www.google.com/s2/favicons?domain=anime-sama.to&sz=128", fallback_icon: "Tv", color: "#8b5cf6", created_at: "" },
+  { id: 102, title: "SushiScan", desc: "La meilleure base pour lire vos scans mangas en VF rapidement.", url: "https://sushiscan.net/", category: "Scans", logo: "https://www.google.com/s2/favicons?domain=sushiscan.net&sz=128", fallback_icon: "BookOpen", color: "#f43f5e", created_at: "" },
+  { id: 103, title: "FRAnime", desc: "Site de stream anime très fluide, très complet et sans prise de tête.", url: "https://franime.fr/", category: "Animes", logo: "https://www.google.com/s2/favicons?domain=franime.fr&sz=128", fallback_icon: "Tv", color: "#f97316", created_at: "" },
+  { id: 104, title: "VoirAnime", desc: "L'un des plus connus. Streaming d'animes très souvent mis à jour.", url: "https://voiranime.tv/", category: "Animes", logo: "https://www.google.com/s2/favicons?domain=voiranime.com&sz=128", fallback_icon: "Tv", color: "#3b82f6", created_at: "" },
+  { id: 106, title: "Movix", desc: "Le bon plan du Don pour le streaming de vos Séries et Films classiques.", url: "https://movix.rodeo/", category: "Films/Séries", logo: "https://www.google.com/s2/favicons?domain=movix.rodeo&sz=128", fallback_icon: "Film", color: "#eab308", created_at: "" },
+  { id: 109, title: "MovieBox", desc: "Excellente alternative de stream film pour vos soirées cinéma.", url: "https://moviebox.ph/", category: "Films/Séries", logo: "https://www.google.com/s2/favicons?domain=moviebox.ph&sz=128", fallback_icon: "Film", color: "#14b8a6", created_at: "" },
+  { id: 111, title: "WiTV", desc: "La solution parfaite pour regarder la telé en Stream et tout le reste.", url: "https://witv.team/", category: "Utiles", logo: "https://www.google.com/s2/favicons?domain=witv.team&sz=128", fallback_icon: "Tv", color: "#f43f5e", created_at: "" },
+  { id: 112, title: "Ygg", desc: "Le tracker de référence pour retrouver tous les torrents fr.", url: "https://ygg.gratis/", category: "Utiles", logo: "https://www.google.com/s2/favicons?domain=ygg.gratis&sz=128", fallback_icon: "Globe", color: "#0ea5e9", created_at: "" },
+  { id: 1, title: "Crunchyroll", desc: "Le géant du streaming. Indispensable pour les simulcasts officiels.", url: "https://www.crunchyroll.com", category: "Animes", logo: "https://cdn.simpleicons.org/crunchyroll/f97316", fallback_icon: "Tv", color: "#f97316", created_at: "" },
+];
+
+export async function fetchBonsPlans(): Promise<SupabaseBonPlanRow[]> {
+  try {
+    const { data, error } = await supabase
+      .from("bons_plans")
+      .select("*")
+      .order("id", { ascending: true });
+
+    if (error) throw new Error(`Supabase error: ${error.message}`);
+    
+    // Si la DB est vide, on renvoie les archives locales
+    if (!data || data.length === 0) {
+      return localBonsPlans;
+    }
+    
+    return data as SupabaseBonPlanRow[];
+  } catch (err) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[dataAdapter] Impossible de fetch bons_plans, fallback local activé:", err);
+    }
+    return localBonsPlans;
+  }
+}

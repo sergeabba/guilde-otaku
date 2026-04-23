@@ -102,6 +102,19 @@ export interface SupabaseAtelierRow {
   has_db_record?: boolean;
 }
 
+// ─── SUPABASE RAW ROW (table bons_plans) ─────────────────────────────────────
+export interface SupabaseBonPlanRow {
+  id:            number;
+  title:         string;
+  desc:          string;
+  url:           string;
+  category:      string;
+  color:         string;
+  logo:          string | null;
+  fallback_icon: string | null;
+  created_at:    string;
+}
+
 // ─── PARSE BIRTHDAY ───────────────────────────────────────────────────────────
 // Parses "12 mars", "3 août", etc. → { day, month }
 // Centralisé ici pour éviter la duplication dans BirthdayBanner et birthdays/page.

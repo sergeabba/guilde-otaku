@@ -1,0 +1,517 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "../../lib/supabase";
+import GuildeHeader from "../components/GuildeHeader";
+import { colors, typography, font } from "../../outputs/styles/tokens";
+import { Trash, Pencil, Plus, X, Globe } from "lucide-react";
+import { ADMIN_PASSWORD } from "../../lib/constants";
+import type { SupabaseBonPlanRow } from "../types";
+
+export default function AdminBonsPlansPage() {
+  const [auth, setAuth] = useState(false);
+  const [password, setPassword] = useState("");
+  const [checking, setChecking] = useState(true);
+  const [links, setLinks] = useState<SupabaseBonPlanRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+
+  // Formulaire d'édition
+  const [formTitle, setFormTitle] = useState("");
+  const [formDesc, setFormDesc] = useState("");
+  const [formUrl, setFormUrl] = useState("");
+  const [formCategory, setFormCategory] = useState("Animes");
+  const [formColor, setFormColor] = useState("#8b5cf6");
+  const [formLogo, setFormLogo] = useState("");
+
+  const categories = ["Animes", "Scans", "Films/Séries", "Utiles"];
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const isAuth = sessionStorage.getItem("guilde_admin_auth") === "true";
+      if (isAuth) setAuth(true);
+      setChecking(false);
+    }
+  }, []);
+
+  const checkAuth = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password === ADMIN_PASSWORD) {
+      sessionStorage.setItem("guilde_admin_auth", "true");
+      setAuth(true);
+    } else {
+      alert("Mot de passe incorrect");
+    }
+  };
+
+  useEffect(() => {
+    if (auth) fetchLinks();
+  }, [auth]);
+
+  const fetchLinks = async () => {
+    const { data } = await supabase
+      .from("bons_plans")
+      .select("*")
+      .order("id", { ascending: false });
+    if (data) setLinks(data);
+    setLoading(false);
+  };
+
+  const openForm = (l: SupabaseBonPlanRow | null = null) => {
+    if (l) {
+      setEditingId(l.id);
+      setFormTitle(l.title);
+      setFormDesc(l.desc);
+      setFormUrl(l.url);
+      setFormCategory(l.category);
+      setFormColor(l.color || "#8b5cf6");
+      setFormLogo(l.logo || "");
+    } else {
+      setEditingId(null);
+      setFormTitle("");
+      setFormDesc("");
+      setFormUrl("");
+      setFormCategory("Animes");
+      setFormColor("#8b5cf6");
+      setFormLogo("");
+    }
+    setShowForm(true);
+  };
+
+  const deleteLink = async (id: number, title: string) => {
+    if (!confirm(`Supprimer définitivement ${title} ?`)) return;
+    await supabase.from("bons_plans").delete().eq("id", id);
+    fetchLinks();
+  };
+
+  const saveLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const payload = {
+      title: formTitle,
+      desc: formDesc,
+      url: formUrl,
+      category: formCategory,
+      color: formColor,
+      logo: formLogo,
+    };
+
+    let error;
+    if (editingId) {
+      ({ error } = await supabase
+        .from("bons_plans")
+        .update(payload)
+        .eq("id", editingId));
+    } else {
+      ({ error } = await supabase.from("bons_plans").insert([payload]));
+    }
+
+    if (error) {
+      alert("Erreur sauvegarde : " + error.message);
+      return;
+    }
+
+    setShowForm(false);
+    fetchLinks();
+  };
+
+  if (checking) return null;
+
+  if (!auth) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: colors.bg,
+        }}
+      >
+        <form
+          onSubmit={checkAuth}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px",
+            background: colors.bgCard,
+            padding: "30px",
+            borderRadius: "20px",
+          }}
+        >
+          <h2
+            style={{
+              fontFamily: font,
+              color: "#fff",
+              textAlign: "center",
+              marginBottom: "20px",
+            }}
+          >
+            ADMIN BONS PLANS
+          </h2>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Mot de passe"
+            style={{
+              padding: "10px",
+              borderRadius: "8px",
+              border: `1px solid ${colors.border}`,
+              background: colors.bg,
+              color: "#fff",
+            }}
+            autoFocus
+          />
+          <button
+            type="submit"
+            style={{
+              padding: "10px",
+              background: colors.gold,
+              borderRadius: "8px",
+              fontWeight: "bold",
+              border: "none",
+              cursor: "pointer",
+            }}
+          >
+            Accéder
+          </button>
+        </form>
+      </div>
+    );
+  }
+
+  const inputStyle: React.CSSProperties = {
+    width: "100%",
+    padding: "10px",
+    background: colors.bgCard,
+    border: `1px solid ${colors.border}`,
+    color: "#fff",
+    borderRadius: "8px",
+    fontFamily: font,
+    boxSizing: "border-box",
+  };
+
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        background: colors.bg,
+        color: colors.textPrimary,
+        fontFamily: font,
+        paddingBottom: "100px",
+      }}
+    >
+      <GuildeHeader activePage="bons-plans" />
+
+      <main
+        style={{
+          maxWidth: "1200px",
+          margin: "120px auto 0",
+          padding: "0 24px",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "40px",
+          }}
+        >
+          <div>
+            <h1
+              style={{
+                fontFamily: font,
+                fontWeight: 900,
+                textTransform: "uppercase",
+                fontSize: "40px",
+                marginBottom: "8px",
+              }}
+            >
+              Archive Administrateur
+            </h1>
+            <p style={{ color: colors.textSecondary }}>
+              Gérez les bons plans de la Guilde. Streams, Scans, Outils de Hackers.
+            </p>
+          </div>
+          <button
+            onClick={() => openForm()}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "12px 24px",
+              background: colors.gold,
+              color: "#000",
+              fontFamily: font,
+              fontWeight: 900,
+              borderRadius: "100px",
+              border: "none",
+              cursor: "pointer",
+              textTransform: "uppercase",
+            }}
+          >
+            <Plus size={18} /> Nouveau Bon Plan
+          </button>
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+            gap: "16px",
+          }}
+        >
+          <AnimatePresence>
+            {!loading &&
+              links.map((link) => (
+                <motion.div
+                  key={link.id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  style={{
+                    background: colors.bgCard,
+                    border: `1px solid ${colors.border}`,
+                    borderLeft: `4px solid ${link.color || colors.gold}`,
+                    borderRadius: "16px",
+                    padding: "20px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "12px",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                      
+                      <div
+                        style={{
+                          width: "32px",
+                          height: "32px",
+                          borderRadius: "8px",
+                          background: `${link.color}20`,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: link.color,
+                        }}
+                      >
+                        {link.logo ? (
+                          <img src={link.logo} alt="logo" style={{ width: "24px", height: "24px", objectFit: "contain" }} />
+                        ) : (
+                          <Globe size={18} color={link.color} />
+                        )}
+                      </div>
+
+                      <div>
+                        <h3
+                          style={{
+                            fontSize: "20px",
+                            fontWeight: 800,
+                            textTransform: "uppercase",
+                          }}
+                        >
+                          {link.title}
+                        </h3>
+                        <span
+                          style={{
+                            fontSize: "12px",
+                            color: "rgba(255,255,255,0.4)",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {link.category}
+                        </span>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <button
+                        onClick={() => openForm(link)}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "#60a5fa",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <Pencil size={18} />
+                      </button>
+                      <button
+                        onClick={() => deleteLink(link.id, link.title)}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "#f87171",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <Trash size={18} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <a href={link.url} target="_blank" rel="noreferrer" style={{ fontSize: "13px", color: link.color, wordBreak: "break-all" }}>
+                    {link.url}
+                  </a>
+                  
+                </motion.div>
+              ))}
+          </AnimatePresence>
+        </div>
+      </main>
+
+      {/* ── FORM MODAL ── */}
+      <AnimatePresence>
+        {showForm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0,0,0,0.8)",
+              zIndex: 9999,
+              display: "flex",
+              justifyContent: "center",
+              padding: "40px 20px",
+              overflowY: "auto",
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              style={{
+                background: colors.bg,
+                padding: "30px",
+                borderRadius: "24px",
+                width: "100%",
+                maxWidth: "600px",
+                height: "fit-content",
+                border: `1px solid ${colors.border}`,
+                position: "relative",
+              }}
+            >
+              <button
+                onClick={() => setShowForm(false)}
+                style={{
+                  position: "absolute",
+                  top: "20px",
+                  right: "20px",
+                  background: "transparent",
+                  color: "#fff",
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
+                <X size={24} />
+              </button>
+
+              <h2
+                style={{
+                  fontSize: "28px",
+                  fontWeight: 800,
+                  marginBottom: "20px",
+                  fontStyle: "italic",
+                  textTransform: "uppercase",
+                }}
+              >
+                {editingId ? "Modifier le Lien" : "Nouveau Lien"}
+              </h2>
+
+              <form
+                onSubmit={saveLink}
+                style={{ display: "flex", flexDirection: "column", gap: "24px" }}
+              >
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                  <div>
+                    <label style={{ fontSize: "12px", color: colors.textSecondary }}>Titre</label>
+                    <input required value={formTitle} onChange={(e) => setFormTitle(e.target.value)} style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: "12px", color: colors.textSecondary }}>Catégorie</label>
+                    <select
+                      value={formCategory}
+                      onChange={(e) => setFormCategory(e.target.value)}
+                      style={{ ...inputStyle }}
+                    >
+                      {categories.map((c) => (
+                        <option key={c} value={c} style={{ background: colors.bg, color: "#fff" }}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: "12px", color: colors.textSecondary }}>URL Complète (commençant par https://)</label>
+                  <input required value={formUrl} onChange={(e) => setFormUrl(e.target.value)} style={inputStyle} placeholder="https://..." />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: "12px", color: colors.textSecondary }}>Description / Punchline</label>
+                  <textarea required value={formDesc} onChange={(e) => setFormDesc(e.target.value)} style={{ ...inputStyle, minHeight: "80px", resize: "vertical" }} />
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "16px" }}>
+                  <div>
+                    <label style={{ fontSize: "12px", color: colors.textSecondary }}>Couleur Thème (HEX)</label>
+                    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                      <input
+                        type="color"
+                        value={formColor}
+                        onChange={(e) => setFormColor(e.target.value)}
+                        style={{ width: "40px", height: "40px", borderRadius: "8px", border: "none", cursor: "pointer" }}
+                      />
+                      <input
+                        value={formColor}
+                        onChange={(e) => setFormColor(e.target.value)}
+                        style={{ ...inputStyle, flex: 1 }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: "12px", color: colors.textSecondary }}>URL d'un Logo direct (optionnel)</label>
+                    <input value={formLogo} onChange={(e) => setFormLogo(e.target.value)} style={inputStyle} placeholder="https://..." />
+                    <p style={{ fontSize: "11px", color: colors.textSecondary, marginTop: "4px" }}>
+                      Si vide, l'application essaiera d'utiliser le service Google Favicon.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  style={{
+                    padding: "16px",
+                    background: colors.gold,
+                    color: "#000",
+                    border: "none",
+                    borderRadius: "12px",
+                    fontFamily: font,
+                    fontWeight: 900,
+                    textTransform: "uppercase",
+                    fontSize: "16px",
+                    cursor: "pointer",
+                    marginTop: "10px",
+                  }}
+                >
+                  Enregistrer
+                </button>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
