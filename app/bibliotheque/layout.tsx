@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     siteName: "Guilde Otaku",
     images: [
       {
-        url: "https://image.thum.io/get/width/1200/crop/630/delay/3000/noanimate/https://guilde-otaku.vercel.app/bibliotheque",
+        url: "https://image.thum.io/get/width/1200/crop/630/delay/3000/noanimate/https://guilde-otaku.vercel.app/bibliotheque?v=3",
         width: 1200,
         height: 630,
         alt: "Aperçu de la Bibliothèque - Chronique du Bash",
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "La Bibliothèque | Guilde Otaku",
     description: "Découvrez les verdicts définitifs de la Guilde Otaku.",
-    images: ["https://image.thum.io/get/width/1200/crop/630/delay/3000/noanimate/https://guilde-otaku.vercel.app/bibliotheque"],
+    images: ["https://image.thum.io/get/width/1200/crop/630/delay/3000/noanimate/https://guilde-otaku.vercel.app/bibliotheque?v=3"],
   },
 };
 

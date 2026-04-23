@@ -117,7 +117,7 @@ export default function BirthdaysPage() {
   );
 
   return (
-    <motion.main animate={{ background: activeTheme.bg }} transition={{ duration: 0.6 }} style={{ minHeight: "100vh" }}>
+    <motion.main animate={{ background: activeTheme.bg }} transition={{ duration: 0.6 }} style={{ minHeight: "100vh", background: activeTheme.bg }}>
       
       <style>{`
         @keyframes gradientMove {
