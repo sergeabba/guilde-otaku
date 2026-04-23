@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Lock, BookOpen, User, Flame, ArrowRight, ShieldAlert, Palette, Film } from "lucide-react";
+import { Lock, BookOpen, User, Flame, ArrowRight, ShieldAlert, Palette, Film, Globe } from "lucide-react";
 import { colors, typography, font } from "../../outputs/styles/tokens";
 import GuildeHeader from "../components/GuildeHeader";
 import { ADMIN_PASSWORD } from "../../lib/constants";
@@ -148,6 +148,19 @@ export default function AdminHubPage() {
             </p>
             <Link href="/admin-film-semaine" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(229,9,20,0.3)", padding: "12px 24px", borderRadius: "100px", color: "#e50914", textDecoration: "none", fontWeight: 700, fontSize: "14px", textTransform: "uppercase", letterSpacing: "0.1em" }}>
               Gérer les Films <ArrowRight size={16} />
+            </Link>
+          </motion.div>
+
+          {/* Carte Bons Plans */}
+          <motion.div whileHover={{ scale: 1.02 }} style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: "24px", padding: "32px", position: "relative", overflow: "hidden" }}>
+            <div style={{ position: "absolute", top: 0, right: 0, background: "rgba(16, 185, 129, 0.1)", width: "150px", height: "150px", filter: "blur(50px)", borderRadius: "50%" }} />
+            <Globe size={32} color="#10b981" style={{ marginBottom: "20px" }} />
+            <h2 style={{ fontFamily: font, fontSize: "28px", fontWeight: 900, marginBottom: "12px", textTransform: "uppercase" }}>Bons Plans</h2>
+            <p style={{ ...typography.body, color: colors.textSecondary, marginBottom: "32px" }}>
+              Étoffez la bibliothèque secrète de la Guilde avec vos meilleurs sites de streaming, de scans ou d'outils de piraterie.
+            </p>
+            <Link href="/admin-bons-plans" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(16,185,129,0.3)", padding: "12px 24px", borderRadius: "100px", color: "#10b981", textDecoration: "none", fontWeight: 700, fontSize: "14px", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+              Gérer les Bons Plans <ArrowRight size={16} />
             </Link>
           </motion.div>
 
