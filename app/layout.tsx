@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import "./globals.css";
 
 import BirthdayBanner from "./components/BirthdayBanner";
@@ -31,7 +32,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const cookieStore = await cookies();
+  const hasSeenSplash = cookieStore.get("guilde-splash-seen")?.value === "1";
+
   return (
     <html lang="fr" data-scroll-behavior="smooth">
       <head>
@@ -48,7 +52,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <BirthdayBanner />
         
         {/* === SPLASH SCREEN FAIRY TAIL === */}
-        <SplashWrapper>
+        <SplashWrapper hasSeenSplash={hasSeenSplash}>
           {children}
         </SplashWrapper>
       </body>

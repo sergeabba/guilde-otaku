@@ -11,11 +11,9 @@ import FairyTailSplash from "./FairyTailSplash";
   - Dès le montage client, on vérifie sessionStorage pour savoir si on skip.
 */
 
-const SPLASH_KEY = "guilde-splash-v2";
-
-export default function SplashWrapper({ children }: { children: React.ReactNode }) {
+export default function SplashWrapper({ children, hasSeenSplash = false }: { children: React.ReactNode, hasSeenSplash?: boolean }) {
   const [mounted, setMounted] = useState(false);
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(!hasSeenSplash);
   const checkedRef = useRef(false);
 
   useEffect(() => {
@@ -24,17 +22,16 @@ export default function SplashWrapper({ children }: { children: React.ReactNode 
     checkedRef.current = true;
 
     try {
-      const seen = sessionStorage.getItem(SPLASH_KEY);
-      if (seen) {
-        setShowSplash(false);
-      }
-    } catch {
-      // Ignore si le sessionStorage est bloqué
-    }
+      // Nettoyage de l'ancien sessionStorage si présent
+      sessionStorage.removeItem("guilde-splash-v2");
+    } catch {}
   }, []);
 
   const handleFinish = useCallback(() => {
-    try { sessionStorage.setItem(SPLASH_KEY, "1"); } catch {}
+    try { 
+      // Sauvegarde du cookie pour l'accès serveur (expire dans 24h)
+      document.cookie = "guilde-splash-seen=1; path=/; max-age=86400";
+    } catch {}
     setShowSplash(false);
   }, []);
 

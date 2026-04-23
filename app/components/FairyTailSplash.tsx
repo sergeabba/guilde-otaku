@@ -85,14 +85,8 @@ export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) 
       if (!doneRef.current) { doneRef.current = true; setPhase("outro"); }
     };
 
-    // Tente unmute une fois (iOS bloque, mais ça ne crashe pas)
-    const tryUnmute = () => {
-      try { video.muted = false; video.volume = 1; } catch {}
-    };
-
     video.addEventListener("timeupdate", onTimeUpdate);
     video.addEventListener("ended",      onEnded);
-    video.addEventListener("playing",    tryUnmute, { once: true });
 
     return () => {
       video.removeEventListener("timeupdate", onTimeUpdate);
