@@ -26,7 +26,7 @@ export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) 
     const t2 = setTimeout(() => setPhase("playing"), 1200);
     const safety = setTimeout(() => {
       setPhase("outro");
-    }, 8000);
+    }, 4500); // Réduit de 8000 à 4500 pour ne jamais bloquer le site trop longtemps
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(safety); };
   }, [phase]);
 
@@ -48,13 +48,13 @@ export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) 
             if (!doneRef.current) { doneRef.current = true; setPhase("outro"); }
             return 100;
           }
-          // Vitesse variable : lent → moyen → lent en fin (simuler un vrai chargement)
+          // Vitesse largement accélérée pour ne pas "bugger" le démarrage (chargement max ~2.5s)
           const spd =
-            p < 15 ? 0.6 :
-            p < 45 ? 1.1 :
-            p < 75 ? 0.85 :
-            p < 92 ? 0.4 :
-            0.15;
+            p < 20 ? 8 :
+            p < 50 ? 6 :
+            p < 80 ? 4 :
+            p < 95 ? 2 :
+            1;
           return Math.min(p + spd + Math.random() * 0.25, 100);
         });
       }, 100);
