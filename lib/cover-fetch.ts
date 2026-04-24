@@ -183,7 +183,7 @@ export async function fetchFromTMDB(query: string): Promise<string | null> {
   const cached = coverCache.get(`tmdb-${query}`);
   if (cached) return cached;
 
-  const apiKey = process.env.NEXT_PUBLIC_TMDB_API_KEY;
+  const apiKey = process.env.TMDB_API_KEY;
   if (!apiKey) return null;
 
   try {

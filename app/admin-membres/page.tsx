@@ -4,16 +4,14 @@ import { useState, useRef, useEffect } from "react";
 import { members } from "../../data/members";
 import { Upload, Check, X, User, Sword, Lock } from "lucide-react";
 import { useIsMobile } from "../hooks/useIsMobile";
-import { ADMIN_PASSWORD } from "../../lib/constants";
+import { useAdminAuth } from "../hooks/useAdminAuth";
+import { getAdminFormDataHeaders } from "../../lib/admin-fetch";
 
 type PhotoType = "photo" | "anime";
 
 export default function AdminMembresPage() {
   const isMobile = useIsMobile();
-  const [authed, setAuthed] = useState(false);
-  const [checking, setChecking] = useState(true);
-  const [pwInput, setPwInput] = useState("");
-  const [pwError, setPwError] = useState(false);
+  const { authed, checking, password: pwInput, setPassword: setPwInput, error: pwError, login } = useAdminAuth();
   const [selectedMember, setSelectedMember] = useState<number | null>(null);
   const [photoType, setPhotoType] = useState<PhotoType>("photo");
   const [dragOver, setDragOver] = useState(false);
@@ -22,14 +20,6 @@ export default function AdminMembresPage() {
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<{ url: string; success: boolean } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const isAuth = sessionStorage.getItem("guilde_admin_auth") === "true";
-      if (isAuth) setAuthed(true);
-      setChecking(false);
-    }
-  }, []);
 
   if (checking) return null;
 
@@ -95,22 +85,14 @@ export default function AdminMembresPage() {
           >
             ACCÈS RESTREINT
           </h1>
-          <input
-            type="password"
-            value={pwInput}
-            onChange={(e) => {
-              setPwInput(e.target.value);
-              setPwError(false);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                if (pwInput === ADMIN_PASSWORD) {
-                  sessionStorage.setItem("guilde_admin_auth", "true");
-                  setAuthed(true);
-                } else setPwError(true);
-              }
-            }}
-            placeholder="Mot de passe..."
+        <input
+          type="password"
+          value={pwInput}
+          onChange={(e) => setPwInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") login();
+          }}
+          placeholder="Mot de passe..."
             style={{
               width: "100%",
               padding: "14px 16px",
@@ -139,13 +121,8 @@ export default function AdminMembresPage() {
               Mot de passe incorrect
             </p>
           )}
-          <button
-            onClick={() => {
-              if (pwInput === ADMIN_PASSWORD) {
-                sessionStorage.setItem("guilde_admin_auth", "true");
-                setAuthed(true);
-              } else setPwError(true);
-            }}
+        <button
+          onClick={() => login()}
             style={{
               width: "100%",
               padding: "14px",
@@ -209,6 +186,7 @@ export default function AdminMembresPage() {
       // Utiliser la route API avec service role key
       const res = await fetch("/api/upload-storage", {
         method: "POST",
+        headers: getAdminFormDataHeaders(),
         body: formData,
       });
 

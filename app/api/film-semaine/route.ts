@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { supabase } from "../../../lib/supabase";
+import { isAdmin } from "../../../lib/auth";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 function getAdminClient() {
   return createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 }
+
+const ALLOWED_INSERT_FIELDS = ["title", "tmdb_id", "week_label", "week_date", "poster_path", "backdrop_path", "synopsis", "trailer_key", "vote_average", "genres", "year", "runtime", "director"] as const;
+const ALLOWED_UPDATE_FIELDS = ["watched", "chosen", "week_label", "week_date"] as const;
 
 export async function GET() {
   try {
@@ -16,51 +20,46 @@ export async function GET() {
       .select("*")
       .order("week_date", { ascending: false });
 
-    if (error) {
-      if (error.message.includes("does not exist") || error.code === "42P01") {
-        return NextResponse.json({ error: "La table film_semaine n'existe pas encore. Exécute le script SQL dans Supabase.", needsSetup: true }, { status: 500 });
-      }
-      return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    if (error.message.includes("does not exist") || error.code === "42P01") {
+      return NextResponse.json({ error: "La table film_semaine n'existe pas encore. Exécute le script SQL dans Supabase.", needsSetup: true }, { status: 500 });
     }
-    return NextResponse.json({ films: data ?? [] });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message ?? "Erreur serveur" }, { status: 500 });
+    return NextResponse.json({ error: "Erreur de base de données" }, { status: 500 });
   }
+  return NextResponse.json({ films: data ?? [] });
+} catch {
+  return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+}
 }
 
 export async function POST(req: NextRequest) {
+  const authErr = isAdmin(req) ? null : NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (authErr) return authErr;
+
   try {
     const sb = getAdminClient();
     const body = await req.json();
+    const insertData: Record<string, unknown> = { watched: false };
+    for (const key of ALLOWED_INSERT_FIELDS) {
+      if (body[key] !== undefined) insertData[key] = body[key];
+    }
     const { data, error } = await sb
       .from("film_semaine")
-      .insert({
-        title: body.title,
-        tmdb_id: body.tmdb_id,
-        week_label: body.week_label,
-        week_date: body.week_date,
-        poster_path: body.poster_path,
-        backdrop_path: body.backdrop_path,
-        synopsis: body.synopsis,
-        trailer_key: body.trailer_key,
-        vote_average: body.vote_average,
-        genres: body.genres,
-        year: body.year,
-        runtime: body.runtime,
-        director: body.director,
-        watched: false,
-      })
+      .insert(insertData)
       .select()
       .single();
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return NextResponse.json({ error: "Erreur lors de la création" }, { status: 500 });
     return NextResponse.json({ film: data });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message ?? "Erreur serveur" }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
 
 export async function PATCH(req: NextRequest) {
+  const authErr = isAdmin(req) ? null : NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (authErr) return authErr;
+
   try {
     const sb = getAdminClient();
     const body = await req.json();
@@ -84,10 +83,9 @@ export async function PATCH(req: NextRequest) {
     }
 
     const updates: Record<string, any> = {};
-    if (body.watched !== undefined) updates.watched = body.watched;
-    if (body.chosen !== undefined) updates.chosen = body.chosen;
-    if (body.week_label !== undefined) updates.week_label = body.week_label;
-    if (body.week_date !== undefined) updates.week_date = body.week_date;
+    for (const key of ALLOWED_UPDATE_FIELDS) {
+      if (body[key] !== undefined) updates[key] = body[key];
+    }
 
     const { data, error } = await sb
       .from("film_semaine")
@@ -96,10 +94,10 @@ export async function PATCH(req: NextRequest) {
       .select()
       .single();
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return NextResponse.json({ error: "Erreur lors de la mise à jour" }, { status: 500 });
     return NextResponse.json({ film: data });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message ?? "Erreur serveur" }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
 

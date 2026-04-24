@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "../../../lib/supabase";
+import { isAdmin } from "../../../lib/auth";
 
 export async function POST(req: NextRequest) {
+  if (!isAdmin(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { resolveAndCacheMediaAssets } = await import("../../../lib/cover-automation");
     const body = await req.json().catch(() => ({}));
@@ -23,9 +28,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Œuvre introuvable" }, { status: 404 });
     }
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
+  if (error) {
+    return NextResponse.json({ error: "Erreur de base de données" }, { status: 500 });
+  }
 
     let updated = 0;
 
@@ -54,8 +59,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ ok: true, updated, targetId });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Erreur inconnue";
-    return NextResponse.json({ error: message }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

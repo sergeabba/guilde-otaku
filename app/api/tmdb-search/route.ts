@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const TMDB_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
+const TMDB_KEY = process.env.TMDB_API_KEY;
 
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q");
@@ -40,18 +40,20 @@ export async function GET(req: NextRequest) {
   }
 
   const res = await fetch(
-    `https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(q)}&api_key=${TMDB_KEY}&language=fr-FR`
+    `https://api.themoviedb.org/3/search/multi?query=${encodeURIComponent(q)}&api_key=${TMDB_KEY}&language=fr-FR`
   );
   const data = await res.json();
 
   const results = (data.results ?? []).slice(0, 10).map((m: any) => ({
     id: m.id,
-    title: m.title,
+    title: m.title || m.name,
     overview: m.overview,
     poster_path: m.poster_path,
     backdrop_path: m.backdrop_path,
-    release_date: m.release_date,
+    release_date: m.release_date || m.first_air_date,
     vote_average: m.vote_average,
+    media_type: m.media_type,
+    original_title: m.original_title || m.original_name,
   }));
 
   return NextResponse.json({ results });

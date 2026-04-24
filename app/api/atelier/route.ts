@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { ADMIN_PASSWORD } from "../../../lib/constants";
+import { isAdmin, sanitizeFilename, validateImageFile } from "../../../lib/auth";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -12,10 +12,7 @@ export const config = {
 
 const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
 
-function isAdmin(req: NextRequest): boolean {
-  const auth = req.headers.get("authorization");
-  return auth === `Bearer ${ADMIN_PASSWORD}`;
-}
+const ALLOWED_PATCH_FIELDS = ["title", "description", "prompt", "category", "universe", "accent", "size"] as const;
 
 function getAdminClient() {
   return createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
@@ -25,7 +22,7 @@ function getAdminClient() {
 
 export async function GET() {
   if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
-    return NextResponse.json({ images: [], db_status: "error", db_error: "Supabase env vars missing" });
+    return NextResponse.json({ images: [], db_status: "error", db_error: "Configuration manquante" });
   }
 
   const adminClient = getAdminClient();
@@ -88,18 +85,21 @@ export async function GET() {
     });
 
     return NextResponse.json({ images, db_status: "connected", db_error: null });
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Unknown error";
+  } catch {
     return NextResponse.json(
-      { images: [], db_status: "error", db_error: msg },
+      { images: [], db_status: "error", db_error: "Erreur serveur" },
       { status: 500 }
     );
   }
 }
 
 export async function POST(req: NextRequest) {
+  if (!isAdmin(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
-    return NextResponse.json({ error: "Supabase env vars missing" }, { status: 500 });
+    return NextResponse.json({ error: "Configuration manquante" }, { status: 500 });
   }
 
   try {
@@ -117,8 +117,14 @@ export async function POST(req: NextRequest) {
     const results: { filename: string; url: string; success: boolean; error?: string }[] = [];
 
     for (const file of files) {
+      const validation = await validateImageFile(file);
+      if (!validation.valid) {
+        results.push({ filename: file.name, url: "", success: false, error: validation.error });
+        continue;
+      }
+
       const buffer = Buffer.from(await file.arrayBuffer());
-      const finalName = file.name;
+      const finalName = sanitizeFilename(file.name);
 
       const { error: uploadError } = await adminClient.storage
         .from(BUCKET)
@@ -128,7 +134,7 @@ export async function POST(req: NextRequest) {
         });
 
       if (uploadError) {
-        results.push({ filename: finalName, url: "", success: false, error: uploadError.message });
+        results.push({ filename: finalName, url: "", success: false, error: "Erreur d'upload" });
         continue;
       }
 
@@ -158,9 +164,8 @@ export async function POST(req: NextRequest) {
       results,
       summary: `${successCount} uploadé(s)${failCount > 0 ? `, ${failCount} échoué(s)` : ""}`,
     });
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Erreur inconnue";
-    return NextResponse.json({ error: msg }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
 
@@ -175,21 +180,25 @@ export async function PATCH(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { filename, ...data } = body;
+    const { filename } = body;
     if (!filename) {
       return NextResponse.json({ error: "Filename manquant" }, { status: 400 });
+    }
+
+    const updates: Record<string, unknown> = { filename };
+    for (const key of ALLOWED_PATCH_FIELDS) {
+      if (body[key] !== undefined) updates[key] = body[key];
     }
 
     const adminClient = getAdminClient();
     const { error } = await adminClient
       .from("atelier")
-      .upsert({ filename, ...data }, { onConflict: "filename" });
+      .upsert(updates, { onConflict: "filename" });
     if (error) throw error;
 
     return NextResponse.json({ success: true });
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Erreur inconnue";
-    return NextResponse.json({ error: msg }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
 
@@ -217,8 +226,7 @@ export async function DELETE(req: NextRequest) {
     await adminClient.from("atelier").delete().eq("filename", filename);
 
     return NextResponse.json({ success: true });
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Erreur inconnue";
-    return NextResponse.json({ error: msg }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

@@ -30,7 +30,7 @@ export default function SplashWrapper({ children, hasSeenSplash = false }: { chi
   const handleFinish = useCallback(() => {
     try { 
       // Sauvegarde du cookie pour l'accès serveur (expire dans 24h)
-      document.cookie = "guilde-splash-seen=1; path=/; max-age=86400";
+      document.cookie = "guilde-splash-seen=1; path=/; max-age=86400; SameSite=Lax";
     } catch {}
     setShowSplash(false);
   }, []);

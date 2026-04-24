@@ -8,7 +8,8 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const title = searchParams.get("title") || "Guilde Otaku";
     const subtitle = searchParams.get("subtitle") || "Le trombinoscope légendaire et bien plus encore.";
-    const imageUrl = searchParams.get("image"); // Optionnel : une image d'arrière-plan
+    const rawImageUrl = searchParams.get("image");
+    const imageUrl = rawImageUrl && rawImageUrl.startsWith("https://image.tmdb.org/") ? rawImageUrl : null;
 
     return new ImageResponse(
       (

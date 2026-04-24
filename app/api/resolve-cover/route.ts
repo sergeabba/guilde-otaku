@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isAdmin } from "../../../lib/auth";
 
 export async function POST(req: NextRequest) {
+  if (!isAdmin(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { resolveAndCacheMediaAssets } = await import("../../../lib/cover-automation");
     const body = await req.json();
@@ -23,8 +28,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ ok: true, ...result });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Erreur inconnue";
-    return NextResponse.json({ error: message }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useIsMobile } from "../hooks/useIsMobile";
-import { ADMIN_PASSWORD } from "../../lib/constants";
+import { useAdminAuth } from "../hooks/useAdminAuth";
+import { getAdminHeaders, getAdminFormDataHeaders } from "../../lib/admin-fetch";
 import {
   Search, Plus, Trash2, Eye, EyeOff, Film, Loader2, Lock,
   Calendar, X, Check, Star, Clock, Trophy,
@@ -82,8 +83,7 @@ function formatWeekLabel(dateStr: string): string {
 }
 
 export default function AdminFilmSemainePage() {
-  const [auth, setAuth] = useState(false);
-  const [pw, setPw] = useState("");
+  const { authed: auth, password: pw, setPassword: setPw, login } = useAdminAuth();
   const [films, setFilms] = useState<FilmEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQ, setSearchQ] = useState("");
@@ -156,7 +156,7 @@ export default function AdminFilmSemainePage() {
     try {
       const r = await fetch("/api/film-semaine", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAdminHeaders(),
         body: JSON.stringify({
           title: selectedMovie.title,
           tmdb_id: selectedMovie.id,
@@ -192,7 +192,7 @@ export default function AdminFilmSemainePage() {
   const deleteFilm = async (id: number) => {
     if (!confirm("Supprimer ce film ?")) return;
     try {
-      await fetch(`/api/film-semaine?id=${id}`, { method: "DELETE" });
+      await fetch(`/api/film-semaine?id=${id}`, { method: "DELETE", headers: getAdminHeaders() });
       loadFilms();
     } catch {
     }
@@ -202,7 +202,7 @@ export default function AdminFilmSemainePage() {
     try {
       await fetch(`/api/film-semaine?id=${film.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: getAdminHeaders(),
         body: JSON.stringify({ watched: !film.watched }),
       });
       loadFilms();
@@ -225,7 +225,7 @@ export default function AdminFilmSemainePage() {
     try {
       await fetch(`/api/film-semaine?id=${film.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: getAdminHeaders(),
         body: JSON.stringify({ chosen: !film.chosen }),
       });
       loadFilms();
@@ -275,8 +275,8 @@ export default function AdminFilmSemainePage() {
             placeholder="Mot de passe"
             value={pw}
             onChange={(e) => setPw(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && pw === ADMIN_PASSWORD) setAuth(true);
+              onKeyDown={(e) => {
+              if (e.key === "Enter") login();
             }}
             style={{
               width: "100%",
@@ -292,11 +292,9 @@ export default function AdminFilmSemainePage() {
               boxSizing: "border-box",
             }}
           />
-          <button
-            onClick={() => {
-              if (pw === ADMIN_PASSWORD) setAuth(true);
-            }}
-            style={{
+        <button
+          onClick={() => login()}
+          style={{
               width: "100%",
               padding: "12px",
               background: accent,

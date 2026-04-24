@@ -6,13 +6,11 @@ import { supabase } from "../../lib/supabase";
 import GuildeHeader from "../components/GuildeHeader";
 import { colors, typography, font } from "../../outputs/styles/tokens";
 import { Trash, Pencil, Plus, X, Globe } from "lucide-react";
-import { ADMIN_PASSWORD } from "../../lib/constants";
+import { useAdminAuth } from "../hooks/useAdminAuth";
 import type { SupabaseBonPlanRow } from "../types";
 
 export default function AdminBonsPlansPage() {
-  const [auth, setAuth] = useState(false);
-  const [password, setPassword] = useState("");
-  const [checking, setChecking] = useState(true);
+  const { authed: auth, checking, password, setPassword, login: checkAuth } = useAdminAuth();
   const [links, setLinks] = useState<SupabaseBonPlanRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -27,24 +25,6 @@ export default function AdminBonsPlansPage() {
   const [formLogo, setFormLogo] = useState("");
 
   const categories = ["Animes", "Scans", "Films/Séries", "Utiles"];
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const isAuth = sessionStorage.getItem("guilde_admin_auth") === "true";
-      if (isAuth) setAuth(true);
-      setChecking(false);
-    }
-  }, []);
-
-  const checkAuth = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (password === ADMIN_PASSWORD) {
-      sessionStorage.setItem("guilde_admin_auth", "true");
-      setAuth(true);
-    } else {
-      alert("Mot de passe incorrect");
-    }
-  };
 
   useEffect(() => {
     if (auth) fetchLinks();

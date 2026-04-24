@@ -8,7 +8,8 @@ import {
   Loader2, Image as ImageIcon, FileText, Youtube, MessageSquare, Lock, Trash2, List
 } from "lucide-react";
 import { useIsMobile } from "../hooks/useIsMobile";
-import { ADMIN_PASSWORD } from "../../lib/constants";
+import { useAdminAuth } from "../hooks/useAdminAuth";
+import { getAdminHeaders } from "../../lib/admin-fetch";
 
 // ─── TOKENS (inline pour éviter l'import fragile depuis outputs/styles) ──────────
 const font = "'Barlow Condensed', sans-serif";
@@ -97,10 +98,7 @@ function stripHtml(html: string): string {
 // ─── FONCTIONS DE RECHERCHE HYBRIDES (Français + HD) ─────────────────────────
 
 async function searchTMDB(query: string): Promise<AniListResult[]> {
-  const apiKey = process.env.NEXT_PUBLIC_TMDB_API_KEY;
-  if (!apiKey) throw new Error("API Key TMDB manquante (.env.local)");
-  
-  const res = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&language=fr-FR&query=${encodeURIComponent(query)}`);
+  const res = await fetch(`/api/tmdb-search?q=${encodeURIComponent(query)}`);
   const json = await res.json();
   if (!json.results) return [];
 
@@ -243,21 +241,10 @@ function ResultCard({ anime, isSelected, onSelect }: { anime: AniListResult; isS
 // ─── PAGE ────────────────────────────────────────────────────────────────────
 export default function AdminBiblio() {
   const isMobile = useIsMobile();
-  const [authed,      setAuthed]      = useState(false);
-  const [checking,    setChecking]    = useState(true);
-  const [pwInput,     setPwInput]     = useState("");
-  const [pwError,     setPwError]     = useState(false);
+  const { authed, checking, password: pwInput, setPassword: setPwInput, error: pwError, login } = useAdminAuth();
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const isAuth = sessionStorage.getItem("guilde_admin_auth") === "true";
-      if (isAuth) setAuthed(true);
-      setChecking(false);
-    }
-  }, []);
-
-  const [currentView,   setCurrentView] = useState<"ADD" | "MANAGE">("ADD");
-  const [libraryItems,  setLibraryItems] = useState<any[]>([]);
+  const [currentView, setCurrentView] = useState<"ADD" | "MANAGE">("ADD");
+  const [libraryItems, setLibraryItems] = useState<any[]>([]);
 
   const fetchLibrary = async () => {
     const { data } = await supabase.from("bibliotheque").select("*").order("created_at", { ascending: false });
@@ -288,7 +275,7 @@ export default function AdminBiblio() {
     try {
       const res = await fetch("/api/bibliotheque-sync-covers", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAdminHeaders(),
         body: JSON.stringify({ force: false }),
       });
       const data = await res.json();
@@ -313,7 +300,7 @@ export default function AdminBiblio() {
     try {
       const res = await fetch("/api/bibliotheque-sync-covers", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAdminHeaders(),
         body: JSON.stringify({ id, force: true }),
       });
       const data = await res.json();
@@ -338,7 +325,7 @@ export default function AdminBiblio() {
     try {
       const res = await fetch("/api/bibliotheque-sync-dossier-bash", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAdminHeaders(),
         body: JSON.stringify({ force: false }),
       });
       const data = await res.json();
@@ -388,19 +375,19 @@ export default function AdminBiblio() {
           </div>
           <p style={{ ...typography.overline, marginBottom: "8px" }}>ESPACE ADMIN</p>
           <h1 style={{ fontSize: "32px", fontWeight: 900, color: colors.textPrimary, textTransform: "uppercase", fontStyle: "italic", lineHeight: 1, marginBottom: "32px" }}>ACCÈS RESTREINT</h1>
-          <input
-            type="password"
-            value={pwInput}
-            onChange={e => { setPwInput(e.target.value); setPwError(false); }}
-            onKeyDown={e => { if (e.key === "Enter") { if (pwInput === ADMIN_PASSWORD) { sessionStorage.setItem("guilde_admin_auth", "true"); setAuthed(true); } else setPwError(true); } }}
-            placeholder="Mot de passe..."
-            style={{ width: "100%", padding: "14px 16px", background: colors.bgCard, border: `1px solid ${pwError ? colors.danger : colors.border}`, borderRadius: "10px", color: colors.textPrimary, fontFamily: font, fontSize: "18px", textAlign: "center", letterSpacing: "0.3em", outline: "none", marginBottom: "12px", boxSizing: "border-box" }}
-          />
-          {pwError && <p style={{ color: colors.danger, fontSize: "13px", fontWeight: 700, marginBottom: "12px" }}>Mot de passe incorrect</p>}
-          <button
-            onClick={() => { if (pwInput === ADMIN_PASSWORD) { sessionStorage.setItem("guilde_admin_auth", "true"); setAuthed(true); } else setPwError(true); }}
-            style={{ ...components.btnPrimary, width: "100%", padding: "14px", justifyContent: "center", fontSize: "16px" }}
-          >
+        <input
+        type="password"
+        value={pwInput}
+        onChange={e => setPwInput(e.target.value)}
+        onKeyDown={e => { if (e.key === "Enter") login(); }}
+        placeholder="Mot de passe..."
+        style={{ width: "100%", padding: "14px 16px", background: colors.bgCard, border: `1px solid ${pwError ? colors.danger : colors.border}`, borderRadius: "10px", color: colors.textPrimary, fontFamily: font, fontSize: "18px", textAlign: "center", letterSpacing: "0.3em", outline: "none", marginBottom: "12px", boxSizing: "border-box" }}
+        />
+        {pwError && <p style={{ color: colors.danger, fontSize: "13px", fontWeight: 700, marginBottom: "12px" }}>Mot de passe incorrect</p>}
+        <button
+        onClick={() => login()}
+        style={{ ...components.btnPrimary, width: "100%", padding: "14px", justifyContent: "center", fontSize: "16px" }}
+        >
             ENTRER
           </button>
         </div>
@@ -447,7 +434,7 @@ export default function AdminBiblio() {
 
       const resolveResponse = await fetch("/api/resolve-cover", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAdminHeaders(),
         body: JSON.stringify({
           title,
           anilistId: selected.id,

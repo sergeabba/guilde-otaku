@@ -2,6 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "edge";
 
+const BLOCKED_HOSTNAMES = ["localhost", "127.0.0.1", "0.0.0.0", "::1", "169.254.169.254"];
+
+function isPrivateHostname(hostname: string): boolean {
+  if (BLOCKED_HOSTNAMES.includes(hostname)) return true;
+  const parts = hostname.split(".").map(Number);
+  if (parts.length === 4 && parts.every((p) => !isNaN(p))) {
+    if (parts[0] === 10) return true;
+    if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return true;
+    if (parts[0] === 192 && parts[1] === 168) return true;
+    if (parts[0] === 0) return true;
+    if (parts[0] === 100 && parts[1] >= 64 && parts[1] <= 127) return true;
+  }
+  return false;
+}
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -11,8 +26,22 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Missing url parameter" }, { status: 400 });
     }
 
-    // Sécurité: valider l'URL
-    const urlToFetch = new URL(urlParam).toString();
+    let parsedUrl: URL;
+    try {
+      parsedUrl = new URL(urlParam);
+    } catch {
+      return NextResponse.json({ error: "URL invalide" }, { status: 400 });
+    }
+
+    if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+      return NextResponse.json({ error: "Protocole non autorisé" }, { status: 400 });
+    }
+
+    if (isPrivateHostname(parsedUrl.hostname)) {
+      return NextResponse.json({ error: "URL non autorisée" }, { status: 400 });
+    }
+
+    const urlToFetch = parsedUrl.toString();
 
     // Fetcher le HTML du site distant
     const response = await fetch(urlToFetch, {

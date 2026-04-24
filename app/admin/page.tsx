@@ -6,32 +6,10 @@ import { motion } from "framer-motion";
 import { Lock, BookOpen, User, Flame, ArrowRight, ShieldAlert, Palette, Film, Globe } from "lucide-react";
 import { colors, typography, font } from "../../outputs/styles/tokens";
 import GuildeHeader from "../components/GuildeHeader";
-import { ADMIN_PASSWORD } from "../../lib/constants";
+import { useAdminAuth } from "../hooks/useAdminAuth";
 
 export default function AdminHubPage() {
-  const [password, setPassword] = useState("");
-  const [auth, setAuth] = useState(false);
-  const [errorLine, setErrorLine] = useState(false);
-  const [checking, setChecking] = useState(true);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const isAuth = sessionStorage.getItem("guilde_admin_auth") === "true";
-      if (isAuth) setAuth(true);
-      setChecking(false);
-    }
-  }, []);
-
-  const checkAuth = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (password === ADMIN_PASSWORD) {
-      sessionStorage.setItem("guilde_admin_auth", "true");
-      setAuth(true);
-    } else {
-      setErrorLine(true);
-      setTimeout(() => setErrorLine(false), 2000);
-    }
-  };
+  const { authed: auth, checking, password, setPassword, error: errorLine, login: checkAuth } = useAdminAuth();
 
   if (checking) return null; // Attendre la vérification du token
 

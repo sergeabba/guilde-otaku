@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "../../../lib/supabase";
 import { members } from "../../../data/members";
-import { ADMIN_PASSWORD } from "../../../lib/constants";
+import { isAdmin } from "../../../lib/auth";
 
 export async function POST(req: NextRequest) {
+  if (!isAdmin(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
-    const auth = req.headers.get("authorization");
-    if (auth !== `Bearer ${ADMIN_PASSWORD}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
     // Check existing entries to avoid duplicates
     const { count } = await supabase
@@ -46,6 +46,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, count: data.length, message: "Migration Supabase Fighters terminée avec succès !" });
   } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Erreur serveur" }, { status: 500 });
   }
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { titleSimilarity } from "../../../lib/cover-fetch";
+import { isAdmin } from "../../../lib/auth";
 
 const QUERY = `
   query ($search: String) {
@@ -47,6 +48,10 @@ function autoTier(score: number | null): string {
 }
 
 export async function POST(req: NextRequest) {
+  if (!isAdmin(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { titles } = await req.json() as { titles: string[] };
   
   if (!titles?.length) return NextResponse.json({ results: [] });

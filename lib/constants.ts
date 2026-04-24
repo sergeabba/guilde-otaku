@@ -1,1 +1,1 @@
-export const ADMIN_PASSWORD = "1111";
+export const IS_ADMIN_CLIENT = typeof window !== "undefined" ? true : false;

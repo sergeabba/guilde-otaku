@@ -5,6 +5,7 @@ import { supabase } from "../../../lib/supabase";
 import { findDossierBashEntry } from "../../../lib/dossier-bash";
 import { Search, Check, X, Loader2, AlertCircle, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { getAdminHeaders } from "../../../lib/admin-fetch";
 
 type Tier = "Chef-d'œuvre" | "Pépite" | "Bof" | "Surcoté" | "A définir";
 
@@ -46,7 +47,7 @@ export default function BulkImportPage() {
 
     const res = await fetch("/api/anilist-bulk", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getAdminHeaders(),
       body: JSON.stringify({ titles }),
     });
     const data = await res.json();
@@ -75,7 +76,7 @@ export default function BulkImportPage() {
       try {
         const resolveResponse = await fetch("/api/resolve-cover", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: getAdminHeaders(),
           body: JSON.stringify({
             title: item.media.title,
             anilistId: item.media.id,

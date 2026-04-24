@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "../../../lib/supabase";
 import { DOSSIER_BASH_DATA, findDossierBashEntry } from "../../../lib/dossier-bash";
+import { isAdmin } from "../../../lib/auth";
 
 export async function POST(req: NextRequest) {
+  if (!isAdmin(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const body = await req.json().catch(() => ({}));
     const force = body?.force === true;
@@ -12,9 +17,9 @@ export async function POST(req: NextRequest) {
       .select("id,title,dossier_bash,dossier_bash_tag,dossier_bash_date,dossier_bash_color")
       .order("created_at", { ascending: false });
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
+  if (error) {
+    return NextResponse.json({ error: "Erreur de base de données" }, { status: 500 });
+  }
 
     let updated = 0;
 
@@ -51,8 +56,7 @@ export async function POST(req: NextRequest) {
       updated,
       matched: DOSSIER_BASH_DATA.length,
     });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Erreur inconnue";
-    return NextResponse.json({ error: message }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

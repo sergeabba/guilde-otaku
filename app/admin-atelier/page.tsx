@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { 
-  Upload, X, Trash2, Loader2, Image as ImageIcon, 
+import {
+  Upload, X, Trash2, Loader2, Image as ImageIcon,
   Lock, Check, ArrowLeft, Plus, Pencil, Palette
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { ADMIN_PASSWORD } from "../../lib/constants";
+import { useAdminAuth } from "../hooks/useAdminAuth";
+import { getAdminHeaders, getAdminFormDataHeaders } from "../../lib/admin-fetch";
 import type { AtelierItem, SupabaseAtelierRow } from "../types";
 
 // --- STYLES (Matching admin-biblio) ---
@@ -27,10 +28,7 @@ const colors = {
 };
 
 export default function AdminAtelier() {
-  const [authed, setAuthed] = useState(false);
-  const [checking, setChecking] = useState(true);
-  const [pwInput, setPwInput] = useState("");
-  const [pwError, setPwError] = useState(false);
+  const { authed, checking, password: pwInput, setPassword: setPwInput, error: pwError, login } = useAdminAuth();
 
   const [images, setImages] = useState<SupabaseAtelierRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,14 +41,6 @@ export default function AdminAtelier() {
   // État d'édition
   const [editingItem, setEditingItem] = useState<any>(null);
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const isAuth = sessionStorage.getItem("guilde_admin_auth") === "true";
-      if (isAuth) setAuthed(true);
-      setChecking(false);
-    }
-  }, []);
 
   const fetchImages = async () => {
     setLoading(true);
@@ -114,6 +104,7 @@ export default function AdminAtelier() {
       try {
         const res = await fetch("/api/atelier", {
           method: "POST",
+          headers: getAdminFormDataHeaders(),
           body: formData,
         });
         if (!res.ok) {
@@ -148,6 +139,7 @@ export default function AdminAtelier() {
     try {
       const res = await fetch("/api/atelier", {
         method: "DELETE",
+        headers: getAdminHeaders(),
         body: JSON.stringify({ filename }),
       });
       if (res.ok) fetchImages();
@@ -163,7 +155,7 @@ export default function AdminAtelier() {
       const { id, url, has_db_record, ...dataToSave } = editingItem;
       const res = await fetch("/api/atelier", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: getAdminHeaders(),
         body: JSON.stringify(dataToSave),
       });
       if (res.ok) {
@@ -188,16 +180,16 @@ export default function AdminAtelier() {
             <Lock size={24} color={colors.gold} />
           </div>
           <h1 style={{ fontSize: "32px", fontWeight: 900, color: colors.textPrimary, textTransform: "uppercase", fontStyle: "italic", lineHeight: 1, marginBottom: "32px" }}>ACCÈS ATELIER</h1>
-          <input
-            type="password"
-            value={pwInput}
-            onChange={e => { setPwInput(e.target.value); setPwError(false); }}
-            onKeyDown={e => { if (e.key === "Enter") { if (pwInput === ADMIN_PASSWORD) { sessionStorage.setItem("guilde_admin_auth", "true"); setAuthed(true); } else setPwError(true); } }}
-            placeholder="Mot de passe..."
-            style={{ width: "100%", padding: "14px 16px", background: colors.bgCard, border: `1px solid ${pwError ? colors.danger : colors.border}`, borderRadius: "10px", color: colors.textPrimary, fontFamily: font, fontSize: "18px", textAlign: "center", outline: "none", marginBottom: "12px", boxSizing: "border-box" }}
-          />
-          {pwError && <p style={{ color: colors.danger, fontSize: "13px", fontWeight: 700, marginBottom: "12px" }}>Incorrect</p>}
-          <button onClick={() => { if (pwInput === ADMIN_PASSWORD) { sessionStorage.setItem("guilde_admin_auth", "true"); setAuthed(true); } else setPwError(true); }}
+        <input
+        type="password"
+        value={pwInput}
+        onChange={e => setPwInput(e.target.value)}
+        onKeyDown={e => { if (e.key === "Enter") login(); }}
+        placeholder="Mot de passe..."
+        style={{ width: "100%", padding: "14px 16px", background: colors.bgCard, border: `1px solid ${pwError ? colors.danger : colors.border}`, borderRadius: "10px", color: colors.textPrimary, fontFamily: font, fontSize: "18px", textAlign: "center", outline: "none", marginBottom: "12px", boxSizing: "border-box" }}
+        />
+        {pwError && <p style={{ color: colors.danger, fontSize: "13px", fontWeight: 700, marginBottom: "12px" }}>Incorrect</p>}
+        <button onClick={() => login()}
             style={{ width: "100%", padding: "14px", background: colors.gold, border: "none", borderRadius: "10px", color: "#000", fontFamily: font, fontWeight: 900, cursor: "pointer" }}>
             ENTRER
           </button>
