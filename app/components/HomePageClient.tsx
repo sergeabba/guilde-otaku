@@ -103,16 +103,21 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
         />
 
         {/* ── BARRE DE FILTRES ── */}
-        <div style={{
-          display: "flex",
-          gap: isMobile ? "10px" : "15px",
-          padding: isMobile ? "15px 20px" : "20px 40px",
-          overflowX: "auto",
-          WebkitOverflowScrolling: "touch",
-          background: isDark ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.4)",
-          backdropFilter: "blur(10px)",
-          borderBottom: `1px solid ${isDark ? "transparent" : "rgba(0,0,0,0.03)"}`,
-        }}>
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          style={{
+            display: "flex",
+            gap: isMobile ? "10px" : "15px",
+            padding: isMobile ? "15px 20px" : "20px 40px",
+            overflowX: "auto",
+            WebkitOverflowScrolling: "touch",
+            background: isDark ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.4)",
+            backdropFilter: "blur(10px)",
+            borderBottom: `1px solid ${isDark ? "transparent" : "rgba(0,0,0,0.03)"}`,
+          }}
+        >
           {["Tous", ...Object.keys(rankLogos)].map((rank) => (
             <button
               key={rank}
@@ -144,30 +149,51 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
               </span>
             </button>
           ))}
-        </div>
+        </motion.div>
 
         {/* ── MAIN ── */}
         <main style={{ maxWidth: "1400px", margin: "0 auto", padding: isMobile ? "30px 15px" : "60px 40px" }}>
           
-          <div style={{
-            display: "flex",
-            flexDirection: isMobile ? "column" : "row",
-            justifyContent: "space-between",
-            alignItems: isMobile ? "flex-start" : "flex-end",
-            marginBottom: isMobile ? "30px" : "40px",
-            gap: "20px",
-          }}>
-            <motion.div layout style={{ position: "relative" }}>
-              <p style={{ color: accent, letterSpacing: "0.4em", fontWeight: 900, fontSize: "14px", textShadow: isDark ? "none" : "0 2px 10px rgba(255,255,255,0.8)" }}>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+            style={{
+              display: "flex",
+              flexDirection: isMobile ? "column" : "row",
+              justifyContent: "space-between",
+              alignItems: isMobile ? "flex-start" : "flex-end",
+              marginBottom: isMobile ? "30px" : "40px",
+              gap: "20px",
+            }}
+          >
+            <motion.div
+              layout
+              initial={{ opacity: 0, y: 24, filter: "blur(10px)" }}
+              animate={{ opacity: 1, y: 0,  filter: "blur(0px)"  }}
+              transition={{ duration: 0.9, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              style={{ position: "relative" }}
+            >
+              <motion.p
+                initial={{ opacity: 0, letterSpacing: "0.1em" }}
+                animate={{ opacity: 1, letterSpacing: "0.4em" }}
+                transition={{ duration: 1.1, delay: 0.35, ease: "easeOut" }}
+                style={{ color: accent, fontWeight: 900, fontSize: "14px", textShadow: isDark ? "none" : "0 2px 10px rgba(255,255,255,0.8)" }}
+              >
                 2025 / 26 MODE {viewMode.toUpperCase()}
-              </p>
+              </motion.p>
               <h2 style={{ fontSize: isMobile ? "50px" : "100px", fontWeight: 900, lineHeight: 0.8, fontStyle: "italic", marginTop: "10px" }}>
                 MEMBRES<br /><span style={{ color: accent }}>DE LA GUILDE</span>
               </h2>
             </motion.div>
 
             {/* ── SEARCH ── */}
-            <div style={{ position: "relative", width: isMobile ? "100%" : "auto" }}>
+            <motion.div
+              initial={{ opacity: 0, y: 16, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0,  scale: 1    }}
+              transition={{ duration: 0.7, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              style={{ position: "relative", width: isMobile ? "100%" : "auto" }}
+            >
               <Search
                 style={{ position: "absolute", left: "15px", top: "50%", transform: "translateY(-50%)", color: accent }}
                 size={20}
@@ -191,8 +217,8 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
                   fontSize: "15px",
                 }}
               />
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
           {/* ── BANNIÈRES EXTRAITES ── */}
           <ChroniqueBanner isMobile={isMobile} isDark={isDark} theme={theme} />

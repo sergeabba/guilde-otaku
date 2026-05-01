@@ -9,7 +9,10 @@
       "Bash(python3:*)",
       "Bash(npx next:*)",
       "Bash(npx tsc:*)",
-      "Bash(python .claude/skills/ui-ux-pro-max/scripts/search.py --help)"
+      "Bash(python .claude/skills/ui-ux-pro-max/scripts/search.py --help)",
+      "Read(//c/Users/hp/.claude/plugins/**)",
+      "Read(//c/Users/hp/.claude/**)",
+      "Bash(npx eslint *)"
     ]
   }
 }

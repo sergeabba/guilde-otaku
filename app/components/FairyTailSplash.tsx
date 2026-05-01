@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 /*
@@ -10,32 +10,81 @@ import { motion, AnimatePresence } from "framer-motion";
   - Solution: start the progress IMMEDIATELY via a timer, video sync is a bonus
 */
 
-type Phase = "black" | "opening" | "playing" | "outro";
+type Phase = "black" | "opening" | "playing" | "ignition" | "outro";
 
 export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) {
   const [phase,    setPhase]    = useState<Phase>("black");
   const [progress, setProgress] = useState(0);
+  const [needsTap, setNeedsTap] = useState(false);
+  const [soundOn,  setSoundOn]  = useState(false);
   const videoRef   = useRef<HTMLVideoElement>(null);
   const timerRef   = useRef<ReturnType<typeof setInterval> | null>(null);
   const doneRef    = useRef(false);
 
+  /* ── AUDIO : tente de jouer avec le son dès que possible ────────────────── */
+  const tryPlayWithSound = useCallback(async () => {
+    const video = videoRef.current;
+    if (!video) return;
+    try {
+      video.muted = false;
+      video.volume = 0.75;
+      await video.play();
+      setSoundOn(true);
+      setNeedsTap(false);
+    } catch {
+      try {
+        video.muted = true;
+        await video.play();
+      } catch {}
+      setNeedsTap(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    // 1) Autoplay garanti en muted
+    video.muted = true;
+    video.play().catch(() => {});
+
+    // 2) Essai d'unmute immédiat (marche sur la plupart des desktops)
+    const t = setTimeout(() => { tryPlayWithSound(); }, 80);
+
+    // 3) Fallback : 1ʳᵉ interaction utilisateur → active le son
+    const onFirstInteract = () => {
+      if (!video.muted) return;
+      video.muted = false;
+      video.volume = 0.75;
+      video.play().then(() => {
+        setSoundOn(true);
+        setNeedsTap(false);
+      }).catch(() => {});
+    };
+    window.addEventListener("pointerdown", onFirstInteract, { once: true });
+    window.addEventListener("touchstart",  onFirstInteract, { once: true });
+    window.addEventListener("keydown",     onFirstInteract, { once: true });
+
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener("pointerdown", onFirstInteract);
+      window.removeEventListener("touchstart",  onFirstInteract);
+      window.removeEventListener("keydown",     onFirstInteract);
+    };
+  }, [tryPlayWithSound]);
+
   /* ── 1. Phase timeline ──────────────────────────────────────────────────── */
   useEffect(() => {
     if (phase !== "black") return;
-    const t1 = setTimeout(() => setPhase("opening"), 200);
-    const t2 = setTimeout(() => setPhase("playing"), 1200);
+    const t1 = setTimeout(() => setPhase("opening"), 180);
+    const t2 = setTimeout(() => setPhase("playing"), 1100);
     const safety = setTimeout(() => {
-      setPhase("outro");
-    }, 4500); // Réduit de 8000 à 4500 pour ne jamais bloquer le site trop longtemps
+      if (!doneRef.current) { doneRef.current = true; setPhase("ignition"); }
+    }, 4800);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(safety); };
   }, [phase]);
 
-  /* ── 2. Timer de progression — TOUJOURS actif dès "playing" ─────────────── */
-  /*
-      On n'attend PAS la vidéo. Le timer est la source principale.
-      Si la vidéo est disponible, elle accélère/ajuste la progression.
-      iOS ne peut pas crasher car il n'y a aucune dépendance à la vidéo.
-  */
+  /* ── 2. Timer de progression ────────────────────────────────────────────── */
   useEffect(() => {
     if (phase !== "playing") return;
 
@@ -45,10 +94,9 @@ export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) 
         setProgress(p => {
           if (p >= 100) {
             if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
-            if (!doneRef.current) { doneRef.current = true; setPhase("outro"); }
+            if (!doneRef.current) { doneRef.current = true; setPhase("ignition"); }
             return 100;
           }
-          // Vitesse largement accélérée pour ne pas "bugger" le démarrage (chargement max ~2.5s)
           const spd =
             p < 20 ? 8 :
             p < 50 ? 6 :
@@ -60,7 +108,6 @@ export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) 
       }, 100);
     };
 
-    // Timer démarre immédiatement, indépendamment de la vidéo
     startTimer();
 
     return () => {
@@ -68,7 +115,7 @@ export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) 
     };
   }, [phase]);
 
-  /* ── 3. Sync vidéo (bonus — accélère la barre si la vidéo joue plus vite) ─ */
+  /* ── 3. Sync vidéo ──────────────────────────────────────────────────────── */
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -76,13 +123,12 @@ export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) 
     const onTimeUpdate = () => {
       if (!isFinite(video.duration) || video.duration <= 0) return;
       const videoPct = (video.currentTime / video.duration) * 100;
-      // N'avance la barre que si la vidéo est devant le timer
       setProgress(p => videoPct > p ? videoPct : p);
     };
 
     const onEnded = () => {
       setProgress(100);
-      if (!doneRef.current) { doneRef.current = true; setPhase("outro"); }
+      if (!doneRef.current) { doneRef.current = true; setPhase("ignition"); }
     };
 
     video.addEventListener("timeupdate", onTimeUpdate);
@@ -94,18 +140,23 @@ export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) 
     };
   }, []);
 
-  /* ── 4. Fade-out audio + fin du splash ──────────────────────────────── */
+  /* ── 4. Phase IGNITION (flash + zoom) puis OUTRO ────────────────────────── */
+  useEffect(() => {
+    if (phase !== "ignition") return;
+    // durée du flash avant le fondu final
+    const t = setTimeout(() => setPhase("outro"), 620);
+    return () => clearTimeout(t);
+  }, [phase]);
+
+  /* ── 5. Fade-out audio + fin du splash ──────────────────────────────────── */
   useEffect(() => {
     if (phase !== "outro") return;
 
     const video = videoRef.current;
 
-    /* — Fade-out du volume sur 900 ms (synchro avec le fondu visuel) —
-       30 étapes de 30 ms = 900 ms total.
-       Si la vidéo est mutée (iOS), on saute juste à 0 directement.        */
     if (video && !video.muted) {
-      const STEPS    = 30;
-      const INTERVAL = 30;           // ms par étape  (30 × 30 = 900 ms)
+      const STEPS    = 24;
+      const INTERVAL = 30;
       const startVol = video.volume;
       let step = 0;
 
@@ -121,26 +172,38 @@ export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) 
         }
       }, INTERVAL);
 
-      // Cleanup si le composant est démonté avant la fin
-      const done = setTimeout(onFinish, 1050);   // un peu plus long pour la fin du fade
+      const done = setTimeout(onFinish, 900);
       return () => { clearInterval(fade); clearTimeout(done); };
     }
 
-    // Fallback : pas de son -> on contrôle juste le timing
-    const t = setTimeout(onFinish, 950);
+    const t = setTimeout(onFinish, 850);
     return () => clearTimeout(t);
   }, [phase, onFinish]);
 
   /* ── Labels ─────────────────────────────────────────────────────────────── */
   const label =
     progress >= 100 ? "Bienvenue dans la Guilde !" :
-    progress < 5    ? "Connexion en cours…"          :
-    progress < 35   ? "Chargement des membres…"      :
-    progress < 72   ? "Initialisation de la Guilde…" :
-                      "Presque prêt…";
+    progress < 5    ? "Invocation du grimoire…"     :
+    progress < 35   ? "Éveil des esprits…"          :
+    progress < 72   ? "Alignement des astres…"      :
+                      "La flamme prend vie…";
 
   const showVideo = phase !== "black";
-  const showUI    = phase === "playing" || phase === "outro";
+  const showUI    = phase === "playing";
+  const igniting  = phase === "ignition" || phase === "outro";
+
+  /* ── Particules (embers) — générées une fois ────────────────────────────── */
+  const embers = useMemo(
+    () => Array.from({ length: 24 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      delay: Math.random() * 3,
+      duration: 5 + Math.random() * 4,
+      size: 2 + Math.random() * 3,
+      drift: (Math.random() - 0.5) * 80,
+    })),
+    []
+  );
 
   return (
     <motion.div
@@ -148,26 +211,30 @@ export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) 
       initial={{ opacity: 1 }}
       animate={{ opacity: phase === "outro" ? 0 : 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 1.0, ease: [0.4, 0, 0.2, 1] }}
+      transition={{ duration: 0.85, ease: [0.65, 0, 0.35, 1] }}
     >
 
-      {/* ── Vidéo HD en fond (best-effort sur iOS) ───────────────────────── */}
+      {/* ── Vidéo HD en fond ────────────────────────────────────────────── */}
       <div
         className="ft-video-wrapper"
         style={{
           opacity:   showVideo ? 1 : 0,
-          transform: showVideo ? "scale(1)" : "scale(1.06)",
-          transition: "opacity 1.4s ease, transform 1.7s cubic-bezier(0.25,0.46,0.45,0.94)",
+          transform: igniting
+            ? "scale(1.18)"
+            : showVideo ? "scale(1)" : "scale(1.08)",
+          filter: igniting ? "brightness(1.6) saturate(1.2)" : "brightness(1) saturate(1)",
+          transition:
+            "opacity 1.4s ease, transform 1.6s cubic-bezier(0.22, 1, 0.36, 1), filter 0.6s ease",
         }}
       >
         <video
           ref={videoRef}
           src="/Ma%20vid%C3%A9o.mp4"
           autoPlay
-          muted         /* requis iOS autoplay */
-          playsInline   /* requis iOS — évite le fullscreen natif */
+          muted
+          playsInline
           loop={false}
-          preload="metadata"   /* "auto" peut être ignoré sur iOS cellulaire */
+          preload="metadata"
           style={{ pointerEvents: "none" }}
         />
       </div>
@@ -175,27 +242,77 @@ export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) 
       {/* ── Vignette cinématique ──────────────────────────────────────────── */}
       <div className="ft-vignette-video" />
 
+      {/* ── Embers / particules flottantes ──────────────────────────────── */}
+      {showVideo && (
+        <div className="ft-embers-layer" aria-hidden>
+          {embers.map(e => (
+            <span
+              key={e.id}
+              className="ft-ember"
+              style={{
+                left: `${e.left}%`,
+                width: `${e.size}px`,
+                height: `${e.size}px`,
+                animationDelay: `${e.delay}s`,
+                animationDuration: `${e.duration}s`,
+                ['--drift' as string]: `${e.drift}px`,
+              } as React.CSSProperties}
+            />
+          ))}
+        </div>
+      )}
+
       {/* ── Barres letterbox ─────────────────────────────────────────────── */}
       <div className="ft-letterbox ft-letterbox--top" style={{
-        transform: `scaleY(${phase === "black" ? 1 : 0})`,
+        transform: `scaleY(${phase === "black" ? 1 : igniting ? 0.25 : 0})`,
         transition: "transform 0.95s cubic-bezier(0.76,0,0.24,1)",
       }}/>
       <div className="ft-letterbox ft-letterbox--bottom" style={{
-        transform: `scaleY(${phase === "black" ? 1 : 0})`,
+        transform: `scaleY(${phase === "black" ? 1 : igniting ? 0.25 : 0})`,
         transition: "transform 0.95s cubic-bezier(0.76,0,0.24,1)",
       }}/>
+
+      {/* ── Flash d'ignition (quand la barre atteint 100 %) ─────────────── */}
+      <AnimatePresence>
+        {igniting && (
+          <motion.div
+            key="flash"
+            className="ft-ignition-flash"
+            initial={{ opacity: 0, scale: 0.2 }}
+            animate={{ opacity: [0, 1, 0.8, 0], scale: [0.2, 1.2, 2.4, 3.2] }}
+            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1], times: [0, 0.25, 0.55, 1] }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* ── Shockwave ring ───────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {igniting && (
+          <motion.div
+            key="ring"
+            className="ft-ignition-ring"
+            initial={{ opacity: 0.9, scale: 0.1 }}
+            animate={{ opacity: 0, scale: 4 }}
+            transition={{ duration: 0.95, ease: [0.22, 1, 0.36, 1] }}
+          />
+        )}
+      </AnimatePresence>
 
       {/* ── Scène centrale ───────────────────────────────────────────────── */}
       <div className="ft-stage">
         <AnimatePresence mode="wait">
-          {showUI && (
+          {(showUI || igniting) && (
             <motion.div
               key="title"
               className="ft-title-block"
               initial={{ opacity: 0, scale: 1.5, filter: "blur(24px)" }}
-              animate={{ opacity: 1, scale: 1,   filter: "blur(0px)"  }}
-              exit={{    opacity: 0, scale: 0.92, filter: "blur(8px)"  }}
-              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+              animate={
+                igniting
+                  ? { opacity: 0, scale: 1.8, filter: "blur(16px)" }
+                  : { opacity: 1, scale: 1,   filter: "blur(0px)"  }
+              }
+              exit={{ opacity: 0, scale: 0.92, filter: "blur(8px)" }}
+              transition={{ duration: igniting ? 0.55 : 0.75, ease: [0.16, 1, 0.3, 1] }}
             >
               {/* Ligne dorée top */}
               <motion.div
@@ -205,15 +322,32 @@ export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) 
                 transition={{ delay: 0.4, duration: 0.65, ease: "easeOut" }}
               />
 
-              {/* ✦ Titre principal — police Cinzel Decorative style guild fantasy */}
-              <h1 className="ft-title-main">GUILDE OTAKU</h1>
+              {/* ✦ Titre principal — lettre par lettre */}
+              <h1 className="ft-title-main" aria-label="GUILDE OTAKU">
+                {"GUILDE OTAKU".split("").map((ch, i) => (
+                  <motion.span
+                    key={i}
+                    className="ft-title-letter"
+                    initial={{ opacity: 0, y: 30, rotateX: -90 }}
+                    animate={{ opacity: 1, y: 0, rotateX: 0 }}
+                    transition={{
+                      delay: 0.25 + i * 0.055,
+                      duration: 0.7,
+                      ease: [0.2, 0.8, 0.2, 1],
+                    }}
+                    style={{ display: "inline-block", whiteSpace: "pre" }}
+                  >
+                    {ch}
+                  </motion.span>
+                ))}
+              </h1>
 
               {/* Sous-ligne avec lettre-espacement animé */}
               <motion.p
                 className="ft-title-sub"
                 initial={{ opacity: 0, letterSpacing: "0.08em" }}
                 animate={{ opacity: 1, letterSpacing: "0.35em" }}
-                transition={{ delay: 0.3, duration: 1.0, ease: "easeOut" }}
+                transition={{ delay: 0.9, duration: 1.0, ease: "easeOut" }}
               >
                 — La légende commence ici —
               </motion.p>
@@ -238,7 +372,7 @@ export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) 
             className="ft-loading-block"
             initial={{ opacity: 0, y: 44 }}
             animate={{ opacity: 1, y: 0  }}
-            exit={{ opacity: 0, y: 28 }}
+            exit={{ opacity: 0, y: 28, scale: 0.98 }}
             transition={{ duration: 0.65, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
           >
             <div className="ft-bar-track">
@@ -261,6 +395,26 @@ export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) 
               </motion.span>
             </div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Bouton "Activer le son" (fallback iOS) ──────────────────────── */}
+      <AnimatePresence>
+        {needsTap && !soundOn && phase === "playing" && (
+          <motion.button
+            key="sound-tap"
+            type="button"
+            className="ft-sound-tap"
+            initial={{ opacity: 0, y: 14, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0,  scale: 1   }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+            onClick={tryPlayWithSound}
+            aria-label="Activer le son"
+          >
+            <span className="ft-sound-tap-icon" aria-hidden>♪</span>
+            <span className="ft-sound-tap-text">Activer le son</span>
+          </motion.button>
         )}
       </AnimatePresence>
 
