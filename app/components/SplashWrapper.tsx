@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useSyncExternalStore } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import FairyTailSplash from "./FairyTailSplash";
 
-/* useSyncExternalStore with a never-changing subscriber = reliable
-   "am I on the client yet?" flag, without setState-in-effect. */
+/* useSyncExternalStore avec subscribe stable = flag client-only fiable,
+   sans setState-in-effect. */
 const emptySubscribe = () => () => {};
 const useMounted = () =>
   useSyncExternalStore(
@@ -16,15 +16,15 @@ const useMounted = () =>
 
 /*
   Stratégie :
-  - Rendu toujours des enfants pour le SSR/SEO.
-  - Pendant splash + reveal : on les enveloppe dans un motion.div
-    (opacity + scale + blur) pour l'animation cinématique.
-  - Dès que le reveal est terminé, on rend les enfants SANS wrapper —
-    sinon transform/filter créent un containing block qui casse les
-    position: fixed des enfants (modal, toggles, scroll lock, etc.).
+  - Un seul <div> wrapper, toujours présent → pas de remount des enfants.
+  - On n'applique JAMAIS `transform` ni `filter` sur ce wrapper une fois
+    le splash terminé : sinon ça crée un containing block qui casse tous
+    les `position: fixed` descendants (modal, badge splash, toggles, etc.).
+  - Pendant le reveal on n'anime QUE l'opacity (safe).
+  - Les effets de zoom/blur restent dans le splash lui-même.
 */
 
-type RevealState = "idle-hidden" | "revealing" | "done";
+type RevealState = "hidden" | "revealing" | "done";
 
 export default function SplashWrapper({
   children,
@@ -36,7 +36,7 @@ export default function SplashWrapper({
   const mounted = useMounted();
   const [showSplash, setShowSplash] = useState(!hasSeenSplash);
   const [reveal, setReveal] = useState<RevealState>(
-    hasSeenSplash ? "done" : "idle-hidden"
+    hasSeenSplash ? "done" : "hidden"
   );
   const checkedRef = useRef(false);
 
@@ -54,11 +54,12 @@ export default function SplashWrapper({
     } catch {}
     setShowSplash(false);
     setReveal("revealing");
-    // Une fois l'anim terminée, on drop le motion wrapper.
-    setTimeout(() => setReveal("done"), 1200);
+    const t = setTimeout(() => setReveal("done"), 1000);
+    return () => clearTimeout(t);
   }, []);
 
   const showingSplash = mounted && showSplash;
+  const hidden = reveal === "hidden" || showingSplash || !mounted;
 
   return (
     <>
@@ -68,33 +69,19 @@ export default function SplashWrapper({
         )}
       </AnimatePresence>
 
-      {reveal === "done" ? (
-        // Pas de wrapper motion → aucun containing block généré,
-        // les position:fixed des enfants fonctionnent normalement.
-        <>{children}</>
-      ) : reveal === "revealing" ? (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.96, filter: "blur(14px)" }}
-          animate={{ opacity: 1, scale: 1,    filter: "blur(0px)"  }}
-          transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
-          style={{ transformOrigin: "center center" }}
-        >
-          {children}
-        </motion.div>
-      ) : (
-        // Splash visible ou pas encore monté → on cache simplement
-        // les enfants, sans transform (opacity seule).
-        <div
-          style={{
-            opacity: 0,
-            pointerEvents: "none",
-            transition: "opacity 0.4s ease",
-          }}
-          aria-hidden="true"
-        >
-          {children}
-        </div>
-      )}
+      <div
+        style={{
+          opacity: hidden ? 0 : 1,
+          transition:
+            reveal === "revealing"
+              ? "opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1)"
+              : "opacity 0.3s ease",
+          pointerEvents: hidden ? "none" : "auto",
+        }}
+        aria-hidden={hidden ? "true" : undefined}
+      >
+        {children}
+      </div>
 
       {!mounted && !hasSeenSplash && (
         <div

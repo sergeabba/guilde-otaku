@@ -37,22 +37,28 @@ export default function MemberModal({ member, onClose, viewMode }: {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const titleId = "modal-member-title";
 
-  // Sync mode + badge splash à l'ouverture
-  useEffect(() => {
-    if (member) {
+  // Reset state + declenche le badge splash quand on change de membre.
+  // Derive via useState + comparaison de clé pour éviter un setState
+  // synchrone dans un useEffect (cascading renders).
+  const memberKey = member?.id ?? null;
+  const [lastKey, setLastKey] = useState<number | null>(null);
+  if (memberKey !== lastKey) {
+    setLastKey(memberKey);
+    if (memberKey !== null) {
       setLocalMode(viewMode);
       setHeroImgError(false);
       setCard1ImgError(false);
       setCard2ImgError(false);
-      if (member.badge) {
-        setShowBadgeSplash(true);
-        const timer = setTimeout(() => setShowBadgeSplash(false), 3500);
-        return () => clearTimeout(timer);
-      } else {
-        setShowBadgeSplash(false);
-      }
+      setShowBadgeSplash(Boolean(member?.badge));
     }
-  }, [member, viewMode]);
+  }
+
+  useEffect(() => {
+    if (member?.badge && showBadgeSplash) {
+      const timer = setTimeout(() => setShowBadgeSplash(false), 3500);
+      return () => clearTimeout(timer);
+    }
+  }, [member, showBadgeSplash]);
 
   // Fermeture clavier (Escape)
   useEffect(() => {
@@ -159,7 +165,7 @@ export default function MemberModal({ member, onClose, viewMode }: {
                   fontFamily: "'Barlow Condensed', sans-serif",
                   fontSize: "14px", letterSpacing: "0.1em", textTransform: "uppercase",
                 }}>
-                  Appuyez n'importe où pour continuer
+                  Appuyez n&apos;importe où pour continuer
                 </p>
               </motion.div>
             )}
@@ -224,6 +230,15 @@ export default function MemberModal({ member, onClose, viewMode }: {
               fontSize: "15px", fontWeight: 700, textTransform: "uppercase",
               backdropFilter: "blur(8px)", cursor: "pointer",
               minHeight: "unset", minWidth: "unset",
+              transition: "background 200ms ease, border-color 200ms ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "rgba(0,0,0,0.85)";
+              e.currentTarget.style.borderColor = accent;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "rgba(0,0,0,0.6)";
+              e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)";
             }}
           >
             {isMobile
