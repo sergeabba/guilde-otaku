@@ -67,7 +67,7 @@ type Phase = "select" | "intro" | "fight";
 function Styles() {
   return (
     <style jsx global>{`
-      @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;600;700;900&family=Orbitron:wght@400;500;700;900&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;600;700;900&family=Orbitron:wght@400;500;700;900&family=Black+Ops+One&display=swap');
 
       @keyframes scanlines { 0%{transform:translateY(0)} 100%{transform:translateY(4px)} }
       @keyframes hpPulse { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.5) saturate(2)} }
@@ -80,6 +80,12 @@ function Styles() {
       @keyframes glowCharge { 0%{background-position:200% center} 100%{background-position:-200% center} }
       @keyframes electricPulse { 0%,100%{opacity:1;filter:brightness(1)} 50%{opacity:.85;filter:brightness(1.5)} }
       @keyframes glitchText { 0%,90%,100%{transform:translate(0);filter:none} 92%{transform:translate(-2px,1px);filter:hue-rotate(90deg)} 94%{transform:translate(2px,-1px);filter:hue-rotate(-90deg)} 96%{transform:translate(-1px,-1px)} 98%{transform:translate(1px,1px);filter:hue-rotate(45deg)} }
+      @keyframes chevronScroll { 0%{background-position:0 0} 100%{background-position:80px 40px} }
+      @keyframes lightSweep { 0%{transform:translateX(-100%) skewX(-20deg)} 100%{transform:translateX(250%) skewX(-20deg)} }
+      @keyframes tileScanline { 0%{top:-100%} 100%{top:110%} }
+      @keyframes neonFlicker { 0%,19%,21%,23%,25%,54%,56%,100%{opacity:1;filter:drop-shadow(0 0 8px currentColor) drop-shadow(0 0 16px currentColor)} 20%,24%,55%{opacity:.55;filter:none} }
+      @keyframes arcadeCoin { 0%,100%{color:#FFD700;text-shadow:0 0 8px rgba(255,215,0,.7)} 50%{color:#fffbcc;text-shadow:0 0 14px #FFD700,0 0 30px rgba(255,215,0,.55)} }
+      @keyframes fightButtonStripes { 0%{background-position:0 0} 100%{background-position:40px 0} }
 
       .hit-shake { animation: hitShake .3s ease-out; }
       .ko-shake { animation: screenShake .5s ease-out; }
@@ -150,6 +156,120 @@ function Styles() {
         content: "";
         position: absolute; inset: 0;
         background: linear-gradient(180deg, rgba(0,0,0,0) 55%, rgba(0,0,0,.55) 100%);
+        pointer-events: none;
+      }
+
+      /* ─── KOF arcade background (chevrons) ─── */
+      .kof-arcade-bg {
+        position: absolute; inset: 0; z-index: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(ellipse at 12% 42%, rgba(220,38,38,.55) 0%, transparent 42%),
+          radial-gradient(ellipse at 88% 58%, rgba(29,78,216,.55) 0%, transparent 42%),
+          linear-gradient(115deg, #4f0a12 0%, #1a0920 42%, #0c1850 100%);
+      }
+      .kof-arcade-bg::before {
+        content: "";
+        position: absolute; inset: 0;
+        background-image:
+          repeating-linear-gradient(45deg,
+            rgba(255,255,255,.045) 0 2px,
+            transparent 2px 40px),
+          repeating-linear-gradient(-45deg,
+            rgba(255,255,255,.045) 0 2px,
+            transparent 2px 40px);
+        background-size: 80px 80px;
+        animation: chevronScroll 22s linear infinite;
+        mix-blend-mode: overlay;
+        opacity: .85;
+      }
+      .kof-arcade-bg::after {
+        content: "";
+        position: absolute; inset: 0;
+        background:
+          repeating-linear-gradient(0deg, transparent 0 2px, rgba(0,0,0,.18) 2px 3px);
+        mix-blend-mode: multiply;
+        pointer-events: none;
+      }
+
+      /* ─── Tile polish : hover scanline + corner cuts ─── */
+      .kof-tile {
+        clip-path: polygon(
+          6px 0, 100% 0,
+          100% calc(100% - 6px),
+          calc(100% - 6px) 100%,
+          0 100%,
+          0 6px
+        );
+      }
+      .kof-tile > .tile-scan {
+        position: absolute;
+        left: 0; right: 0; height: 40%;
+        background: linear-gradient(180deg, transparent, rgba(255,255,255,.25), transparent);
+        mix-blend-mode: screen;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity .15s;
+      }
+      .kof-tile:hover > .tile-scan { opacity: 1; animation: tileScanline 1.2s linear infinite; }
+
+      /* ─── Side frame chrome (P1/P2 panels) ─── */
+      .kof-frame {
+        position: relative;
+      }
+      .kof-frame::before, .kof-frame::after {
+        content: "";
+        position: absolute;
+        width: 22px; height: 22px;
+        border-style: solid;
+        pointer-events: none;
+        z-index: 4;
+      }
+      .kof-frame::before { top:-2px; left:-2px;  border-width: 3px 0 0 3px; }
+      .kof-frame::after  { bottom:-2px; right:-2px; border-width: 0 3px 3px 0; }
+      .kof-frame.p1::before, .kof-frame.p1::after { border-color: #FF3B30; filter: drop-shadow(0 0 6px #FF3B3088); }
+      .kof-frame.p2::before, .kof-frame.p2::after { border-color: #1DA1F2; filter: drop-shadow(0 0 6px #1DA1F288); }
+
+      /* ─── Arcade marquee title ─── */
+      .arcade-title {
+        font-family: 'Black Ops One','Orbitron',sans-serif;
+        letter-spacing: 7px;
+        color: #ffd700;
+        text-shadow:
+          0 0 6px #FFD700,
+          0 0 16px rgba(255,150,0,.85),
+          0 2px 0 #7a5700,
+          0 4px 0 #3d2b00;
+        animation: neonFlicker 4.5s infinite;
+      }
+
+      .arcade-coin {
+        font-family: 'Orbitron', monospace;
+        animation: arcadeCoin 1.3s ease-in-out infinite;
+      }
+
+      /* ─── FIGHT button : oblique shape + stripes ─── */
+      .kof-fight-btn {
+        position: relative;
+        clip-path: polygon(14px 0, 100% 0, calc(100% - 14px) 100%, 0 100%);
+        overflow: hidden;
+      }
+      .kof-fight-btn::before {
+        content: "";
+        position: absolute; inset: 0;
+        background: repeating-linear-gradient(45deg,
+          rgba(255,255,255,.12) 0 8px,
+          transparent 8px 20px);
+        animation: fightButtonStripes 1.2s linear infinite;
+        pointer-events: none;
+        opacity: .8;
+      }
+      .kof-fight-btn::after {
+        content: "";
+        position: absolute; top:0; left:0; width: 50%; height: 100%;
+        background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.45) 50%, transparent 100%);
+        filter: blur(6px);
+        animation: lightSweep 2.4s cubic-bezier(.4,0,.2,1) infinite;
         pointer-events: none;
       }
     `}</style>
@@ -550,6 +670,9 @@ function FighterCard({ member, mode, selected, hovered, idx, onSelect, onHover }
         />
       )}
 
+      {/* Hover scanline (horizontale qui descend) */}
+      <span className="tile-scan" aria-hidden="true" />
+
       {/* Rank stripe */}
       <div
         className="absolute bottom-0 left-0 right-0"
@@ -794,7 +917,7 @@ function CharacterSelect({ members, mode, setMode, selected, onSelect, onFight }
   return (
     <div className="relative min-h-screen overflow-hidden" style={{ background: "#0b0a14" }}>
       {/* Diagonal P1/P2 background */}
-      <div className="kof-diagonal-bg" />
+      <div className="kof-arcade-bg" />
 
       {/* Floating light-particles */}
       <div className="absolute inset-0 pointer-events-none z-[1]">
@@ -821,43 +944,72 @@ function CharacterSelect({ members, mode, setMode, selected, onSelect, onFight }
         ))}
       </div>
 
-      {/* ─── Top bar ───────────────────────────────── */}
-      <div className="relative z-40 border-b" style={{ borderColor: "rgba(255,255,255,.08)", background: "rgba(0,0,0,.35)", backdropFilter: "blur(8px)" }}>
-        <div className="max-w-[1700px] mx-auto px-4 py-2.5 flex items-center justify-between gap-3">
+      {/* ─── Top bar (Arcade cab style) ────────────── */}
+      <div
+        className="relative z-40"
+        style={{
+          borderBottom: "2px solid rgba(255,215,0,.35)",
+          background:
+            "linear-gradient(180deg, rgba(0,0,0,.85) 0%, rgba(15,5,25,.72) 100%)",
+          backdropFilter: "blur(8px)",
+          boxShadow: "0 10px 30px rgba(0,0,0,.55), inset 0 -1px 0 rgba(255,255,255,.05)",
+        }}
+      >
+        {/* Ribbon of stripes under the bar */}
+        <div
+          className="absolute left-0 right-0 bottom-0 h-[4px]"
+          style={{
+            background:
+              "repeating-linear-gradient(90deg, #FFD700 0 12px, #DC2626 12px 24px, #1D4ED8 24px 36px, #FFD700 36px 48px)",
+            opacity: .75,
+          }}
+        />
+        <div className="max-w-[1700px] mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <Swords size={18} style={{ color: "#FFD700", flexShrink: 0 }} />
-            <span style={{
-              fontFamily: "'Orbitron', monospace",
-              fontSize: "clamp(13px,2vw,18px)",
-              fontWeight: 900,
-              color: "#fff",
-              letterSpacing: "5px",
-              whiteSpace: "nowrap",
-            }}>
-              SELECT · FIGHTER
-            </span>
+            <Swords size={22} style={{ color: "#FFD700", flexShrink: 0, filter: "drop-shadow(0 0 8px rgba(255,215,0,.75))" }} />
+            <div className="flex flex-col leading-none min-w-0">
+              <span
+                className="arcade-title"
+                style={{
+                  fontSize: "clamp(16px, 2.4vw, 26px)",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                GUILDE · FIGHTERS
+              </span>
+              <span
+                className="arcade-coin mt-1"
+                style={{ fontSize: 10, letterSpacing: 3, whiteSpace: "nowrap" }}
+              >
+                ★ INSERT COIN · CREDIT 01 ★
+              </span>
+            </div>
           </div>
 
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
               onClick={() => { if (sfx) sfx.muted = !sfx.muted; }}
-              className="p-1.5 rounded cursor-pointer text-white/40 hover:text-white/80 transition-colors"
-              style={{ fontFamily: "'Orbitron', monospace", fontSize: 9, letterSpacing: 1 }}
+              className="p-1.5 rounded cursor-pointer text-white/50 hover:text-white/90 transition-colors"
+              style={{ fontFamily: "'Orbitron', monospace", fontSize: 10, letterSpacing: 1 }}
               aria-label="Toggle sound"
             >
-              {sfx?.muted ? "MUTE" : "SFX"}
+              {sfx?.muted ? "♪ OFF" : "♪ ON"}
             </button>
             {(["real", "anime"] as ViewMode[]).map((m) => (
               <button
                 key={m}
                 onClick={() => { setMode(m); sfx?.play("select"); }}
-                className="px-3 py-1 rounded cursor-pointer text-[10px] font-bold transition-all duration-200"
+                className="px-3 py-1 cursor-pointer text-[10px] font-bold transition-all duration-200"
                 style={{
                   fontFamily: "'Orbitron', monospace",
-                  letterSpacing: "1px",
-                  background: mode === m ? "rgba(255,215,0,.18)" : "transparent",
-                  color:      mode === m ? "#FFD700" : "rgba(255,255,255,.35)",
-                  border:     mode === m ? "1px solid rgba(255,215,0,.4)" : "1px solid rgba(255,255,255,.1)",
+                  letterSpacing: "2px",
+                  clipPath: "polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)",
+                  background: mode === m
+                    ? "linear-gradient(135deg, rgba(255,215,0,.3), rgba(255,140,0,.2))"
+                    : "rgba(0,0,0,.4)",
+                  color:      mode === m ? "#FFD700" : "rgba(255,255,255,.45)",
+                  border: "none",
+                  boxShadow: mode === m ? "inset 0 0 0 1px rgba(255,215,0,.55), 0 0 14px rgba(255,215,0,.3)" : "inset 0 0 0 1px rgba(255,255,255,.1)",
                 }}
               >
                 {m.toUpperCase()}
@@ -961,11 +1113,12 @@ function CharacterSelect({ members, mode, setMode, selected, onSelect, onFight }
 
             {/* ─── LEFT portrait (desktop) ─── */}
             <div className="kof-left relative hidden md:flex" style={{ minHeight: 400 }}>
-              <div className="relative flex-1 rounded-xl overflow-hidden"
+              <div className="kof-frame p1 relative flex-1 overflow-hidden"
                 style={{
-                  background: "linear-gradient(160deg, rgba(220,38,38,.25) 0%, rgba(40,0,10,.6) 60%, rgba(0,0,0,.8) 100%)",
-                  border: "1px solid rgba(220,38,38,.35)",
-                  boxShadow: "0 0 30px rgba(220,38,38,.18), inset 0 0 80px rgba(0,0,0,.6)",
+                  clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%)",
+                  background: "linear-gradient(160deg, rgba(220,38,38,.35) 0%, rgba(40,0,10,.65) 55%, rgba(0,0,0,.88) 100%)",
+                  border: "1px solid rgba(220,38,38,.5)",
+                  boxShadow: "0 0 40px rgba(220,38,38,.28), inset 0 0 90px rgba(0,0,0,.65), inset 0 0 0 1px rgba(255,59,48,.18)",
                 }}>
                 <SidePortrait member={leftFighter} mode={mode} side="left" />
               </div>
@@ -973,25 +1126,33 @@ function CharacterSelect({ members, mode, setMode, selected, onSelect, onFight }
 
             {/* ─── CENTRAL GRID ─── */}
             <div className="kof-grid relative flex flex-col">
-              {/* PRESS START */}
-              <div className="flex items-center justify-between mb-2 px-1">
-                <span style={{
-                  fontFamily: "'Orbitron', monospace",
-                  fontSize: 11,
-                  color: "#FFD700",
-                  letterSpacing: 3,
-                  animation: "kof-press-blink 1s infinite",
-                  textShadow: "0 0 8px rgba(255,215,0,.6)",
-                }}>
-                  ★ PRESS · START ★
+              {/* PRESS START / ROSTER HEADER */}
+              <div
+                className="flex items-center justify-between mb-2 px-3 py-1.5"
+                style={{
+                  background: "linear-gradient(90deg, rgba(220,38,38,.22), rgba(0,0,0,.45) 50%, rgba(29,78,216,.22))",
+                  border: "1px solid rgba(255,255,255,.08)",
+                  borderLeft: "3px solid #DC2626",
+                  borderRight: "3px solid #1D4ED8",
+                  clipPath: "polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%)",
+                }}
+              >
+                <span
+                  className="arcade-coin"
+                  style={{
+                    fontSize: 11,
+                    letterSpacing: 4,
+                  }}
+                >
+                  ★ CHOOSE · YOUR · FIGHTER ★
                 </span>
                 <span style={{
                   fontFamily: "'Orbitron', monospace",
                   fontSize: 10,
-                  color: "rgba(255,255,255,.4)",
+                  color: "rgba(255,255,255,.55)",
                   letterSpacing: 2,
                 }}>
-                  {filtered.length} COMBATANTS
+                  [ {filtered.length.toString().padStart(2, "0")} · COMBATANTS ]
                 </span>
               </div>
 
@@ -1096,11 +1257,12 @@ function CharacterSelect({ members, mode, setMode, selected, onSelect, onFight }
 
             {/* ─── RIGHT portrait (desktop) ─── */}
             <div className="kof-right relative hidden md:flex" style={{ minHeight: 400 }}>
-              <div className="relative flex-1 rounded-xl overflow-hidden"
+              <div className="kof-frame p2 relative flex-1 overflow-hidden"
                 style={{
-                  background: "linear-gradient(200deg, rgba(29,78,216,.28) 0%, rgba(0,10,40,.65) 60%, rgba(0,0,0,.8) 100%)",
-                  border: "1px solid rgba(29,78,216,.4)",
-                  boxShadow: "0 0 30px rgba(29,78,216,.22), inset 0 0 80px rgba(0,0,0,.6)",
+                  clipPath: "polygon(18px 0, 100% 0, 100% 100%, 0 100%, 0 18px)",
+                  background: "linear-gradient(200deg, rgba(29,78,216,.38) 0%, rgba(0,10,40,.7) 55%, rgba(0,0,0,.88) 100%)",
+                  border: "1px solid rgba(29,78,216,.55)",
+                  boxShadow: "0 0 40px rgba(29,78,216,.3), inset 0 0 90px rgba(0,0,0,.65), inset 0 0 0 1px rgba(29,161,242,.2)",
                 }}>
                 <SidePortrait member={rightFighter} mode={mode} side="right" />
               </div>
@@ -1136,22 +1298,29 @@ function CharacterSelect({ members, mode, setMode, selected, onSelect, onFight }
             <div className="flex justify-center px-4">
               <motion.button
                 onClick={() => onFight(selected)}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: .96 }}
-                className="px-10 sm:px-14 py-3 rounded-md cursor-pointer font-bold relative overflow-hidden"
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: .95 }}
+                className="kof-fight-btn px-12 sm:px-16 py-3.5 cursor-pointer font-bold"
                 style={{
-                  background: "linear-gradient(135deg,#DC2626 0%,#991B1B 100%)",
-                  fontFamily: "'Orbitron', monospace",
-                  fontSize: "clamp(13px, 1.6vw, 16px)",
+                  background: "linear-gradient(135deg,#FFD700 0%,#DC2626 45%,#7a0f12 100%)",
+                  fontFamily: "'Black Ops One', 'Orbitron', monospace",
+                  fontSize: "clamp(15px, 1.8vw, 19px)",
                   color: "#fff",
                   letterSpacing: 6,
-                  boxShadow: "0 0 26px rgba(220,38,38,.5), 0 10px 34px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.15)",
+                  textShadow: "0 2px 4px rgba(0,0,0,.7), 0 0 14px rgba(255,215,0,.45)",
+                  boxShadow:
+                    "0 0 32px rgba(220,38,38,.6)," +
+                    "0 14px 42px rgba(0,0,0,.65)," +
+                    "inset 0 0 0 2px rgba(255,215,0,.6)," +
+                    "inset 0 2px 0 rgba(255,255,255,.2)," +
+                    "inset 0 -3px 0 rgba(0,0,0,.35)",
+                  border: "none",
                 }}
               >
                 <span className="flex items-center gap-3 relative z-10">
-                  <Swords size={15} />
-                  COMBATTRE
-                  <Swords size={15} style={{ transform: "scaleX(-1)" }} />
+                  <Swords size={17} />
+                  COMBATTRE !
+                  <Swords size={17} style={{ transform: "scaleX(-1)" }} />
                 </span>
               </motion.button>
             </div>
