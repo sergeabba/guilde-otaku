@@ -93,11 +93,67 @@ function Styles() {
       .r-pill { transition: all .2s ease; cursor: pointer; white-space: nowrap; }
       .r-pill:hover { transform: translateY(-1px); }
 
-      .roster { display:grid; gap:5px; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); }
-      @media(min-width:480px){ .roster{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px;} }
-      @media(min-width:640px){ .roster{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:7px;} }
-      @media(min-width:1024px){ .roster{grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:8px;} }
-      @media(min-width:1400px){ .roster{grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:9px;} }
+      /* ─── KOF-style compact square roster ─── */
+      .kof-roster {
+        display: grid;
+        gap: 4px;
+        grid-template-columns: repeat(8, 1fr);
+      }
+      @media(min-width:640px)  { .kof-roster { grid-template-columns: repeat(9, 1fr);  gap: 5px; } }
+      @media(min-width:900px)  { .kof-roster { grid-template-columns: repeat(10,1fr);  gap: 6px; } }
+      @media(min-width:1200px) { .kof-roster { grid-template-columns: repeat(11,1fr);  gap: 6px; } }
+
+      /* Diagonal P1/P2 background (rouge → bleu) */
+      .kof-diagonal-bg {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(ellipse at 15% 50%, rgba(220,38,38,.55) 0%, transparent 45%),
+          radial-gradient(ellipse at 85% 50%, rgba(29,78,216,.55) 0%, transparent 45%),
+          linear-gradient(115deg, #7a0f12 0%, #2a0f2f 45%, #0f1f55 100%);
+      }
+      .kof-diagonal-bg::before {
+        content: "";
+        position: absolute; inset: 0;
+        background-image:
+          linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);
+        background-size: 42px 42px;
+        mix-blend-mode: overlay;
+        opacity: .25;
+      }
+      .kof-diagonal-bg::after {
+        content: "";
+        position: absolute; inset: 0;
+        background:
+          repeating-linear-gradient(0deg, transparent 0 3px, rgba(0,0,0,.12) 3px 4px);
+        pointer-events: none;
+        mix-blend-mode: multiply;
+        opacity: .45;
+      }
+
+      .kof-portrait-side {
+        animation: kof-portrait-float 4.5s ease-in-out infinite;
+      }
+      @keyframes kof-portrait-float {
+        0%,100% { transform: translateY(0); }
+        50%     { transform: translateY(-6px); }
+      }
+
+      @keyframes kof-press-blink {
+        0%,100% { opacity: 1; }
+        50%     { opacity: .25; }
+      }
+
+      .kof-tile { position: relative; }
+      .kof-tile::after {
+        content: "";
+        position: absolute; inset: 0;
+        background: linear-gradient(180deg, rgba(0,0,0,0) 55%, rgba(0,0,0,.55) 100%);
+        pointer-events: none;
+      }
     `}</style>
   );
 }

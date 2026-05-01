@@ -16,11 +16,15 @@ const useMounted = () =>
 
 /*
   Stratégie :
-  - On rend toujours les enfants pour ne pas casser le SSR et le SEO.
-  - Le splash s'affiche par-dessus (z-index élevé).
-  - Quand le splash se termine, on révèle le site avec un zoom-in + blur-out
-    cinématique pour que la transition sente la continuité.
+  - Rendu toujours des enfants pour le SSR/SEO.
+  - Pendant splash + reveal : on les enveloppe dans un motion.div
+    (opacity + scale + blur) pour l'animation cinématique.
+  - Dès que le reveal est terminé, on rend les enfants SANS wrapper —
+    sinon transform/filter créent un containing block qui casse les
+    position: fixed des enfants (modal, toggles, scroll lock, etc.).
 */
+
+type RevealState = "idle-hidden" | "revealing" | "done";
 
 export default function SplashWrapper({
   children,
@@ -31,13 +35,14 @@ export default function SplashWrapper({
 }) {
   const mounted = useMounted();
   const [showSplash, setShowSplash] = useState(!hasSeenSplash);
-  const [revealing, setRevealing] = useState(false);
+  const [reveal, setReveal] = useState<RevealState>(
+    hasSeenSplash ? "done" : "idle-hidden"
+  );
   const checkedRef = useRef(false);
 
   useEffect(() => {
     if (checkedRef.current) return;
     checkedRef.current = true;
-
     try {
       sessionStorage.removeItem("guilde-splash-v2");
     } catch {}
@@ -48,13 +53,12 @@ export default function SplashWrapper({
       document.cookie = "guilde-splash-seen=1; path=/; max-age=86400; SameSite=Lax";
     } catch {}
     setShowSplash(false);
-    setRevealing(true);
-    // le reveal se termine après 1.4s, on coupe l'état après
-    setTimeout(() => setRevealing(false), 1400);
+    setReveal("revealing");
+    // Une fois l'anim terminée, on drop le motion wrapper.
+    setTimeout(() => setReveal("done"), 1200);
   }, []);
 
   const showingSplash = mounted && showSplash;
-  const hidden = !mounted || showingSplash;
 
   return (
     <>
@@ -64,28 +68,35 @@ export default function SplashWrapper({
         )}
       </AnimatePresence>
 
-      <motion.div
-        initial={false}
-        animate={
-          hidden
-            ? { opacity: 0, scale: 0.96, filter: "blur(14px)" }
-            : { opacity: 1, scale: 1,    filter: "blur(0px)"  }
-        }
-        transition={{
-          duration: revealing ? 1.2 : 0.4,
-          ease: [0.16, 1, 0.3, 1],
-        }}
-        style={{
-          transformOrigin: "center center",
-          pointerEvents: hidden ? "none" : "auto",
-          willChange: "transform, opacity, filter",
-        }}
-      >
-        {children}
-      </motion.div>
+      {reveal === "done" ? (
+        // Pas de wrapper motion → aucun containing block généré,
+        // les position:fixed des enfants fonctionnent normalement.
+        <>{children}</>
+      ) : reveal === "revealing" ? (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96, filter: "blur(14px)" }}
+          animate={{ opacity: 1, scale: 1,    filter: "blur(0px)"  }}
+          transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+          style={{ transformOrigin: "center center" }}
+        >
+          {children}
+        </motion.div>
+      ) : (
+        // Splash visible ou pas encore monté → on cache simplement
+        // les enfants, sans transform (opacity seule).
+        <div
+          style={{
+            opacity: 0,
+            pointerEvents: "none",
+            transition: "opacity 0.4s ease",
+          }}
+          aria-hidden="true"
+        >
+          {children}
+        </div>
+      )}
 
-      {/* Fallback SSR — évite le FOUC avant l'hydratation */}
-      {!mounted && (
+      {!mounted && !hasSeenSplash && (
         <div
           style={{
             position: "fixed",
