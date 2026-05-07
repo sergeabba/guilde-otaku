@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../../lib/supabase";
 import { DOSSIER_BASH_DATA, findDossierBashEntry, normalizeDossierBashKey } from "../../lib/dossier-bash";
+import Link from "next/link";
 import {
   Search, Star, Check, X, Tv, BookOpen, Film, Gamepad2,
-  Loader2, Image as ImageIcon, FileText, Youtube, MessageSquare, Lock, Trash2, List
+  Loader2, Image as ImageIcon, FileText, Youtube, MessageSquare, Lock, Trash2, List, ChevronLeft, AlertTriangle,
 } from "lucide-react";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { useAdminAuth } from "../hooks/useAdminAuth";
@@ -245,6 +247,10 @@ export default function AdminBiblio() {
 
   const [currentView, setCurrentView] = useState<"ADD" | "MANAGE">("ADD");
   const [libraryItems, setLibraryItems] = useState<any[]>([]);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
 
   const fetchLibrary = async () => {
     const { data } = await supabase.from("bibliotheque").select("*").order("created_at", { ascending: false });
@@ -262,10 +268,15 @@ export default function AdminBiblio() {
     if (authed) fetchLibrary();
   }, [authed]);
 
-  const handleDelete = async (id: string, title: string) => {
-    if (!confirm(`Supprimer définitivement l'œuvre "${title}" ?`)) return;
-    await supabase.from("bibliotheque").delete().eq("id", id);
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const title = deleteTarget.title;
+    await supabase.from("bibliotheque").delete().eq("id", deleteTarget.id);
+    setDeleting(false);
+    setDeleteTarget(null);
     fetchLibrary();
+    showToast(`${title} supprimé`);
   };
 
   const handleSyncCovers = async () => {
@@ -364,7 +375,12 @@ export default function AdminBiblio() {
   const [syncingItemId,  setSyncingItemId]  = useState<string | null>(null);
 
   // ─── GARDE MOT DE PASSE ──────────────────────────────────────────────────────
-  if (checking) return null;
+  if (checking) return (
+    <div style={{ minHeight: "100vh", background: colors.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ width: 36, height: 36, borderRadius: "50%", border: "3px solid rgba(201,168,76,0.2)", borderTopColor: "#c9a84c", animation: "spin 0.7s linear infinite" }} />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
   
   if (!authed) {
     return (
@@ -476,6 +492,7 @@ export default function AdminBiblio() {
       }
 
       setSaveSuccess(true);
+      showToast("Ajouté à la bibliothèque !");
       setSelected(null); setResults([]); setQuery("");
       setFrenchSynopsis(""); setAvisGuilde(""); setTrailerUrl("");
       fetchLibrary();
@@ -507,36 +524,42 @@ export default function AdminBiblio() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: colors.bg, color: colors.textPrimary, fontFamily: font, padding: isMobile ? "32px 16px" : "60px 40px" }}>
+    <div style={{ minHeight: "100vh", background: colors.bg, color: colors.textPrimary, fontFamily: font }}>
       <style>{`
         input::placeholder, textarea::placeholder { color: ${colors.textMuted}; font-family: ${font}; }
         input:focus, textarea:focus { outline: 2px solid ${colors.goldGlow} !important; }
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
 
-      <div style={{ maxWidth: "800px", margin: "0 auto" }}>
-
-        {/* HEADER */}
-        <div style={{ marginBottom: "48px", display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "20px" }}>
-          <div>
-            <p style={{ ...typography.overline, marginBottom: "8px" }}>GUILDE OTAKU · ESPACE ADMIN</p>
-            <h1 style={{ fontSize: "clamp(40px,8vw,72px)", fontWeight: 900, fontStyle: "italic", lineHeight: 0.9, textTransform: "uppercase", marginBottom: "12px" }}>
-              GÉRER LA<br /><span style={{ color: colors.gold }}>BIBLIOTHÈQUE</span>
+      {/* ── STICKY TOP BAR ── */}
+      <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(5,5,8,0.95)", backdropFilter: "blur(14px)", position: "sticky", top: 0, zIndex: 50 }}>
+        <div style={{ maxWidth: 860, margin: "0 auto", padding: isMobile ? "14px 16px" : "16px 28px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+          <Link href="/admin" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)", flexShrink: 0, textDecoration: "none" }}>
+            <ChevronLeft size={18} />
+          </Link>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: 10, fontWeight: 800, color: colors.gold, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 2 }}>ADMIN · GUILDE OTAKU</p>
+            <h1 style={{ fontSize: "clamp(20px,3vw,30px)", fontWeight: 900, fontStyle: "italic", textTransform: "uppercase", lineHeight: 1 }}>
+              BIBLIO<span style={{ color: colors.gold }}>THÈQUE</span>
             </h1>
-            <p style={{ ...typography.body, maxWidth: "480px" }}>
-              Recherche HD via AniList ou Gestion des entrées existantes.
-            </p>
           </div>
-          
-          <div style={{ display: "flex", gap: "8px", background: colors.bgCard, padding: "6px", borderRadius: "12px", border: `1px solid ${colors.border}` }}>
-            <button onClick={() => setCurrentView("ADD")} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "10px 16px", borderRadius: "8px", border: "none", cursor: "pointer", fontFamily: font, fontWeight: 700, fontSize: "14px", background: currentView === "ADD" ? colors.gold : "transparent", color: currentView === "ADD" ? "#000" : colors.textSecondary }}>
-              <Search size={16} /> Ajouter
-            </button>
-            <button onClick={() => setCurrentView("MANAGE")} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "10px 16px", borderRadius: "8px", border: "none", cursor: "pointer", fontFamily: font, fontWeight: 700, fontSize: "14px", background: currentView === "MANAGE" ? colors.gold : "transparent", color: currentView === "MANAGE" ? "#000" : colors.textSecondary }}>
-              <List size={16} /> Gérer
-            </button>
+          <div style={{ display: "flex", gap: 6, background: "rgba(255,255,255,0.04)", padding: 4, borderRadius: 12, border: "1px solid rgba(255,255,255,0.07)" }}>
+            {([
+              { id: "ADD" as const, icon: <Search size={13} />, label: "AJOUTER" },
+              { id: "MANAGE" as const, icon: <List size={13} />, label: "GÉRER" },
+            ]).map(t => (
+              <button key={t.id} onClick={() => setCurrentView(t.id)}
+                style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 9, border: currentView === t.id ? `1px solid ${colors.goldBorder}` : "1px solid transparent", cursor: "pointer", fontFamily: font, fontWeight: 800, fontSize: 12, letterSpacing: "0.1em", background: currentView === t.id ? "rgba(201,168,76,0.15)" : "transparent", color: currentView === t.id ? colors.gold : "rgba(255,255,255,0.4)" }}>
+                {t.icon} {!isMobile && t.label}
+              </button>
+            ))}
           </div>
+          {currentView === "MANAGE" && <span style={{ fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.35)" }}>{libraryItems.length} œuvre{libraryItems.length !== 1 ? "s" : ""}</span>}
         </div>
+      </div>
+
+      <div style={{ maxWidth: "800px", margin: "0 auto", padding: isMobile ? "24px 16px 80px" : "32px 28px 80px" }}>
+
 
         {currentView === "MANAGE" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -595,10 +618,10 @@ export default function AdminBiblio() {
                         {!isMobile && <span>{syncingItemId === item.id ? "Sync..." : "Resync"}</span>}
                       </button>
                       <button
-                        onClick={() => handleDelete(item.id, item.title)}
+                        onClick={() => setDeleteTarget({ id: item.id, title: item.title })}
                         title={`Supprimer ${item.title}`}
                         aria-label={`Supprimer ${item.title}`}
-                        style={{ background: "rgba(248,113,113,0.1)", border: "none", borderRadius: "8px", padding: isMobile ? "10px" : "10px 12px", color: colors.danger, cursor: "pointer", display: "flex", alignItems: "center", gap: isMobile ? "0" : "6px", fontFamily: font, fontSize: "12px", fontWeight: 800 }}
+                        style={{ background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "8px", padding: isMobile ? "10px" : "10px 12px", color: colors.danger, cursor: "pointer", display: "flex", alignItems: "center", gap: isMobile ? "0" : "6px", fontFamily: font, fontSize: "12px", fontWeight: 800 }}
                       >
                         <Trash2 size={16} />
                         {!isMobile && <span>Supprimer</span>}
@@ -823,6 +846,48 @@ export default function AdminBiblio() {
         )}
 
       </div>
+
+      {/* ── DELETE CONFIRM MODAL ── */}
+      <AnimatePresence>
+        {deleteTarget && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => !deleting && setDeleteTarget(null)}
+              style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)", zIndex: 200 }}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.92, y: 16 }}
+              transition={{ type: "spring", stiffness: 300, damping: 28 }}
+              style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 201, width: "min(420px,92vw)", background: "#0d0d18", border: "1px solid rgba(248,113,113,0.25)", borderRadius: 20, padding: "32px 28px", textAlign: "center", boxShadow: "0 0 60px rgba(248,113,113,0.12), 0 24px 60px rgba(0,0,0,0.7)", fontFamily: font }}
+            >
+              <div style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.3)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
+                <AlertTriangle size={22} color="#f87171" />
+              </div>
+              <p style={{ fontSize: 11, fontWeight: 800, color: "#f87171", letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 8 }}>SUPPRESSION DÉFINITIVE</p>
+              <h3 style={{ fontSize: 22, fontWeight: 900, textTransform: "uppercase", fontStyle: "italic", marginBottom: 8, color: "#fff" }}>{deleteTarget.title}</h3>
+              <p style={{ fontSize: 14, color: "rgba(255,255,255,0.4)", marginBottom: 28, lineHeight: 1.5 }}>Cette œuvre sera retirée définitivement de la bibliothèque.</p>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button onClick={() => setDeleteTarget(null)} disabled={deleting} style={{ flex: 1, padding: 12, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, cursor: "pointer", color: "rgba(255,255,255,0.5)", fontFamily: font, fontSize: 14, fontWeight: 800, textTransform: "uppercase" }}>ANNULER</button>
+                <button onClick={confirmDelete} disabled={deleting} style={{ flex: 1, padding: 12, background: deleting ? "rgba(248,113,113,0.3)" : "#ef4444", border: "none", borderRadius: 12, cursor: deleting ? "not-allowed" : "pointer", color: "#fff", fontFamily: font, fontSize: 14, fontWeight: 900, textTransform: "uppercase" }}>
+                  {deleting ? "Suppression…" : "SUPPRIMER"}
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ── TOAST ── */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div initial={{ opacity: 0, y: 20, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 20, scale: 0.95 }} transition={{ type: "spring", stiffness: 400, damping: 28 }}
+            style={{ position: "fixed", bottom: 28, left: "50%", transform: "translateX(-50%)", zIndex: 9999, background: "#0d0d18", border: `1px solid ${colors.goldBorder}`, borderRadius: 14, padding: "12px 22px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 8px 32px rgba(0,0,0,0.6)", fontFamily: font, pointerEvents: "none", whiteSpace: "nowrap" }}
+          >
+            <Check size={16} color={colors.gold} />
+            <span style={{ fontSize: 14, fontWeight: 800, color: "#fff", letterSpacing: "0.03em" }}>{toast}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

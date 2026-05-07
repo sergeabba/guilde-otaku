@@ -3,18 +3,24 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../../lib/supabase";
-import GuildeHeader from "../components/GuildeHeader";
+import Link from "next/link";
 import { colors, typography, font } from "../../outputs/styles/tokens";
-import { Trash, Pencil, Plus, X, Globe } from "lucide-react";
+import { Trash, Pencil, Plus, X, Globe, Lock, ChevronLeft, AlertTriangle, Check } from "lucide-react";
 import { useAdminAuth } from "../hooks/useAdminAuth";
+import { useIsMobile } from "../hooks/useIsMobile";
 import type { SupabaseBonPlanRow } from "../types";
 
 export default function AdminBonsPlansPage() {
   const { authed: auth, checking, password, setPassword, login: checkAuth } = useAdminAuth();
+  const isMobile = useIsMobile();
   const [links, setLinks] = useState<SupabaseBonPlanRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; title: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
 
   // Formulaire d'édition
   const [formTitle, setFormTitle] = useState("");
@@ -60,10 +66,14 @@ export default function AdminBonsPlansPage() {
     setShowForm(true);
   };
 
-  const deleteLink = async (id: number, title: string) => {
-    if (!confirm(`Supprimer définitivement ${title} ?`)) return;
-    await supabase.from("bons_plans").delete().eq("id", id);
+  const confirmDeleteLink = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    await supabase.from("bons_plans").delete().eq("id", deleteTarget.id);
+    setDeleting(false);
+    setDeleteTarget(null);
     fetchLinks();
+    showToast(`${deleteTarget.title} supprimé`);
   };
 
   const saveLink = async (e: React.FormEvent) => {
@@ -88,12 +98,13 @@ export default function AdminBonsPlansPage() {
     }
 
     if (error) {
-      alert("Erreur sauvegarde : " + error.message);
+      showToast("Erreur : " + error.message);
       return;
     }
 
     setShowForm(false);
     fetchLinks();
+    showToast(editingId ? `${formTitle} modifié` : `${formTitle} ajouté`);
   };
 
   const migrateOldLinks = async () => {
@@ -121,68 +132,35 @@ export default function AdminBonsPlansPage() {
     }
   };
 
-  if (checking) return null;
+  if (checking) return (
+    <div style={{ minHeight: "100vh", background: colors.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ width: 36, height: 36, borderRadius: "50%", border: "3px solid rgba(201,168,76,0.2)", borderTopColor: "#c9a84c", animation: "spin 0.7s linear infinite" }} />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
 
   if (!auth) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: colors.bg,
-        }}
-      >
-        <form
-          onSubmit={checkAuth}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "10px",
-            background: colors.bgCard,
-            padding: "30px",
-            borderRadius: "20px",
-          }}
+      <div style={{ minHeight: "100vh", background: colors.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font }}>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <motion.div
+          initial={{ opacity: 0, y: 24, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          style={{ width: "min(420px,92vw)", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 24, padding: "48px 40px", textAlign: "center", boxShadow: "0 40px 80px rgba(0,0,0,0.5)" }}
         >
-          <h2
-            style={{
-              fontFamily: font,
-              color: "#fff",
-              textAlign: "center",
-              marginBottom: "20px",
-            }}
-          >
-            ADMIN BONS PLANS
-          </h2>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Mot de passe"
-            style={{
-              padding: "10px",
-              borderRadius: "8px",
-              border: `1px solid ${colors.border}`,
-              background: colors.bg,
-              color: "#fff",
-            }}
-            autoFocus
+          <div style={{ width: 64, height: 64, borderRadius: "50%", margin: "0 auto 28px", background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Lock size={26} color="#10b981" />
+          </div>
+          <p style={{ fontSize: 11, fontWeight: 800, color: "#10b981", letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: 8 }}>GUILDE OTAKU</p>
+          <h1 style={{ fontSize: "clamp(28px,6vw,38px)", fontWeight: 900, color: "#fff", textTransform: "uppercase", fontStyle: "italic", lineHeight: 1, marginBottom: 32 }}>BONS PLANS</h1>
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") checkAuth(e as any); }} placeholder="Mot de passe…" autoFocus
+            style={{ width: "100%", padding: "14px 16px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: "#fff", fontFamily: font, fontSize: 18, textAlign: "center", letterSpacing: "0.25em", outline: "none", marginBottom: 16, boxSizing: "border-box" }}
           />
-          <button
-            type="submit"
-            style={{
-              padding: "10px",
-              background: colors.gold,
-              borderRadius: "8px",
-              fontWeight: "bold",
-              border: "none",
-              cursor: "pointer",
-            }}
-          >
-            Accéder
+          <button onClick={(e) => checkAuth(e as any)} style={{ width: "100%", padding: 14, background: "linear-gradient(135deg, #10b981, #059669)", border: "none", borderRadius: 12, color: "#fff", fontFamily: font, fontSize: 16, fontWeight: 900, textTransform: "uppercase", cursor: "pointer", letterSpacing: "0.1em", boxShadow: "0 4px 20px rgba(16,185,129,0.3)" }}>
+            ENTRER
           </button>
-        </form>
+        </motion.div>
       </div>
     );
   }
@@ -199,68 +177,29 @@ export default function AdminBonsPlansPage() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: colors.bg,
-        color: colors.textPrimary,
-        fontFamily: font,
-        paddingBottom: "100px",
-      }}
-    >
-      <GuildeHeader activePage="bons-plans" />
+    <div style={{ minHeight: "100vh", background: colors.bg, color: colors.textPrimary, fontFamily: font }}>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
-      <main
-        style={{
-          maxWidth: "1200px",
-          margin: "120px auto 0",
-          padding: "0 24px",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "40px",
-          }}
-        >
-          <div>
-            <h1
-              style={{
-                fontFamily: font,
-                fontWeight: 900,
-                textTransform: "uppercase",
-                fontSize: "40px",
-                marginBottom: "8px",
-              }}
-            >
-              Archive Administrateur
+      {/* ── STICKY TOP BAR ── */}
+      <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(5,5,8,0.95)", backdropFilter: "blur(14px)", position: "sticky", top: 0, zIndex: 50 }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: isMobile ? "14px 16px" : "16px 28px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+          <Link href="/admin" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)", flexShrink: 0, textDecoration: "none" }}>
+            <ChevronLeft size={18} />
+          </Link>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: 10, fontWeight: 800, color: "#10b981", letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 2 }}>ADMIN · GUILDE OTAKU</p>
+            <h1 style={{ fontSize: "clamp(20px,3vw,30px)", fontWeight: 900, fontStyle: "italic", textTransform: "uppercase", lineHeight: 1 }}>
+              BONS <span style={{ color: "#10b981" }}>PLANS</span>
             </h1>
-            <p style={{ color: colors.textSecondary }}>
-              Gérez les bons plans de la Guilde. Streams, Scans, Outils de Hackers.
-            </p>
           </div>
-          <button
-            onClick={() => openForm()}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "12px 24px",
-              background: colors.gold,
-              color: "#000",
-              fontFamily: font,
-              fontWeight: 900,
-              borderRadius: "100px",
-              border: "none",
-              cursor: "pointer",
-              textTransform: "uppercase",
-            }}
-          >
-            <Plus size={18} /> Nouveau Bon Plan
+          <button onClick={() => openForm()} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 20px", background: "#10b981", border: "none", borderRadius: 12, cursor: "pointer", fontFamily: font, fontSize: 14, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.06em", color: "#000", boxShadow: "0 4px 16px rgba(16,185,129,0.35)", whiteSpace: "nowrap", flexShrink: 0 }}>
+            <Plus size={16} /> {!isMobile && "AJOUTER"}
           </button>
         </div>
+      </div>
+
+      <main style={{ maxWidth: "1200px", margin: "0 auto", padding: isMobile ? "24px 16px 80px" : "32px 28px 80px" }}>
+
 
         <div
           style={{
@@ -340,25 +279,15 @@ export default function AdminBonsPlansPage() {
                     <div style={{ display: "flex", gap: "8px" }}>
                       <button
                         onClick={() => openForm(link)}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          color: "#60a5fa",
-                          cursor: "pointer",
-                        }}
+                        style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, background: "rgba(96,165,250,0.1)", border: "1px solid rgba(96,165,250,0.2)", borderRadius: 8, color: "#60a5fa", cursor: "pointer" }}
                       >
-                        <Pencil size={18} />
+                        <Pencil size={15} />
                       </button>
                       <button
-                        onClick={() => deleteLink(link.id, link.title)}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          color: "#f87171",
-                          cursor: "pointer",
-                        }}
+                        onClick={() => setDeleteTarget({ id: link.id, title: link.title })}
+                        style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: 8, color: "#f87171", cursor: "pointer" }}
                       >
-                        <Trash size={18} />
+                        <Trash size={15} />
                       </button>
                     </div>
                   </div>
@@ -538,6 +467,48 @@ export default function AdminBonsPlansPage() {
                 </button>
               </form>
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── DELETE CONFIRM MODAL ── */}
+      <AnimatePresence>
+        {deleteTarget && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => !deleting && setDeleteTarget(null)}
+              style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)", zIndex: 200 }}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.92, y: 16 }}
+              transition={{ type: "spring", stiffness: 300, damping: 28 }}
+              style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 201, width: "min(400px,92vw)", background: "#0d0d18", border: "1px solid rgba(248,113,113,0.25)", borderRadius: 20, padding: "32px 28px", textAlign: "center", boxShadow: "0 0 60px rgba(248,113,113,0.12), 0 24px 60px rgba(0,0,0,0.7)", fontFamily: font }}
+            >
+              <div style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.3)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
+                <AlertTriangle size={22} color="#f87171" />
+              </div>
+              <p style={{ fontSize: 11, fontWeight: 800, color: "#f87171", letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 8 }}>SUPPRESSION DÉFINITIVE</p>
+              <h3 style={{ fontSize: 22, fontWeight: 900, textTransform: "uppercase", fontStyle: "italic", marginBottom: 8, color: "#fff" }}>{deleteTarget.title}</h3>
+              <p style={{ fontSize: 14, color: "rgba(255,255,255,0.4)", marginBottom: 28, lineHeight: 1.5 }}>Ce bon plan sera retiré définitivement de la liste.</p>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button onClick={() => setDeleteTarget(null)} disabled={deleting} style={{ flex: 1, padding: 12, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, cursor: "pointer", color: "rgba(255,255,255,0.5)", fontFamily: font, fontSize: 14, fontWeight: 800, textTransform: "uppercase" }}>ANNULER</button>
+                <button onClick={confirmDeleteLink} disabled={deleting} style={{ flex: 1, padding: 12, background: deleting ? "rgba(248,113,113,0.3)" : "#ef4444", border: "none", borderRadius: 12, cursor: deleting ? "not-allowed" : "pointer", color: "#fff", fontFamily: font, fontSize: 14, fontWeight: 900, textTransform: "uppercase" }}>
+                  {deleting ? "Suppression…" : "SUPPRIMER"}
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ── TOAST ── */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div initial={{ opacity: 0, y: 20, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 20, scale: 0.95 }} transition={{ type: "spring", stiffness: 400, damping: 28 }}
+            style={{ position: "fixed", bottom: 28, left: "50%", transform: "translateX(-50%)", zIndex: 9999, background: "#0d0d18", border: "1px solid rgba(201,168,76,0.4)", borderRadius: 14, padding: "12px 22px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 8px 32px rgba(0,0,0,0.6)", fontFamily: font, pointerEvents: "none", whiteSpace: "nowrap" }}
+          >
+            <Check size={16} color="#c9a84c" />
+            <span style={{ fontSize: 14, fontWeight: 800, color: "#fff", letterSpacing: "0.03em" }}>{toast}</span>
           </motion.div>
         )}
       </AnimatePresence>

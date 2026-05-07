@@ -5,9 +5,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { useAdminAuth } from "../hooks/useAdminAuth";
 import { getAdminHeaders, getAdminFormDataHeaders } from "../../lib/admin-fetch";
+import Link from "next/link";
 import {
   Search, Plus, Trash2, Eye, EyeOff, Film, Loader2, Lock,
-  Calendar, X, Check, Star, Clock, Trophy,
+  Calendar, X, Check, Star, Clock, Trophy, ChevronLeft, AlertTriangle,
 } from "lucide-react";
 
 const font = "'Barlow Condensed', sans-serif";
@@ -93,7 +94,6 @@ export default function AdminFilmSemainePage() {
   const [fetchingDetails, setFetchingDetails] = useState(false);
   const [weekDate, setWeekDate] = useState(getMonday(new Date()));
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
   const isMobile = useIsMobile();
 
@@ -152,7 +152,6 @@ export default function AdminFilmSemainePage() {
   const addFilm = async () => {
     if (!selectedMovie) return;
     setSaving(true);
-    setMessage(null);
     try {
       const r = await fetch("/api/film-semaine", {
         method: "POST",
@@ -177,26 +176,18 @@ export default function AdminFilmSemainePage() {
       });
       const d = await r.json();
       if (d.error) throw new Error(d.error);
-      setMessage({ type: "ok", text: `"${selectedMovie.title}" ajouté !` });
+      showToast(`"${selectedMovie.title}" ajouté !`);
       setSelectedMovie(null);
       setSearchQ("");
       setSearchResults([]);
       loadFilms();
     } catch (e: any) {
-      setMessage({ type: "err", text: e.message ?? "Erreur" });
+      showToast(e.message ?? "Erreur");
     } finally {
       setSaving(false);
     }
   };
 
-  const deleteFilm = async (id: number) => {
-    if (!confirm("Supprimer ce film ?")) return;
-    try {
-      await fetch(`/api/film-semaine?id=${id}`, { method: "DELETE", headers: getAdminHeaders() });
-      loadFilms();
-    } catch {
-    }
-  };
 
   const toggleWatched = async (film: FilmEntry) => {
     try {
@@ -233,83 +224,42 @@ export default function AdminFilmSemainePage() {
     }
   };
 
+  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirm) return;
+    setDeleting(true);
+    try {
+      await fetch(`/api/film-semaine?id=${deleteConfirm}`, { method: "DELETE", headers: getAdminHeaders() });
+      loadFilms();
+      setDeleteConfirm(null);
+      showToast("Film supprimé");
+    } catch { } finally { setDeleting(false); }
+  };
+
   if (!auth) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          background: colors.bg,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontFamily: font,
-        }}
-      >
+      <div style={{ minHeight: "100vh", background: colors.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font }}>
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          style={{
-            background: colors.bgCard,
-            border: `1px solid ${colors.border}`,
-            borderRadius: "24px",
-            padding: "40px",
-            width: "min(400px, 90vw)",
-            textAlign: "center",
-          }}
+          initial={{ opacity: 0, y: 24, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          style={{ width: "min(420px,92vw)", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 24, padding: "48px 40px", textAlign: "center", boxShadow: "0 40px 80px rgba(0,0,0,0.5)" }}
         >
-          <Lock size={40} color={accent} style={{ marginBottom: "20px" }} />
-          <h2
-            style={{
-              fontFamily: font,
-              fontSize: "28px",
-              fontWeight: 900,
-              color: colors.textPrimary,
-              textTransform: "uppercase",
-              marginBottom: "16px",
-            }}
-          >
-            Admin Film de la Semaine
-          </h2>
-          <input
-            type="password"
-            placeholder="Mot de passe"
-            value={pw}
-            onChange={(e) => setPw(e.target.value)}
-              onKeyDown={(e) => {
-              if (e.key === "Enter") login();
-            }}
-            style={{
-              width: "100%",
-              padding: "12px 16px",
-              background: colors.bgCard,
-              border: `1px solid ${colors.border}`,
-              borderRadius: "10px",
-              color: colors.textPrimary,
-              fontFamily: font,
-              fontSize: "16px",
-              outline: "none",
-              marginBottom: "16px",
-              boxSizing: "border-box",
-            }}
+          <div style={{ width: 64, height: 64, borderRadius: "50%", margin: "0 auto 28px", background: `${accent}12`, border: `1px solid ${accent}40`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Lock size={26} color={accent} />
+          </div>
+          <p style={{ fontSize: 11, fontWeight: 800, color: accent, letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: 8 }}>GUILDE OTAKU</p>
+          <h1 style={{ fontSize: "clamp(28px,6vw,38px)", fontWeight: 900, color: "#fff", textTransform: "uppercase", fontStyle: "italic", lineHeight: 1, marginBottom: 32 }}>FILM DE LA SEMAINE</h1>
+          <input type="password" placeholder="Mot de passe…" value={pw} onChange={(e) => setPw(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") login(); }} autoFocus
+            style={{ width: "100%", padding: "14px 16px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: "#fff", fontFamily: font, fontSize: 18, textAlign: "center", letterSpacing: "0.25em", outline: "none", marginBottom: 16, boxSizing: "border-box" }}
           />
-        <button
-          onClick={() => login()}
-          style={{
-              width: "100%",
-              padding: "12px",
-              background: accent,
-              border: "none",
-              borderRadius: "10px",
-              color: "#fff",
-              fontFamily: font,
-              fontSize: "16px",
-              fontWeight: 900,
-              textTransform: "uppercase",
-              cursor: "pointer",
-              letterSpacing: "0.1em",
-            }}
-          >
-            Accéder
+          <button onClick={() => login()} style={{ width: "100%", padding: 14, background: `linear-gradient(135deg, ${accent}, #8c0008)`, border: "none", borderRadius: 12, color: "#fff", fontFamily: font, fontSize: 16, fontWeight: 900, textTransform: "uppercase", cursor: "pointer", letterSpacing: "0.1em", boxShadow: `0 4px 20px ${accent}40` }}>
+            ENTRER
           </button>
         </motion.div>
       </div>
@@ -317,81 +267,28 @@ export default function AdminFilmSemainePage() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: colors.bg,
-        color: colors.textPrimary,
-        fontFamily: font,
-      }}
-    >
-      <div
-        style={{
-          maxWidth: "1000px",
-          margin: "0 auto",
-          padding: isMobile ? "20px 16px 80px" : "40px 32px 80px",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            marginBottom: "40px",
-          }}
-        >
-          <Film size={24} color={accent} />
-          <h1
-            style={{
-              fontSize: "28px",
-              fontWeight: 900,
-              textTransform: "uppercase",
-              letterSpacing: "0.02em",
-            }}
-          >
-            Admin — Film de la Semaine
-          </h1>
-        </div>
+    <div style={{ minHeight: "100vh", background: colors.bg, color: colors.textPrimary, fontFamily: font }}>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
-        {message && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            style={{
-              padding: "12px 16px",
-              borderRadius: "10px",
-              marginBottom: "20px",
-              background:
-                message.type === "ok"
-                  ? "rgba(34,197,94,0.1)"
-                  : "rgba(248,113,113,0.1)",
-              border:
-                message.type === "ok"
-                  ? "1px solid rgba(34,197,94,0.3)"
-                  : "1px solid rgba(248,113,113,0.3)",
-              color: message.type === "ok" ? "#22c55e" : "#f87171",
-              fontFamily: font,
-              fontSize: "14px",
-              fontWeight: 700,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            {message.text}
-            <button
-              onClick={() => setMessage(null)}
-              style={{
-                background: "none",
-                border: "none",
-                color: "inherit",
-                cursor: "pointer",
-              }}
-            >
-              <X size={16} />
-            </button>
-          </motion.div>
-        )}
+      {/* ── STICKY TOP BAR ── */}
+      <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(5,5,5,0.95)", backdropFilter: "blur(14px)", position: "sticky", top: 0, zIndex: 50 }}>
+        <div style={{ maxWidth: 1000, margin: "0 auto", padding: isMobile ? "14px 16px" : "16px 28px", display: "flex", alignItems: "center", gap: 16 }}>
+          <Link href="/admin" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)", flexShrink: 0, textDecoration: "none" }}>
+            <ChevronLeft size={18} />
+          </Link>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: 10, fontWeight: 800, color: accent, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 2 }}>ADMIN · GUILDE OTAKU</p>
+            <h1 style={{ fontSize: "clamp(20px,3vw,30px)", fontWeight: 900, fontStyle: "italic", textTransform: "uppercase", lineHeight: 1 }}>
+              FILM DE LA <span style={{ color: accent }}>SEMAINE</span>
+            </h1>
+          </div>
+          <span style={{ fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.35)" }}>{films.length} film{films.length !== 1 ? "s" : ""}</span>
+        </div>
+      </div>
+
+      <div style={{ maxWidth: "1000px", margin: "0 auto", padding: isMobile ? "24px 16px 80px" : "32px 28px 80px" }}>
+
+
 
         <section
           style={{
@@ -965,15 +862,8 @@ export default function AdminFilmSemainePage() {
                     )}
                   </button>
                   <button
-                    onClick={() => deleteFilm(film.id)}
-                    style={{
-                      background: "rgba(248,113,113,0.08)",
-                      border: "1px solid rgba(248,113,113,0.15)",
-                      borderRadius: "8px",
-                      padding: "6px",
-                      cursor: "pointer",
-                      color: "#f87171",
-                    }}
+                    onClick={() => setDeleteConfirm(film.id)}
+                    style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.15)", borderRadius: "8px", padding: "6px 10px", cursor: "pointer", color: "#f87171", display: "flex", alignItems: "center" }}
                   >
                     <Trash2 size={14} />
                   </button>
@@ -987,6 +877,47 @@ export default function AdminFilmSemainePage() {
           )}
         </section>
       </div>
+
+      {/* ── DELETE CONFIRM MODAL ── */}
+      <AnimatePresence>
+        {deleteConfirm !== null && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => !deleting && setDeleteConfirm(null)}
+              style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)", zIndex: 200 }}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.92, y: 16 }}
+              transition={{ type: "spring", stiffness: 300, damping: 28 }}
+              style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 201, width: "min(400px,92vw)", background: "#0d0d18", border: "1px solid rgba(248,113,113,0.25)", borderRadius: 20, padding: "32px 28px", textAlign: "center", boxShadow: "0 0 60px rgba(248,113,113,0.12), 0 24px 60px rgba(0,0,0,0.7)" }}
+            >
+              <div style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.3)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
+                <AlertTriangle size={22} color="#f87171" />
+              </div>
+              <p style={{ fontSize: 11, fontWeight: 800, color: "#f87171", letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 8 }}>SUPPRESSION DÉFINITIVE</p>
+              <p style={{ fontSize: 14, color: "rgba(255,255,255,0.4)", marginBottom: 28, lineHeight: 1.5 }}>Ce film sera retiré définitivement de la liste.</p>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button onClick={() => setDeleteConfirm(null)} disabled={deleting} style={{ flex: 1, padding: 12, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, cursor: "pointer", color: "rgba(255,255,255,0.5)", fontFamily: font, fontSize: 14, fontWeight: 800, textTransform: "uppercase" }}>ANNULER</button>
+                <button onClick={confirmDelete} disabled={deleting} style={{ flex: 1, padding: 12, background: deleting ? "rgba(248,113,113,0.3)" : "#ef4444", border: "none", borderRadius: 12, cursor: deleting ? "not-allowed" : "pointer", color: "#fff", fontFamily: font, fontSize: 14, fontWeight: 900, textTransform: "uppercase" }}>
+                  {deleting ? "Suppression…" : "SUPPRIMER"}
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ── TOAST ── */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div initial={{ opacity: 0, y: 20, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 20, scale: 0.95 }} transition={{ type: "spring", stiffness: 400, damping: 28 }}
+            style={{ position: "fixed", bottom: 28, left: "50%", transform: "translateX(-50%)", zIndex: 9999, background: "#0d0d18", border: "1px solid rgba(201,168,76,0.4)", borderRadius: 14, padding: "12px 22px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 8px 32px rgba(0,0,0,0.6)", fontFamily: font, pointerEvents: "none", whiteSpace: "nowrap" }}
+          >
+            <Check size={16} color="#c9a84c" />
+            <span style={{ fontSize: 14, fontWeight: 800, color: "#fff", letterSpacing: "0.03em" }}>{toast}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import {
   Upload, X, Trash2, Loader2, Image as ImageIcon,
-  Lock, Check, ArrowLeft, Plus, Pencil, Palette
+  Lock, Check, ChevronLeft, Plus, Pencil, Palette
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -170,50 +170,74 @@ export default function AdminAtelier() {
     setSaving(false);
   };
 
-  if (checking) return null;
+  if (checking) return (
+    <div style={{ minHeight: "100vh", background: colors.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ width: 36, height: 36, borderRadius: "50%", border: "3px solid rgba(201,168,76,0.2)", borderTopColor: "#c9a84c", animation: "spin 0.7s linear infinite" }} />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
 
   if (!authed) {
     return (
-       <div style={{ minHeight: "100vh", background: colors.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font }}>
+      <motion.div
+        initial={{ opacity: 0, y: 24, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        style={{ minHeight: "100vh", background: colors.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font }}
+      >
         <div style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: "20px", padding: "48px 40px", width: "min(400px, 90vw)", textAlign: "center" }}>
           <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: "rgba(201,168,76,0.1)", border: `1px solid ${colors.goldBorder}`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px" }}>
             <Lock size={24} color={colors.gold} />
           </div>
           <h1 style={{ fontSize: "32px", fontWeight: 900, color: colors.textPrimary, textTransform: "uppercase", fontStyle: "italic", lineHeight: 1, marginBottom: "32px" }}>ACCÈS ATELIER</h1>
-        <input
-        type="password"
-        value={pwInput}
-        onChange={e => setPwInput(e.target.value)}
-        onKeyDown={e => { if (e.key === "Enter") login(); }}
-        placeholder="Mot de passe..."
-        style={{ width: "100%", padding: "14px 16px", background: colors.bgCard, border: `1px solid ${pwError ? colors.danger : colors.border}`, borderRadius: "10px", color: colors.textPrimary, fontFamily: font, fontSize: "18px", textAlign: "center", outline: "none", marginBottom: "12px", boxSizing: "border-box" }}
-        />
-        {pwError && <p style={{ color: colors.danger, fontSize: "13px", fontWeight: 700, marginBottom: "12px" }}>Incorrect</p>}
-        <button onClick={() => login()}
+          <input
+            type="password"
+            value={pwInput}
+            onChange={e => setPwInput(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter") login(); }}
+            placeholder="Mot de passe..."
+            style={{ width: "100%", padding: "14px 16px", background: colors.bgCard, border: `1px solid ${pwError ? colors.danger : colors.border}`, borderRadius: "10px", color: colors.textPrimary, fontFamily: font, fontSize: "18px", textAlign: "center", outline: "none", marginBottom: "12px", boxSizing: "border-box" }}
+          />
+          {pwError && <p style={{ color: colors.danger, fontSize: "13px", fontWeight: 700, marginBottom: "12px" }}>Incorrect</p>}
+          <button onClick={() => login()}
             style={{ width: "100%", padding: "14px", background: colors.gold, border: "none", borderRadius: "10px", color: "#000", fontFamily: font, fontWeight: 900, cursor: "pointer" }}>
             ENTRER
           </button>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: colors.bg, color: colors.textPrimary, fontFamily: font, padding: "60px 20px" }}>
-      <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
-        
-        {/* Header */}
-        <div style={{ marginBottom: "60px", display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "20px" }}>
-          <div>
-            <Link href="/admin" style={{ display: "flex", alignItems: "center", gap: "8px", color: colors.gold, textDecoration: "none", fontSize: "14px", fontWeight: 700, marginBottom: "16px" }}>
-              <ArrowLeft size={16} /> RETOUR AU HUB
-            </Link>
-            <h1 style={{ fontSize: "clamp(40px, 8vw, 64px)", fontWeight: 900, fontStyle: "italic", textTransform: "uppercase", lineHeight: 0.9, marginBottom: "8px" }}>
-              GESTION <span style={{ color: colors.gold }}>ATELIER</span>
+    <div style={{ minHeight: "100vh", background: colors.bg, color: colors.textPrimary, fontFamily: font }}>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+
+      {/* STICKY TOP BAR */}
+      <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(5,5,8,0.95)", backdropFilter: "blur(14px)", position: "sticky", top: 0, zIndex: 50 }}>
+        <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "16px 28px", display: "flex", alignItems: "center", gap: 16 }}>
+          <Link href="/admin" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)", flexShrink: 0, textDecoration: "none" }}>
+            <ChevronLeft size={18} />
+          </Link>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: 10, fontWeight: 800, color: colors.gold, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 2 }}>ADMIN · GUILDE OTAKU</p>
+            <h1 style={{ fontSize: "clamp(20px,3vw,30px)", fontWeight: 900, fontStyle: "italic", textTransform: "uppercase", lineHeight: 1, color: "#fff" }}>
+              ATELIER <span style={{ color: colors.gold }}>VISUEL</span>
             </h1>
-            <p style={{ color: colors.textSecondary, fontSize: "18px" }}>Personnalisez les descriptions, noms et prompts de vos œuvres.</p>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {dbStatus === "connected" && (
+              <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.2)", borderRadius: 100 }}>
+                <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#34d399", boxShadow: "0 0 8px #34d399" }} />
+                <span style={{ fontSize: 11, fontWeight: 700, color: "#34d399", letterSpacing: "0.1em" }}>DB OK</span>
+              </div>
+            )}
+            <span style={{ fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.35)" }}>{images.length} œuvre{images.length !== 1 ? "s" : ""}</span>
           </div>
         </div>
+      </div>
+
+      {/* CONTENT */}
+      <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "40px 28px 80px" }}>
 
         {/* Zone SQL Alert - Visible only if DB error */}
         {dbStatus === "error" && (
@@ -265,15 +289,6 @@ export default function AdminAtelier() {
             >
               Copier le SQL
             </button>
-          </div>
-        )}
-
-        {dbStatus === "connected" && (
-          <div style={{ background: "rgba(52,211,153,0.05)", border: `1px solid rgba(52,211,153,0.2)`, borderRadius: "16px", padding: "12px 20px", marginBottom: "32px", display: "flex", gap: "12px", alignItems: "center" }}>
-            <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#34d399", boxShadow: "0 0 10px #34d399" }} />
-            <p style={{ fontSize: "13px", color: "#34d399", margin: 0, fontWeight: 600 }}>
-              Base de données connectée. La table 'atelier' est prête.
-            </p>
           </div>
         )}
 
