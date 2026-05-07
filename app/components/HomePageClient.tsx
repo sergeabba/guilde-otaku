@@ -89,10 +89,13 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
           }}
         >
           {["Tous", ...Object.keys(rankLogos)].map((rank) => (
-            <button
+            <motion.button
               key={rank}
               onClick={() => setActiveRank(rank as Rank | "Tous")}
               aria-pressed={activeRank === rank}
+              whileHover={{ scale: 1.07, y: -2 }}
+              whileTap={{ scale: 0.93 }}
+              transition={{ type: "spring", stiffness: 450, damping: 22 }}
               style={{
                 flexShrink: 0,
                 display: "flex",
@@ -104,7 +107,7 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
                 background: activeRank === rank ? `${accent}20` : "transparent",
                 color: activeRank === rank ? accent : (isDark ? "#888" : "#555"),
                 cursor: "pointer",
-                transition: "0.3s",
+                transition: "background 0.3s, border-color 0.3s, color 0.3s",
                 whiteSpace: "nowrap",
               }}
             >
@@ -118,7 +121,7 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
               <span style={{ fontWeight: 900, fontSize: isMobile ? "14px" : "17px", letterSpacing: "0.05em" }}>
                 {rank.toUpperCase()}
               </span>
-            </button>
+            </motion.button>
           ))}
         </motion.div>
         {/* fade mask droite — signale le scroll */}
@@ -236,12 +239,21 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
                 if (rankMembers.length === 0) return null;
 
                 return (
-                  <section key={rank} style={{ marginBottom: isMobile ? "60px" : "80px" }}>
+                  <motion.section
+                    key={rank}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-60px" }}
+                    transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+                    style={{ marginBottom: isMobile ? "60px" : "80px" }}
+                  >
                     <div style={{ display: "flex", alignItems: "center", gap: isMobile ? "15px" : "20px", marginBottom: "30px" }}>
-                      <img
+                      <motion.img
                         src={rankLogos[rank as Rank]}
                         style={{ height: isMobile ? "50px" : "70px", objectFit: "contain" }}
                         alt=""
+                        whileHover={{ scale: 1.15, rotate: -5 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 15 }}
                       />
                       <h3 style={{ fontSize: isMobile ? "24px" : "32px", fontWeight: 900, fontStyle: "italic", color: rankAccents[rank as Rank] }}>
                         {rank.toUpperCase()}
@@ -265,7 +277,7 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
                         />
                       ))}
                     </div>
-                  </section>
+                  </motion.section>
                 );
               })}
             </motion.div>
@@ -301,9 +313,11 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
         }}
       >
         {(["real", "anime"] as ViewMode[]).map((mode) => (
-          <button
+          <motion.button
             key={mode}
             onClick={() => setViewMode(mode)}
+            whileTap={{ scale: 0.93 }}
+            transition={{ type: "spring", stiffness: 500, damping: 25 }}
             style={{
               padding: isMobile ? "10px 20px" : "12px 28px",
               borderRadius: "100px",
@@ -325,7 +339,7 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
           >
             {mode === "real" ? <User size={isMobile ? 16 : 18} /> : <Sword size={isMobile ? 16 : 18} />}
             {mode === "real" ? "Réel" : "Anime"}
-          </button>
+          </motion.button>
         ))}
       </motion.div>
 

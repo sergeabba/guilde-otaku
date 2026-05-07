@@ -56,6 +56,11 @@ function TiltWrapper({ children }: { children: React.ReactNode }) {
 
 export function ChroniqueBanner({ isMobile, isDark, theme }: { isMobile?: boolean, isDark: boolean, theme: any }) {
   return (
+    <motion.div
+      initial={{ opacity: 0, y: 32 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.7, delay: 0.55, ease: [0.16, 1, 0.3, 1] }}
+    >
     <Link href="/bibliotheque" style={{ textDecoration: "none", display: "block", marginBottom: "24px" }}>
       <TiltWrapper>
         <div style={{
@@ -102,11 +107,17 @@ export function ChroniqueBanner({ isMobile, isDark, theme }: { isMobile?: boolea
         </div>
       </TiltWrapper>
     </Link>
+    </motion.div>
   );
 }
 
 export function AtelierBanner({ isMobile, isDark, theme, accent }: { isMobile?: boolean, isDark: boolean, theme: any, accent: string }) {
   return (
+    <motion.div
+      initial={{ opacity: 0, y: 32 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.7, delay: 0.7, ease: [0.16, 1, 0.3, 1] }}
+    >
     <Link href="/atelier" style={{ textDecoration: "none", display: "block", marginBottom: isMobile ? "40px" : "60px" }}>
       <TiltWrapper>
         <div style={{
@@ -151,5 +162,6 @@ export function AtelierBanner({ isMobile, isDark, theme, accent }: { isMobile?: 
         </div>
       </TiltWrapper>
     </Link>
+    </motion.div>
   );
 }

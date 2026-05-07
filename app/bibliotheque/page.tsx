@@ -386,10 +386,16 @@ export default function BibliothequePage() {
             {/* Catégories */}
             <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
               {CATEGORIES.map((cat) => (
-                <button key={cat} onClick={() => setActiveCategory(cat)}
-                  style={filterPillStyle(activeCategory === cat)}>
+                <motion.button
+                  key={cat}
+                  onClick={() => setActiveCategory(cat)}
+                  whileHover={{ scale: 1.07, y: -2 }}
+                  whileTap={{ scale: 0.93 }}
+                  transition={{ type: "spring", stiffness: 450, damping: 22 }}
+                  style={filterPillStyle(activeCategory === cat)}
+                >
                   {cat}
-                </button>
+                </motion.button>
               ))}
             </div>
           </motion.div>

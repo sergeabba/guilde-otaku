@@ -134,8 +134,8 @@ function HeroSection({ film, onTrailer }: { film: FilmEntry; onTrailer: () => vo
             <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
               {film.trailer_key && (
                 <motion.button
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.97 }}
+                  whileHover={{ scale: 1.04, boxShadow: "0 12px 40px rgba(229,9,20,0.5)" }}
+                  whileTap={{ scale: 0.96 }}
                   onClick={onTrailer}
                   style={{ display: "flex", alignItems: "center", gap: "10px", padding: "14px 28px", background: "#e50914", border: "none", borderRadius: "4px", fontFamily: font, fontSize: "14px", fontWeight: 900, color: "#fff", textTransform: "uppercase", letterSpacing: "0.12em", cursor: "pointer", boxShadow: "0 8px 30px rgba(229,9,20,0.35)" }}
                 >
@@ -442,7 +442,13 @@ export default function FilmSemainePage() {
           )}
 
           {weeks.length > 1 && (
-            <section style={{ maxWidth: "1100px", margin: "0 auto", padding: isMobile ? "56px 24px 80px" : "80px 48px 100px" }}>
+            <motion.section
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+              style={{ maxWidth: "1100px", margin: "0 auto", padding: isMobile ? "56px 24px 80px" : "80px 48px 100px" }}
+            >
               <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "36px" }}>
                 <div style={{ width: "3px", height: "28px", background: "rgba(255,255,255,0.08)", borderRadius: "2px" }} />
                 <h2 style={{ fontFamily: font, fontSize: "20px", fontWeight: 800, color: "rgba(255,255,255,0.25)", textTransform: "uppercase", fontStyle: "italic", letterSpacing: "0.04em" }}>
@@ -450,12 +456,19 @@ export default function FilmSemainePage() {
                 </h2>
                 <div style={{ flex: 1, height: "1px", background: "linear-gradient(90deg, rgba(255,255,255,0.05), transparent)" }} />
               </div>
-              {weeks.slice(1).map(([weekLabel, weekFilms]) => {
+              {weeks.slice(1).map(([weekLabel, weekFilms], weekIdx) => {
                 const isExpanded = expandedWeeks.has(weekLabel);
                 const weekChosen = weekFilms.find((f: FilmEntry) => f.chosen);
                 const weekOthers = weekFilms.filter((f: FilmEntry) => !f.chosen);
                 return (
-                  <div key={weekLabel} style={{ marginBottom: "28px" }}>
+                  <motion.div
+                    key={weekLabel}
+                    initial={{ opacity: 0, y: 16 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-40px" }}
+                    transition={{ duration: 0.45, delay: weekIdx * 0.06, ease: [0.16, 1, 0.3, 1] }}
+                    style={{ marginBottom: "28px" }}
+                  >
                     <button onClick={() => toggleWeek(weekLabel)} style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", marginBottom: "14px", paddingBottom: "12px", borderBottom: "1px solid rgba(255,255,255,0.04)", background: "none", borderLeft: "none", borderRight: "none", borderTop: "none", cursor: "pointer", padding: "0" }}>
                       <h3 style={{ fontFamily: font, fontSize: "18px", fontWeight: 800, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", fontStyle: "italic" }}>{weekLabel}</h3>
                       <span style={{ fontFamily: font, fontSize: "11px", color: "rgba(255,255,255,0.15)", fontWeight: 600 }}>{weekFilms.length} films</span>
@@ -486,10 +499,10 @@ export default function FilmSemainePage() {
                         </motion.div>
                       )}
                     </AnimatePresence>
-                  </div>
+                  </motion.div>
                 );
               })}
-            </section>
+            </motion.section>
           )}
         </div>
       )}

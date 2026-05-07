@@ -10,7 +10,7 @@ import type { SupabaseBonPlanRow } from "../types";
 const categories = ["Tout", "Animes", "Scans", "Films/Séries", "Utiles"];
 
 // ─── COMPOSANT DE CARTE DE BON PLAN ──────────────────────────────────────────
-const LinkCard = ({ link }: { link: SupabaseBonPlanRow }) => {
+const LinkCard = ({ link, index }: { link: SupabaseBonPlanRow; index: number }) => {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(true);
 
@@ -60,10 +60,12 @@ const LinkCard = ({ link }: { link: SupabaseBonPlanRow }) => {
       target="_blank"
       rel="noopener noreferrer"
       layout
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
+      initial={{ opacity: 0, y: 24, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ duration: 0.4 }}
+      transition={{ duration: 0.5, delay: index * 0.06, ease: [0.16, 1, 0.3, 1] }}
+      whileHover={{ y: -6 }}
+      whileTap={{ scale: 0.98 }}
       style={{
         background: "rgba(15, 15, 20, 0.4)",
         border: "1px solid rgba(255,255,255,0.08)",
@@ -76,16 +78,6 @@ const LinkCard = ({ link }: { link: SupabaseBonPlanRow }) => {
         position: "relative",
         cursor: "pointer",
         minHeight: "360px"
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = link.color;
-        e.currentTarget.style.transform = "translateY(-6px)";
-        e.currentTarget.style.boxShadow = `0 20px 40px -10px ${link.color}40`;
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
-        e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow = "none";
       }}
     >
       {/* Ligne Accent en Haut */}
@@ -196,14 +188,24 @@ export default function BonsPlansClient({ initialLinks }: { initialLinks: Supaba
       <GuildeHeader activePage="bons-plans" />
 
       <main style={{ flex: 1, padding: "40px 5%", position: "relative", zIndex: 10, maxWidth: "1400px", margin: "0 auto", width: "100%" }}>
-        
+
         <div style={{ textAlign: "center", marginBottom: "50px" }}>
-          <h1 style={{ fontSize: "clamp(40px, 8vw, 80px)", fontWeight: 900, color: "#fff", textTransform: "uppercase", letterSpacing: "0.02em", lineHeight: 1 }}>
+          <motion.h1
+            initial={{ opacity: 0, y: 28, filter: "blur(8px)" }}
+            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+            style={{ fontSize: "clamp(40px, 8vw, 80px)", fontWeight: 900, color: "#fff", textTransform: "uppercase", letterSpacing: "0.02em", lineHeight: 1 }}
+          >
             LES BONS PLANS <span style={{ color: "#c9a84c", fontStyle: "italic" }}>OTAKU</span>
-          </h1>
-          <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "18px", letterSpacing: "0.1em", marginTop: "16px", marginBottom: "40px" }}>
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            style={{ color: "rgba(255,255,255,0.5)", fontSize: "18px", letterSpacing: "0.1em", marginTop: "16px", marginBottom: "40px" }}
+          >
             LES ARCHIVES SECRÈTES DE LA GUILDE : STREAMS, SCANS ET EXCLUSIVITÉS.
-          </p>
+          </motion.p>
 
           <div style={{ display: "flex", justifyContent: "center" }}>
             <div style={{ display: "flex", alignItems: "center", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "100px", padding: "12px 24px", width: "min(400px, 100%)", transition: "all 0.3s" }}>
@@ -216,11 +218,19 @@ export default function BonsPlansClient({ initialLinks }: { initialLinks: Supaba
           </div>
         </div>
 
-        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "12px", marginBottom: "50px" }}>
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "12px", marginBottom: "50px" }}
+        >
           {categories.map((cat) => (
-            <button
+            <motion.button
               key={cat}
               onClick={() => setActiveCategory(cat)}
+              whileHover={{ scale: 1.06, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 400, damping: 20 }}
               style={{
                 background: activeCategory === cat ? "#c9a84c" : "rgba(255,255,255,0.02)",
                 color: activeCategory === cat ? "#000" : "rgba(255,255,255,0.6)",
@@ -228,20 +238,18 @@ export default function BonsPlansClient({ initialLinks }: { initialLinks: Supaba
                 borderColor: activeCategory === cat ? "#c9a84c" : "rgba(255,255,255,0.1)",
                 padding: "10px 24px", borderRadius: "100px", cursor: "pointer",
                 fontFamily: "'Barlow Condensed', sans-serif", fontSize: "16px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em",
-                transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
                 boxShadow: activeCategory === cat ? "0 4px 15px rgba(201, 168, 76, 0.3)" : "none",
-                transform: activeCategory === cat ? "translateY(-2px)" : "none"
               }}
             >
               {cat}
-            </button>
+            </motion.button>
           ))}
-        </div>
+        </motion.div>
 
         <motion.div layout style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "24px" }}>
           <AnimatePresence mode="popLayout">
-            {filteredLinks.map((link) => (
-              <LinkCard key={link.id} link={link} />
+            {filteredLinks.map((link, i) => (
+              <LinkCard key={link.id} link={link} index={i} />
             ))}
           </AnimatePresence>
         </motion.div>
