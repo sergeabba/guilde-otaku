@@ -8,6 +8,7 @@ import { Dices, Swords, Flame, Shield, Wind } from "lucide-react";
 
 import type { ViewMode } from "../types";
 import { supabase } from "../../lib/supabase";
+import VideoPlayer from "../components/VideoPlayer";
 
 /* ─── Sound Manager ─── */
 type HowlInstance = { play: () => void };
@@ -461,7 +462,9 @@ function FightIntro({ p1, p2, mode, onFinish }: { p1: Member; p2: Member; mode: 
               {(vid(p1, mode) || img(p1, mode)) && (
                 <div className="absolute inset-0 flex items-end justify-center">
                   {vid(p1, mode) ? (
-                    <video src={vid(p1, mode)} autoPlay loop muted playsInline style={{ width: "80%", height: "90%", objectFit: "contain", objectPosition: "bottom", filter: `drop-shadow(0 0 50px ${c1.glow})` }} />
+                    <div style={{ width: "80%", height: "90%", filter: `drop-shadow(0 0 50px ${c1.glow})` }}>
+                      <VideoPlayer src={vid(p1, mode)!} fit="contain" objectPosition="bottom" fullscreenBtn={false} />
+                    </div>
                   ) : (
                     <Image src={img(p1, mode)} alt={p1.name} fill={false} width={400} height={500} className="object-contain object-bottom" style={{ width: "80%", height: "90%", filter: `drop-shadow(0 0 50px ${c1.glow})` }} />
                   )}
@@ -485,7 +488,9 @@ function FightIntro({ p1, p2, mode, onFinish }: { p1: Member; p2: Member; mode: 
               {(vid(p2, mode) || img(p2, mode)) && (
                 <div className="absolute inset-0 flex items-end justify-center">
                   {vid(p2, mode) ? (
-                    <video src={vid(p2, mode)} autoPlay loop muted playsInline style={{ width: "80%", height: "90%", objectFit: "contain", objectPosition: "bottom", filter: `drop-shadow(0 0 50px ${c2.glow})`, transform: "scaleX(-1)" }} />
+                    <div style={{ width: "80%", height: "90%", filter: `drop-shadow(0 0 50px ${c2.glow})`, transform: "scaleX(-1)" }}>
+                      <VideoPlayer src={vid(p2, mode)!} fit="contain" objectPosition="bottom" fullscreenBtn={false} />
+                    </div>
                   ) : (
                     <Image src={img(p2, mode)} alt={p2.name} fill={false} width={400} height={500} className="object-contain object-bottom" style={{ width: "80%", height: "90%", filter: `drop-shadow(0 0 50px ${c2.glow})`, transform: "scaleX(-1)" }} />
                   )}
@@ -635,7 +640,9 @@ function Arena({ p1, p2, mode, onExit }: { p1: Member; p2: Member; mode: ViewMod
         <motion.div initial={{ x: "-80%", opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 50, damping: 12, delay: .2 }} className="flex-1 relative flex items-end justify-center">
           <div className={`relative ${hitFlash === "left" ? "hit-shake" : ""}`} style={{ width: "clamp(220px,30vw,420px)", height: "clamp(300px,55vh,600px)" }}>
             {vid(p1, mode) ? (
-              <video src={vid(p1, mode)} autoPlay loop muted playsInline className="object-contain object-bottom" style={{ width: "100%", height: "100%", filter: hitFlash === "left" ? "brightness(3) saturate(0)" : `drop-shadow(0 0 30px ${c1.glow})`, transition: "filter .1s" }} />
+              <div style={{ width: "100%", height: "100%", filter: hitFlash === "left" ? "brightness(3) saturate(0)" : `drop-shadow(0 0 30px ${c1.glow})`, transition: "filter .1s" }}>
+                <VideoPlayer src={vid(p1, mode)!} fit="contain" objectPosition="bottom" fullscreenBtn={false} />
+              </div>
             ) : img(p1, mode) ? (
               <Image src={img(p1, mode)} alt={p1.name} fill={false} width={400} height={500} className="object-contain object-bottom" style={{ filter: hitFlash === "left" ? "brightness(3) saturate(0)" : `drop-shadow(0 0 30px ${c1.glow})`, transition: "filter .1s" }} />
             ) : null}
@@ -646,7 +653,9 @@ function Arena({ p1, p2, mode, onExit }: { p1: Member; p2: Member; mode: ViewMod
         <motion.div initial={{ x: "80%", opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 50, damping: 12, delay: .2 }} className="flex-1 relative flex items-end justify-center">
           <div className={`relative ${hitFlash === "right" ? "hit-shake" : ""}`} style={{ width: "clamp(220px,30vw,420px)", height: "clamp(300px,55vh,600px)" }}>
             {vid(p2, mode) ? (
-              <video src={vid(p2, mode)} autoPlay loop muted playsInline className="object-contain object-bottom" style={{ width: "100%", height: "100%", filter: hitFlash === "right" ? "brightness(3) saturate(0)" : `drop-shadow(0 0 30px ${c2.glow})`, transition: "filter .1s", transform: "scaleX(-1)" }} />
+              <div style={{ width: "100%", height: "100%", filter: hitFlash === "right" ? "brightness(3) saturate(0)" : `drop-shadow(0 0 30px ${c2.glow})`, transition: "filter .1s", transform: "scaleX(-1)" }}>
+                <VideoPlayer src={vid(p2, mode)!} fit="contain" objectPosition="bottom" fullscreenBtn={false} />
+              </div>
             ) : img(p2, mode) ? (
               <Image src={img(p2, mode)} alt={p2.name} fill={false} width={400} height={500} className="object-contain object-bottom" style={{ filter: hitFlash === "right" ? "brightness(3) saturate(0)" : `drop-shadow(0 0 30px ${c2.glow})`, transition: "filter .1s", transform: "scaleX(-1)" }} />
             ) : null}
@@ -735,22 +744,9 @@ function FighterCard({ member, mode, selected, hovered, idx, onSelect, onHover }
 
       {/* Portrait — video takes priority over image */}
       {videoSrc ? (
-        <video
-          src={videoSrc}
-          autoPlay
-          loop
-          muted
-          playsInline
-          style={{
-            width: "100%",
-            height: "calc(100% - 28px)",
-            objectFit: "cover",
-            objectPosition: "center 12%",
-            filter: active ? "saturate(1.1) brightness(1.05)" : "saturate(.75) brightness(.78)",
-            transition: "filter .18s",
-            display: "block",
-          }}
-        />
+        <div style={{ width: "100%", height: "calc(100% - 28px)", filter: active ? "saturate(1.1) brightness(1.05)" : "saturate(.75) brightness(.78)", transition: "filter .18s" }}>
+          <VideoPlayer src={videoSrc} fit="cover" objectPosition="smart" fullscreenBtn={active} />
+        </div>
       ) : portrait ? (
         <Image
           src={portrait}
@@ -825,11 +821,7 @@ function DetailPanel({ member, mode }: { member: Member; mode: ViewMode }) {
         {/* Portrait — full height on mobile, fixed width on desktop */}
         <div className="relative w-full h-56 sm:w-40 sm:h-52 rounded-lg overflow-hidden shrink-0" style={{ border: `1px solid ${c.main}20` }}>
           {vid(member, mode) ? (
-            <video
-              src={vid(member, mode)}
-              autoPlay loop muted playsInline
-              style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 10%", filter: `drop-shadow(0 0 16px ${c.glow})` }}
-            />
+            <VideoPlayer src={vid(member, mode)!} fit="cover" objectPosition="smart" fullscreenBtn />
           ) : img(member, mode) ? (
             <Image src={img(member, mode)} alt={member.name} fill={false} width={200} height={260}
               style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 10%", filter: `drop-shadow(0 0 16px ${c.glow})` }}
@@ -931,16 +923,13 @@ function SidePortrait({ member, mode, side }: { member: Member | null; mode: Vie
             style={{ zIndex: 1 }}
           >
             {vid(member, mode) ? (
-              <video
-                src={vid(member, mode)}
-                autoPlay loop muted playsInline
-                style={{
-                  width: "100%", height: "100%", maxHeight: "100%",
-                  objectFit: "contain", objectPosition: "bottom",
-                  filter: `drop-shadow(0 0 50px ${c.glow}) drop-shadow(0 12px 30px rgba(0,0,0,.8))`,
-                  transform: side === "right" ? "scaleX(-1)" : undefined,
-                }}
-              />
+              <div style={{
+                width: "100%", height: "100%", maxHeight: "100%",
+                filter: `drop-shadow(0 0 50px ${c.glow}) drop-shadow(0 12px 30px rgba(0,0,0,.8))`,
+                transform: side === "right" ? "scaleX(-1)" : undefined,
+              }}>
+                <VideoPlayer src={vid(member, mode)!} fit="contain" objectPosition="bottom" fullscreenBtn />
+              </div>
             ) : img(member, mode) ? (
               <Image
                 src={img(member, mode)}

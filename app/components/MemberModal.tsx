@@ -16,6 +16,7 @@ import type { ViewMode } from "../types";
 import { rankAccents } from "../config/ranks";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { Trophy, X, ArrowLeft } from "lucide-react";
+import VideoPlayer from "./VideoPlayer";
 
 const PLACEHOLDER = "/placeholder.svg"; // ← Fix : plus d'espace dans le chemin
 
@@ -283,15 +284,11 @@ export default function MemberModal({ member, onClose, viewMode }: {
                     style={{ position: "absolute", inset: 0 }}
                   >
                     {heroVideoSrc ? (
-                      <video
+                      <VideoPlayer
                         src={heroVideoSrc}
-                        autoPlay loop muted playsInline
-                        style={{
-                          position: "absolute", inset: 0,
-                          width: "100%", height: "100%",
-                          objectFit: isMobile ? "cover" : "contain",
-                          objectPosition: isMobile ? "center 20%" : "bottom",
-                        }}
+                        fit={isMobile ? "cover" : "contain"}
+                        objectPosition={isMobile ? "smart" : "center bottom"}
+                        fullscreenBtn
                       />
                     ) : (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -432,11 +429,7 @@ export default function MemberModal({ member, onClose, viewMode }: {
                       border: "1px solid #eaeaea",
                     }}>
                       {heroVideoSrc ? (
-                        <video
-                          src={heroVideoSrc}
-                          autoPlay loop muted playsInline
-                          style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 15%" }}
-                        />
+                        <VideoPlayer src={heroVideoSrc} fit="cover" objectPosition="smart" fullscreenBtn />
                       ) : (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -466,11 +459,7 @@ export default function MemberModal({ member, onClose, viewMode }: {
                       border: "1px solid #eaeaea",
                     }}>
                       {card2VideoSrc ? (
-                        <video
-                          src={card2VideoSrc}
-                          autoPlay loop muted playsInline
-                          style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 15%" }}
-                        />
+                        <VideoPlayer src={card2VideoSrc} fit="cover" objectPosition="smart" fullscreenBtn />
                       ) : (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img

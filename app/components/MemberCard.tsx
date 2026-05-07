@@ -7,6 +7,7 @@ import { useState } from "react";
 import type { ViewMode } from "../types";
 import { rankAccents, darkRanks } from "../config/ranks";
 import { User, Sword, Cake, Trophy } from "lucide-react";
+import VideoPlayer from "./VideoPlayer";
 
 export default function MemberCard({ member, index, viewMode, onClick, isMobile }: {
   member: Member; index: number; viewMode: ViewMode; onClick: () => void; isMobile?: boolean;
@@ -60,14 +61,7 @@ export default function MemberCard({ member, index, viewMode, onClick, isMobile 
           style={{ position: "absolute", inset: 0 }}
         >
           {videoSrc ? (
-            <video
-              src={videoSrc}
-              autoPlay
-              loop
-              muted
-              playsInline
-              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "top" }}
-            />
+            <VideoPlayer src={videoSrc} fit="cover" objectPosition="smart" fullscreenBtn />
           ) : !hasError ? (
             <Image
               src={photoSrc}
