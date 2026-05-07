@@ -1,147 +1,317 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { Lock, BookOpen, User, Flame, ArrowRight, ShieldAlert, Palette, Film, Globe } from "lucide-react";
-import { colors, typography, font } from "../../outputs/styles/tokens";
-import GuildeHeader from "../components/GuildeHeader";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Lock, BookOpen, User, Flame, ArrowUpRight,
+  Palette, Film, Globe, ShieldCheck, Eye, EyeOff,
+} from "lucide-react";
 import { useAdminAuth } from "../hooks/useAdminAuth";
 
+const MODULES = [
+  {
+    href: "/admin-fighters",
+    label: "Roster Fighters",
+    sub: "Ajouter, modifier, supprimer des membres",
+    icon: Flame,
+    color: "#f87171",
+    glow: "rgba(248,113,113,0.18)",
+    tag: "MEMBRES",
+  },
+  {
+    href: "/admin-membres",
+    label: "Upload Médias",
+    sub: "Photos & vidéos des membres",
+    icon: User,
+    color: "#38bdf8",
+    glow: "rgba(56,189,248,0.18)",
+    tag: "MÉDIAS",
+  },
+  {
+    href: "/admin-biblio",
+    label: "Bibliothèque",
+    sub: "Animes, mangas, films & scores",
+    icon: BookOpen,
+    color: "#a78bfa",
+    glow: "rgba(167,139,250,0.18)",
+    tag: "BIBLIO",
+  },
+  {
+    href: "/admin-atelier",
+    label: "Atelier Visuel",
+    sub: "Galerie d'art IA de la Guilde",
+    icon: Palette,
+    color: "#c9a84c",
+    glow: "rgba(201,168,76,0.18)",
+    tag: "ART",
+  },
+  {
+    href: "/admin-film-semaine",
+    label: "Film de la Semaine",
+    sub: "Programmer les soirées cinéma",
+    icon: Film,
+    color: "#e50914",
+    glow: "rgba(229,9,20,0.18)",
+    tag: "CINÉMA",
+  },
+  {
+    href: "/admin-bons-plans",
+    label: "Bons Plans",
+    sub: "Sites streaming, scans & outils",
+    icon: Globe,
+    color: "#10b981",
+    glow: "rgba(16,185,129,0.18)",
+    tag: "RESSOURCES",
+  },
+];
+
 export default function AdminHubPage() {
-  const { authed: auth, checking, password, setPassword, error: errorLine, login: checkAuth } = useAdminAuth();
+  const { authed, checking, password, setPassword, error: pwError, login } = useAdminAuth();
+  const [showPw, setShowPw] = useState(false);
 
-  if (checking) return null; // Attendre la vérification du token
+  if (checking) return null;
 
-  if (!auth) {
+  if (!authed) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: colors.bg, color: colors.textPrimary, fontFamily: font, alignItems: "center", justifyContent: "center" }}>
-        <GuildeHeader activePage="bibliotheque" />
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-          style={{ background: colors.bgCard, padding: "40px", borderRadius: "24px", border: `1px solid ${errorLine ? colors.youtube : colors.border}`, maxWidth: "400px", width: "90%", textAlign: "center", boxShadow: errorLine ? `0 0 30px rgba(248,113,113,0.3)` : "none", transition: "all 0.3s" }}>
-          
-          <div style={{ background: "rgba(255,255,255,0.05)", width: "64px", height: "64px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px" }}>
-            <Lock size={28} color={errorLine ? colors.youtube : colors.gold} />
+      <div style={{
+        minHeight: "100vh", background: "#050508",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontFamily: "'Barlow Condensed', sans-serif",
+        backgroundImage: "radial-gradient(ellipse 80% 60% at 50% -10%, rgba(201,168,76,0.08) 0%, transparent 60%)",
+      }}>
+        <motion.div
+          initial={{ opacity: 0, y: 24, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          style={{
+            width: "min(420px, 92vw)",
+            background: "rgba(255,255,255,0.02)",
+            border: `1px solid ${pwError ? "rgba(248,113,113,0.4)" : "rgba(255,255,255,0.07)"}`,
+            borderRadius: "24px",
+            padding: "48px 40px",
+            textAlign: "center",
+            boxShadow: pwError ? "0 0 40px rgba(248,113,113,0.12)" : "0 40px 80px rgba(0,0,0,0.5)",
+            transition: "border-color 0.3s, box-shadow 0.3s",
+          }}
+        >
+          {/* Icon */}
+          <div style={{
+            width: 64, height: 64, borderRadius: "50%", margin: "0 auto 28px",
+            background: "rgba(201,168,76,0.08)",
+            border: "1px solid rgba(201,168,76,0.25)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <Lock size={26} color="#c9a84c" />
           </div>
-          
-          <h1 style={{ fontFamily: font, fontWeight: 900, textTransform: "uppercase", fontSize: "28px", marginBottom: "8px", fontStyle: "italic" }}>SÉCURITÉ GUILDE</h1>
-          <p style={{ ...typography.body, color: colors.textSecondary, marginBottom: "32px" }}>
-            Veuillez entrer le code confidentiel pour accéder à l'interface de commandement.
-          </p>
 
-          <form onSubmit={checkAuth} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Code d'accès"
-              style={{ padding: "16px", background: "rgba(0,0,0,0.5)", border: `1px solid ${errorLine ? colors.youtube : colors.border}`, borderRadius: "12px", color: "#fff", fontFamily: font, fontSize: "16px", outline: "none", textAlign: "center", letterSpacing: "0.2em" }} autoFocus />
-            <button type="submit"
-              style={{ padding: "16px", background: colors.gold, border: "none", borderRadius: "12px", color: "#000", fontFamily: font, fontSize: "16px", fontWeight: 800, textTransform: "uppercase", cursor: "pointer", letterSpacing: "0.1em" }}>
-              Déverrouiller
+          <p style={{ fontSize: 11, fontWeight: 800, color: "#c9a84c", letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: 8 }}>
+            GUILDE OTAKU
+          </p>
+          <h1 style={{ fontSize: "clamp(28px,6vw,38px)", fontWeight: 900, color: "#fff", textTransform: "uppercase", fontStyle: "italic", lineHeight: 1, marginBottom: 32 }}>
+            ESPACE ADMIN
+          </h1>
+
+          {/* Password input */}
+          <div style={{ position: "relative", marginBottom: 12 }}>
+            <input
+              type={showPw ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") login(); }}
+              placeholder="Mot de passe..."
+              autoFocus
+              style={{
+                width: "100%", padding: "14px 44px 14px 16px",
+                background: "rgba(255,255,255,0.05)",
+                border: `1px solid ${pwError ? "rgba(248,113,113,0.5)" : "rgba(255,255,255,0.1)"}`,
+                borderRadius: 12, color: "#fff",
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontSize: 18, textAlign: "center", letterSpacing: "0.25em",
+                outline: "none", boxSizing: "border-box",
+                transition: "border-color 0.2s",
+              }}
+            />
+            <button
+              onClick={() => setShowPw(v => !v)}
+              style={{
+                position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)",
+                background: "none", border: "none", cursor: "pointer",
+                color: "rgba(255,255,255,0.3)", padding: 0,
+              }}
+            >
+              {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
-          </form>
+          </div>
+
+          <AnimatePresence>
+            {pwError && (
+              <motion.p
+                initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                style={{ color: "#f87171", fontSize: 13, fontWeight: 700, marginBottom: 12 }}
+              >
+                Mot de passe incorrect
+              </motion.p>
+            )}
+          </AnimatePresence>
+
+          <button
+            onClick={() => login()}
+            style={{
+              width: "100%", padding: "14px",
+              background: "linear-gradient(135deg, #c9a84c, #a07830)",
+              border: "none", borderRadius: 12,
+              color: "#000", fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: 16, fontWeight: 900, textTransform: "uppercase",
+              letterSpacing: "0.1em", cursor: "pointer",
+              boxShadow: "0 4px 20px rgba(201,168,76,0.3)",
+            }}
+          >
+            ENTRER
+          </button>
         </motion.div>
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: colors.bg, color: colors.textPrimary, fontFamily: font, paddingBottom: "80px" }}>
-      <GuildeHeader activePage="bibliotheque" />
-      
-      <main style={{ maxWidth: "1000px", margin: "120px auto 0", padding: "0 24px" }}>
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
-            <ShieldAlert size={24} color={colors.gold} />
-            <span style={{ fontFamily: font, fontSize: "14px", fontWeight: 800, color: colors.gold, letterSpacing: "0.2em", textTransform: "uppercase" }}>
-              Réseau Sécurisé
+    <div style={{
+      minHeight: "100vh", background: "#050508",
+      fontFamily: "'Barlow Condensed', sans-serif", color: "#fff",
+      backgroundImage: "radial-gradient(ellipse 80% 50% at 50% -5%, rgba(201,168,76,0.06) 0%, transparent 60%)",
+    }}>
+      <style>{`
+        .admin-card { transition: transform 0.22s cubic-bezier(0.22,1,0.36,1), box-shadow 0.22s; }
+        .admin-card:hover { transform: translateY(-4px) scale(1.012); }
+        .admin-link { transition: color 0.15s, gap 0.15s; }
+        .admin-link:hover { gap: 10px !important; }
+      `}</style>
+
+      {/* ── HEADER ── */}
+      <div style={{
+        padding: "40px 48px 0",
+        maxWidth: 1100, margin: "0 auto",
+      }}>
+        <motion.div
+          initial={{ opacity: 0, y: -16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+            <ShieldCheck size={18} color="#c9a84c" />
+            <span style={{ fontSize: 11, fontWeight: 800, color: "#c9a84c", letterSpacing: "0.3em", textTransform: "uppercase" }}>
+              ACCÈS AUTORISÉ · RÉSEAU SÉCURISÉ
             </span>
           </div>
-          <h1 style={{ fontFamily: font, fontWeight: 900, textTransform: "uppercase", fontSize: "48px", marginBottom: "16px" }}>
-            COMMANDEMENT OTAKU
+          <h1 style={{
+            fontSize: "clamp(44px,7vw,80px)", fontWeight: 900, fontStyle: "italic",
+            textTransform: "uppercase", lineHeight: 0.88, marginBottom: 16,
+          }}>
+            COMMANDEMENT<br />
+            <span style={{ color: "#c9a84c" }}>OTAKU</span>
           </h1>
-          <p style={{ ...typography.body, color: colors.textSecondary, maxWidth: "600px", marginBottom: "60px" }}>
-            Bienvenue dans le centre névralgique du site. Vous pouvez administrer l'intégralité des données en temps réel. N'oubliez pas que toute action ici modifie publiquement la plateforme.
+          <p style={{ fontSize: 17, color: "rgba(255,255,255,0.4)", maxWidth: 520, lineHeight: 1.5, marginBottom: 0 }}>
+            Centre de contrôle. Toute modification ici est appliquée en direct sur la plateforme.
           </p>
         </motion.div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "24px" }}>
-          
-          {/* Carte Bibliothèque */}
-          <motion.div whileHover={{ scale: 1.02 }} style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: "24px", padding: "32px", position: "relative", overflow: "hidden" }}>
-            <div style={{ position: "absolute", top: 0, right: 0, background: "rgba(167, 139, 250, 0.1)", width: "150px", height: "150px", filter: "blur(50px)", borderRadius: "50%" }} />
-            <BookOpen size={32} color="#a78bfa" style={{ marginBottom: "20px" }} />
-            <h2 style={{ fontFamily: font, fontSize: "28px", fontWeight: 900, marginBottom: "12px", textTransform: "uppercase" }}>Administration Bilio</h2>
-            <p style={{ ...typography.body, color: colors.textSecondary, marginBottom: "32px" }}>
-              Ajoutez des animes, jugez des mangas et choisissez qui figure dans la célèbre Chronique du Bash en page d'accueil.
-            </p>
-            <Link href="/admin-biblio" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.05)", border: `1px solid rgba(255,255,255,0.1)`, padding: "12px 24px", borderRadius: "100px", color: "#fff", textDecoration: "none", fontWeight: 700, fontSize: "14px", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-              Gérer la Bibliothèque <ArrowRight size={16} />
-            </Link>
-          </motion.div>
+        {/* Divider */}
+        <div style={{ height: 1, background: "linear-gradient(90deg, rgba(201,168,76,0.3), transparent)", margin: "36px 0" }} />
+      </div>
 
-          {/* Carte Fighters */}
-          <motion.div whileHover={{ scale: 1.02 }} style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: "24px", padding: "32px", position: "relative", overflow: "hidden" }}>
-            <div style={{ position: "absolute", top: 0, right: 0, background: "rgba(248, 113, 113, 0.1)", width: "150px", height: "150px", filter: "blur(50px)", borderRadius: "50%" }} />
-            <Flame size={32} color="#f87171" style={{ marginBottom: "20px" }} />
-            <h2 style={{ fontFamily: font, fontSize: "28px", fontWeight: 900, marginBottom: "12px", textTransform: "uppercase" }}>Roster Fighters</h2>
-            <p style={{ ...typography.body, color: colors.textSecondary, marginBottom: "32px" }}>
-              C'est ici qu'on recrute de nouveaux combattants, met à jour leurs compétences, et qu'on attribue les rangs légendaires de l'Arène.
-            </p>
-            <Link href="/admin-fighters" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.05)", border: `1px solid rgba(248,113,113,0.3)`, padding: "12px 24px", borderRadius: "100px", color: "#f87171", textDecoration: "none", fontWeight: 700, fontSize: "14px", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-              Entrer dans l'Arène <ArrowRight size={16} />
-            </Link>
-          </motion.div>
+      {/* ── GRID ── */}
+      <main style={{ maxWidth: 1100, margin: "0 auto", padding: "0 48px 80px" }}>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+          gap: 20,
+        }}>
+          {MODULES.map((mod, i) => {
+            const Icon = mod.icon;
+            return (
+              <motion.div
+                key={mod.href}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: i * 0.06, ease: [0.22, 1, 0.36, 1] }}
+                className="admin-card"
+                style={{
+                  background: "rgba(255,255,255,0.025)",
+                  border: "1px solid rgba(255,255,255,0.07)",
+                  borderRadius: 20,
+                  padding: "28px 28px 24px",
+                  position: "relative",
+                  overflow: "hidden",
+                  cursor: "pointer",
+                }}
+              >
+                {/* Glow blob */}
+                <div style={{
+                  position: "absolute", top: -30, right: -30,
+                  width: 160, height: 160,
+                  background: mod.glow,
+                  borderRadius: "50%",
+                  filter: "blur(40px)",
+                  pointerEvents: "none",
+                }} />
 
-          {/* Carte Membres */}
-          <motion.div whileHover={{ scale: 1.02 }} style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: "24px", padding: "32px", position: "relative", overflow: "hidden" }}>
-            <div style={{ position: "absolute", top: 0, right: 0, background: "rgba(56, 189, 248, 0.1)", width: "150px", height: "150px", filter: "blur(50px)", borderRadius: "50%" }} />
-            <User size={32} color="#38bdf8" style={{ marginBottom: "20px" }} />
-            <h2 style={{ fontFamily: font, fontSize: "28px", fontWeight: 900, marginBottom: "12px", textTransform: "uppercase" }}>Trombinoscope Membres</h2>
-            <p style={{ ...typography.body, color: colors.textSecondary, marginBottom: "32px" }}>
-              L'ancienne page d'administration des membres. Nous recommandons de gérer via l'Arène désormais, mais le trombinoscope reste disponible.
-            </p>
-            <Link href="/admin-membres" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.05)", border: `1px solid rgba(56,189,248,0.3)`, padding: "12px 24px", borderRadius: "100px", color: "#38bdf8", textDecoration: "none", fontWeight: 700, fontSize: "14px", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-              Gérer Membres <ArrowRight size={16} />
-            </Link>
-          </motion.div>
+                {/* Top accent line */}
+                <div style={{
+                  position: "absolute", top: 0, left: 0, right: 0, height: 2,
+                  background: `linear-gradient(90deg, ${mod.color}, transparent)`,
+                }} />
 
-          {/* Carte Atelier */}
-          <motion.div whileHover={{ scale: 1.02 }} style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: "24px", padding: "32px", position: "relative", overflow: "hidden" }}>
-            <div style={{ position: "absolute", top: 0, right: 0, background: "rgba(201, 168, 76, 0.1)", width: "150px", height: "150px", filter: "blur(50px)", borderRadius: "50%" }} />
-            <Palette size={32} color={colors.gold} style={{ marginBottom: "20px" }} />
-            <h2 style={{ fontFamily: font, fontSize: "28px", fontWeight: 900, marginBottom: "12px", textTransform: "uppercase" }}>L'Atelier Visuel</h2>
-            <p style={{ ...typography.body, color: colors.textSecondary, marginBottom: "32px" }}>
-              Gérez la galerie d'art générée par IA. Ajoutez vos dernières créations ou retirez les anciennes d'un seul clic.
-            </p>
-            <Link href="/admin-atelier" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.05)", border: `1px solid ${colors.goldBorder}`, padding: "12px 24px", borderRadius: "100px", color: colors.gold, textDecoration: "none", fontWeight: 700, fontSize: "14px", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-              Gérer l'Atelier <ArrowRight size={16} />
-            </Link>
-          </motion.div>
+                {/* Tag */}
+                <div style={{
+                  display: "inline-flex", alignItems: "center", gap: 6,
+                  padding: "3px 10px", borderRadius: 100, marginBottom: 20,
+                  background: `${mod.color}15`,
+                  border: `1px solid ${mod.color}30`,
+                }}>
+                  <span style={{ fontSize: 9, fontWeight: 800, color: mod.color, letterSpacing: "0.2em" }}>
+                    {mod.tag}
+                  </span>
+                </div>
 
-          {/* Carte Film de la Semaine */}
-          <motion.div whileHover={{ scale: 1.02 }} style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: "24px", padding: "32px", position: "relative", overflow: "hidden" }}>
-            <div style={{ position: "absolute", top: 0, right: 0, background: "rgba(229, 9, 20, 0.1)", width: "150px", height: "150px", filter: "blur(50px)", borderRadius: "50%" }} />
-            <Film size={32} color="#e50914" style={{ marginBottom: "20px" }} />
-            <h2 style={{ fontFamily: font, fontSize: "28px", fontWeight: 900, marginBottom: "12px", textTransform: "uppercase" }}>Film de la Semaine</h2>
-            <p style={{ ...typography.body, color: colors.textSecondary, marginBottom: "32px" }}>
-              Programmez les soirées cinéma de la Guilde. Recherchez un film sur TMDB, ajoutez-le à la semaine et marquez-le comme vu une fois regardé.
-            </p>
-            <Link href="/admin-film-semaine" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(229,9,20,0.3)", padding: "12px 24px", borderRadius: "100px", color: "#e50914", textDecoration: "none", fontWeight: 700, fontSize: "14px", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-              Gérer les Films <ArrowRight size={16} />
-            </Link>
-          </motion.div>
+                {/* Icon */}
+                <div style={{
+                  width: 48, height: 48, borderRadius: 14,
+                  background: `${mod.color}12`,
+                  border: `1px solid ${mod.color}25`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  marginBottom: 18,
+                }}>
+                  <Icon size={22} color={mod.color} />
+                </div>
 
-          {/* Carte Bons Plans */}
-          <motion.div whileHover={{ scale: 1.02 }} style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: "24px", padding: "32px", position: "relative", overflow: "hidden" }}>
-            <div style={{ position: "absolute", top: 0, right: 0, background: "rgba(16, 185, 129, 0.1)", width: "150px", height: "150px", filter: "blur(50px)", borderRadius: "50%" }} />
-            <Globe size={32} color="#10b981" style={{ marginBottom: "20px" }} />
-            <h2 style={{ fontFamily: font, fontSize: "28px", fontWeight: 900, marginBottom: "12px", textTransform: "uppercase" }}>Bons Plans</h2>
-            <p style={{ ...typography.body, color: colors.textSecondary, marginBottom: "32px" }}>
-              Étoffez la bibliothèque secrète de la Guilde avec vos meilleurs sites de streaming, de scans ou d'outils de piraterie.
-            </p>
-            <Link href="/admin-bons-plans" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(16,185,129,0.3)", padding: "12px 24px", borderRadius: "100px", color: "#10b981", textDecoration: "none", fontWeight: 700, fontSize: "14px", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-              Gérer les Bons Plans <ArrowRight size={16} />
-            </Link>
-          </motion.div>
+                <h2 style={{
+                  fontSize: 22, fontWeight: 900, textTransform: "uppercase",
+                  color: "#fff", lineHeight: 1, marginBottom: 8,
+                }}>
+                  {mod.label}
+                </h2>
+                <p style={{
+                  fontSize: 14, color: "rgba(255,255,255,0.38)",
+                  lineHeight: 1.5, marginBottom: 28,
+                }}>
+                  {mod.sub}
+                </p>
 
+                <Link
+                  href={mod.href}
+                  className="admin-link"
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 6,
+                    fontSize: 13, fontWeight: 800, textTransform: "uppercase",
+                    letterSpacing: "0.08em", color: mod.color,
+                    textDecoration: "none",
+                  }}
+                >
+                  Accéder <ArrowUpRight size={14} />
+                </Link>
+              </motion.div>
+            );
+          })}
         </div>
       </main>
     </div>
