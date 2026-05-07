@@ -15,7 +15,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ViewMode } from "../types";
 import { rankAccents } from "../config/ranks";
 import { useIsMobile } from "../hooks/useIsMobile";
-import { Trophy, X, ArrowLeft } from "lucide-react";
+import { Trophy, ArrowLeft } from "lucide-react";
 import VideoPlayer from "./VideoPlayer";
 
 const PLACEHOLDER = "/placeholder.svg"; // ← Fix : plus d'espace dans le chemin
@@ -186,79 +186,84 @@ export default function MemberModal({ member, onClose, viewMode }: {
             )}
           </AnimatePresence>
 
-          {/* ── SWITCH RÉEL / ANIME ─────────────────────────────────────── */}
+          {/* ── BARRE DE NAVIGATION STICKY ───────────────────────────────
+               position: sticky + top: 0 inside the scroll container is the
+               only approach that works reliably on iOS Safari.
+               position: fixed children of an overflow: auto container are
+               NOT fixed on iOS — they scroll with the content.              */}
           <div
-            role="group"
-            aria-label="Mode d'affichage"
             style={{
-              position: "fixed",
-              top: isMobile ? "max(16px, env(safe-area-inset-top))" : "24px",
-              left: "50%", transform: "translateX(-50%)",
+              position: "sticky",
+              top: 0,
               zIndex: 10000,
               display: "flex",
-              background: "rgba(0,0,0,0.6)",
-              borderRadius: "100px",
-              padding: "4px",
-              backdropFilter: "blur(8px)",
-              border: "1px solid rgba(255,255,255,0.2)",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: isMobile ? "10px 16px" : "14px 24px",
+              background: "rgba(8,8,15,0.85)",
+              backdropFilter: "blur(16px)",
+              WebkitBackdropFilter: "blur(16px)",
+              borderBottom: "1px solid rgba(255,255,255,0.06)",
             }}
           >
-            {(["real", "anime"] as ViewMode[]).map((mode) => (
-              <button
-                key={mode}
-                onClick={() => setLocalMode(mode)}
-                aria-pressed={localMode === mode}
-                style={{
-                  padding: isMobile ? "6px 14px" : "7px 18px",
-                  borderRadius: "100px", border: "none", cursor: "pointer",
-                  fontFamily: "'Barlow Condensed', sans-serif",
-                  fontSize: "13px", fontWeight: 700, textTransform: "uppercase",
-                  background: localMode === mode ? accent : "transparent",
-                  color: localMode === mode ? "#fff" : "#aaa",
-                  transition: "all 0.3s",
-                }}
-              >
-                {mode === "real" ? "Réel" : "Anime"}
-              </button>
-            ))}
-          </div>
+            {/* Bouton fermer */}
+            <button
+              ref={closeButtonRef}
+              onClick={onClose}
+              aria-label="Fermer la fiche membre"
+              style={{
+                display: "flex", alignItems: "center", gap: "6px",
+                padding: isMobile ? "7px 14px" : "8px 16px",
+                borderRadius: "100px",
+                background: "rgba(255,255,255,0.07)",
+                border: "1px solid rgba(255,255,255,0.14)",
+                color: "#fff",
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontSize: "14px", fontWeight: 700, textTransform: "uppercase",
+                cursor: "pointer",
+                transition: "background 200ms",
+              }}
+            >
+              <ArrowLeft size={15} aria-hidden="true" />
+              {isMobile ? "Retour" : "Fermer"}
+            </button>
 
-          {/* ── BOUTON FERMER ────────────────────────────────────────────── */}
-          <button
-            ref={closeButtonRef}
-            onClick={onClose}
-            aria-label="Fermer la fiche membre"
-            style={{
-              position: "fixed",
-              top: isMobile ? "max(16px, env(safe-area-inset-top))" : "24px",
-              left: isMobile ? "max(16px, env(safe-area-inset-left))" : "auto",
-              right: isMobile ? "auto" : "24px",
-              zIndex: 10000,
-              display: "flex", alignItems: "center", gap: "6px",
-              padding: isMobile ? "8px 14px" : "9px 16px",
-              borderRadius: "100px",
-              background: "rgba(0,0,0,0.6)",
-              border: "1px solid rgba(255,255,255,0.2)",
-              color: "#fff",
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontSize: "15px", fontWeight: 700, textTransform: "uppercase",
-              backdropFilter: "blur(8px)", cursor: "pointer",
-              transition: "background 200ms ease, border-color 200ms ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(0,0,0,0.85)";
-              e.currentTarget.style.borderColor = accent;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(0,0,0,0.6)";
-              e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)";
-            }}
-          >
-            {isMobile
-              ? <><ArrowLeft size={16} aria-hidden="true" /> Retour</>
-              : <X size={18} aria-hidden="true" />
-            }
-          </button>
+            {/* Switch Réel / Anime */}
+            <div
+              role="group"
+              aria-label="Mode d'affichage"
+              style={{
+                display: "flex",
+                background: "rgba(255,255,255,0.07)",
+                borderRadius: "100px",
+                padding: "3px",
+                border: "1px solid rgba(255,255,255,0.14)",
+              }}
+            >
+              {(["real", "anime"] as ViewMode[]).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => setLocalMode(mode)}
+                  aria-pressed={localMode === mode}
+                  style={{
+                    padding: isMobile ? "5px 14px" : "6px 18px",
+                    borderRadius: "100px", border: "none", cursor: "pointer",
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontSize: "13px", fontWeight: 700, textTransform: "uppercase",
+                    background: localMode === mode ? accent : "transparent",
+                    color: localMode === mode ? "#fff" : "rgba(255,255,255,0.5)",
+                    transition: "background 0.25s, color 0.25s",
+                    boxShadow: localMode === mode ? `0 2px 10px ${accent}55` : "none",
+                  }}
+                >
+                  {mode === "real" ? "Réel" : "Anime"}
+                </button>
+              ))}
+            </div>
+
+            {/* Spacer pour centrer le switch sur desktop */}
+            <div style={{ width: isMobile ? 0 : "80px" }} />
+          </div>
 
           <motion.div
             initial={{ y: 20, opacity: 0 }}
