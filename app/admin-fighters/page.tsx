@@ -7,6 +7,7 @@ import { Trash2, Pencil, Plus, Flame, Zap, Shield, X, Upload, Lock, Search, Chev
 import { Rank, RANK_FILTER_ORDER } from "../../data/members";
 import { useAdminAuth } from "../hooks/useAdminAuth";
 import { getAdminFormDataHeaders } from "../../lib/admin-fetch";
+import { invalidateMembersCache } from "../utils/dataAdapter";
 import type { SupabaseMemberRow } from "../types";
 
 const RANK_COLORS: Record<string, string> = {
@@ -169,6 +170,7 @@ export default function AdminFightersPage() {
     } else {
       await supabase.from("fighters").insert([payload]);
     }
+    invalidateMembersCache();
     setSaving(false);
     setPanelOpen(false);
     fetchFighters();
@@ -177,6 +179,7 @@ export default function AdminFightersPage() {
   const confirmDelete = async () => {
     if (!deleteTarget) return;
     await supabase.from("fighters").delete().eq("id", deleteTarget.id);
+    invalidateMembersCache();
     setDeleteTarget(null);
     fetchFighters();
   };
