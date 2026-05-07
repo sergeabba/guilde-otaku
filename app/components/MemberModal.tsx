@@ -83,6 +83,11 @@ export default function MemberModal({ member, onClose, viewMode }: {
   }, [member]);
 
   const isAnime = localMode === "anime";
+
+  // Vidéos (priorité sur les photos)
+  const heroVideoSrc = isAnime ? member?.animeVideo : member?.photoVideo;
+  const card2VideoSrc = isAnime ? member?.photoVideo : member?.animeVideo;
+
   const heroSrc = heroImgError
     ? PLACEHOLDER
     : (isAnime ? member?.animeChar : member?.photo) ?? PLACEHOLDER;
@@ -277,18 +282,31 @@ export default function MemberModal({ member, onClose, viewMode }: {
                     transition={{ duration: 0.4, ease: "easeOut" }}
                     style={{ position: "absolute", inset: 0 }}
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={heroSrc}
-                      alt={`${member.name} — ${isAnime ? "avatar anime" : "photo réelle"}`}
-                      style={{
-                        position: "absolute", inset: 0,
-                        width: "100%", height: "100%",
-                        objectFit: isMobile ? "cover" : "contain",
-                        objectPosition: isMobile ? "center 20%" : "bottom",
-                      }}
-                      onError={() => setHeroImgError(true)}
-                    />
+                    {heroVideoSrc ? (
+                      <video
+                        src={heroVideoSrc}
+                        autoPlay loop muted playsInline
+                        style={{
+                          position: "absolute", inset: 0,
+                          width: "100%", height: "100%",
+                          objectFit: isMobile ? "cover" : "contain",
+                          objectPosition: isMobile ? "center 20%" : "bottom",
+                        }}
+                      />
+                    ) : (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={heroSrc}
+                        alt={`${member.name} — ${isAnime ? "avatar anime" : "photo réelle"}`}
+                        style={{
+                          position: "absolute", inset: 0,
+                          width: "100%", height: "100%",
+                          objectFit: isMobile ? "cover" : "contain",
+                          objectPosition: isMobile ? "center 20%" : "bottom",
+                        }}
+                        onError={() => setHeroImgError(true)}
+                      />
+                    )}
                   </motion.div>
                 </AnimatePresence>
 
@@ -405,7 +423,7 @@ export default function MemberModal({ member, onClose, viewMode }: {
                   </div>
 
                   <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "24px" }}>
-                    {/* Carte 1 */}
+                    {/* Carte 1 — mode actuel */}
                     <div style={{
                       position: "relative",
                       height: isMobile ? "320px" : "440px",
@@ -413,13 +431,21 @@ export default function MemberModal({ member, onClose, viewMode }: {
                       boxShadow: "0 12px 36px rgba(0,0,0,0.1)",
                       border: "1px solid #eaeaea",
                     }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={card1Src}
-                        alt={`${member.name} — ${card1Label}`}
-                        style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 15%" }}
-                        onError={() => setCard1ImgError(true)}
-                      />
+                      {heroVideoSrc ? (
+                        <video
+                          src={heroVideoSrc}
+                          autoPlay loop muted playsInline
+                          style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 15%" }}
+                        />
+                      ) : (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={card1Src}
+                          alt={`${member.name} — ${card1Label}`}
+                          style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 15%" }}
+                          onError={() => setCard1ImgError(true)}
+                        />
+                      )}
                       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 40%, transparent 100%)" }} />
                       <div style={{ position: "absolute", bottom: "20px", left: "16px", right: "16px", textAlign: "center" }}>
                         <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "11px", fontWeight: 800, color: accent, textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "6px" }}>
@@ -431,7 +457,7 @@ export default function MemberModal({ member, onClose, viewMode }: {
                       </div>
                     </div>
 
-                    {/* Carte 2 */}
+                    {/* Carte 2 — alter ego */}
                     <div style={{
                       position: "relative",
                       height: isMobile ? "320px" : "440px",
@@ -439,13 +465,21 @@ export default function MemberModal({ member, onClose, viewMode }: {
                       boxShadow: "0 12px 36px rgba(0,0,0,0.1)",
                       border: "1px solid #eaeaea",
                     }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={card2Src}
-                        alt={`${member.name} — ${card2Label}`}
-                        style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 15%" }}
-                        onError={() => setCard2ImgError(true)}
-                      />
+                      {card2VideoSrc ? (
+                        <video
+                          src={card2VideoSrc}
+                          autoPlay loop muted playsInline
+                          style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 15%" }}
+                        />
+                      ) : (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={card2Src}
+                          alt={`${member.name} — ${card2Label}`}
+                          style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 15%" }}
+                          onError={() => setCard2ImgError(true)}
+                        />
+                      )}
                       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 40%, transparent 100%)" }} />
                       <div style={{ position: "absolute", bottom: "20px", left: "16px", right: "16px", textAlign: "center" }}>
                         <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "11px", fontWeight: 800, color: accent, textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "6px" }}>
