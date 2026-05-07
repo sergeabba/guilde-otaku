@@ -21,7 +21,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Paramètres manquants" }, { status: 400 });
     }
 
-    if (field !== "photo" && field !== "animechar") {
+    const ALLOWED_FIELDS = ["photo", "animechar", "photovideo", "animevideo"];
+    if (!ALLOWED_FIELDS.includes(field)) {
       return NextResponse.json({ error: "Champ invalide" }, { status: 400 });
     }
 

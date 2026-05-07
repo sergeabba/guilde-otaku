@@ -60,6 +60,8 @@ const RC: Record<string, { main: string; glow: string; gradient: string; dark: s
 function rc(rank: string) { return RC[rank] ?? RC["Fondateur"]; }
 function pwr(m: Member) { const s = m.stats ?? { force: 80, vitesse: 80, technique: 80 }; return Math.round((s.force + s.vitesse + s.technique) / 3); }
 function img(m: Member, mode: ViewMode) { return mode === "anime" ? m.animeChar : m.photo; }
+function vid(m: Member, mode: ViewMode) { return mode === "anime" ? (m.animeVideo ?? "") : (m.photoVideo ?? ""); }
+function hasVideo(m: Member, mode: ViewMode) { return !!vid(m, mode); }
 
 type Phase = "select" | "intro" | "fight";
 
@@ -456,9 +458,13 @@ function FightIntro({ p1, p2, mode, onFinish }: { p1: Member; p2: Member; mode: 
           <motion.div initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} transition={{ type: "spring", stiffness: 60, damping: 12 }}
             className="absolute top-0 bottom-0 left-0 z-10 w-[50%]" style={{ clipPath: "polygon(0 0,100% 0,80% 100%,0 100%)" }}>
             <div className="relative w-full h-full" style={{ background: `linear-gradient(135deg,${c1.dark},#030308)` }}>
-              {img(p1, mode) && (
+              {(vid(p1, mode) || img(p1, mode)) && (
                 <div className="absolute inset-0 flex items-end justify-center">
-                  <Image src={img(p1, mode)} alt={p1.name} fill={false} width={400} height={500} className="object-contain object-bottom" style={{ width: "80%", height: "90%", filter: `drop-shadow(0 0 50px ${c1.glow})` }} />
+                  {vid(p1, mode) ? (
+                    <video src={vid(p1, mode)} autoPlay loop muted playsInline style={{ width: "80%", height: "90%", objectFit: "contain", objectPosition: "bottom", filter: `drop-shadow(0 0 50px ${c1.glow})` }} />
+                  ) : (
+                    <Image src={img(p1, mode)} alt={p1.name} fill={false} width={400} height={500} className="object-contain object-bottom" style={{ width: "80%", height: "90%", filter: `drop-shadow(0 0 50px ${c1.glow})` }} />
+                  )}
                 </div>
               )}
               <div className="absolute bottom-10 left-8 z-20">
@@ -476,9 +482,13 @@ function FightIntro({ p1, p2, mode, onFinish }: { p1: Member; p2: Member; mode: 
           <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", stiffness: 60, damping: 12 }}
             className="absolute top-0 bottom-0 right-0 z-10 w-[50%]" style={{ clipPath: "polygon(20% 0,100% 0,100% 100%,0 100%)" }}>
             <div className="relative w-full h-full" style={{ background: `linear-gradient(225deg,${c2.dark},#030308)` }}>
-              {img(p2, mode) && (
+              {(vid(p2, mode) || img(p2, mode)) && (
                 <div className="absolute inset-0 flex items-end justify-center">
-                  <Image src={img(p2, mode)} alt={p2.name} fill={false} width={400} height={500} className="object-contain object-bottom" style={{ width: "80%", height: "90%", filter: `drop-shadow(0 0 50px ${c2.glow})`, transform: "scaleX(-1)" }} />
+                  {vid(p2, mode) ? (
+                    <video src={vid(p2, mode)} autoPlay loop muted playsInline style={{ width: "80%", height: "90%", objectFit: "contain", objectPosition: "bottom", filter: `drop-shadow(0 0 50px ${c2.glow})`, transform: "scaleX(-1)" }} />
+                  ) : (
+                    <Image src={img(p2, mode)} alt={p2.name} fill={false} width={400} height={500} className="object-contain object-bottom" style={{ width: "80%", height: "90%", filter: `drop-shadow(0 0 50px ${c2.glow})`, transform: "scaleX(-1)" }} />
+                  )}
                 </div>
               )}
               <div className="absolute bottom-10 right-8 z-20 text-right">
@@ -624,14 +634,22 @@ function Arena({ p1, p2, mode, onExit }: { p1: Member; p2: Member; mode: ViewMod
       <div className="absolute inset-0 flex h-full items-end pb-8">
         <motion.div initial={{ x: "-80%", opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 50, damping: 12, delay: .2 }} className="flex-1 relative flex items-end justify-center">
           <div className={`relative ${hitFlash === "left" ? "hit-shake" : ""}`} style={{ width: "clamp(220px,30vw,420px)", height: "clamp(300px,55vh,600px)" }}>
-            {img(p1, mode) && <Image src={img(p1, mode)} alt={p1.name} fill={false} width={400} height={500} className="object-contain object-bottom" style={{ filter: hitFlash === "left" ? "brightness(3) saturate(0)" : `drop-shadow(0 0 30px ${c1.glow})`, transition: "filter .1s" }} />}
+            {vid(p1, mode) ? (
+              <video src={vid(p1, mode)} autoPlay loop muted playsInline className="object-contain object-bottom" style={{ width: "100%", height: "100%", filter: hitFlash === "left" ? "brightness(3) saturate(0)" : `drop-shadow(0 0 30px ${c1.glow})`, transition: "filter .1s" }} />
+            ) : img(p1, mode) ? (
+              <Image src={img(p1, mode)} alt={p1.name} fill={false} width={400} height={500} className="object-contain object-bottom" style={{ filter: hitFlash === "left" ? "brightness(3) saturate(0)" : `drop-shadow(0 0 30px ${c1.glow})`, transition: "filter .1s" }} />
+            ) : null}
             <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[80%] h-4 rounded-full" style={{ background: `radial-gradient(ellipse,${c1.glow}25,transparent 70%)`, filter: "blur(8px)" }} />
           </div>
         </motion.div>
         <div className="w-px h-[60%] self-center shrink-0" style={{ background: "linear-gradient(to bottom,transparent,rgba(255,255,255,.06),transparent)" }} />
         <motion.div initial={{ x: "80%", opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 50, damping: 12, delay: .2 }} className="flex-1 relative flex items-end justify-center">
           <div className={`relative ${hitFlash === "right" ? "hit-shake" : ""}`} style={{ width: "clamp(220px,30vw,420px)", height: "clamp(300px,55vh,600px)" }}>
-            {img(p2, mode) && <Image src={img(p2, mode)} alt={p2.name} fill={false} width={400} height={500} className="object-contain object-bottom" style={{ filter: hitFlash === "right" ? "brightness(3) saturate(0)" : `drop-shadow(0 0 30px ${c2.glow})`, transition: "filter .1s", transform: "scaleX(-1)" }} />}
+            {vid(p2, mode) ? (
+              <video src={vid(p2, mode)} autoPlay loop muted playsInline className="object-contain object-bottom" style={{ width: "100%", height: "100%", filter: hitFlash === "right" ? "brightness(3) saturate(0)" : `drop-shadow(0 0 30px ${c2.glow})`, transition: "filter .1s", transform: "scaleX(-1)" }} />
+            ) : img(p2, mode) ? (
+              <Image src={img(p2, mode)} alt={p2.name} fill={false} width={400} height={500} className="object-contain object-bottom" style={{ filter: hitFlash === "right" ? "brightness(3) saturate(0)" : `drop-shadow(0 0 30px ${c2.glow})`, transition: "filter .1s", transform: "scaleX(-1)" }} />
+            ) : null}
             <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[80%] h-4 rounded-full" style={{ background: `radial-gradient(ellipse,${c2.glow}25,transparent 70%)`, filter: "blur(8px)" }} />
           </div>
         </motion.div>
@@ -679,6 +697,7 @@ function FighterCard({ member, mode, selected, hovered, idx, onSelect, onHover }
   const c = rc(member.rank);
   const active = selected || hovered;
   const portrait = img(member, mode);
+  const videoSrc = vid(member, mode);
 
   return (
     <motion.button
@@ -714,8 +733,25 @@ function FighterCard({ member, mode, selected, hovered, idx, onSelect, onHover }
         opacity: active ? 1 : .6, transition: "opacity .15s",
       }} />
 
-      {/* Portrait image */}
-      {portrait ? (
+      {/* Portrait — video takes priority over image */}
+      {videoSrc ? (
+        <video
+          src={videoSrc}
+          autoPlay
+          loop
+          muted
+          playsInline
+          style={{
+            width: "100%",
+            height: "calc(100% - 28px)",
+            objectFit: "cover",
+            objectPosition: "center 12%",
+            filter: active ? "saturate(1.1) brightness(1.05)" : "saturate(.75) brightness(.78)",
+            transition: "filter .18s",
+            display: "block",
+          }}
+        />
+      ) : portrait ? (
         <Image
           src={portrait}
           alt={member.name}
@@ -788,7 +824,13 @@ function DetailPanel({ member, mode }: { member: Member; mode: ViewMode }) {
       <div className="flex flex-col sm:flex-row gap-5 p-5">
         {/* Portrait — full height on mobile, fixed width on desktop */}
         <div className="relative w-full h-56 sm:w-40 sm:h-52 rounded-lg overflow-hidden shrink-0" style={{ border: `1px solid ${c.main}20` }}>
-          {img(member, mode) ? (
+          {vid(member, mode) ? (
+            <video
+              src={vid(member, mode)}
+              autoPlay loop muted playsInline
+              style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 10%", filter: `drop-shadow(0 0 16px ${c.glow})` }}
+            />
+          ) : img(member, mode) ? (
             <Image src={img(member, mode)} alt={member.name} fill={false} width={200} height={260}
               style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 10%", filter: `drop-shadow(0 0 16px ${c.glow})` }}
             />
@@ -888,7 +930,18 @@ function SidePortrait({ member, mode, side }: { member: Member | null; mode: Vie
             transition={{ duration: .38, ease: [0.22, 1, 0.36, 1] }}
             style={{ zIndex: 1 }}
           >
-            {img(member, mode) && (
+            {vid(member, mode) ? (
+              <video
+                src={vid(member, mode)}
+                autoPlay loop muted playsInline
+                style={{
+                  width: "100%", height: "100%", maxHeight: "100%",
+                  objectFit: "contain", objectPosition: "bottom",
+                  filter: `drop-shadow(0 0 50px ${c.glow}) drop-shadow(0 12px 30px rgba(0,0,0,.8))`,
+                  transform: side === "right" ? "scaleX(-1)" : undefined,
+                }}
+              />
+            ) : img(member, mode) ? (
               <Image
                 src={img(member, mode)}
                 alt={member.name}
@@ -903,7 +956,7 @@ function SidePortrait({ member, mode, side }: { member: Member | null; mode: Vie
                   transform: side === "right" ? "scaleX(-1)" : undefined,
                 }}
               />
-            )}
+            ) : null}
           </motion.div>
         ) : (
           <motion.div
@@ -1401,6 +1454,8 @@ export default function FightersPage() {
             badge: m.badge, rankJP: m.rankjp,
             stats: m.stats ?? { force: 80, vitesse: 80, technique: 80 },
             special: m.special ?? { name: "Inconnu", effect: "?" },
+            photoVideo: m.photovideo ?? "",
+            animeVideo: m.animevideo ?? "",
           }));
           setMembers(mapped);
         }

@@ -21,18 +21,20 @@ export interface SpecialAttack {
 // ─── SUPABASE RAW ROW (table fighters) ───────────────────────────────────────
 // Représente une ligne brute telle que retournée par Supabase.
 export interface SupabaseMemberRow {
-  id:        number;
-  name:      string;
-  rank:      string;
-  birthday:  string;
-  bio:       string;
-  photo:     string;
-  animechar: string;
-  color:     string;
-  badge?:    string | null;
-  rankjp?:   string | null;
-  stats?:    FighterStats | null;
-  special?:  SpecialAttack | null;
+  id:           number;
+  name:         string;
+  rank:         string;
+  birthday:     string;
+  bio:          string;
+  photo:        string;
+  animechar:    string;
+  color:        string;
+  badge?:       string | null;
+  rankjp?:      string | null;
+  stats?:       FighterStats | null;
+  special?:     SpecialAttack | null;
+  photovideo?:  string | null;
+  animevideo?:  string | null;
 }
 
 // ─── BIBLIOTHÈQUE ENTRY ───────────────────────────────────────────────────────

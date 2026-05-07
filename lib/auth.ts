@@ -52,6 +52,7 @@ export function sanitizeFilename(name: string): string {
 }
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
+const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
 
 const IMAGE_SIGNATURES: Record<string, number[]> = {
   "image/jpeg": [0xff, 0xd8, 0xff],
@@ -79,4 +80,31 @@ export async function validateImageFile(file: File): Promise<{ valid: boolean; e
   }
 
   return { valid: true };
+}
+
+export async function validateMediaFile(file: File): Promise<{ valid: boolean; error?: string; isVideo?: boolean }> {
+  const isVideo = ALLOWED_VIDEO_TYPES.includes(file.type);
+  const isImage = ALLOWED_IMAGE_TYPES.includes(file.type);
+
+  if (!isVideo && !isImage) {
+    return { valid: false, error: "Format non supporté (jpg, png, webp, mp4, webm uniquement)" };
+  }
+
+  const maxSize = isVideo ? 50 * 1024 * 1024 : 5 * 1024 * 1024;
+  if (file.size > maxSize) {
+    return { valid: false, error: `Fichier trop lourd (max ${isVideo ? "50" : "5"} Mo)` };
+  }
+
+  if (isImage) {
+    const buffer = Buffer.from(await file.arrayBuffer().then((ab) => new Uint8Array(ab).slice(0, 12)));
+    const sig = IMAGE_SIGNATURES[file.type];
+    if (sig) {
+      const matches = sig.every((byte, i) => buffer[i] === byte);
+      if (!matches) {
+        return { valid: false, error: "Le contenu du fichier ne correspond pas à son type déclaré" };
+      }
+    }
+  }
+
+  return { valid: true, isVideo };
 }

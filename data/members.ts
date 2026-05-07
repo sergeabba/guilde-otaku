@@ -44,8 +44,10 @@ export interface Member {
   color: string;
   badge?: string;
   rankJP?: string;
-  stats: FighterStats; // Ajout des stats
-  special: SpecialAttack; // Ajout du coup spécial
+  stats: FighterStats;
+  special: SpecialAttack;
+  photoVideo?: string;
+  animeVideo?: string;
 }
 
 export const members: Member[] = [
