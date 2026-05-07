@@ -5,7 +5,7 @@ import { members } from "../../data/members";
 import { Upload, Check, X, User, Sword, Lock } from "lucide-react";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { useAdminAuth } from "../hooks/useAdminAuth";
-import { getAdminFormDataHeaders } from "../../lib/admin-fetch";
+import { getAdminFormDataHeaders, getAdminHeaders } from "../../lib/admin-fetch";
 
 type PhotoType = "photo" | "anime";
 
@@ -194,6 +194,20 @@ export default function AdminMembresPage() {
 
       if (!res.ok || data.error) {
         setResult({ url: data.error ?? "Erreur inconnue", success: false });
+        return;
+      }
+
+      // Mise à jour automatique dans la table fighters
+      const field = photoType === "photo" ? "photo" : "animechar";
+      const updateRes = await fetch("/api/update-fighter-photo", {
+        method: "POST",
+        headers: getAdminHeaders(),
+        body: JSON.stringify({ memberName: member!.name, field, url: data.url }),
+      });
+      const updateData = await updateRes.json();
+
+      if (!updateRes.ok || updateData.error) {
+        setResult({ url: `Upload OK mais mise à jour échouée : ${updateData.error}`, success: false });
         return;
       }
 
@@ -566,18 +580,8 @@ export default function AdminMembresPage() {
                     </p>
                   )}
                   {result.success && (
-                    <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.5)", marginTop: "8px", fontStyle: "italic" }}>
-                      ⚠️ Mets à jour le champ "photo" ou "animeChar" dans{" "}
-                      <code
-                        style={{
-                          background: "rgba(255,255,255,0.06)",
-                          padding: "1px 5px",
-                          borderRadius: "4px",
-                        }}
-                      >
-                        data/members.ts
-                      </code>{" "}
-                      ou via l'admin Fighters avec cette URL.
+                    <p style={{ fontSize: "12px", color: "rgba(52,211,153,0.7)", marginTop: "8px", fontStyle: "italic" }}>
+                      La photo a été mise à jour automatiquement dans la base de données.
                     </p>
                   )}
                 </div>
@@ -641,9 +645,9 @@ export default function AdminMembresPage() {
               }}
             >
               guilde-images/fighters/
-            </code>
-            . Copiez l'URL publique retournée et mettez-la à jour dans l'admin
-            Fighters pour que le membre l'utilise.
+            </code>{" "}
+            et la table fighters est mise à jour automatiquement. Le site affiche
+            la nouvelle photo immédiatement.
           </p>
         </div>
       </div>
