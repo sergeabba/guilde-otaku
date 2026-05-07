@@ -118,7 +118,11 @@ export default function MemberModal({ member, onClose, viewMode }: {
             position: "fixed", inset: 0, zIndex: 9999,
             background: "#08080f",
             overflowY: "auto",
+            overflowX: "hidden",
             WebkitOverflowScrolling: "touch",
+            overscrollBehavior: "contain",
+            // Pad for iOS home bar
+            paddingBottom: "env(safe-area-inset-bottom)",
           }}
         >
           {/* ── OVERLAY BADGE PLEIN ÉCRAN ──────────────────────────────── */}
@@ -188,7 +192,7 @@ export default function MemberModal({ member, onClose, viewMode }: {
             aria-label="Mode d'affichage"
             style={{
               position: "fixed",
-              top: isMobile ? "16px" : "24px",
+              top: isMobile ? "max(16px, env(safe-area-inset-top))" : "24px",
               left: "50%", transform: "translateX(-50%)",
               zIndex: 10000,
               display: "flex",
@@ -226,8 +230,8 @@ export default function MemberModal({ member, onClose, viewMode }: {
             aria-label="Fermer la fiche membre"
             style={{
               position: "fixed",
-              top: isMobile ? "16px" : "24px",
-              left: isMobile ? "16px" : "auto",
+              top: isMobile ? "max(16px, env(safe-area-inset-top))" : "24px",
+              left: isMobile ? "max(16px, env(safe-area-inset-left))" : "auto",
               right: isMobile ? "auto" : "24px",
               zIndex: 10000,
               display: "flex", alignItems: "center", gap: "6px",

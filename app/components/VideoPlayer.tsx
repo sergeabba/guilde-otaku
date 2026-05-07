@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import { Maximize2 } from "lucide-react";
 
 interface VideoPlayerProps {
@@ -13,7 +13,7 @@ interface VideoPlayerProps {
    */
   objectPosition?: "smart" | string;
   style?: React.CSSProperties;
-  /** Affiche le bouton plein écran au hover */
+  /** Affiche le bouton plein écran */
   fullscreenBtn?: boolean;
   /** Classes Tailwind supplémentaires sur la <video> */
   className?: string;
@@ -29,12 +29,16 @@ export default function VideoPlayer({
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hovered, setHovered] = useState(false);
-  const [fsActive, setFsActive] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+
+  useEffect(() => {
+    setIsTouchDevice("ontouchstart" in window || navigator.maxTouchPoints > 0);
+  }, []);
 
   const resolvedPosition =
     objectPosition === "smart"
       ? fit === "cover"
-        ? "center 18%"   // légèrement au-dessus du centre pour capter le visage
+        ? "center 18%"
         : "center bottom"
       : objectPosition;
 
@@ -46,13 +50,12 @@ export default function VideoPlayer({
     } else if ((el as any).webkitRequestFullscreen) {
       (el as any).webkitRequestFullscreen();
     } else if ((el as any).webkitEnterFullscreen) {
-      // iOS Safari
       (el as any).webkitEnterFullscreen();
     }
-    setFsActive(true);
-    el.addEventListener("fullscreenchange", () => setFsActive(false), { once: true });
-    el.addEventListener("webkitfullscreenchange", () => setFsActive(false), { once: true });
   }, []);
+
+  // On touch devices the button is always visible (no hover state)
+  const btnVisible = isTouchDevice ? true : hovered;
 
   return (
     <div
@@ -76,10 +79,14 @@ export default function VideoPlayer({
           objectFit: fit,
           objectPosition: resolvedPosition,
           display: "block",
+          // Prevent the video element itself from capturing touch events so that:
+          // 1. Scrolling over the video works on iOS
+          // 2. iOS won't open the native video player on tap
+          pointerEvents: "none",
         }}
       />
 
-      {/* Bouton plein écran — apparaît au hover */}
+      {/* Bouton plein écran */}
       {fullscreenBtn && (
         <button
           onClick={(e) => { e.stopPropagation(); requestFs(); }}
@@ -89,8 +96,8 @@ export default function VideoPlayer({
             top: 8,
             right: 8,
             zIndex: 20,
-            width: 32,
-            height: 32,
+            width: 36,
+            height: 36,
             borderRadius: 8,
             background: "rgba(0,0,0,0.55)",
             backdropFilter: "blur(6px)",
@@ -100,13 +107,13 @@ export default function VideoPlayer({
             justifyContent: "center",
             cursor: "pointer",
             color: "#fff",
-            opacity: hovered ? 1 : 0,
-            transform: hovered ? "scale(1)" : "scale(0.8)",
+            opacity: btnVisible ? (isTouchDevice ? 0.75 : 1) : 0,
+            transform: btnVisible ? "scale(1)" : "scale(0.8)",
             transition: "opacity 0.18s, transform 0.18s",
-            pointerEvents: hovered ? "auto" : "none",
+            pointerEvents: "auto",
           }}
         >
-          <Maximize2 size={14} />
+          <Maximize2 size={15} />
         </button>
       )}
     </div>
