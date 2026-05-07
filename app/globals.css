@@ -295,6 +295,16 @@ textarea:focus {
   height: 100%;
 }
 
+/* ─── MODAL SCROLL FIX iOS ───────────────────────────────────────────────────── */
+/* Quand le modal est ouvert, body a overflow:hidden — mais il faut aussi bloquer
+   le scroll sur iOS via position:fixed (sinon le fond continue de scroller).
+   La classe est ajoutée par JS. On évite de casser le scroll interne du modal. */
+body.modal-open {
+  position: fixed;
+  width: 100%;
+  overflow: hidden;
+}
+
 /* ─── TAILWIND @layer utilities ──────────────────────────────────────────────── */
 @layer utilities {
   .scrollbar-hide {

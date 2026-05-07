@@ -62,12 +62,18 @@ export default function MemberModal({ member, onClose, viewMode }: {
     return () => window.removeEventListener("keydown", h);
   }, [onClose, showBadge]);
 
-  // Body scroll lock — simple overflow:hidden (avoids iOS vh bugs from position:fixed on body)
+  // Body scroll lock — iOS Safari requires position:fixed on body to truly prevent
+  // background scroll. We save/restore scrollY so the page doesn't jump.
   useEffect(() => {
     if (!member) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = prev; };
+    const scrollY = window.scrollY;
+    document.body.style.top = `-${scrollY}px`;
+    document.body.classList.add("modal-open");
+    return () => {
+      document.body.classList.remove("modal-open");
+      document.body.style.top = "";
+      window.scrollTo({ top: scrollY, behavior: "instant" as ScrollBehavior });
+    };
   }, [member]);
 
   const isAnime       = localMode === "anime";
@@ -152,6 +158,9 @@ export default function MemberModal({ member, onClose, viewMode }: {
               display: "flex", flexDirection: "column",
               overflow: "hidden",
               background: "#08080f",
+              /* iOS Safari : height explicite pour que flex:1 fonctionne dans les enfants */
+              height: "100%",
+              maxHeight: "-webkit-fill-available",
             }}
           >
             {/* ── NAV BAR ──────────────────────────────────────────────────── */}
@@ -226,6 +235,7 @@ export default function MemberModal({ member, onClose, viewMode }: {
               ref={scrollRef}
               style={{
                 flex: 1,
+                minHeight: 0,          /* iOS Safari : sans ça flex:1 ignore la hauteur disponible */
                 overflowY: "scroll",
                 WebkitOverflowScrolling: "touch",
                 overscrollBehavior: "contain",
