@@ -17,10 +17,11 @@ export default function MemberCard({ member, index, viewMode, onClick, isMobile 
 
   const accent = rankAccents[member.rank as keyof typeof rankAccents] ?? "#c9a84c";
   const isDark  = darkRanks.includes(member.rank as any);
-  const isAnime = viewMode === "anime";
-  const photoSrc = isAnime ? member.animeChar : member.photo;
-  const hasError = isAnime ? imgErrorAnime : imgErrorReal;
-  const onError  = isAnime ? () => setImgErrorAnime(true) : () => setImgErrorReal(true);
+  const isAnime   = viewMode === "anime";
+  const videoSrc  = isAnime ? member.animeVideo : member.photoVideo;
+  const photoSrc  = isAnime ? member.animeChar : member.photo;
+  const hasError  = isAnime ? imgErrorAnime : imgErrorReal;
+  const onError   = isAnime ? () => setImgErrorAnime(true) : () => setImgErrorReal(true);
 
   return (
     <motion.div
@@ -58,7 +59,16 @@ export default function MemberCard({ member, index, viewMode, onClick, isMobile 
           transition={{ duration: 0.35 }}
           style={{ position: "absolute", inset: 0 }}
         >
-          {!hasError ? (
+          {videoSrc ? (
+            <video
+              src={videoSrc}
+              autoPlay
+              loop
+              muted
+              playsInline
+              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "top" }}
+            />
+          ) : !hasError ? (
             <Image
               src={photoSrc}
               alt={member.name}

@@ -36,8 +36,10 @@ function mapRowToMember(row: SupabaseMemberRow): Member {
     color:     row.color ?? "#c9a84c",
     badge:     row.badge ?? undefined,
     rankJP:    row.rankjp ?? undefined,
-    stats:     row.stats ?? defaultStats,
-    special:   row.special ?? defaultSpecial,
+    stats:      row.stats ?? defaultStats,
+    special:    row.special ?? defaultSpecial,
+    photoVideo: row.photovideo ?? undefined,
+    animeVideo: row.animevideo ?? undefined,
   };
 }
 
