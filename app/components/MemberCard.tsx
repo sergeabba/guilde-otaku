@@ -28,6 +28,13 @@ export default function MemberCard({ member, index, viewMode, onClick, isMobile 
     <motion.div
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
+      whileHover={isMobile ? {} : {
+        y: -8,
+        scale: 1.02,
+        rotateX: 1,
+        boxShadow: `0 32px 64px rgba(0,0,0,0.28), 0 0 0 2px ${accent}, 0 0 40px ${accent}55`,
+        transition: { duration: 0.4, ease: [0.23, 1, 0.32, 1] },
+      }}
       transition={{ duration: 0.45, delay: index * 0.04 }}
       onClick={onClick}
       onMouseEnter={() => !isMobile && setHovered(true)}
@@ -41,14 +48,9 @@ export default function MemberCard({ member, index, viewMode, onClick, isMobile 
         overflow: "hidden",
         position: "relative",
         aspectRatio: isMobile ? "3/4" : "2/3",
-        boxShadow: hovered
-          ? `0 32px 64px rgba(0,0,0,0.28), 0 0 0 2px ${accent}, 0 0 40px ${accent}55`
-          : `0 4px 20px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.07)`,
-        transform: hovered
-          ? "translateY(-8px) scale(1.02) perspective(1000px) rotateX(1deg)"
-          : "translateY(0px) scale(1)",
-        transition: "box-shadow 0.4s ease, transform 0.4s cubic-bezier(0.23,1,0.32,1)",
+        boxShadow: `0 4px 20px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.07)`,
         background: isDark ? "#0d0d14" : "#f5f5f2",
+        perspective: "1000px",
       }}
     >
       <AnimatePresence mode="wait">

@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../../lib/supabase";
 import {
   Lock, Eye, EyeOff, Plus, Trash2, Pencil, X, Check,
   Upload, RefreshCw, User, Sword, Video, Image as ImageIcon,
-  Search, AlertTriangle, Users, Film, Cake,
+  Search, AlertTriangle, Users, Film, Cake, ChevronLeft,
 } from "lucide-react";
 import { RANK_FILTER_ORDER, type Rank } from "../../data/members";
 import { useAdminAuth } from "../hooks/useAdminAuth";
@@ -107,6 +108,8 @@ export default function AdminMembresPage() {
   const [loadingMembers, setLoadingMembers] = useState(true);
   const [search, setSearch] = useState("");
 
+  const [saveToast, setSaveToast] = useState<string | null>(null);
+
   // Panel (add / edit)
   const [panelOpen, setPanelOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -176,16 +179,22 @@ export default function AdminMembresPage() {
     setSaving(false);
     setPanelOpen(false);
     fetchFighters();
+    const msg = editingId ? `${formName.trim()} mis à jour` : `${formName.trim()} ajouté`;
+    setSaveToast(msg);
+    setTimeout(() => setSaveToast(null), 3000);
   }
 
   async function confirmDelete() {
     if (!deleteTarget) return;
     setDeleting(true);
+    const name = deleteTarget.name;
     await supabase.from("fighters").delete().eq("id", deleteTarget.id);
     invalidateMembersCache();
     setDeleting(false);
     setDeleteTarget(null);
     fetchFighters();
+    setSaveToast(`${name} supprimé`);
+    setTimeout(() => setSaveToast(null), 3000);
   }
 
   // ── MEDIA ────────────────────────────────────────────────────────────────
@@ -258,7 +267,23 @@ export default function AdminMembresPage() {
 
   const filtered = fighters.filter(f => f.name.toLowerCase().includes(search.toLowerCase()));
 
-  if (checking) return null;
+  useEffect(() => {
+    if (!panelOpen && !deleteTarget) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (deleteTarget) setDeleteTarget(null);
+      else if (panelOpen) setPanelOpen(false);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [panelOpen, deleteTarget]);
+
+  if (checking) return (
+    <div style={{ minHeight: "100vh", background: "#050508", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ width: 36, height: 36, borderRadius: "50%", border: "3px solid rgba(201,168,76,0.2)", borderTopColor: "#c9a84c", animation: "spin 0.7s linear infinite" }} />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
   if (!authed) return <AuthScreen password={password} setPassword={setPassword} login={login} />;
 
   return (
@@ -285,6 +310,9 @@ export default function AdminMembresPage() {
       {/* ── STICKY TOP BAR ── */}
       <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(5,5,8,0.95)", backdropFilter: "blur(14px)", position: "sticky", top: 0, zIndex: 50 }}>
         <div style={{ maxWidth: 1000, margin: "0 auto", padding: isMobile ? "14px 16px" : "16px 28px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+          <Link href="/admin" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)", flexShrink: 0, textDecoration: "none", transition: "all 0.15s" }}>
+            <ChevronLeft size={18} />
+          </Link>
           <div style={{ flex: 1 }}>
             <p style={{ fontSize: 10, fontWeight: 800, color: "#c9a84c", letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 2 }}>ADMIN · GUILDE OTAKU</p>
             <h1 style={{ fontSize: "clamp(20px,3vw,30px)", fontWeight: 900, fontStyle: "italic", textTransform: "uppercase", lineHeight: 1 }}>
@@ -589,6 +617,30 @@ export default function AdminMembresPage() {
           </>
         )}
       </AnimatePresence>
+
+      {/* ── SAVE TOAST ── */}
+      <AnimatePresence>
+        {saveToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 400, damping: 28 }}
+            style={{
+              position: "fixed", bottom: 28, left: "50%", transform: "translateX(-50%)",
+              zIndex: 9999, background: "#0d0d18",
+              border: "1px solid rgba(201,168,76,0.4)",
+              borderRadius: 14, padding: "12px 22px",
+              display: "flex", alignItems: "center", gap: 10,
+              boxShadow: "0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(201,168,76,0.15)",
+              fontFamily: F, pointerEvents: "none", whiteSpace: "nowrap",
+            }}
+          >
+            <Check size={16} color="#c9a84c" />
+            <span style={{ fontSize: 14, fontWeight: 800, color: "#fff", letterSpacing: "0.03em" }}>{saveToast}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -617,7 +669,7 @@ function MediasTab({
   preview: string | null; file: File | null; uploading: boolean;
   uploadResult: { url: string; success: boolean } | null;
   onUpload: () => void;
-  inputRef: React.RefObject<HTMLInputElement>;
+  inputRef: React.RefObject<HTMLInputElement | null>;
   onFile: (f: File) => void;
   isMobile: boolean;
 }) {

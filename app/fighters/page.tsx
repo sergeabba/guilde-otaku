@@ -70,8 +70,6 @@ type Phase = "select" | "intro" | "fight";
 function Styles() {
   return (
     <style jsx global>{`
-      @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;600;700;900&family=Orbitron:wght@400;500;700;900&family=Black+Ops+One&display=swap');
-
       @keyframes scanlines       { 0%{transform:translateY(0)} 100%{transform:translateY(4px)} }
       @keyframes hpPulse         { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.5) saturate(2)} }
       @keyframes comboPop        { 0%,100%{transform:scale(1)} 50%{transform:scale(1.15)} }
@@ -154,7 +152,7 @@ function Styles() {
       }
       .kof-tile-name {
         font-family: 'Bebas Neue', sans-serif;
-        font-size: clamp(8px, 1.1vw, 12px);
+        font-size: clamp(10px, 1.3vw, 13px);
         color: #fff;
         letter-spacing: 1px;
         line-height: 1;
@@ -516,7 +514,7 @@ function FightIntro({ p1, p2, mode, onFinish }: { p1: Member; p2: Member; mode: 
       )}
       {step === "fight" && (
         <div className="absolute inset-0 z-[60] flex items-center justify-center pointer-events-none">
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 bg-white/90" style={{ transition: "opacity .4s" }} />
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: [0, 0.55, 0] }} transition={{ duration: 0.55, times: [0, 0.25, 1], ease: "easeOut" }} className="absolute inset-0" style={{ background: "rgba(255,255,255,1)" }} />
           <motion.div initial={{ scale: 4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 200, damping: 14, delay: .15 }}>
             <GlitchText text="FIGHT!" style={{ fontFamily: "'Orbitron',monospace", fontSize: "clamp(60px,16vw,200px)", fontWeight: 900, color: "#FFD700", textShadow: "0 0 40px rgba(255,215,0,.8),0 0 80px rgba(255,69,0,.5),0 8px 0 #7a5700", letterSpacing: "14px" }} />
           </motion.div>
@@ -544,7 +542,7 @@ function HPBar({ hp, color, glow, side, name, rank, combo }: { hp: number; color
       <div className="relative h-5 rounded-sm overflow-hidden" style={{ background: "rgba(0,0,0,.7)", border: `1px solid ${bc}20` }}>
         <motion.div animate={{ width: `${hp}%` }} transition={{ type: "spring", stiffness: 140, damping: 18 }}
           className="absolute top-0 bottom-0 rounded-sm"
-          style={{ [side === "right" ? "right" : "left"]: 0, background: danger ? "linear-gradient(90deg,#FF1A1A,#FF5500)" : `linear-gradient(90deg,${color}cc,${color})`, boxShadow: `0 0 10px ${glow}`, animation: danger ? "hpPulse .8s infinite" : undefined }}
+          style={{ [side === "right" ? "right" : "left"]: 0, background: danger ? `linear-gradient(${side === "right" ? 270 : 90}deg,#FF1A1A,#FF5500)` : `linear-gradient(${side === "right" ? 270 : 90}deg,${color}cc,${color})`, boxShadow: `0 0 10px ${glow}`, animation: danger ? "hpPulse .8s infinite" : undefined }}
         >
           <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom,rgba(255,255,255,.25) 0%,transparent 55%)" }} />
         </motion.div>
@@ -575,6 +573,7 @@ function Arena({ p1, p2, mode, onExit }: { p1: Member; p2: Member; mode: ViewMod
   const [roundText, setRoundText] = useState<string | null>("ROUND 1");
   const [winner, setWinner] = useState<Member | null>(null);
   const [shake, setShake] = useState(false);
+  const winnerRef = useRef<Member | null>(null);
   const c1 = rc(p1.rank), c2 = rc(p2.rank);
 
   useEffect(() => {
@@ -593,6 +592,7 @@ function Arena({ p1, p2, mode, onExit }: { p1: Member; p2: Member; mode: ViewMod
     const b = t1 / (t1 + t2);
 
     const iv = setInterval(() => {
+      if (winnerRef.current) return;
       const r = Math.random();
       if (r < b * .7) {
         const crit = Math.random() < s1.technique / 400;
@@ -611,12 +611,12 @@ function Arena({ p1, p2, mode, onExit }: { p1: Member; p2: Member; mode: ViewMod
       } else { setCombo1(0); setCombo2(0); }
     }, 700);
     return () => clearInterval(iv);
-  }, [roundText, hp1, hp2, winner]);
+  }, [roundText]);
 
   useEffect(() => {
-    if (hp1 <= 0 && !winner) { setWinner(p2); setShake(true); sfx?.play("ko"); setTimeout(() => setShake(false), 500); }
-    if (hp2 <= 0 && !winner) { setWinner(p1); setShake(true); sfx?.play("ko"); setTimeout(() => setShake(false), 500); }
-  }, [hp1, hp2, winner]);
+    if (hp1 <= 0 && !winnerRef.current) { winnerRef.current = p2; setWinner(p2); setShake(true); sfx?.play("ko"); setTimeout(() => setShake(false), 500); }
+    if (hp2 <= 0 && !winnerRef.current) { winnerRef.current = p1; setWinner(p1); setShake(true); sfx?.play("ko"); setTimeout(() => setShake(false), 500); }
+  }, [hp1, hp2]);
 
   return (
     <div className={`relative w-full h-screen overflow-hidden ${shake ? "ko-shake" : ""}`} style={{ background: "#050510" }}>
@@ -690,7 +690,7 @@ function Arena({ p1, p2, mode, onExit }: { p1: Member; p2: Member; mode: ViewMod
       <button onClick={onExit} className="absolute top-3 right-3 sm:top-4 sm:right-4 z-50 flex items-center gap-1.5 px-2.5 py-1.5 rounded cursor-pointer text-white/30 hover:text-white/60 transition-colors text-xs" style={{ fontFamily: "'Orbitron',monospace", fontSize: "9px", letterSpacing: "2px", background: "rgba(0,0,0,.5)", border: "1px solid rgba(255,255,255,.08)" }}>
         RETOUR
       </button>
-      <div className="absolute inset-0 pointer-events-none z-30" style={{ backgroundImage: "repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.01) 2px,rgba(255,255,255,.01) 4px)", animation: "scanlines .1s linear infinite" }} />
+      <div className="absolute inset-0 pointer-events-none z-30" style={{ backgroundImage: "repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.01) 2px,rgba(255,255,255,.01) 4px)", animation: "scanlines 8s linear infinite", willChange: "transform" }} />
       <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,.4) 100%)" }} />
     </div>
   );
@@ -1037,6 +1037,7 @@ function CharacterSelect({ members, mode, setMode, selected, onSelect, onFight }
 }) {
   const [filter, setFilter] = useState<Rank | "Tous">("Tous");
   const [hovered, setHovered] = useState<Member | null>(null);
+  const [isMuted, setIsMuted] = useState(false);
   const filtered = filter === "Tous" ? members : members.filter(m => m.rank === filter);
 
   const leftFighter  = selected;
@@ -1105,12 +1106,12 @@ function CharacterSelect({ members, mode, setMode, selected, onSelect, onFight }
 
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
-              onClick={() => { if (sfx) sfx.muted = !sfx.muted; }}
+              onClick={() => { const next = !isMuted; setIsMuted(next); if (sfx) sfx.muted = next; }}
               className="p-1.5 rounded cursor-pointer text-white/50 hover:text-white/90 transition-colors"
               style={{ fontFamily: "'Orbitron', monospace", fontSize: 9, letterSpacing: 1, background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.08)" }}
               aria-label="Toggle sound"
             >
-              {sfx?.muted ? "♪ OFF" : "♪ ON"}
+              {isMuted ? "♪ OFF" : "♪ ON"}
             </button>
             {(["real", "anime"] as ViewMode[]).map((m) => (
               <button

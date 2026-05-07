@@ -14,7 +14,8 @@
       "Read(//c/Users/hp/.claude/**)",
       "Bash(npx eslint *)",
       "Bash(python skills/ui-ux-pro-max/scripts/search.py \"arcade fighting game KOF dark gaming roster character select\" --design-system -p \"Guild Fighters\")",
-      "Bash(python .claude/skills/ui-ux-pro-max/scripts/search.py \"arcade fighting game KOF dark gaming roster character select\" --design-system -p \"Guild Fighters\")"
+      "Bash(python .claude/skills/ui-ux-pro-max/scripts/search.py \"arcade fighting game KOF dark gaming roster character select\" --design-system -p \"Guild Fighters\")",
+      "Bash(git -C \"c:/Users/hp/trombinoscope\" log --oneline -10)"
     ]
   }
 }

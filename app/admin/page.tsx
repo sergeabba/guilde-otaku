@@ -229,11 +229,12 @@ export default function AdminHubPage() {
           {MODULES.map((mod, i) => {
             const Icon = mod.icon;
             return (
+              <Link key={mod.href} href={mod.href} style={{ textDecoration: "none", display: "block" }}>
               <motion.div
-                key={mod.href}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: i * 0.06, ease: [0.22, 1, 0.36, 1] }}
+                whileHover={{ y: -4, scale: 1.01, transition: { duration: 0.2 } }}
                 className="admin-card"
                 style={{
                   background: "rgba(255,255,255,0.025)",
@@ -243,6 +244,7 @@ export default function AdminHubPage() {
                   position: "relative",
                   overflow: "hidden",
                   cursor: "pointer",
+                  height: "100%",
                 }}
               >
                 {/* Glow blob */}
@@ -297,19 +299,18 @@ export default function AdminHubPage() {
                   {mod.sub}
                 </p>
 
-                <Link
-                  href={mod.href}
+                <span
                   className="admin-link"
                   style={{
                     display: "inline-flex", alignItems: "center", gap: 6,
                     fontSize: 13, fontWeight: 800, textTransform: "uppercase",
                     letterSpacing: "0.08em", color: mod.color,
-                    textDecoration: "none",
                   }}
                 >
                   Accéder <ArrowUpRight size={14} />
-                </Link>
+                </span>
               </motion.div>
+              </Link>
             );
           })}
         </div>

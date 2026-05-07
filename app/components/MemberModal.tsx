@@ -38,21 +38,16 @@ export default function MemberModal({ member, onClose, viewMode }: {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const titleId = "modal-member-title";
 
-  // Reset state + declenche le badge splash quand on change de membre.
-  // Derive via useState + comparaison de clé pour éviter un setState
-  // synchrone dans un useEffect (cascading renders).
-  const memberKey = member?.id ?? null;
-  const [lastKey, setLastKey] = useState<number | null>(null);
-  if (memberKey !== lastKey) {
-    setLastKey(memberKey);
-    if (memberKey !== null) {
-      setLocalMode(viewMode);
-      setHeroImgError(false);
-      setCard1ImgError(false);
-      setCard2ImgError(false);
-      setShowBadgeSplash(Boolean(member?.badge));
-    }
-  }
+  // Reset state + déclenche le badge splash quand on change de membre
+  useEffect(() => {
+    if (!member) return;
+    setLocalMode(viewMode);
+    setHeroImgError(false);
+    setCard1ImgError(false);
+    setCard2ImgError(false);
+    setShowBadgeSplash(Boolean(member.badge));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [member?.id]);
 
   useEffect(() => {
     if (member?.badge && showBadgeSplash) {
@@ -73,13 +68,23 @@ export default function MemberModal({ member, onClose, viewMode }: {
     return () => window.removeEventListener("keydown", handler);
   }, [onClose, showBadgeSplash]);
 
-  // Bloquer le scroll du body + focus trap à l'ouverture
+  // Bloquer le scroll du body (iOS-safe) + focus à l'ouverture
   useEffect(() => {
     if (member) {
-      const original = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      setTimeout(() => closeButtonRef.current?.focus(), 100);
-      return () => { document.body.style.overflow = original; };
+      const scrollY = window.scrollY;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = "100%";
+      // Reset modal scroll position
+      const dialog = document.querySelector('[role="dialog"]') as HTMLElement | null;
+      dialog?.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+      requestAnimationFrame(() => requestAnimationFrame(() => closeButtonRef.current?.focus()));
+      return () => {
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.width = "";
+        window.scrollTo(0, scrollY);
+      };
     }
   }, [member]);
 
@@ -128,8 +133,8 @@ export default function MemberModal({ member, onClose, viewMode }: {
                 role="alertdialog"
                 aria-label={`Award Otaku obtenu : ${member.badge}`}
                 style={{
-                  position: "fixed", inset: 0, zIndex: 99999,
-                  background: "rgba(0,0,0,0.85)", backdropFilter: "blur(15px)",
+                  position: "fixed", inset: 0, zIndex: 9002,
+                  background: "rgba(0,0,0,0.94)",
                   display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
                   cursor: "pointer",
                 }}
@@ -207,7 +212,6 @@ export default function MemberModal({ member, onClose, viewMode }: {
                   background: localMode === mode ? accent : "transparent",
                   color: localMode === mode ? "#fff" : "#aaa",
                   transition: "all 0.3s",
-                  minHeight: "unset", minWidth: "unset",
                 }}
               >
                 {mode === "real" ? "Réel" : "Anime"}
@@ -235,7 +239,6 @@ export default function MemberModal({ member, onClose, viewMode }: {
               fontFamily: "'Barlow Condensed', sans-serif",
               fontSize: "15px", fontWeight: 700, textTransform: "uppercase",
               backdropFilter: "blur(8px)", cursor: "pointer",
-              minHeight: "unset", minWidth: "unset",
               transition: "background 200ms ease, border-color 200ms ease",
             }}
             onMouseEnter={(e) => {
@@ -344,7 +347,7 @@ export default function MemberModal({ member, onClose, viewMode }: {
             </div>
 
             {/* ── INFOS ─────────────────────────────────────────────────────── */}
-            <div style={{ padding: isMobile ? "36px 20px" : "72px 5%", background: "#fff", color: "#000" }}>
+            <div style={{ padding: isMobile ? "36px 20px" : "72px 5%", background: "#0d0d14", color: "#fff" }}>
               <div style={{ maxWidth: "960px", margin: "0 auto" }}>
 
                 {/* STATS */}
@@ -352,7 +355,7 @@ export default function MemberModal({ member, onClose, viewMode }: {
                   display: "grid",
                   gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)",
                   gap: "2px",
-                  background: "rgba(0,0,0,0.06)",
+                  background: "rgba(255,255,255,0.04)",
                   borderRadius: "14px", overflow: "hidden",
                   marginBottom: isMobile ? "40px" : "60px",
                 }}>
@@ -362,7 +365,7 @@ export default function MemberModal({ member, onClose, viewMode }: {
                     { label: "Guilde",       value: "Otaku"         },
                   ].map((stat) => (
                     <div key={stat.label} style={{
-                      background: "#fff",
+                      background: "rgba(255,255,255,0.03)",
                       padding: isMobile ? "20px" : "25px",
                       borderTop: `4px solid ${accent}`,
                       textAlign: "center",
@@ -377,7 +380,7 @@ export default function MemberModal({ member, onClose, viewMode }: {
                       <p style={{
                         fontFamily: "'Barlow Condensed', sans-serif",
                         fontSize: isMobile ? "22px" : "28px",
-                        fontWeight: 900, color: "#111", marginTop: "5px",
+                        fontWeight: 900, color: "#fff", marginTop: "5px",
                       }}>
                         {stat.value}
                       </p>
@@ -397,15 +400,15 @@ export default function MemberModal({ member, onClose, viewMode }: {
                   <p style={{
                     fontSize: isMobile ? "17px" : "22px",
                     fontWeight: 600, lineHeight: 1.6,
-                    maxWidth: "760px", margin: "0 auto", color: "#333",
-                    fontFamily: "'Barlow', sans-serif",
+                    maxWidth: "760px", margin: "0 auto", color: "rgba(255,255,255,0.75)",
+                    fontFamily: "'Barlow Condensed', sans-serif",
                   }}>
                     {member.bio}
                   </p>
                 </div>
 
                 {/* ALTER EGO */}
-                <div style={{ borderTop: "1px solid #eee", paddingTop: isMobile ? "40px" : "60px", paddingBottom: "20px" }}>
+                <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: isMobile ? "40px" : "60px", paddingBottom: "20px" }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "15px", marginBottom: "36px" }}>
                     <div style={{ width: "40px", height: "4px", background: accent, borderRadius: "2px" }} />
                     <p style={{
@@ -425,8 +428,8 @@ export default function MemberModal({ member, onClose, viewMode }: {
                       position: "relative",
                       height: isMobile ? "320px" : "440px",
                       borderRadius: "20px", overflow: "hidden",
-                      boxShadow: "0 12px 36px rgba(0,0,0,0.1)",
-                      border: "1px solid #eaeaea",
+                      boxShadow: `0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px ${accent}20`,
+                      border: `1px solid ${accent}25`,
                     }}>
                       {heroVideoSrc ? (
                         <VideoPlayer src={heroVideoSrc} fit="cover" objectPosition="smart" fullscreenBtn />
@@ -435,11 +438,12 @@ export default function MemberModal({ member, onClose, viewMode }: {
                         <img
                           src={card1Src}
                           alt={`${member.name} — ${card1Label}`}
+                          loading="lazy"
                           style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 15%" }}
                           onError={() => setCard1ImgError(true)}
                         />
                       )}
-                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 40%, transparent 100%)" }} />
+                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.2) 40%, transparent 100%)" }} />
                       <div style={{ position: "absolute", bottom: "20px", left: "16px", right: "16px", textAlign: "center" }}>
                         <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "11px", fontWeight: 800, color: accent, textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "6px" }}>
                           {card1Label}
@@ -455,8 +459,8 @@ export default function MemberModal({ member, onClose, viewMode }: {
                       position: "relative",
                       height: isMobile ? "320px" : "440px",
                       borderRadius: "20px", overflow: "hidden",
-                      boxShadow: "0 12px 36px rgba(0,0,0,0.1)",
-                      border: "1px solid #eaeaea",
+                      boxShadow: `0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px ${accent}20`,
+                      border: `1px solid ${accent}25`,
                     }}>
                       {card2VideoSrc ? (
                         <VideoPlayer src={card2VideoSrc} fit="cover" objectPosition="smart" fullscreenBtn />
@@ -465,11 +469,12 @@ export default function MemberModal({ member, onClose, viewMode }: {
                         <img
                           src={card2Src}
                           alt={`${member.name} — ${card2Label}`}
+                          loading="lazy"
                           style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 15%" }}
                           onError={() => setCard2ImgError(true)}
                         />
                       )}
-                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 40%, transparent 100%)" }} />
+                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.2) 40%, transparent 100%)" }} />
                       <div style={{ position: "absolute", bottom: "20px", left: "16px", right: "16px", textAlign: "center" }}>
                         <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "11px", fontWeight: 800, color: accent, textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "6px" }}>
                           {card2Label}

@@ -47,6 +47,15 @@ html, body {
   --radius-card:   16px;
   --radius-btn:    12px;
   --radius-pill:   100px;
+
+  /* ── Z-INDEX SCALE (source unique — ne jamais hardcoder ailleurs) ── */
+  --z-header:          100;
+  --z-fab:             200;
+  --z-modal:          9000;
+  --z-modal-controls: 9001;
+  --z-badge-splash:   9002;
+  --z-splash:         9999;
+  --z-splash-overlay: 10000;
 }
 
 /* ─── SCROLLBAR ──────────────────────────────────────────────────────────────── */
@@ -330,7 +339,7 @@ textarea:focus {
 
 /* ─── PAGE D'ACCUEIL · BACKGROUND ────────────────────────────────────────────── */
 body {
-  background-color: #f7f5f0;
+  background-color: #050508;
   background-image:
     radial-gradient(ellipse at 10% 0%,  rgba(201, 168, 76, 0.12) 0%, transparent 50%),
     radial-gradient(ellipse at 90% 10%, rgba(167, 139, 250, 0.08) 0%, transparent 45%),

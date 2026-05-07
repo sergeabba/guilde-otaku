@@ -5,7 +5,7 @@ import { Rank, Member } from "../../data/members";
 import MemberCard from "./MemberCard";
 import MemberModal from "./MemberModal";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, User, Sword } from "lucide-react";
+import { Search, User, Sword, X } from "lucide-react";
 import { rankAccents, rankBg, rankLogos, darkRanks } from "../config/ranks";
 import GuildeHeader from "./GuildeHeader";
 import { useIsMobile } from "../hooks/useIsMobile";
@@ -31,37 +31,6 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
     });
   }, [activeRank, searchTerm, initialMembers]);
 
-  // ─── VIEW TOGGLE ───────────────
-  const ViewToggle = useMemo(() => (
-    <div style={{
-      display: "flex",
-      background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)",
-      borderRadius: "100px",
-      padding: "4px",
-    }}>
-      {(["real", "anime"] as ViewMode[]).map((mode) => (
-        <button
-          key={mode}
-          onClick={() => setViewMode(mode)}
-          style={{
-            padding: "6px 14px",
-            borderRadius: "100px",
-            border: "none",
-            cursor: "pointer",
-            fontFamily: "'Barlow Condensed', sans-serif",
-            fontSize: "12px",
-            fontWeight: 900,
-            textTransform: "uppercase",
-            background: viewMode === mode ? accent : "transparent",
-            color: viewMode === mode ? "#fff" : (isDark ? "#aaa" : "#666"),
-            transition: "all 0.3s",
-          }}
-        >
-          {mode === "real" ? "Réel" : "Anime"}
-        </button>
-      ))}
-    </div>
-  ), [viewMode, accent, isDark]);
 
   return (
     <motion.div
@@ -85,8 +54,8 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
             transition={{ duration: 1 }}
             style={{ position: "absolute", inset: 0, zIndex: 0, overflow: "hidden", pointerEvents: "none" }}
           >
-            <div style={{ position: "absolute", top: "-10%", left: "-10%", width: "50vw", height: "50vw", background: "radial-gradient(circle, rgba(201,168,76,0.15) 0%, rgba(201,168,76,0) 70%)", filter: "blur(60px)", animation: "floatSlow 15s ease-in-out infinite" }} />
-            <div style={{ position: "absolute", top: "40%", right: "-5%", width: "60vw", height: "60vw", background: "radial-gradient(circle, rgba(167,139,250,0.1) 0%, rgba(167,139,250,0) 70%)", filter: "blur(80px)", animation: "floatSlow 18s ease-in-out infinite reverse" }} />
+            <div style={{ position: "absolute", top: "-10%", left: "-10%", width: "50vw", height: "50vw", background: "radial-gradient(circle, rgba(201,168,76,0.15) 0%, rgba(201,168,76,0) 70%)", filter: "blur(60px)", animation: "floatSlow 15s ease-in-out infinite", willChange: "transform" }} />
+            <div style={{ position: "absolute", top: "40%", right: "-5%", width: "60vw", height: "60vw", background: "radial-gradient(circle, rgba(167,139,250,0.1) 0%, rgba(167,139,250,0) 70%)", filter: "blur(80px)", animation: "floatSlow 18s ease-in-out infinite reverse", willChange: "transform" }} />
             <div style={{ position: "absolute", inset: 0, backgroundImage: "url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.8%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')", opacity: 0.04, mixBlendMode: "overlay" }} />
           </motion.div>
         )}
@@ -99,14 +68,15 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
           accentColor={accent}
           bgColor={rankBg[activeRank as Rank | "Tous"].nav}
           textColor={isDark ? "#fff" : "#111"}
-          rightSlot={ViewToggle}
         />
 
         {/* ── BARRE DE FILTRES ── */}
+        <div style={{ position: "relative" }}>
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          className="scrollbar-hide"
           style={{
             display: "flex",
             gap: isMobile ? "10px" : "15px",
@@ -122,6 +92,7 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
             <button
               key={rank}
               onClick={() => setActiveRank(rank as Rank | "Tous")}
+              aria-pressed={activeRank === rank}
               style={{
                 flexShrink: 0,
                 display: "flex",
@@ -150,6 +121,9 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
             </button>
           ))}
         </motion.div>
+        {/* fade mask droite — signale le scroll */}
+        <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 60, background: `linear-gradient(to left, ${isDark ? rankBg[activeRank as Rank | "Tous"].bg : rankBg[activeRank as Rank | "Tous"].bg}, transparent)`, pointerEvents: "none" }} />
+        </div>
 
         {/* ── MAIN ── */}
         <main style={{ maxWidth: "1400px", margin: "0 auto", padding: isMobile ? "30px 15px" : "60px 40px" }}>
@@ -195,16 +169,18 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
               style={{ position: "relative", width: isMobile ? "100%" : "auto" }}
             >
               <Search
-                style={{ position: "absolute", left: "15px", top: "50%", transform: "translateY(-50%)", color: accent }}
+                style={{ position: "absolute", left: "15px", top: "50%", transform: "translateY(-50%)", color: accent, pointerEvents: "none" }}
                 size={20}
+                aria-hidden="true"
               />
               <input
                 type="text"
                 placeholder="Rechercher une légende..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                aria-label="Rechercher un membre"
                 style={{
-                  padding: "15px 15px 15px 45px",
+                  padding: searchTerm ? "15px 44px 15px 45px" : "15px 15px 15px 45px",
                   borderRadius: "12px",
                   width: isMobile ? "100%" : "320px",
                   background: isDark ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.8)",
@@ -217,6 +193,16 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
                   fontSize: "15px",
                 }}
               />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm("")}
+                  aria-label="Effacer la recherche"
+                  className="no-min"
+                  style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.4)", padding: "4px", display: "flex" }}
+                >
+                  <X size={16} />
+                </button>
+              )}
             </motion.div>
           </motion.div>
 
@@ -233,6 +219,18 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.5 }}
             >
+              {filteredMembers.length === 0 && (
+                <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} style={{ textAlign: "center", padding: "80px 20px" }}>
+                  <p style={{ fontSize: isMobile ? "18px" : "24px", fontWeight: 900, fontStyle: "italic", textTransform: "uppercase", color: isDark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.2)", marginBottom: "12px" }}>
+                    Aucun membre trouvé
+                  </p>
+                  {searchTerm && (
+                    <button onClick={() => setSearchTerm("")} style={{ fontSize: "14px", fontWeight: 800, color: accent, textTransform: "uppercase", letterSpacing: "0.1em", background: "none", border: `1px solid ${accent}40`, borderRadius: "100px", padding: "8px 20px", cursor: "pointer" }}>
+                      Effacer « {searchTerm} »
+                    </button>
+                  )}
+                </motion.div>
+              )}
               {(activeRank === "Tous" ? Object.keys(rankLogos) : [activeRank]).map((rank) => {
                 const rankMembers = filteredMembers.filter((m) => m.rank === rank);
                 if (rankMembers.length === 0) return null;
@@ -254,7 +252,7 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
                     <div style={{
                       display: "grid",
                       gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(auto-fill, minmax(230px, 1fr))",
-                      gap: isMobile ? "10px" : "25px",
+                      gap: isMobile ? "16px" : "25px",
                     }}>
                       {rankMembers.map((member, i) => (
                         <MemberCard
@@ -284,14 +282,14 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
       {/* ── BOUTON FLOTTANT SWITCH RÉEL / ANIME ── */}
       <motion.div
         initial={{ y: 100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.3, type: "spring", bounce: 0.4 }}
+        animate={{ y: 0, opacity: selectedMember ? 0 : 1, pointerEvents: selectedMember ? "none" : "auto" }}
+        transition={{ delay: selectedMember ? 0 : 0.3, type: "spring", bounce: 0.4 }}
         style={{
           position: "fixed",
           bottom: isMobile ? "20px" : "40px",
           left: "50%",
           transform: "translateX(-50%)",
-          zIndex: 999,
+          zIndex: 200,
           display: "flex",
           background: isDark ? "rgba(10,10,10,0.85)" : "rgba(255,255,255,0.85)",
           backdropFilter: "blur(20px)",

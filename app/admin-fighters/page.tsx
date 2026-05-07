@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 import { supabase } from "../../lib/supabase";
-import { Trash2, Pencil, Plus, Flame, Zap, Shield, X, Upload, Lock, Search, ChevronLeft, Eye, EyeOff, AlertTriangle } from "lucide-react";
+import { Trash2, Pencil, Plus, Flame, Zap, Shield, X, Upload, Lock, Search, ChevronLeft, Eye, EyeOff, AlertTriangle, Check } from "lucide-react";
 import { Rank, RANK_FILTER_ORDER } from "../../data/members";
 import { useAdminAuth } from "../hooks/useAdminAuth";
 import { getAdminFormDataHeaders } from "../../lib/admin-fetch";
@@ -47,7 +48,7 @@ function StatSlider({ label, value, onChange, color }: { label: string; value: n
         <input
           type="range" min={0} max={100} value={value}
           onChange={(e) => onChange(Number(e.target.value))}
-          style={{ position: "absolute", inset: 0, width: "100%", opacity: 0, cursor: "pointer", height: "100%", margin: 0 }}
+          style={{ position: "absolute", left: 0, right: 0, top: "50%", transform: "translateY(-50%)", width: "100%", height: 44, opacity: 0, cursor: "pointer", margin: 0 }}
         />
       </div>
     </div>
@@ -103,6 +104,9 @@ export default function AdminFightersPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<SupabaseMemberRow | null>(null);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveToast, setSaveToast] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Uploads
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -127,6 +131,17 @@ export default function AdminFightersPage() {
   const [formSpecialEffect, setFormSpecialEffect] = useState("");
 
   useEffect(() => { if (authed) fetchFighters(); }, [authed]);
+
+  // Escape key handlers
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (deleteTarget) { setDeleteTarget(null); return; }
+      if (panelOpen) { setPanelOpen(false); }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [panelOpen, deleteTarget]);
 
   const fetchFighters = async () => {
     setLoading(true);
@@ -158,6 +173,7 @@ export default function AdminFightersPage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setSaveError(null);
     const payload = {
       name: formName, rank: formRank, birthday: formBirthday, bio: formBio,
       photo: formPhoto, animechar: formAnimechar, color: formColor,
@@ -165,23 +181,36 @@ export default function AdminFightersPage() {
       stats: { force: formForce, vitesse: formVitesse, technique: formTechnique },
       special: { name: formSpecialName, effect: formSpecialEffect },
     };
-    if (editingId) {
-      await supabase.from("fighters").update(payload).eq("id", editingId);
-    } else {
-      await supabase.from("fighters").insert([payload]);
+    const { error } = editingId
+      ? await supabase.from("fighters").update(payload).eq("id", editingId)
+      : await supabase.from("fighters").insert([payload]);
+    if (error) {
+      setSaveError(error.message);
+      setSaving(false);
+      return;
     }
     invalidateMembersCache();
     setSaving(false);
     setPanelOpen(false);
     fetchFighters();
+    const msg = editingId ? `${formName} mis à jour` : `${formName} invoqué`;
+    setSaveToast(msg);
+    setTimeout(() => setSaveToast(null), 3000);
   };
 
   const confirmDelete = async () => {
     if (!deleteTarget) return;
-    await supabase.from("fighters").delete().eq("id", deleteTarget.id);
-    invalidateMembersCache();
-    setDeleteTarget(null);
-    fetchFighters();
+    setDeleting(true);
+    const { error } = await supabase.from("fighters").delete().eq("id", deleteTarget.id);
+    if (!error) {
+      invalidateMembersCache();
+      const name = deleteTarget.name;
+      setDeleteTarget(null);
+      fetchFighters();
+      setSaveToast(`${name} supprimé`);
+      setTimeout(() => setSaveToast(null), 3000);
+    }
+    setDeleting(false);
   };
 
   const handleUpload = async (file: File, type: "photo" | "anime") => {
@@ -212,7 +241,11 @@ export default function AdminFightersPage() {
   });
 
   // ── Auth screen ──────────────────────────────────────────────────────────────
-  if (checking) return null;
+  if (checking) return (
+    <div style={{ minHeight: "100vh", background: "#050508", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ width: 36, height: 36, borderRadius: "50%", border: "2px solid rgba(201,168,76,0.2)", borderTopColor: "#c9a84c", animation: "spin 0.8s linear infinite" }} />
+    </div>
+  );
   if (!authed) {
     return (
       <div style={{ minHeight: "100vh", background: "#050508", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: F }}>
@@ -264,6 +297,9 @@ export default function AdminFightersPage() {
       {/* ── TOP BAR ── */}
       <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(5,5,8,0.9)", backdropFilter: "blur(12px)", position: "sticky", top: 0, zIndex: 50 }}>
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "16px 24px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+          <Link href="/admin" style={{ display: "flex", alignItems: "center", gap: 5, color: "rgba(255,255,255,0.35)", fontSize: 13, fontWeight: 700, textDecoration: "none", fontFamily: F, flexShrink: 0 }}>
+            <ChevronLeft size={15} /> Admin
+          </Link>
           <div style={{ flex: 1 }}>
             <p style={{ fontSize: 10, fontWeight: 800, color: "#c9a84c", letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 2 }}>ADMIN · GUILDE OTAKU</p>
             <h1 style={{ fontSize: "clamp(22px,3vw,32px)", fontWeight: 900, fontStyle: "italic", textTransform: "uppercase", lineHeight: 1 }}>
@@ -534,6 +570,13 @@ export default function AdminFightersPage() {
                   </div>
                 </div>
 
+                {/* Save error */}
+                {saveError && (
+                  <div style={{ padding: "10px 14px", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.3)", borderRadius: 10, color: "#f87171", fontSize: 13, fontWeight: 700 }}>
+                    {saveError}
+                  </div>
+                )}
+
                 {/* Footer buttons */}
                 <div style={{ position: "sticky", bottom: 0, background: "#0a0a12", borderTop: "1px solid rgba(255,255,255,0.07)", padding: "16px 0 0", marginTop: 8, display: "flex", gap: 10 }}>
                   <button type="button" onClick={() => setPanelOpen(false)} style={{ flex: 1, padding: "13px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: "rgba(255,255,255,0.5)", fontFamily: F, fontSize: 14, fontWeight: 800, cursor: "pointer", textTransform: "uppercase" }}>
@@ -546,6 +589,30 @@ export default function AdminFightersPage() {
               </form>
             </motion.div>
           </>
+        )}
+      </AnimatePresence>
+
+      {/* ── SAVE TOAST ── */}
+      <AnimatePresence>
+        {saveToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 400, damping: 28 }}
+            style={{
+              position: "fixed", bottom: 28, left: "50%", transform: "translateX(-50%)",
+              zIndex: 9999, background: "#0d0d18",
+              border: "1px solid rgba(201,168,76,0.4)",
+              borderRadius: 14, padding: "12px 22px",
+              display: "flex", alignItems: "center", gap: 10,
+              boxShadow: "0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(201,168,76,0.15)",
+              fontFamily: F, pointerEvents: "none",
+            }}
+          >
+            <Check size={16} color="#c9a84c" />
+            <span style={{ fontSize: 14, fontWeight: 800, color: "#fff", letterSpacing: "0.03em" }}>{saveToast}</span>
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -585,8 +652,8 @@ export default function AdminFightersPage() {
                 <button onClick={() => setDeleteTarget(null)} style={{ flex: 1, padding: "12px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: "rgba(255,255,255,0.5)", fontFamily: F, fontSize: 14, fontWeight: 800, cursor: "pointer", textTransform: "uppercase" }}>
                   Annuler
                 </button>
-                <button onClick={confirmDelete} style={{ flex: 1, padding: "12px", background: "rgba(248,113,113,0.15)", border: "1px solid rgba(248,113,113,0.4)", borderRadius: 12, color: "#f87171", fontFamily: F, fontSize: 14, fontWeight: 900, cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                  Supprimer
+                <button onClick={confirmDelete} disabled={deleting} style={{ flex: 1, padding: "12px", background: deleting ? "rgba(248,113,113,0.08)" : "rgba(248,113,113,0.15)", border: "1px solid rgba(248,113,113,0.4)", borderRadius: 12, color: deleting ? "rgba(248,113,113,0.4)" : "#f87171", fontFamily: F, fontSize: 14, fontWeight: 900, cursor: deleting ? "not-allowed" : "pointer", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                  {deleting ? "Suppression…" : "Supprimer"}
                 </button>
               </div>
             </motion.div>
