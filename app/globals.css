@@ -305,6 +305,15 @@ body.modal-open {
   overflow: hidden;
 }
 
+/* Hauteur plein écran iOS-safe :
+   100dvh (dynamic viewport height) s'ajuste quand la barre d'adresse Safari
+   apparaît/disparaît, évitant l'écran noir et les contenus tronqués.
+   100vh en fallback pour les navigateurs sans support dvh. */
+.modal-fullscreen {
+  height: 100vh;
+  height: 100dvh;
+}
+
 /* ─── TAILWIND @layer utilities ──────────────────────────────────────────────── */
 @layer utilities {
   .scrollbar-hide {

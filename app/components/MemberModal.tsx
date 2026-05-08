@@ -153,14 +153,12 @@ export default function MemberModal({ member, onClose, viewMode }: {
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}
+            className="modal-fullscreen"
             style={{
               position: "fixed", inset: 0, zIndex: 9999,
               display: "flex", flexDirection: "column",
               overflow: "hidden",
               background: "#08080f",
-              /* iOS Safari : height explicite pour que flex:1 fonctionne dans les enfants */
-              height: "100%",
-              maxHeight: "-webkit-fill-available",
             }}
           >
             {/* ── NAV BAR ──────────────────────────────────────────────────── */}
@@ -235,10 +233,11 @@ export default function MemberModal({ member, onClose, viewMode }: {
               ref={scrollRef}
               style={{
                 flex: 1,
-                minHeight: 0,          /* iOS Safari : sans ça flex:1 ignore la hauteur disponible */
+                minHeight: 0,
                 overflowY: "scroll",
                 WebkitOverflowScrolling: "touch",
                 overscrollBehavior: "contain",
+                touchAction: "pan-y",
                 paddingBottom: "env(safe-area-inset-bottom, 20px)",
               }}
             >
