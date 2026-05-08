@@ -64,7 +64,6 @@ function rc(rank: string) { return RC[rank] ?? RC["Fondateur"]; }
 function pwr(m: Member) { const s = m.stats ?? { force: 80, vitesse: 80, technique: 80 }; return Math.round((s.force + s.vitesse + s.technique) / 3); }
 function img(m: Member, mode: ViewMode) { return mode === "anime" ? m.animeChar : m.photo; }
 function vid(m: Member, mode: ViewMode) { return mode === "anime" ? (m.animeVideo ?? "") : (m.photoVideo ?? ""); }
-function hasVideo(m: Member, mode: ViewMode) { return !!vid(m, mode); }
 
 type Phase = "select" | "intro" | "fight";
 
@@ -138,12 +137,12 @@ function Styles() {
       /* ─── KOF Portrait grid ─── */
       .kof-roster {
         display: grid;
-        gap: 3px;
-        grid-template-columns: repeat(4, 1fr);
+        gap: 5px;
+        grid-template-columns: repeat(3, 1fr);
       }
-      @media(min-width:480px)  { .kof-roster { grid-template-columns: repeat(5, 1fr); gap: 4px; } }
-      @media(min-width:760px)  { .kof-roster { grid-template-columns: repeat(6, 1fr); gap: 4px; } }
-      @media(min-width:1100px) { .kof-roster { grid-template-columns: repeat(7, 1fr); gap: 4px; } }
+      @media(min-width:480px)  { .kof-roster { grid-template-columns: repeat(4, 1fr); gap: 5px; } }
+      @media(min-width:760px)  { .kof-roster { grid-template-columns: repeat(5, 1fr); gap: 6px; } }
+      @media(min-width:1100px) { .kof-roster { grid-template-columns: repeat(6, 1fr); gap: 6px; } }
 
       /* ─── Tile base ─── */
       .kof-tile {
@@ -185,7 +184,7 @@ function Styles() {
       }
       .kof-tile-name {
         font-family: 'Bebas Neue', sans-serif;
-        font-size: clamp(10px, 1.3vw, 13px);
+        font-size: clamp(12px, 1.8vw, 15px);
         color: #fff;
         letter-spacing: 1px;
         line-height: 1;
@@ -1254,8 +1253,8 @@ function ArcadeTimer() {
 /* ════════════════════════════════════════════════════
    CHARACTER SELECT — KOF STYLE
    ════════════════════════════════════════════════════ */
-function CharacterSelect({ members, mode, setMode, selected, onSelect, onFight }: {
-  members: Member[]; mode: ViewMode; setMode: (m: ViewMode) => void;
+function CharacterSelect({ members, mode, selected, onSelect, onFight }: {
+  members: Member[]; mode: ViewMode;
   selected: Member | null; onSelect: (m: Member) => void; onFight?: (m: Member) => void;
 }) {
   const [filter, setFilter] = useState<Rank | "Tous">("Tous");
@@ -1408,23 +1407,24 @@ function CharacterSelect({ members, mode, setMode, selected, onSelect, onFight }
           }
           @media (min-width: 900px) {
             .kof-layout {
-              grid-template-columns: 22% minmax(0, 1fr) 22%;
+              grid-template-columns: 40% minmax(0, 1fr);
               grid-template-rows: 1fr;
-              grid-template-areas: "left center right";
-              gap: 8px;
+              grid-template-areas: "left center";
+              gap: 10px;
             }
           }
           @media (min-width: 1200px) {
             .kof-layout {
-              grid-template-columns: 24% minmax(0, 1fr) 24%;
+              grid-template-columns: 38% minmax(0, 1fr);
             }
           }
-          .kof-area-left     { grid-area: left;  display: none; }
+          .kof-area-left     { grid-area: left;  display: none; flex-direction: column; min-height: 0; }
           .kof-area-center   { grid-area: center; display: flex; flex-direction: column; min-height: 0; overflow-y: auto; overflow-x: hidden; }
-          .kof-area-right    { grid-area: right; display: none; }
+          .kof-area-right    { display: none !important; }
           .kof-area-previews { grid-area: previews; }
           @media (min-width: 900px) {
-            .kof-area-left, .kof-area-right { display: block; }
+            .kof-area-left { display: flex; }
+            .kof-area-previews { display: none !important; }
           }
 
           /* Mobile preview strip */
@@ -1438,9 +1438,6 @@ function CharacterSelect({ members, mode, setMode, selected, onSelect, onFight }
             aspect-ratio: 3/4;
             border-radius: 6px;
             overflow: hidden;
-          }
-          @media (min-width: 900px) {
-            .kof-area-previews { display: none !important; }
           }
           /* scroll bottom padding pour le bouton FIGHT flottant */
           .kof-area-center { padding-bottom: 100px; }
@@ -1461,11 +1458,43 @@ function CharacterSelect({ members, mode, setMode, selected, onSelect, onFight }
             </div>
           </div>
 
-          {/* Desktop: LEFT panel */}
-          <div className="kof-area-left" style={{ minHeight: 0 }}>
-            <div className="kof-panel-p1 kof-panel-p1-clip relative overflow-hidden rounded-sm" style={{ height: "100%" }}>
+          {/* Desktop: LEFT panel — Showcase du fighter sélectionné/survolé */}
+          <div className="kof-area-left" style={{ minHeight: 0, gap: 8 }}>
+            {/* Portrait principal plein écran */}
+            <div className="kof-panel-p1 relative overflow-hidden rounded" style={{ flex: "0 0 62%", minHeight: 0 }}>
               <div className="kof-panel-streak" style={{ background: "linear-gradient(90deg, transparent, rgba(220,38,38,.8), transparent)" }} />
-              <SidePortrait member={leftFighter} mode={mode} side="left" />
+              <SidePortrait member={leftFighter ?? rightFighter} mode={mode} side="left" />
+              {/* Indicateur P1 sélectionné */}
+              {leftFighter && (
+                <div style={{
+                  position: "absolute", top: 10, left: 10, zIndex: 20,
+                  background: "rgba(220,38,38,.85)", color: "#fff",
+                  fontFamily: "'Orbitron',monospace", fontSize: 9, letterSpacing: 3,
+                  padding: "3px 10px", borderRadius: 2,
+                  boxShadow: "0 0 14px rgba(220,38,38,.6)",
+                }}>P1 SELECTED</div>
+              )}
+            </div>
+            {/* Detail panel en dessous */}
+            <div style={{ flex: "0 0 38%", minHeight: 0, overflowY: "auto" }} className="custom-scroll">
+              <AnimatePresence mode="wait">
+                {(leftFighter ?? rightFighter) ? (
+                  <DetailPanel key={(leftFighter ?? rightFighter)!.id} member={(leftFighter ?? rightFighter)!} mode={mode} />
+                ) : (
+                  <motion.div
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                    style={{
+                      height: "100%", display: "flex", alignItems: "center", justifyContent: "center",
+                      flexDirection: "column", gap: 10,
+                      color: "rgba(255,255,255,.15)",
+                      fontFamily: "'Orbitron',monospace", fontSize: 11, letterSpacing: 3, textAlign: "center",
+                    }}
+                  >
+                    <span style={{ fontSize: 32, opacity: .3 }}>?</span>
+                    <span>SURVOLE UN FIGHTER</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
 
@@ -1572,22 +1601,14 @@ function CharacterSelect({ members, mode, setMode, selected, onSelect, onFight }
               </AnimatePresence>
             </div>
 
-            {/* Detail panel — inside center column so it scrolls with the grid */}
+            {/* Detail panel — visible only on mobile (desktop uses left panel) */}
             {selected && (
-              <div className="mt-4 max-w-[720px] mx-auto w-full">
+              <div className="mt-4 max-w-[720px] mx-auto w-full block lg:hidden">
                 <AnimatePresence mode="wait">
                   <DetailPanel key={selected.id} member={selected} mode={mode} />
                 </AnimatePresence>
               </div>
             )}
-          </div>
-
-          {/* Desktop: RIGHT panel */}
-          <div className="kof-area-right" style={{ minHeight: 0 }}>
-            <div className="kof-panel-p2 kof-panel-p2-clip relative overflow-hidden rounded-sm" style={{ height: "100%" }}>
-              <div className="kof-panel-streak" style={{ background: "linear-gradient(90deg, transparent, rgba(29,78,216,.8), transparent)" }} />
-              <SidePortrait member={rightFighter} mode={mode} side="right" />
-            </div>
           </div>
 
         </div>
@@ -1740,7 +1761,7 @@ export default function FightersPage() {
         <>
           <div style={{ height: "100dvh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
             <GuildeHeader activePage="fighters" accentColor="#FFD700" bgColor="rgba(4,4,12,0.92)" textColor="#fff" />
-            <CharacterSelect members={members} mode={mode} setMode={setMode} selected={selected} onSelect={handleSelect} onFight={handleFight} />
+            <CharacterSelect members={members} mode={mode} selected={selected} onSelect={handleSelect} onFight={handleFight} />
           </div>
           {mounted && phase === "select" && createPortal(
             <div style={{
