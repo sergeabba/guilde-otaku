@@ -94,6 +94,36 @@ function Styles() {
       @keyframes slashEnter      { 0%{clip-path:inset(0 100% 0 0)} 100%{clip-path:inset(0 0% 0 0)} }
       @keyframes bgDrift         { 0%{background-position:0% 50%} 100%{background-position:100% 50%} }
 
+      /* ── NEW KEYFRAMES ── */
+      @keyframes rgbSplit {
+        0%,94%,100%{text-shadow:none;clip-path:none}
+        95%{text-shadow:-3px 0 #ff0000,3px 0 #00ffff;clip-path:inset(10% 0 85% 0)}
+        96%{text-shadow:3px 0 #ff0000,-3px 0 #00ffff;clip-path:inset(50% 0 30% 0)}
+        97%{text-shadow:-2px 0 #ff00ff,2px 0 #00ff00;clip-path:inset(80% 0 5% 0)}
+        98%,99%{clip-path:none;text-shadow:none}
+      }
+      @keyframes pixelBorderPulse {
+        0%,100%{box-shadow:0 0 0 2px var(--pb-color),0 0 15px var(--pb-color),inset 0 0 15px rgba(0,0,0,.5)}
+        50%{box-shadow:0 0 0 2px var(--pb-color),0 0 30px var(--pb-color),0 0 60px color-mix(in srgb,var(--pb-color) 40%,transparent),inset 0 0 20px rgba(0,0,0,.7)}
+      }
+      @keyframes titleFlicker {
+        0%,88%,90%,92%,100%{opacity:1}
+        89%,91%{opacity:.35}
+      }
+      @keyframes arcadeLoad {
+        0%{width:0%;box-shadow:none}
+        50%{box-shadow:0 0 20px #FFD700,0 0 40px rgba(255,215,0,.5)}
+        100%{width:100%;box-shadow:0 0 10px #FFD700}
+      }
+      @keyframes coinBlink {
+        0%,49%,100%{opacity:1}
+        50%,99%{opacity:0}
+      }
+      @keyframes selectBlink {
+        0%,49%,100%{opacity:.5}
+        50%,99%{opacity:0}
+      }
+
       .hit-shake { animation: hitShake .3s ease-out; }
       .ko-shake  { animation: screenShake .5s ease-out; }
       .custom-scroll::-webkit-scrollbar       { width:3px; height:3px; }
@@ -103,6 +133,7 @@ function Styles() {
 
       .r-pill { transition: all .2s ease; cursor: pointer; white-space: nowrap; }
       .r-pill:hover { transform: translateY(-1px); }
+      .r-pill[data-active="true"]::before { content: "▶ "; font-size: 7px; }
 
       /* ─── KOF Portrait grid ─── */
       .kof-roster {
@@ -181,10 +212,11 @@ function Styles() {
         z-index: 0;
         pointer-events: none;
         background:
-          radial-gradient(ellipse 55% 60% at 10% 50%, rgba(180,20,20,.6) 0%, transparent 100%),
-          radial-gradient(ellipse 55% 60% at 90% 50%, rgba(20,60,200,.55) 0%, transparent 100%),
-          radial-gradient(ellipse 50% 35% at 50% 50%, rgba(60,20,100,.3) 0%, transparent 100%),
-          linear-gradient(180deg, #0b0210 0%, #07060f 40%, #060914 100%);
+          radial-gradient(ellipse 70% 50% at 8% 50%,  rgba(200,15,15,.75) 0%, transparent 60%),
+          radial-gradient(ellipse 70% 50% at 92% 50%, rgba(15,50,220,.70) 0%, transparent 60%),
+          radial-gradient(ellipse 40% 60% at 50% 100%, rgba(80,10,10,.4) 0%, transparent 50%),
+          radial-gradient(ellipse 30% 30% at 50% 0%,  rgba(255,215,0,.06) 0%, transparent 60%),
+          linear-gradient(180deg, #080013 0%, #060411 40%, #050910 100%);
       }
       .kof-screen-bg::before {
         content: "";
@@ -318,6 +350,46 @@ function Styles() {
         border-radius: 2px;
         backdrop-filter: blur(4px);
         background: rgba(0,0,0,.65);
+      }
+
+      /* ─── Side panel P1/P2 watermarks ─── */
+      .kof-panel-p1 { position: relative; }
+      .kof-panel-p1::after {
+        content: "P1";
+        position: absolute; top: 50%; left: 50%;
+        transform: translate(-50%,-50%);
+        font-family: 'Orbitron',monospace;
+        font-size: clamp(60px,12vw,120px);
+        font-weight: 900;
+        color: rgba(220,38,38,.05);
+        pointer-events: none;
+        letter-spacing: 8px;
+        z-index: 0;
+      }
+      .kof-panel-p2 { position: relative; }
+      .kof-panel-p2::after {
+        content: "P2";
+        position: absolute; top: 50%; left: 50%;
+        transform: translate(-50%,-50%);
+        font-family: 'Orbitron',monospace;
+        font-size: clamp(60px,12vw,120px);
+        font-weight: 900;
+        color: rgba(29,78,216,.05);
+        pointer-events: none;
+        letter-spacing: 8px;
+        z-index: 0;
+      }
+
+      /* ─── Selected tile pixel-border glow ─── */
+      .kof-tile[data-selected="true"] {
+        --pb-color: var(--tile-rank-color, #FFD700);
+        animation: pixelBorderPulse 1.4s ease-in-out infinite;
+        z-index: 5;
+        transform: scale(1.04);
+      }
+      .kof-tile:not([data-selected="true"]):hover {
+        transform: scale(1.03) translateY(-2px);
+        transition: transform .12s ease;
       }
 
       /* ─── "CHOOSE YOUR FIGHTER" banner ─── */
@@ -721,21 +793,18 @@ function FighterCard({ member, mode, selected, hovered, idx, onSelect, onHover }
       onFocus={() => onHover(member)}
       onBlur={() => onHover(null)}
       className="kof-tile cursor-pointer block"
+      data-selected={selected ? "true" : "false"}
       style={{
+        "--tile-rank-color": c.main,
         border: selected
           ? `2px solid ${c.main}`
           : hovered
-            ? `1px solid rgba(255,255,255,.55)`
-            : `1px solid rgba(255,255,255,.1)`,
-        boxShadow: selected
-          ? `0 0 0 1px rgba(0,0,0,.8), 0 0 18px ${c.glow}, 0 0 44px ${c.glow}55`
-          : hovered
-            ? `0 0 14px rgba(255,255,255,.2)`
-            : "none",
-        transform: hovered && !selected ? "scale(1.06)" : "scale(1)",
-        transition: "border .1s, box-shadow .15s, transform .12s",
+            ? `1px solid rgba(255,255,255,.6)`
+            : `1px solid rgba(255,255,255,.08)`,
+        boxShadow: hovered && !selected ? `0 0 18px rgba(255,255,255,.18)` : "none",
+        transition: "border .1s, box-shadow .15s",
         zIndex: hovered || selected ? 3 : 1,
-      }}
+      } as React.CSSProperties}
     >
       {/* Left rank accent stripe */}
       <div style={{
@@ -815,13 +884,28 @@ function DetailPanel({ member, mode }: { member: Member; mode: ViewMode }) {
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} transition={{ duration: .2 }}
-      className="rounded-xl overflow-hidden"
-      style={{ background: "rgba(8,8,20,.9)", border: `1px solid ${c.main}20`, backdropFilter: "blur(16px)" }}
+      style={{
+        background: "rgba(6,6,18,.95)",
+        border: `1px solid ${c.main}30`,
+        backdropFilter: "blur(16px)",
+        clipPath: "polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px))",
+        boxShadow: `0 0 40px ${c.glow}20, inset 0 0 40px rgba(0,0,0,.4)`,
+      }}
     >
-      <div className="h-[3px]" style={{ background: c.gradient }} />
+      {/* Top bar — 4px neon accent */}
+      <div style={{ height: 4, background: c.gradient, position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg,transparent 0%,rgba(255,255,255,.35) 50%,transparent 100%)", animation: "lightSweep 2.5s ease-in-out infinite" }} />
+      </div>
+
       <div className="flex flex-col sm:flex-row gap-5 p-5">
-        {/* Portrait — full height on mobile, fixed width on desktop */}
-        <div className="relative w-full h-56 sm:w-40 sm:h-52 rounded-lg overflow-hidden shrink-0" style={{ border: `1px solid ${c.main}20` }}>
+        {/* Portrait */}
+        <div className="relative w-full h-56 sm:w-40 sm:h-52 shrink-0 overflow-hidden"
+          style={{
+            clipPath: "polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px))",
+            border: `1px solid ${c.main}25`,
+            background: `radial-gradient(ellipse at center, ${c.dark}, #030310)`,
+          }}
+        >
           {vid(member, mode) ? (
             <VideoPlayer src={vid(member, mode)!} fit="cover" objectPosition="smart" fullscreenBtn />
           ) : img(member, mode) ? (
@@ -829,41 +913,58 @@ function DetailPanel({ member, mode }: { member: Member; mode: ViewMode }) {
               style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 10%", filter: `drop-shadow(0 0 16px ${c.glow})` }}
             />
           ) : (
-            <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: `radial-gradient(ellipse, ${c.dark}, #050510)` }}>
+            <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <span style={{ fontFamily: "'Orbitron',monospace", fontSize: 40, fontWeight: 900, color: `${c.main}40` }}>?</span>
             </div>
           )}
           <div className="absolute inset-0" style={{ background: `linear-gradient(to top,rgba(5,5,20,.9) 0%,transparent 55%)` }} />
-          <div className="absolute bottom-2.5 left-2.5">
-            <span className="px-2 py-0.5 rounded" style={{ background: "rgba(0,0,0,.75)", border: `1px solid ${c.main}40`, fontFamily: "'Orbitron',monospace", fontSize: 9, color: c.main, letterSpacing: "1.5px", fontWeight: 700 }}>
-              PWR {power}
+          {/* Power badge */}
+          <div style={{
+            position: "absolute", bottom: 0, left: 0, right: 0,
+            padding: "8px 6px 6px",
+            background: "rgba(0,0,0,.88)",
+            borderTop: `1px solid ${c.main}40`,
+            textAlign: "center",
+          }}>
+            <span style={{ fontFamily: "'Orbitron',monospace", fontSize: 9, color: c.main, letterSpacing: "2px", fontWeight: 700 }}>
+              ◆ POWER {power} ◆
             </span>
           </div>
         </div>
 
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <h3 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(26px,3.5vw,36px)", color: "#fff", letterSpacing: "4px", lineHeight: 1, textShadow: `0 0 18px ${c.glow}30` }}>
+          <h3 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(26px,3.5vw,38px)", color: "#fff", letterSpacing: "5px", lineHeight: 1, textShadow: `0 0 24px ${c.glow}50` }}>
             {member.name.toUpperCase()}
           </h3>
           {member.rank && (
-            <span className="inline-block mt-1.5 px-2.5 py-0.5 rounded-sm" style={{ background: c.gradient, color: "#000", fontFamily: "'Orbitron',monospace", fontSize: 10, letterSpacing: "1.5px", fontWeight: 800 }}>
+            <span className="inline-block mt-1.5 px-2.5 py-0.5" style={{
+              background: c.gradient, color: "#000",
+              fontFamily: "'Orbitron',monospace", fontSize: 9, letterSpacing: "2px", fontWeight: 800,
+              clipPath: "polygon(0 0,calc(100% - 5px) 0,100% 5px,100% 100%,5px 100%,0 calc(100% - 5px))",
+            }}>
               {member.rank.toUpperCase()}
             </span>
           )}
           {member.special && (
-            <div className="mt-2 flex items-center gap-1.5" style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 13, color: c.main, letterSpacing: "0.5px" }}>
-              <Flame size={12} />
+            <div className="mt-2 flex items-center gap-1.5" style={{ fontFamily: "'Orbitron',monospace", fontSize: 9, color: c.main, letterSpacing: "1px" }}>
+              <span style={{ color: c.main }}>▲</span>
               <span>{member.special.name}</span>
             </div>
           )}
           <div className="space-y-2 mt-4">
-            <StatBar label="FOR" value={s.force} color="#EF4444" icon={<Flame size={12} />} delay={0} />
-            <StatBar label="VIT" value={s.vitesse} color="#38BDF8" icon={<Wind size={12} />} delay={80} />
-            <StatBar label="TEC" value={s.technique} color="#A78BFA" icon={<Shield size={12} />} delay={160} />
+            <StatBar label="▲ FOR" value={s.force}     color="#EF4444" icon={<Flame size={12} />} delay={0} />
+            <StatBar label="► VIT" value={s.vitesse}   color="#38BDF8" icon={<Wind  size={12} />} delay={80} />
+            <StatBar label="◆ TEC" value={s.technique} color="#A78BFA" icon={<Shield size={12} />} delay={160} />
           </div>
           {member.special?.effect && (
-            <div className="mt-3 px-3 py-2 rounded" style={{ background: "rgba(255,255,255,.03)", border: `1px solid ${c.main}12`, color: "rgba(255,255,255,.5)", fontFamily: "'Barlow Condensed',sans-serif", fontSize: 12, lineHeight: 1.5 }}>
+            <div className="mt-3 px-3 py-2" style={{
+              background: "rgba(255,255,255,.025)",
+              borderLeft: `2px solid ${c.main}60`,
+              color: "rgba(255,255,255,.45)",
+              fontFamily: "'Barlow Condensed',sans-serif",
+              fontSize: 12, lineHeight: 1.6,
+            }}>
               {member.special.effect}
             </div>
           )}
@@ -877,17 +978,99 @@ function DetailPanel({ member, mode }: { member: Member; mode: ViewMode }) {
    LOADING
    ════════════════════════════════════════════════════ */
 function LoadingScreen() {
+  const [dots, setDots] = useState(0);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const d = setInterval(() => setDots(p => (p + 1) % 4), 380);
+    const p = setInterval(() => setProgress(v => {
+      const next = v + Math.random() * 7 + 2;
+      return next >= 100 ? 100 : next;
+    }), 100);
+    return () => { clearInterval(d); clearInterval(p); };
+  }, []);
+
   return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: "#050510" }}>
-      <div className="text-center">
-        <span style={{ fontFamily: "'Orbitron',monospace", fontSize: "clamp(24px,4vw,48px)", fontWeight: 900, color: "#DC2626", letterSpacing: "10px", textShadow: "0 0 20px rgba(220,38,38,.4)" }}>
-          LOADING
-        </span>
-        <div className="mt-4 mx-auto h-[2px] rounded-full overflow-hidden" style={{ width: 160, background: "rgba(255,255,255,.04)" }}>
-          <motion.div className="h-full rounded-full" style={{ width: "40%", background: "linear-gradient(90deg,#DC2626,#FFD700)" }}
-            animate={{ x: [-80, 240] }} transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
-          />
+    <div style={{
+      minHeight: "100dvh", display: "flex", flexDirection: "column",
+      alignItems: "center", justifyContent: "center",
+      background: "linear-gradient(180deg,#050010 0%,#070614 50%,#060a10 100%)",
+      gap: 32,
+      backgroundImage: "repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.12) 3px,rgba(0,0,0,.12) 4px)",
+    }}>
+      {/* ASCII frame */}
+      <div style={{
+        fontFamily: "'Orbitron',monospace",
+        fontSize: "clamp(8px,1.1vw,11px)",
+        color: "rgba(255,215,0,.3)",
+        letterSpacing: 2,
+        lineHeight: 1.7,
+        textAlign: "center",
+        whiteSpace: "pre",
+      }}>{`╔══════════════════════╗\n║   GUILDE  FIGHTERS   ║\n╚══════════════════════╝`}</div>
+
+      <div style={{ textAlign: "center" }}>
+        <div style={{
+          fontFamily: "'Orbitron',monospace",
+          fontSize: "clamp(28px,5vw,52px)",
+          fontWeight: 900,
+          color: "#DC2626",
+          letterSpacing: 10,
+          textShadow: "0 0 28px rgba(220,38,38,.65),0 0 60px rgba(220,38,38,.2),0 4px 0 #5c0000",
+          animation: "neonFlicker 3s infinite",
+          marginBottom: 8,
+        }}>
+          LOADING{".".repeat(dots)}
         </div>
+        <div style={{
+          fontFamily: "'Orbitron',monospace",
+          fontSize: 9,
+          color: "rgba(255,215,0,.5)",
+          letterSpacing: 4,
+          animation: "coinBlink 1s step-start infinite",
+        }}>
+          ★ PLEASE WAIT ★
+        </div>
+      </div>
+
+      {/* KOF progress bar */}
+      <div style={{ width: "clamp(240px,48vw,380px)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+          <span style={{ fontFamily: "'Orbitron',monospace", fontSize: 8, color: "rgba(255,255,255,.3)", letterSpacing: 2 }}>PLAYER DATA</span>
+          <span style={{ fontFamily: "'Orbitron',monospace", fontSize: 8, color: "#FFD700", letterSpacing: 2 }}>{Math.floor(progress)}%</span>
+        </div>
+        <div style={{
+          height: 10, background: "rgba(255,255,255,.06)",
+          border: "1px solid rgba(255,215,0,.2)", borderRadius: 2, overflow: "hidden", position: "relative",
+        }}>
+          <div style={{
+            height: "100%", width: `${progress}%`,
+            background: "linear-gradient(90deg,#DC2626,#FFD700)",
+            transition: "width .1s linear",
+            boxShadow: "0 0 16px rgba(255,215,0,.5)",
+            borderRadius: 2,
+          }} />
+          <div style={{
+            position: "absolute", inset: 0,
+            backgroundImage: "repeating-linear-gradient(90deg,transparent,transparent 5px,rgba(0,0,0,.25) 5px,rgba(0,0,0,.25) 10px)",
+          }} />
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 5 }}>
+          {["P1","P2","P3","P4","P5"].map((p, i) => (
+            <span key={i} style={{
+              fontFamily: "'Orbitron',monospace", fontSize: 7,
+              color: progress > i * 20 ? "#FFD700" : "rgba(255,255,255,.14)",
+              letterSpacing: 1, transition: "color .3s",
+            }}>{p}</span>
+          ))}
+        </div>
+      </div>
+
+      <div style={{
+        fontFamily: "'Orbitron',monospace", fontSize: 8,
+        color: "rgba(255,255,255,.15)", letterSpacing: 4, textAlign: "center",
+      }}>
+        © GUILDE OTAKU 2025 · ALL RIGHTS RESERVED
       </div>
     </div>
   );
@@ -1026,6 +1209,44 @@ function SidePortrait({ member, mode, side }: { member: Member | null; mode: Vie
         position: "absolute", inset: 0, pointerEvents: "none", zIndex: 8,
         backgroundImage: "repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.06) 3px,rgba(0,0,0,.06) 4px)",
       }} />
+
+      {/* ▶ READY / SELECT ◀ label */}
+      <div style={{
+        position: "absolute", bottom: 8, left: 0, right: 0,
+        textAlign: "center",
+        fontFamily: "'Orbitron',monospace",
+        fontSize: 8, letterSpacing: 3,
+        color: side === "left" ? "rgba(220,38,38,.55)" : "rgba(29,78,216,.55)",
+        animation: "arcadeCoin 1.8s ease-in-out infinite",
+        zIndex: 15, pointerEvents: "none",
+      }}>
+        {member ? "▶ READY ◀" : "▶ SELECT ◀"}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Arcade Timer ─── */
+function ArcadeTimer() {
+  const [t, setT] = useState(99);
+  useEffect(() => {
+    const iv = setInterval(() => setT(p => p > 0 ? p - 1 : 99), 1200);
+    return () => clearInterval(iv);
+  }, []);
+  return (
+    <div style={{
+      fontFamily: "'Orbitron',monospace",
+      fontSize: "clamp(22px,3.2vw,38px)",
+      fontWeight: 900,
+      color: t <= 20 ? "#FF1A1A" : "#FFD700",
+      textShadow: `0 0 22px ${t <= 20 ? "rgba(255,26,26,.9)" : "rgba(255,215,0,.85)"}`,
+      letterSpacing: 3,
+      minWidth: 56,
+      textAlign: "center",
+      transition: "color .3s,text-shadow .3s",
+      lineHeight: 1,
+    }}>
+      {String(t).padStart(2,"0")}
     </div>
   );
 }
@@ -1094,18 +1315,7 @@ function CharacterSelect({ members, mode, setMode, selected, onSelect, onFight }
         }} />
 
         <div className="px-4 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <Swords size={22} style={{ color: "#FFD700", flexShrink: 0, filter: "drop-shadow(0 0 10px rgba(255,215,0,.9))" }} />
-            <div className="flex flex-col leading-none min-w-0">
-              <span className="arcade-title" style={{ fontSize: "clamp(18px, 2.8vw, 30px)", whiteSpace: "nowrap" }}>
-                GUILDE · FIGHTERS
-              </span>
-              <span className="arcade-coin mt-0.5" style={{ fontSize: 9, letterSpacing: 3, whiteSpace: "nowrap" }}>
-                ★ INSERT COIN · CREDIT 01 ★
-              </span>
-            </div>
-          </div>
-
+          {/* LEFT: sound btn */}
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
               onClick={() => { const next = !isMuted; setIsMuted(next); if (sfx) sfx.muted = next; }}
@@ -1115,7 +1325,37 @@ function CharacterSelect({ members, mode, setMode, selected, onSelect, onFight }
             >
               {isMuted ? "♪ OFF" : "♪ ON"}
             </button>
-            {/* switch géré par portal dans FightersPage */}
+          </div>
+
+          {/* CENTER: title block */}
+          <div className="flex flex-col items-center leading-none text-center flex-1 min-w-0">
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <Swords size={18} style={{ color: "#FFD700", flexShrink: 0, filter: "drop-shadow(0 0 10px rgba(255,215,0,.9))" }} />
+              <span className="arcade-title" style={{
+                fontSize: "clamp(16px,2.8vw,32px)",
+                whiteSpace: "nowrap",
+                animation: "titleFlicker 6s infinite",
+                letterSpacing: 10,
+              }}>
+                GUILDE · FIGHTERS
+              </span>
+              <Swords size={18} style={{ color: "#FFD700", flexShrink: 0, filter: "drop-shadow(0 0 10px rgba(255,215,0,.9))", transform: "scaleX(-1)" }} />
+            </div>
+            <span style={{
+              fontFamily: "'Orbitron',monospace",
+              fontSize: 8, letterSpacing: 4,
+              color: "rgba(255,215,0,.6)",
+              marginTop: 3,
+              animation: "selectBlink 2s step-start infinite",
+              whiteSpace: "nowrap",
+            }}>
+              ▶ SELECT YOUR FIGHTER ◀
+            </span>
+          </div>
+
+          {/* RIGHT: timer */}
+          <div className="flex-shrink-0">
+            <ArcadeTimer />
           </div>
         </div>
 
@@ -1129,6 +1369,7 @@ function CharacterSelect({ members, mode, setMode, selected, onSelect, onFight }
                 key={r}
                 onClick={() => { setFilter(r as Rank | "Tous"); sfx?.play("hover"); }}
                 className="r-pill px-3 py-1.5 rounded flex-shrink-0"
+                data-active={active ? "true" : "false"}
                 style={{
                   fontFamily: "'Barlow Condensed', sans-serif",
                   fontSize: 12,
