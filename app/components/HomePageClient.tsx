@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Rank, Member } from "../../data/members";
 import MemberCard from "./MemberCard";
 import MemberModal from "./MemberModal";
@@ -17,7 +18,9 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("anime");
+  const [mounted, setMounted] = useState(false);
   const isMobile = useIsMobile();
+  useEffect(() => { setMounted(true); }, []);
 
   const theme  = rankBg[activeRank] ?? rankBg["Tous"];
   const accent = rankAccents[activeRank as Rank | "Tous"];
@@ -297,56 +300,56 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
     {/* ── BOUTON FLOTTANT SWITCH RÉEL / ANIME ────────────────────────────────
         Rendu HORS du motion.div principal pour éviter que le stacking context
         créé par animate:backgroundColor ne piège ce position:fixed.           */}
-    <motion.div
-      initial={{ y: 100, opacity: 0 }}
-      animate={{ y: 0, opacity: selectedMember ? 0 : 1, pointerEvents: selectedMember ? "none" : "auto" }}
-      transition={{ delay: selectedMember ? 0 : 0.3, type: "spring", bounce: 0.4 }}
-      style={{
-        position: "fixed",
-        bottom: isMobile ? "20px" : "40px",
-        left: "50%",
-        transform: "translateX(-50%)",
-        zIndex: 200,
-        display: "flex",
-        background: isDark ? "rgba(10,10,10,0.88)" : "rgba(255,255,255,0.88)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        padding: "6px",
-        borderRadius: "100px",
-        boxShadow: isDark ? "0 10px 40px rgba(0,0,0,0.8)" : "0 10px 40px rgba(0,0,0,0.15)",
-        border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)"}`,
-      }}
-    >
-      {(["real", "anime"] as ViewMode[]).map((mode) => (
-        <motion.button
-          key={mode}
-          onClick={() => setViewMode(mode)}
-          whileTap={{ scale: 0.93 }}
-          transition={{ type: "spring", stiffness: 500, damping: 25 }}
-          style={{
-            padding: isMobile ? "10px 20px" : "12px 28px",
-            borderRadius: "100px",
-            border: "none",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            fontFamily: "'Barlow Condensed', sans-serif",
-            fontSize: isMobile ? "14px" : "16px",
-            fontWeight: 800,
-            textTransform: "uppercase",
-            letterSpacing: "0.1em",
-            background: viewMode === mode ? accent : "transparent",
-            color: viewMode === mode ? "#fff" : "#888",
-            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-            boxShadow: viewMode === mode ? `0 4px 15px ${accent}60` : "none",
-          }}
-        >
-          {mode === "real" ? <User size={isMobile ? 16 : 18} /> : <Sword size={isMobile ? 16 : 18} />}
-          {mode === "real" ? "Réel" : "Anime"}
-        </motion.button>
-      ))}
-    </motion.div>
+    {mounted && !selectedMember && createPortal(
+      <div
+        style={{
+          position: "fixed",
+          bottom: isMobile ? "20px" : "40px",
+          left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 10002,
+          display: "flex",
+          background: isDark ? "rgba(10,10,10,0.88)" : "rgba(255,255,255,0.88)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          padding: "6px",
+          borderRadius: "100px",
+          boxShadow: isDark ? "0 10px 40px rgba(0,0,0,0.8)" : "0 10px 40px rgba(0,0,0,0.15)",
+          border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)"}`,
+        }}
+      >
+        {(["real", "anime"] as ViewMode[]).map((mode) => (
+          <motion.button
+            key={mode}
+            onClick={() => setViewMode(mode)}
+            whileTap={{ scale: 0.93 }}
+            transition={{ type: "spring", stiffness: 500, damping: 25 }}
+            style={{
+              padding: isMobile ? "10px 20px" : "12px 28px",
+              borderRadius: "100px",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: isMobile ? "14px" : "16px",
+              fontWeight: 800,
+              textTransform: "uppercase",
+              letterSpacing: "0.1em",
+              background: viewMode === mode ? accent : "transparent",
+              color: viewMode === mode ? "#fff" : "#888",
+              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+              boxShadow: viewMode === mode ? `0 4px 15px ${accent}60` : "none",
+            }}
+          >
+            {mode === "real" ? <User size={isMobile ? 16 : 18} /> : <Sword size={isMobile ? 16 : 18} />}
+            {mode === "real" ? "Réel" : "Anime"}
+          </motion.button>
+        ))}
+      </div>,
+      document.body
+    )}
     </>
   );
 }

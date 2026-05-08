@@ -150,8 +150,8 @@ export default function GuildeHeader({
                 color: isActive
                   ? accentColor
                   : textColor === "#111"
-                  ? "rgba(0,0,0,0.4)"
-                  : "rgba(255,255,255,0.4)",
+                  ? "#111111"
+                  : "#ffffff",
                 transition: "color 0.25s ease",
                 whiteSpace: "nowrap",
                 flexShrink: 0,

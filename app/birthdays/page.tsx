@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Member, Rank } from "../../data/members";
 import { supabase } from "../../lib/supabase";
@@ -9,7 +10,7 @@ import { Gift, Crown } from "lucide-react";
 import { rankAccents } from "../config/ranks";
 import { useIsMobile } from "../hooks/useIsMobile";
 import GuildeHeader from "../components/GuildeHeader";
-import { parseBirthday } from "../types"; // ← centralisé, plus de duplication
+import { parseBirthday } from "../types";
 
 // On définit le type localement pour éviter les erreurs d'importation croisées
 type ViewMode = "real" | "anime";

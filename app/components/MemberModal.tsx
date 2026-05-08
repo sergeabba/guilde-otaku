@@ -182,8 +182,8 @@ function ModalContent({ member, onClose, viewMode }: {
           <p style={{
             fontFamily: "'Outfit', sans-serif",
             fontSize: isMobile ? 15 : 16,
-            fontWeight: 400, lineHeight: 1.78,
-            color: textMuted,
+            fontWeight: 700, lineHeight: 1.78,
+            color: textPrimary,
           }}>
             {member.bio ?? "Aucune biographie disponible pour ce membre."}
           </p>
@@ -327,12 +327,31 @@ function ModalContent({ member, onClose, viewMode }: {
         )}
       </AnimatePresence>
 
+      {/* ── BACKDROP (desktop uniquement) ──────────────────────────────────── */}
+      {!isMobile && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.28 }}
+          style={{
+            position: "fixed", inset: 0, zIndex: 9998,
+            background: "rgba(0,0,0,0.72)",
+            backdropFilter: "blur(6px)",
+            WebkitBackdropFilter: "blur(6px)",
+          }}
+        />
+      )}
+
       {/* ── MODAL ───────────────────────────────────────────────────────────── */}
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.22 }}
+        initial={isMobile ? { y: "100%", opacity: 1 } : { opacity: 0, scale: 0.96, y: 32 }}
+        animate={isMobile ? { y: 0, opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
+        exit={isMobile ? { y: "100%", opacity: 1, transition: { type: "spring", stiffness: 340, damping: 36 } } : { opacity: 0, scale: 0.96, y: 32 }}
+        transition={isMobile
+          ? { type: "spring", stiffness: 340, damping: 36, mass: 0.85 }
+          : { duration: 0.42, ease: [0.22, 1, 0.36, 1] }
+        }
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
@@ -342,9 +361,16 @@ function ModalContent({ member, onClose, viewMode }: {
           display: "flex", flexDirection: "column",
           overflow: "hidden",
           background: bg,
+          borderRadius: isMobile ? "20px 20px 0 0" : 0,
+          boxShadow: isMobile ? "0 -8px 48px rgba(0,0,0,0.5)" : "none",
         }}
       >
         {/* ── NAV ─────────────────────────────────────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: -16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: isMobile ? 0.18 : 0.12, duration: 0.36, ease: [0.22, 1, 0.36, 1] }}
+        >
         <div style={{
           flexShrink: 0,
           display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -396,39 +422,9 @@ function ModalContent({ member, onClose, viewMode }: {
             </div>
           )}
 
-          {/* Switch Réel / Anime */}
-          <div
-            role="group"
-            aria-label="Mode d'affichage"
-            style={{
-              display: "flex",
-              background: switchBg,
-              borderRadius: 100, padding: 3,
-              border: `1px solid ${btnBorder}`,
-            }}
-          >
-            {(["real", "anime"] as ViewMode[]).map((mode) => (
-              <button
-                key={mode}
-                onClick={() => setLocalMode(mode)}
-                aria-pressed={localMode === mode}
-                style={{
-                  padding: isMobile ? "5px 14px" : "6px 18px",
-                  borderRadius: 100,
-                  border: "none", cursor: "pointer",
-                  fontFamily: "'Barlow Condensed', sans-serif",
-                  fontSize: 13, fontWeight: 700, textTransform: "uppercase",
-                  background: localMode === mode ? accent : "transparent",
-                  color: localMode === mode ? "#fff" : textMuted,
-                  transition: "background 0.22s, color 0.22s",
-                  boxShadow: localMode === mode ? `0 2px 12px ${accent}55` : "none",
-                }}
-              >
-                {mode === "real" ? "Réel" : "Anime"}
-              </button>
-            ))}
-          </div>
+          <div style={{ width: 80 }} />
         </div>
+        </motion.div>
 
         {/* ── BODY ────────────────────────────────────────────────────────── */}
         {isMobile ? (
@@ -446,7 +442,12 @@ function ModalContent({ member, onClose, viewMode }: {
             }}
           >
             {/* Hero mobile */}
-            <div style={{ position: "relative", height: 300, overflow: "hidden", flexShrink: 0 }}>
+            <motion.div
+              initial={{ opacity: 0, scale: 1.04 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.22, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+              style={{ position: "relative", height: 300, overflow: "hidden", flexShrink: 0 }}
+            >
               {HeroMedia}
               <div style={{
                 position: "absolute", inset: 0, pointerEvents: "none",
@@ -477,9 +478,15 @@ function ModalContent({ member, onClose, viewMode }: {
                 </h1>
               </div>
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 3, background: accent, zIndex: 4 }} />
-            </div>
+            </motion.div>
 
-            {InfoSection}
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.32, duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
+            >
+              {InfoSection}
+            </motion.div>
           </div>
 
         ) : (
@@ -488,11 +495,16 @@ function ModalContent({ member, onClose, viewMode }: {
           <div style={{ flex: 1, minHeight: 0, display: "flex" }}>
 
             {/* Colonne gauche : photo pleine hauteur */}
-            <div style={{
-              flex: "0 0 44%",
-              position: "relative",
-              overflow: "hidden",
-            }}>
+            <motion.div
+              initial={{ opacity: 0, x: -32 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.08, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              style={{
+                flex: "0 0 44%",
+                position: "relative",
+                overflow: "hidden",
+              }}
+            >
               {HeroMedia}
 
               {/* Gradient bas → nom */}
@@ -532,11 +544,14 @@ function ModalContent({ member, onClose, viewMode }: {
                 position: "absolute", top: 0, bottom: 0, right: 0,
                 width: 3, background: accent, zIndex: 4,
               }} />
-            </div>
+            </motion.div>
 
             {/* Colonne droite : infos scrollables */}
-            <div
+            <motion.div
               ref={scrollRef}
+              initial={{ opacity: 0, x: 32 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.18, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
               style={{
                 flex: 1, overflowY: "scroll",
                 WebkitOverflowScrolling: "touch",
@@ -544,10 +559,59 @@ function ModalContent({ member, onClose, viewMode }: {
               }}
             >
               {InfoSection}
-            </div>
+            </motion.div>
           </div>
         )}
+
       </motion.div>
+
+      {/* ── SWITCH FLOTTANT DU MODAL — frère du modal pour position:fixed réel ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 24, scale: 0.88, x: "-50%" }}
+        animate={{ opacity: 1, y: 0, scale: 1, x: "-50%" }}
+        exit={{ opacity: 0, y: 24, scale: 0.88, x: "-50%" }}
+        transition={{ delay: 0.45, duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+        style={{
+          position: "fixed",
+          bottom: isMobile ? "calc(env(safe-area-inset-bottom, 0px) + 20px)" : "32px",
+          left: "50%",
+          zIndex: 10002,
+          display: "flex",
+          background: isDark ? "rgba(10,10,18,0.88)" : "rgba(255,255,255,0.92)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          borderRadius: 100,
+          padding: 5,
+          border: `1px solid ${btnBorder}`,
+          boxShadow: `0 8px 32px rgba(0,0,0,0.35), 0 0 0 1px ${accent}33`,
+        }}
+        role="group"
+        aria-label="Mode d'affichage"
+      >
+        {(["real", "anime"] as ViewMode[]).map((mode) => (
+          <motion.button
+            key={mode}
+            onClick={() => setLocalMode(mode)}
+            whileTap={{ scale: 0.93 }}
+            style={{
+              padding: isMobile ? "9px 22px" : "10px 28px",
+              borderRadius: 100,
+              border: "none", cursor: "pointer",
+              display: "flex", alignItems: "center", gap: 7,
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: isMobile ? 14 : 15, fontWeight: 800,
+              textTransform: "uppercase", letterSpacing: "0.08em",
+              background: localMode === mode ? accent : "transparent",
+              color: localMode === mode ? "#fff" : textMuted,
+              transition: "background 0.22s, color 0.22s",
+              boxShadow: localMode === mode ? `0 3px 14px ${accent}66` : "none",
+            }}
+          >
+            {mode === "real" ? "Réel" : "Anime"}
+          </motion.button>
+        ))}
+      </motion.div>
+
     </>
   );
 }
