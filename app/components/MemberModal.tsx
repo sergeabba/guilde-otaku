@@ -327,106 +327,109 @@ function ModalContent({ member, onClose, viewMode }: {
         )}
       </AnimatePresence>
 
-      {/* ── BACKDROP (desktop uniquement) ──────────────────────────────────── */}
-      {!isMobile && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.28 }}
-          style={{
-            position: "fixed", inset: 0, zIndex: 9998,
-            background: "rgba(0,0,0,0.72)",
-            backdropFilter: "blur(6px)",
-            WebkitBackdropFilter: "blur(6px)",
-          }}
-        />
-      )}
+      {/* ── BACKDROP ─────────────────────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.28 }}
+        onClick={isMobile ? onClose : undefined}
+        style={{
+          position: "fixed", inset: 0, zIndex: 9997,
+          background: isMobile ? "rgba(0,0,0,0.65)" : "rgba(0,0,0,0.72)",
+          backdropFilter: "blur(6px)",
+          WebkitBackdropFilter: "blur(6px)",
+          cursor: isMobile ? "pointer" : "default",
+        }}
+      />
 
       {/* ── MODAL ───────────────────────────────────────────────────────────── */}
       <motion.div
-        initial={isMobile ? { y: "100%", opacity: 1 } : { opacity: 0, scale: 0.96, y: 32 }}
-        animate={isMobile ? { y: 0, opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
-        exit={isMobile ? { y: "100%", opacity: 1, transition: { type: "spring", stiffness: 340, damping: 36 } } : { opacity: 0, scale: 0.96, y: 32 }}
+        initial={isMobile ? { y: "100%" } : { opacity: 0, scale: 0.97, y: 24 }}
+        animate={isMobile ? { y: 0 } : { opacity: 1, scale: 1, y: 0 }}
+        exit={isMobile ? { y: "100%", transition: { type: "spring", stiffness: 340, damping: 36 } } : { opacity: 0, scale: 0.97, y: 24 }}
         transition={isMobile
           ? { type: "spring", stiffness: 340, damping: 36, mass: 0.85 }
-          : { duration: 0.42, ease: [0.22, 1, 0.36, 1] }
+          : { duration: 0.38, ease: [0.22, 1, 0.36, 1] }
         }
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         className="modal-fullscreen"
-        style={{
+        style={isMobile ? {
+          position: "fixed",
+          bottom: 0, left: 0, right: 0,
+          height: "92dvh",
+          zIndex: 9999,
+          display: "flex", flexDirection: "column",
+          overflow: "hidden",
+          background: bg,
+          borderRadius: "20px 20px 0 0",
+          boxShadow: "0 -12px 60px rgba(0,0,0,0.6)",
+        } : {
           position: "fixed", inset: 0, zIndex: 9999,
           display: "flex", flexDirection: "column",
           overflow: "hidden",
           background: bg,
-          borderRadius: isMobile ? "20px 20px 0 0" : 0,
-          boxShadow: isMobile ? "0 -8px 48px rgba(0,0,0,0.5)" : "none",
         }}
       >
         {/* ── NAV ─────────────────────────────────────────────────────────── */}
-        <motion.div
-          initial={{ opacity: 0, y: -16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: isMobile ? 0.18 : 0.12, duration: 0.36, ease: [0.22, 1, 0.36, 1] }}
-        >
-        <div style={{
-          flexShrink: 0,
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: isMobile ? "10px 16px" : "12px 28px",
-          paddingTop: isMobile ? "max(10px, env(safe-area-inset-top, 10px))" : "12px",
-          background: navBg,
-          backdropFilter: "blur(24px)",
-          WebkitBackdropFilter: "blur(24px)",
-          borderBottom: `1px solid ${borderColor}`,
-          zIndex: 2,
-        }}>
-          {/* GAUCHE : bouton retour — largeur fixe pour équilibrer */}
-          <button
-            ref={closeRef}
-            onClick={onClose}
-            aria-label="Fermer"
-            style={{
-              display: "flex", alignItems: "center", gap: 6,
-              padding: "8px 18px", borderRadius: 100,
-              background: btnBg, border: `1px solid ${btnBorder}`,
-              color: textPrimary, cursor: "pointer",
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontSize: 14, fontWeight: 700, textTransform: "uppercase",
-              transition: "background 0.18s",
-              flexShrink: 0,
-            }}
-          >
-            <ArrowLeft size={15} />
-            Retour
-          </button>
+        <div style={{ flexShrink: 0, background: navBg, backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", borderBottom: `1px solid ${borderColor}`, zIndex: 2 }}>
+          {/* Drag handle — mobile only */}
+          {isMobile && (
+            <div style={{ display: "flex", justifyContent: "center", paddingTop: 10, paddingBottom: 4 }}>
+              <div style={{ width: 36, height: 4, borderRadius: 2, background: isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.15)" }} />
+            </div>
+          )}
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: isMobile ? "8px 16px 12px" : "12px 28px",
+          }}>
+            {/* GAUCHE : bouton retour */}
+            <button
+              ref={closeRef}
+              onClick={onClose}
+              aria-label="Fermer"
+              style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: isMobile ? "7px 14px" : "8px 18px", borderRadius: 100,
+                background: btnBg, border: `1px solid ${btnBorder}`,
+                color: textPrimary, cursor: "pointer",
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontSize: isMobile ? 13 : 14, fontWeight: 700, textTransform: "uppercase",
+                transition: "background 0.18s",
+                flexShrink: 0,
+              }}
+            >
+              <ArrowLeft size={14} />
+              Retour
+            </button>
 
-          {/* CENTRE : nom du membre — toujours centré mobile + desktop */}
-          <div style={{ textAlign: "center", flex: 1, padding: "0 8px" }}>
-            <p style={{
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontSize: isMobile ? 9 : 10, fontWeight: 700,
-              color: accent, letterSpacing: "0.22em",
-              textTransform: "uppercase", marginBottom: 1,
-            }}>
-              {member.rank}
-            </p>
-            <p style={{
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontSize: isMobile ? 16 : 20, fontWeight: 900,
-              color: textPrimary, fontStyle: "italic",
-              textTransform: "uppercase", lineHeight: 1,
-              whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-            }}>
-              {member.name}
-            </p>
+            {/* CENTRE */}
+            <div style={{ textAlign: "center", flex: 1, padding: "0 8px", minWidth: 0 }}>
+              <p style={{
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontSize: isMobile ? 9 : 10, fontWeight: 700,
+                color: accent, letterSpacing: "0.22em",
+                textTransform: "uppercase", marginBottom: 1,
+              }}>
+                {member.rank}
+              </p>
+              <p style={{
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontSize: isMobile ? 16 : 20, fontWeight: 900,
+                color: textPrimary, fontStyle: "italic",
+                textTransform: "uppercase", lineHeight: 1,
+                whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+              }}>
+                {member.name}
+              </p>
+            </div>
+
+            {/* DROITE : miroir du bouton pour centrage */}
+            <div style={{ width: isMobile ? 82 : 90, flexShrink: 0 }} />
           </div>
-
-          {/* DROITE : espace miroir du bouton retour pour centrage parfait */}
-          <div style={{ width: 90, flexShrink: 0 }} />
         </div>
-        </motion.div>
 
         {/* ── BODY ────────────────────────────────────────────────────────── */}
         {isMobile ? (
@@ -440,15 +443,15 @@ function ModalContent({ member, onClose, viewMode }: {
               WebkitOverflowScrolling: "touch",
               overscrollBehavior: "contain",
               touchAction: "pan-y",
-              paddingBottom: "env(safe-area-inset-bottom, 24px)",
+              paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 90px)",
             }}
           >
             {/* Hero mobile */}
             <motion.div
               initial={{ opacity: 0, scale: 1.04 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.22, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-              style={{ position: "relative", height: 300, overflow: "hidden", flexShrink: 0 }}
+              transition={{ delay: 0.18, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              style={{ position: "relative", height: "min(55vw, 340px)", overflow: "hidden", flexShrink: 0 }}
             >
               {HeroMedia}
               <div style={{
@@ -575,7 +578,7 @@ function ModalContent({ member, onClose, viewMode }: {
         transition={{ delay: 0.45, duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
         style={{
           position: "fixed",
-          bottom: isMobile ? "calc(env(safe-area-inset-bottom, 0px) + 20px)" : "32px",
+          bottom: isMobile ? "calc(env(safe-area-inset-bottom, 0px) + 28px)" : "32px",
           left: "50%",
           zIndex: 10002,
           display: "flex",

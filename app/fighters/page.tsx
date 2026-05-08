@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { Rank, RANK_FILTER_ORDER, type Member } from "../../data/members";
@@ -9,6 +10,7 @@ import { Dices, Swords, Flame, Shield, Wind } from "lucide-react";
 import type { ViewMode } from "../types";
 import { supabase } from "../../lib/supabase";
 import VideoPlayer from "../components/VideoPlayer";
+import GuildeHeader from "../components/GuildeHeader";
 
 /* ─── Sound Manager ─── */
 type HowlInstance = { play: () => void };
@@ -106,11 +108,11 @@ function Styles() {
       .kof-roster {
         display: grid;
         gap: 3px;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(4, 1fr);
       }
-      @media(min-width:480px)  { .kof-roster { grid-template-columns: repeat(4, 1fr); gap: 4px; } }
-      @media(min-width:760px)  { .kof-roster { grid-template-columns: repeat(5, 1fr); gap: 5px; } }
-      @media(min-width:1100px) { .kof-roster { grid-template-columns: repeat(6, 1fr); gap: 5px; } }
+      @media(min-width:480px)  { .kof-roster { grid-template-columns: repeat(5, 1fr); gap: 4px; } }
+      @media(min-width:760px)  { .kof-roster { grid-template-columns: repeat(6, 1fr); gap: 4px; } }
+      @media(min-width:1100px) { .kof-roster { grid-template-columns: repeat(7, 1fr); gap: 4px; } }
 
       /* ─── Tile base ─── */
       .kof-tile {
@@ -1044,7 +1046,7 @@ function CharacterSelect({ members, mode, setMode, selected, onSelect, onFight }
   const rightFighter = hovered && hovered.id !== selected?.id ? hovered : null;
 
   return (
-    <div className="relative min-h-screen overflow-hidden" style={{ background: "#07060f" }}>
+    <div className="relative overflow-hidden" style={{ background: "#07060f", flex: 1, display: "flex", flexDirection: "column" }}>
       {/* Main atmospheric background */}
       <div className="kof-screen-bg" />
       <div className="kof-spotlight" />
@@ -1091,11 +1093,11 @@ function CharacterSelect({ members, mode, setMode, selected, onSelect, onFight }
           opacity: .8,
         }} />
 
-        <div className="max-w-[1700px] mx-auto px-4 py-3 flex items-center justify-between gap-3">
+        <div className="px-4 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <Swords size={20} style={{ color: "#FFD700", flexShrink: 0, filter: "drop-shadow(0 0 8px rgba(255,215,0,.75))" }} />
+            <Swords size={22} style={{ color: "#FFD700", flexShrink: 0, filter: "drop-shadow(0 0 10px rgba(255,215,0,.9))" }} />
             <div className="flex flex-col leading-none min-w-0">
-              <span className="arcade-title" style={{ fontSize: "clamp(14px, 2.2vw, 24px)", whiteSpace: "nowrap" }}>
+              <span className="arcade-title" style={{ fontSize: "clamp(18px, 2.8vw, 30px)", whiteSpace: "nowrap" }}>
                 GUILDE · FIGHTERS
               </span>
               <span className="arcade-coin mt-0.5" style={{ fontSize: 9, letterSpacing: 3, whiteSpace: "nowrap" }}>
@@ -1113,33 +1115,12 @@ function CharacterSelect({ members, mode, setMode, selected, onSelect, onFight }
             >
               {isMuted ? "♪ OFF" : "♪ ON"}
             </button>
-            {(["real", "anime"] as ViewMode[]).map((m) => (
-              <button
-                key={m}
-                onClick={() => { setMode(m); sfx?.play("select"); }}
-                className="px-3 py-1 cursor-pointer text-[9px] font-bold transition-all duration-200"
-                style={{
-                  fontFamily: "'Orbitron', monospace",
-                  letterSpacing: "2px",
-                  clipPath: "polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)",
-                  background: mode === m
-                    ? "linear-gradient(135deg, rgba(255,215,0,.28), rgba(255,120,0,.18))"
-                    : "rgba(0,0,0,.5)",
-                  color: mode === m ? "#FFD700" : "rgba(255,255,255,.4)",
-                  border: "none",
-                  boxShadow: mode === m
-                    ? "inset 0 0 0 1px rgba(255,215,0,.5), 0 0 14px rgba(255,215,0,.28)"
-                    : "inset 0 0 0 1px rgba(255,255,255,.09)",
-                }}
-              >
-                {m.toUpperCase()}
-              </button>
-            ))}
+            {/* switch géré par portal dans FightersPage */}
           </div>
         </div>
 
         {/* Rank filters */}
-        <div className="max-w-[1700px] mx-auto px-4 pb-2 flex gap-1.5 overflow-x-auto custom-scroll">
+        <div className="px-4 pb-2 flex gap-1.5 overflow-x-auto custom-scroll">
           {(["Tous", ...RANK_FILTER_ORDER] as (Rank | "Tous")[]).map(r => {
             const active = filter === r;
             const col = r === "Tous" ? "#FFD700" : rc(r).main;
@@ -1168,27 +1149,37 @@ function CharacterSelect({ members, mode, setMode, selected, onSelect, onFight }
       </div>
 
       {/* ─── MAIN LAYOUT ─── */}
-      <div className="relative z-10 max-w-[1700px] mx-auto px-3 sm:px-5 py-4">
+      <div className="relative z-10" style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, padding: "8px 8px 0" }}>
 
         {/* Layout CSS via local style */}
         <style jsx>{`
           .kof-layout {
             display: grid;
-            gap: 12px;
+            gap: 8px;
             grid-template-columns: 1fr;
+            grid-template-rows: auto 1fr;
             grid-template-areas:
               "previews"
               "center";
+            flex: 1;
+            min-height: 0;
           }
           @media (min-width: 900px) {
             .kof-layout {
-              grid-template-columns: minmax(0, 18%) minmax(0, 1fr) minmax(0, 18%);
+              grid-template-columns: 22% minmax(0, 1fr) 22%;
+              grid-template-rows: 1fr;
               grid-template-areas: "left center right";
-              gap: 14px;
+              gap: 8px;
+            }
+          }
+          @media (min-width: 1200px) {
+            .kof-layout {
+              grid-template-columns: 24% minmax(0, 1fr) 24%;
             }
           }
           .kof-area-left     { grid-area: left;  display: none; }
-          .kof-area-center   { grid-area: center; }
+          .kof-area-center   { grid-area: center; display: flex; flex-direction: column; min-height: 0; overflow-y: auto; overflow-x: hidden; }
           .kof-area-right    { grid-area: right; display: none; }
           .kof-area-previews { grid-area: previews; }
           @media (min-width: 900px) {
@@ -1199,20 +1190,23 @@ function CharacterSelect({ members, mode, setMode, selected, onSelect, onFight }
           .kof-mobile-previews {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 8px;
+            gap: 6px;
           }
           .kof-mobile-slot {
             position: relative;
             aspect-ratio: 3/4;
-            border-radius: 8px;
+            border-radius: 6px;
             overflow: hidden;
           }
           @media (min-width: 900px) {
             .kof-area-previews { display: none !important; }
           }
+          /* scroll bottom padding pour le bouton FIGHT flottant */
+          .kof-area-center { padding-bottom: 100px; }
+          @media (min-width: 900px) { .kof-area-center { padding-bottom: 0; } }
         `}</style>
 
-        <div className="kof-layout" style={{ minHeight: "min(660px,75vh)" }}>
+        <div className="kof-layout" style={{ flex: 1, minHeight: 0 }}>
 
           {/* Mobile: mini P1/P2 preview */}
           <div className="kof-area-previews">
@@ -1227,8 +1221,8 @@ function CharacterSelect({ members, mode, setMode, selected, onSelect, onFight }
           </div>
 
           {/* Desktop: LEFT panel */}
-          <div className="kof-area-left" style={{ minHeight: 420 }}>
-            <div className="kof-panel-p1 kof-panel-p1-clip relative h-full overflow-hidden rounded-sm">
+          <div className="kof-area-left" style={{ minHeight: 0 }}>
+            <div className="kof-panel-p1 kof-panel-p1-clip relative overflow-hidden rounded-sm" style={{ height: "100%" }}>
               <div className="kof-panel-streak" style={{ background: "linear-gradient(90deg, transparent, rgba(220,38,38,.8), transparent)" }} />
               <SidePortrait member={leftFighter} mode={mode} side="left" />
             </div>
@@ -1336,27 +1330,28 @@ function CharacterSelect({ members, mode, setMode, selected, onSelect, onFight }
                 )}
               </AnimatePresence>
             </div>
+
+            {/* Detail panel — inside center column so it scrolls with the grid */}
+            {selected && (
+              <div className="mt-4 max-w-[720px] mx-auto w-full">
+                <AnimatePresence mode="wait">
+                  <DetailPanel key={selected.id} member={selected} mode={mode} />
+                </AnimatePresence>
+              </div>
+            )}
           </div>
 
           {/* Desktop: RIGHT panel */}
-          <div className="kof-area-right" style={{ minHeight: 420 }}>
-            <div className="kof-panel-p2 kof-panel-p2-clip relative h-full overflow-hidden rounded-sm">
+          <div className="kof-area-right" style={{ minHeight: 0 }}>
+            <div className="kof-panel-p2 kof-panel-p2-clip relative overflow-hidden rounded-sm" style={{ height: "100%" }}>
               <div className="kof-panel-streak" style={{ background: "linear-gradient(90deg, transparent, rgba(29,78,216,.8), transparent)" }} />
               <SidePortrait member={rightFighter} mode={mode} side="right" />
             </div>
           </div>
 
         </div>
-
-        {/* Detail panel when selected */}
-        {selected && (
-          <div className="mt-4 max-w-[720px] mx-auto">
-            <AnimatePresence mode="wait">
-              <DetailPanel key={selected.id} member={selected} mode={mode} />
-            </AnimatePresence>
-          </div>
-        )}
-      </div>
+        </div>{/* closes max-w inner */}
+      </div>{/* closes relative z-10 outer */}
 
       {/* ─── FIGHT BUTTON ─── */}
       <AnimatePresence>
@@ -1366,11 +1361,11 @@ function CharacterSelect({ members, mode, setMode, selected, onSelect, onFight }
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 30 }}
             transition={{ type: "spring", stiffness: 200, damping: 18 }}
-            className="fixed bottom-0 left-0 right-0 z-50"
+            className="fixed bottom-0 left-0 right-0 z-[9998]"
             style={{
               background: "linear-gradient(to top, rgba(0,0,0,.95) 0%, rgba(0,0,0,.65) 70%, transparent 100%)",
               paddingTop: 24,
-              paddingBottom: "max(16px, env(safe-area-inset-bottom))",
+              paddingBottom: "max(80px, calc(env(safe-area-inset-bottom) + 80px))",
             }}
           >
             {/* Hint: P1 selected, click a second fighter to fight */}
@@ -1425,11 +1420,15 @@ function CharacterSelect({ members, mode, setMode, selected, onSelect, onFight }
    MAIN PAGE
    ════════════════════════════════════════════════════ */
 export default function FightersPage() {
-  const [members, setMembers] = useState<Member[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [mode, setMode] = useState<ViewMode>("anime");
-  const [selected, setSelected] = useState<Member | null>(null);
-  const [phase, setPhase] = useState<Phase>("select");
+  const [members, setMembers]     = useState<Member[]>([]);
+  const [loading, setLoading]     = useState(true);
+  const [mode, setMode]           = useState<ViewMode>("anime");
+  const [selected, setSelected]   = useState<Member | null>(null);
+  const [phase, setPhase]         = useState<Phase>("select");
+  const [fightData, setFightData] = useState<{ p1: Member; p2: Member } | null>(null);
+  const [mounted, setMounted]     = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -1456,30 +1455,40 @@ export default function FightersPage() {
     return () => { cancelled = true; };
   }, []);
 
+  // Déclaré avant handleSelect pour éviter la stale closure
+  const startFight = useCallback((p1: Member, p2: Member) => {
+    setFightData({ p1, p2 });
+    setPhase("intro");
+  }, []);
+
   const handleSelect = useCallback((m: Member) => {
-    if (selected?.id === m.id) { setSelected(null); }
-    else if (!selected) { setSelected(m); }
-    else if (m.id !== selected.id) {
-      const p2 = m;
+    if (selected?.id === m.id) {
+      setSelected(null);
+    } else if (!selected) {
+      setSelected(m);
+    } else {
       const p1 = selected;
       setSelected(null);
-      setPhase("intro");
-      handleIntro(p1, p2);
+      startFight(p1, m);
     }
-  }, [selected]);
+  }, [selected, startFight]);
 
-  const [fightData, setFightData] = useState<{ p1: Member; p2: Member } | null>(null);
-
-  const handleIntro = useCallback((p1: Member, p2: Member) => { setFightData({ p1, p2 }); setPhase("intro"); }, []);
   const handleIntroDone = useCallback(() => setPhase("fight"), []);
+
   const handleFight = useCallback((fighter: Member) => {
     if (members.length >= 2) {
       const others = members.filter(m => m.id !== fighter.id);
       const random = others[Math.floor(Math.random() * others.length)];
-      setFightData({ p1: fighter, p2: random });
-      setPhase("intro");
+      setSelected(null);
+      startFight(fighter, random);
     }
-  }, [members]);
+  }, [members, startFight]);
+
+  const handleExit = useCallback(() => {
+    setFightData(null);
+    setSelected(null);
+    setPhase("select");
+  }, []);
 
   if (loading) return <><Styles /><LoadingScreen /></>;
 
@@ -1487,13 +1496,58 @@ export default function FightersPage() {
     <>
       <Styles />
       {phase === "select" && (
-        <CharacterSelect members={members} mode={mode} setMode={setMode} selected={selected} onSelect={handleSelect} onFight={handleFight} />
+        <>
+          <div style={{ height: "100dvh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+            <GuildeHeader activePage="fighters" accentColor="#FFD700" bgColor="rgba(4,4,12,0.92)" textColor="#fff" />
+            <CharacterSelect members={members} mode={mode} setMode={setMode} selected={selected} onSelect={handleSelect} onFight={handleFight} />
+          </div>
+          {mounted && phase === "select" && createPortal(
+            <div style={{
+              position: "fixed",
+              bottom: "40px",
+              left: "50%",
+              transform: "translateX(-50%)",
+              zIndex: 10002,
+              display: "flex",
+              background: "rgba(4,4,12,0.92)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              padding: "5px",
+              borderRadius: "100px",
+              boxShadow: "0 10px 40px rgba(0,0,0,0.8)",
+              border: "1px solid rgba(255,215,0,0.15)",
+            }}>
+              {(["real", "anime"] as ViewMode[]).map((m) => (
+                <motion.button
+                  key={m}
+                  onClick={() => { setMode(m); sfx?.play("select"); }}
+                  whileTap={{ scale: 0.93 }}
+                  style={{
+                    padding: "10px 24px",
+                    borderRadius: "100px",
+                    border: "none", cursor: "pointer",
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontSize: "15px", fontWeight: 800,
+                    textTransform: "uppercase", letterSpacing: "0.1em",
+                    background: mode === m ? "#FFD700" : "transparent",
+                    color: mode === m ? "#000" : "rgba(255,255,255,0.5)",
+                    transition: "all 0.2s",
+                    boxShadow: mode === m ? "0 4px 15px rgba(255,215,0,0.5)" : "none",
+                  }}
+                >
+                  {m === "real" ? "Réel" : "Anime"}
+                </motion.button>
+              ))}
+            </div>,
+            document.body
+          )}
+        </>
       )}
       {phase === "intro" && fightData && (
         <FightIntro p1={fightData.p1} p2={fightData.p2} mode={mode} onFinish={handleIntroDone} />
       )}
       {phase === "fight" && fightData && (
-        <Arena p1={fightData.p1} p2={fightData.p2} mode={mode} onExit={() => { setFightData(null); setSelected(null); setPhase("select"); }} />
+        <Arena p1={fightData.p1} p2={fightData.p2} mode={mode} onExit={handleExit} />
       )}
     </>
   );
