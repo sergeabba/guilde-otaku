@@ -56,7 +56,9 @@ export default function BirthdaysPage() {
   const [activeMonth, setActiveMonth] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("anime");
   const [members, setMembers] = useState<Member[]>([]);
+  const [mounted, setMounted] = useState(false);
   const isMobile = useIsMobile();
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     const fetchMembers = async () => {
@@ -102,20 +104,6 @@ export default function BirthdaysPage() {
   const isDark = activeTheme.dark;
   const themeAccent = activeTheme.accent;
 
-  const renderViewToggle = () => (
-    <div style={{ display: "flex", background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)", borderRadius: "100px", padding: "4px" }}>
-      {(["real", "anime"] as const).map((mode) => (
-        <button key={mode} onClick={() => setViewMode(mode)} style={{
-          padding: "6px 14px", borderRadius: "100px", border: "none", cursor: "pointer",
-          fontFamily: "'Barlow Condensed', sans-serif", fontSize: "12px", fontWeight: 900, textTransform: "uppercase",
-          background: viewMode === mode ? themeAccent : "transparent",
-          color: viewMode === mode ? "#fff" : (isDark ? "#aaa" : "#666"), transition: "0.3s"
-        }}>
-          {mode === "real" ? "Réel" : "Anime"}
-        </button>
-      ))}
-    </div>
-  );
 
   return (
     <motion.main animate={{ background: activeTheme.bg }} transition={{ duration: 0.6 }} style={{ minHeight: "100vh", background: activeTheme.bg }}>
@@ -144,7 +132,6 @@ export default function BirthdaysPage() {
         accentColor={themeAccent}
         bgColor={isDark ? "rgba(5,5,8,0.7)" : "rgba(255,255,255,0.4)"}
         textColor={isDark ? "#fff" : "#111"}
-        rightSlot={renderViewToggle()} 
       />
       
       <div style={{ maxWidth: "1100px", margin: "0 auto", padding: isMobile ? "0 15px" : "0 40px" }}>
@@ -336,6 +323,49 @@ export default function BirthdaysPage() {
       </div>
 
       <MemberModal member={selectedMember} onClose={() => setSelectedMember(null)} viewMode={viewMode} />
+
+      {mounted && !selectedMember && createPortal(
+        <div style={{
+          position: "fixed",
+          bottom: isMobile ? "20px" : "40px",
+          left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 10002,
+          display: "flex",
+          background: isDark ? "rgba(10,10,10,0.88)" : "rgba(255,255,255,0.88)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          padding: "6px",
+          borderRadius: "100px",
+          boxShadow: isDark ? "0 10px 40px rgba(0,0,0,0.8)" : "0 10px 40px rgba(0,0,0,0.15)",
+          border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)"}`,
+        }}>
+          {(["real", "anime"] as const).map((mode) => (
+            <motion.button
+              key={mode}
+              onClick={() => setViewMode(mode)}
+              whileTap={{ scale: 0.93 }}
+              transition={{ type: "spring", stiffness: 500, damping: 25 }}
+              style={{
+                padding: isMobile ? "10px 20px" : "12px 28px",
+                borderRadius: "100px",
+                border: "none", cursor: "pointer",
+                display: "flex", alignItems: "center", gap: "8px",
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontSize: isMobile ? "14px" : "16px",
+                fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em",
+                background: viewMode === mode ? themeAccent : "transparent",
+                color: viewMode === mode ? "#fff" : "#888",
+                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                boxShadow: viewMode === mode ? `0 4px 15px ${themeAccent}60` : "none",
+              }}
+            >
+              {mode === "real" ? "Réel" : "Anime"}
+            </motion.button>
+          ))}
+        </div>,
+        document.body
+      )}
     </motion.main>
   );
 }

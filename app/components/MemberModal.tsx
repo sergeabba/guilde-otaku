@@ -382,6 +382,7 @@ function ModalContent({ member, onClose, viewMode }: {
           borderBottom: `1px solid ${borderColor}`,
           zIndex: 2,
         }}>
+          {/* GAUCHE : bouton retour — largeur fixe pour équilibrer */}
           <button
             ref={closeRef}
             onClick={onClose}
@@ -394,35 +395,36 @@ function ModalContent({ member, onClose, viewMode }: {
               fontFamily: "'Barlow Condensed', sans-serif",
               fontSize: 14, fontWeight: 700, textTransform: "uppercase",
               transition: "background 0.18s",
+              flexShrink: 0,
             }}
           >
             <ArrowLeft size={15} />
             Retour
           </button>
 
-          {/* Centre: nom du membre (desktop) */}
-          {!isMobile && (
-            <div style={{ textAlign: "center" }}>
-              <p style={{
-                fontFamily: "'Barlow Condensed', sans-serif",
-                fontSize: 10, fontWeight: 700,
-                color: accent, letterSpacing: "0.22em",
-                textTransform: "uppercase", marginBottom: 1,
-              }}>
-                {member.rank}
-              </p>
-              <p style={{
-                fontFamily: "'Barlow Condensed', sans-serif",
-                fontSize: 20, fontWeight: 900,
-                color: textPrimary, fontStyle: "italic",
-                textTransform: "uppercase", lineHeight: 1,
-              }}>
-                {member.name}
-              </p>
-            </div>
-          )}
+          {/* CENTRE : nom du membre — toujours centré mobile + desktop */}
+          <div style={{ textAlign: "center", flex: 1, padding: "0 8px" }}>
+            <p style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: isMobile ? 9 : 10, fontWeight: 700,
+              color: accent, letterSpacing: "0.22em",
+              textTransform: "uppercase", marginBottom: 1,
+            }}>
+              {member.rank}
+            </p>
+            <p style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: isMobile ? 16 : 20, fontWeight: 900,
+              color: textPrimary, fontStyle: "italic",
+              textTransform: "uppercase", lineHeight: 1,
+              whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+            }}>
+              {member.name}
+            </p>
+          </div>
 
-          <div style={{ width: 80 }} />
+          {/* DROITE : espace miroir du bouton retour pour centrage parfait */}
+          <div style={{ width: 90, flexShrink: 0 }} />
         </div>
         </motion.div>
 

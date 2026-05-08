@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useIsMobile } from "../hooks/useIsMobile";
+import { usePathname } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 
 interface GuildeHeaderProps {
   activePage:
@@ -21,28 +23,30 @@ interface GuildeHeaderProps {
 }
 
 const navLinks = [
-  { id: "membres",      label: "Membres",      href: "/"            },
-  { id: "birthdays",    label: "Anniversaires", href: "/birthdays"   },
-  { id: "wanted",       label: "Wanted",        href: "/wanted"      },
-  { id: "fighters",     label: "Fighters",      href: "/fighters"    },
-  { id: "film-semaine", label: "Film Semaine",  href: "/film-semaine"},
-  { id: "bibliotheque", label: "Bibliothèque",  href: "/bibliotheque"},
-  { id: "bons-plans",   label: "Bons Plans",    href: "/bons-plans"  },
-  { id: "atelier",      label: "Atelier",       href: "/atelier"     },
+  { id: "membres",      label: "Membres",       href: "/"             },
+  { id: "birthdays",    label: "Anniversaires", href: "/birthdays"    },
+  { id: "wanted",       label: "Wanted",        href: "/wanted"       },
+  { id: "fighters",     label: "Fighters",      href: "/fighters"     },
+  { id: "film-semaine", label: "Film Semaine",  href: "/film-semaine" },
+  { id: "bibliotheque", label: "Bibliothèque",  href: "/bibliotheque" },
+  { id: "bons-plans",   label: "Bons Plans",    href: "/bons-plans"   },
+  { id: "atelier",      label: "Atelier",       href: "/atelier"      },
 ];
 
 export default function GuildeHeader({
   activePage,
   accentColor = "#c9a84c",
-  bgColor     = "rgba(5,5,8,0.7)",
+  bgColor     = "rgba(5,5,8,0.82)",
   textColor   = "#fff",
   rightSlot,
 }: GuildeHeaderProps) {
-  const isMobile = useIsMobile();
+  const isMobile  = useIsMobile();
+  const pathname  = usePathname();
+  const isHome    = pathname === "/";
 
   return (
     <motion.header
-      initial={{ y: -60, opacity: 0 }}
+      initial={{ y: -80, opacity: 0 }}
       animate={{ y: 0,   opacity: 1 }}
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       style={{
@@ -50,65 +54,94 @@ export default function GuildeHeader({
         top: 0,
         zIndex: 100,
         background: bgColor,
-        backdropFilter: "blur(24px)",
-        WebkitBackdropFilter: "blur(24px)",
-        borderBottom: "1px solid rgba(255,255,255,0.06)",
+        backdropFilter: "blur(28px)",
+        WebkitBackdropFilter: "blur(28px)",
+        borderBottom: `1px solid rgba(255,255,255,0.07)`,
+        boxShadow: "0 4px 32px rgba(0,0,0,0.18)",
       }}
     >
-      {/* ── LIGNE 1 : Logo + rightSlot ──────────────────────────────────────── */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: isMobile ? "0 16px" : "0 48px",
-          height: "56px",
-        }}
-      >
-        {/* LOGO */}
-        <Link
-          href="/"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            textDecoration: "none",
-            flexShrink: 0,
-          }}
-        >
-          <img
-            src="/logo.png"
-            style={{ height: "34px", filter: "brightness(1.1)" }}
-            alt="Logo Guilde Otaku"
-            loading="eager"
-          />
-          <div>
-            <div
-              style={{
-                fontSize: isMobile ? "16px" : "19px",
-                fontWeight: 900,
-                color: textColor,
-                lineHeight: 1,
-                fontFamily: "'Barlow Condensed', sans-serif",
-              }}
-            >
-              GUILDE OTAKU
-            </div>
-            <div
-              style={{
-                fontSize: "9px",
-                fontWeight: 700,
-                color: accentColor,
-                letterSpacing: "0.22em",
-                fontFamily: "'Barlow Condensed', sans-serif",
-              }}
-            >
-              DEPUIS 2020
-            </div>
-          </div>
-        </Link>
+      {/* ── LIGNE 1 : Logo + back + rightSlot ─────────────────────────────── */}
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: isMobile ? "0 14px" : "0 48px",
+        height: isMobile ? "62px" : "70px",
+      }}>
 
-        {/* rightSlot (toggle Réel/Anime, etc.) */}
+        {/* GAUCHE : back arrow (si pas accueil) + logo */}
+        <div style={{ display: "flex", alignItems: "center", gap: isMobile ? "10px" : "16px" }}>
+          {!isHome && (
+            <Link
+              href="/"
+              aria-label="Retour à l'accueil"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: isMobile ? "34px" : "38px",
+                height: isMobile ? "34px" : "38px",
+                borderRadius: "50%",
+                background: textColor === "#111"
+                  ? "rgba(0,0,0,0.07)"
+                  : "rgba(255,255,255,0.09)",
+                border: textColor === "#111"
+                  ? "1px solid rgba(0,0,0,0.1)"
+                  : "1px solid rgba(255,255,255,0.13)",
+                color: textColor,
+                textDecoration: "none",
+                flexShrink: 0,
+                transition: "background 0.2s",
+              }}
+            >
+              <ArrowLeft size={isMobile ? 16 : 18} />
+            </Link>
+          )}
+
+          <Link
+            href="/"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: isMobile ? "10px" : "14px",
+              textDecoration: "none",
+              flexShrink: 0,
+            }}
+          >
+            <img
+              src="/logo.png"
+              style={{ height: isMobile ? "36px" : "44px", filter: "brightness(1.1)" }}
+              alt="Logo Guilde Otaku"
+              loading="eager"
+            />
+            {!isMobile && (
+              <div>
+                <div style={{
+                  fontSize: "22px",
+                  fontWeight: 900,
+                  color: textColor,
+                  lineHeight: 1,
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  letterSpacing: "0.04em",
+                }}>
+                  GUILDE OTAKU
+                </div>
+                <div style={{
+                  fontSize: "9px",
+                  fontWeight: 700,
+                  color: accentColor,
+                  letterSpacing: "0.28em",
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  marginTop: "2px",
+                }}>
+                  DEPUIS 2020
+                </div>
+              </div>
+            )}
+          </Link>
+        </div>
+
+        {/* DROITE : rightSlot */}
         {rightSlot && (
           <div style={{ flexShrink: 0, marginLeft: "12px" }}>
             {rightSlot}
@@ -124,9 +157,11 @@ export default function GuildeHeader({
           overflowX: "auto",
           WebkitOverflowScrolling: "touch",
           scrollbarWidth: "none",
-          padding: isMobile ? "0 8px 0" : "0 40px",
+          padding: isMobile ? "0 4px" : "0 40px",
           gap: 0,
-          borderTop: "1px solid rgba(255,255,255,0.04)",
+          borderTop: textColor === "#111"
+            ? "1px solid rgba(0,0,0,0.06)"
+            : "1px solid rgba(255,255,255,0.05)",
         }}
       >
         {navLinks.map((link) => {
@@ -138,21 +173,22 @@ export default function GuildeHeader({
               style={{
                 display: "flex",
                 alignItems: "center",
-                padding: isMobile ? "0 10px" : "0 14px",
-                height: "42px",
+                padding: isMobile ? "0 11px" : "0 18px",
+                height: isMobile ? "46px" : "52px",
                 position: "relative",
                 textDecoration: "none",
                 fontFamily: "'Barlow Condensed', sans-serif",
-                fontSize: isMobile ? "13px" : "14px",
+                fontSize: isMobile ? "15px" : "17px",
                 fontWeight: 900,
-                letterSpacing: "0.05em",
+                letterSpacing: "0.06em",
                 textTransform: "uppercase",
                 color: isActive
                   ? accentColor
                   : textColor === "#111"
                   ? "#111111"
                   : "#ffffff",
-                transition: "color 0.25s ease",
+                opacity: isActive ? 1 : 0.72,
+                transition: "color 0.2s, opacity 0.2s",
                 whiteSpace: "nowrap",
                 flexShrink: 0,
               }}
@@ -160,20 +196,20 @@ export default function GuildeHeader({
             >
               {link.label}
 
-              {/* ── Indicateur de page active animé ───────────────────────── */}
               {isActive && (
                 <motion.div
                   layoutId="nav-indicator"
                   style={{
                     position: "absolute",
                     bottom: 0,
-                    left: isMobile ? "10px" : "14px",
-                    right: isMobile ? "10px" : "14px",
-                    height: "2px",
+                    left: isMobile ? "11px" : "18px",
+                    right: isMobile ? "11px" : "18px",
+                    height: "3px",
                     background: accentColor,
-                    borderRadius: "2px 2px 0 0",
+                    borderRadius: "3px 3px 0 0",
+                    boxShadow: `0 0 8px ${accentColor}88`,
                   }}
-                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 />
               )}
             </Link>
