@@ -56,21 +56,20 @@ export default function MemberModal({ member, onClose, viewMode }: {
   }, [onClose, showBadgeSplash]);
 
   useEffect(() => {
-    if (member) {
-      const scrollY = window.scrollY;
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = "100%";
-      document.body.style.overflow = "hidden";
-      setTimeout(() => closeButtonRef.current?.focus(), 100);
-      return () => {
-        document.body.style.position = "";
-        document.body.style.top = "";
-        document.body.style.width = "";
-        document.body.style.overflow = "";
-        window.scrollTo(0, scrollY);
-      };
-    }
+    if (!member) return;
+    const scrollY = window.scrollY;
+    document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = "100%";
+    setTimeout(() => closeButtonRef.current?.focus(), 100);
+    return () => {
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
+      window.scrollTo(0, scrollY);
+    };
   }, [member]);
 
   const isAnime = localMode === "anime";
@@ -94,11 +93,16 @@ export default function MemberModal({ member, onClose, viewMode }: {
           aria-labelledby="modal-member-title"
           style={{
             position: "fixed",
-            inset: 0,
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
             zIndex: 9999,
             background: "#08080f",
-            overflowY: "auto",
+            overflowY: "scroll",
+            overflowX: "hidden",
             WebkitOverflowScrolling: "touch",
+            overscrollBehavior: "contain",
           }}
         >
           {/* BADGE SPLASH */}
