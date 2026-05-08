@@ -23,12 +23,7 @@ export default function VideoPlayer({
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hovered, setHovered] = useState(false);
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-
-  useEffect(() => {
-    setIsTouchDevice("ontouchstart" in window || navigator.maxTouchPoints > 0);
-  }, []);
 
   useEffect(() => {
     const handleFsChange = () => {
@@ -53,6 +48,7 @@ export default function VideoPlayer({
   const toggleFs = useCallback(() => {
     const el = containerRef.current;
     if (!el) return;
+
     if (isFullscreen) {
       if (document.exitFullscreen) {
         document.exitFullscreen();
@@ -70,12 +66,10 @@ export default function VideoPlayer({
     }
   }, [isFullscreen]);
 
-  const btnVisible = isTouchDevice ? true : hovered;
-
   return (
     <div
       ref={containerRef}
-      style={{ position: "relative", width: "100%", height: "100%", background: "#050508", ...style }}
+      style={{ position: "relative", width: "100%", height: "100%", ...style }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -95,7 +89,6 @@ export default function VideoPlayer({
           objectFit: fit,
           objectPosition: resolvedPosition,
           display: "block",
-          pointerEvents: "none",
         }}
       />
 
@@ -119,10 +112,9 @@ export default function VideoPlayer({
             justifyContent: "center",
             cursor: "pointer",
             color: "#fff",
-            opacity: btnVisible ? (isTouchDevice ? 0.75 : 1) : 0,
-            transform: btnVisible ? "scale(1)" : "scale(0.8)",
+            opacity: hovered || isFullscreen ? 1 : 0,
+            transform: hovered || isFullscreen ? "scale(1)" : "scale(0.8)",
             transition: "opacity 0.18s, transform 0.18s",
-            pointerEvents: "auto",
           }}
         >
           {isFullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
