@@ -67,11 +67,15 @@ export default function MemberModal({ member, onClose, viewMode }: {
   useEffect(() => {
     if (!member) return;
     const scrollY = window.scrollY;
+    document.body.style.position = "fixed";
     document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = "100%";
     document.body.classList.add("modal-open");
     return () => {
       document.body.classList.remove("modal-open");
+      document.body.style.position = "";
       document.body.style.top = "";
+      document.body.style.width = "";
       window.scrollTo({ top: scrollY, behavior: "instant" as ScrollBehavior });
     };
   }, [member]);
