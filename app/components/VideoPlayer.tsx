@@ -1,21 +1,14 @@
 "use client";
 
 import { useRef, useState, useCallback, useEffect } from "react";
-import { Maximize2 } from "lucide-react";
+import { Maximize2, Minimize2 } from "lucide-react";
 
 interface VideoPlayerProps {
   src: string;
-  /** "cover" (default) remplit le conteneur | "contain" montre tout le sujet */
   fit?: "cover" | "contain";
-  /**
-   * Position auto : "smart" décale légèrement vers le haut pour centrer le visage.
-   * Passe une valeur CSS directe ("center", "50% 30%"…) pour override manuel.
-   */
   objectPosition?: "smart" | string;
   style?: React.CSSProperties;
-  /** Affiche le bouton plein écran */
   fullscreenBtn?: boolean;
-  /** Classes Tailwind supplémentaires sur la <video> */
   className?: string;
 }
 
@@ -27,12 +20,27 @@ export default function VideoPlayer({
   fullscreenBtn = true,
   className = "",
 }: VideoPlayerProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hovered, setHovered] = useState(false);
   const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     setIsTouchDevice("ontouchstart" in window || navigator.maxTouchPoints > 0);
+  }, []);
+
+  useEffect(() => {
+    const handleFsChange = () => {
+      const fsEl = document.fullscreenElement || (document as any).webkitFullscreenElement;
+      setIsFullscreen(fsEl === containerRef.current);
+    };
+    document.addEventListener("fullscreenchange", handleFsChange);
+    document.addEventListener("webkitfullscreenchange", handleFsChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFsChange);
+      document.removeEventListener("webkitfullscreenchange", handleFsChange);
+    };
   }, []);
 
   const resolvedPosition =
@@ -42,24 +50,32 @@ export default function VideoPlayer({
         : "center bottom"
       : objectPosition;
 
-  const requestFs = useCallback(() => {
-    const el = videoRef.current;
+  const toggleFs = useCallback(() => {
+    const el = containerRef.current;
     if (!el) return;
-    if (el.requestFullscreen) {
-      el.requestFullscreen();
-    } else if ((el as any).webkitRequestFullscreen) {
-      (el as any).webkitRequestFullscreen();
-    } else if ((el as any).webkitEnterFullscreen) {
-      (el as any).webkitEnterFullscreen();
+    if (isFullscreen) {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if ((document as any).webkitExitFullscreen) {
+        (document as any).webkitExitFullscreen();
+      }
+    } else {
+      if (el.requestFullscreen) {
+        el.requestFullscreen();
+      } else if ((el as any).webkitRequestFullscreen) {
+        (el as any).webkitRequestFullscreen();
+      } else if ((el as any).webkitEnterFullscreen) {
+        (el as any).webkitEnterFullscreen();
+      }
     }
-  }, []);
+  }, [isFullscreen]);
 
-  // On touch devices the button is always visible (no hover state)
   const btnVisible = isTouchDevice ? true : hovered;
 
   return (
     <div
-      style={{ position: "relative", width: "100%", height: "100%", ...style }}
+      ref={containerRef}
+      style={{ position: "relative", width: "100%", height: "100%", background: "#050508", ...style }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -79,18 +95,14 @@ export default function VideoPlayer({
           objectFit: fit,
           objectPosition: resolvedPosition,
           display: "block",
-          // Prevent the video element itself from capturing touch events so that:
-          // 1. Scrolling over the video works on iOS
-          // 2. iOS won't open the native video player on tap
           pointerEvents: "none",
         }}
       />
 
-      {/* Bouton plein écran */}
       {fullscreenBtn && (
         <button
-          onClick={(e) => { e.stopPropagation(); requestFs(); }}
-          aria-label="Plein écran"
+          onClick={(e) => { e.stopPropagation(); toggleFs(); }}
+          aria-label={isFullscreen ? "Quitter le plein écran" : "Plein écran"}
           style={{
             position: "absolute",
             top: 8,
@@ -113,7 +125,7 @@ export default function VideoPlayer({
             pointerEvents: "auto",
           }}
         >
-          <Maximize2 size={15} />
+          {isFullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
         </button>
       )}
     </div>
