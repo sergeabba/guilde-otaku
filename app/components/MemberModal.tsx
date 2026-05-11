@@ -6,7 +6,7 @@ import { Member } from "../../data/members";
 import { useEffect, useRef, useState } from "react";
 import type { ViewMode } from "../types";
 import { rankAccents, rankBg, darkRanks } from "../config/ranks";
-import { useIsMobile } from "../hooks/useIsMobile";
+
 import { Trophy, ArrowLeft } from "lucide-react";
 import VideoPlayer from "./VideoPlayer";
 
@@ -17,7 +17,13 @@ function ModalContent({ member, onClose, viewMode }: {
   onClose: () => void;
   viewMode: ViewMode;
 }) {
-  const isMobile = useIsMobile();
+  // Synchrone dès le premier rendu — sûr car ModalContent n'est monté
+  // qu'après le guard `mounted` dans MemberModal (côté client uniquement).
+  // useIsMobile() démarre à `false` (SSR-safe) puis flip en useEffect :
+  // ça provoque un flash du layout desktop + aucune animation slide-up sur mobile.
+  const [isMobile] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches
+  );
 
   // ── Thème adaptatif selon le rang ──────────────────────────────────────────
   const isDark  = darkRanks.includes(member.rank);
