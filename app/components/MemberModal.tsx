@@ -336,9 +336,9 @@ function ModalContent({ member, onClose, viewMode }: {
         onClick={isMobile ? onClose : undefined}
         style={{
           position: "fixed", inset: 0, zIndex: 9997,
-          background: isMobile ? "rgba(0,0,0,0.65)" : "rgba(0,0,0,0.72)",
-          backdropFilter: "blur(6px)",
-          WebkitBackdropFilter: "blur(6px)",
+          background: isMobile ? "rgba(0,0,0,0.75)" : "rgba(0,0,0,0.72)",
+          backdropFilter: isMobile ? undefined : "blur(6px)",
+          WebkitBackdropFilter: isMobile ? undefined : "blur(6px)",
           cursor: isMobile ? "pointer" : "default",
         }}
       />
@@ -366,6 +366,7 @@ function ModalContent({ member, onClose, viewMode }: {
           background: bg,
           borderRadius: "20px 20px 0 0",
           boxShadow: "0 -12px 60px rgba(0,0,0,0.6)",
+          willChange: "transform",
         } : {
           position: "fixed", inset: 0, zIndex: 9999,
           display: "flex", flexDirection: "column",
@@ -448,9 +449,9 @@ function ModalContent({ member, onClose, viewMode }: {
           >
             {/* Hero mobile */}
             <motion.div
-              initial={{ opacity: 0, scale: 1.04 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.18, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.18, duration: 0.4, ease: "easeOut" }}
               style={{ position: "relative", height: "min(55vw, 340px)", overflow: "hidden", flexShrink: 0 }}
             >
               {HeroMedia}

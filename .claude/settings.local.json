@@ -18,7 +18,10 @@
       "Bash(git -C \"c:/Users/hp/trombinoscope\" log --oneline -10)",
       "Bash(curl https://raw.githubusercontent.com/forrestchang/andrej-karpathy-skills/main/CLAUDE.md)",
       "Bash(curl -s http://localhost:3000)",
-      "mcp__plugin_ecc_playwright__browser_navigate"
+      "mcp__plugin_ecc_playwright__browser_navigate",
+      "Bash(python skills/ui-ux-pro-max/scripts/search.py \"arcade fighting game character select dark anime\" --design-system -p \"Guilde Fighters\")",
+      "Bash(python \"c:\\\\Users\\\\hp\\\\.claude\\\\plugins\\\\cache\\\\ui-ux-pro-max-skill\\\\ui-ux-pro-max\\\\2.5.0\\\\src\\\\ui-ux-pro-max\\\\scripts\\\\search.py\" \"arcade fighting game character select dark anime neon\" --design-system -p \"Guilde Fighters\")",
+      "Bash(npx skillfish *)"
     ]
   }
 }

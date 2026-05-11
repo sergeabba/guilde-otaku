@@ -4,1384 +4,937 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { Rank, RANK_FILTER_ORDER, type Member } from "../../data/members";
-import { Dices, Swords, Flame, Shield, Wind } from "lucide-react";
-
-import type { ViewMode } from "../types";
+import { Swords, Dices, Zap, Shield, Wind, Flame } from "lucide-react";
 import { supabase } from "../../lib/supabase";
-import VideoPlayer from "../components/VideoPlayer";
 import GuildeHeader from "../components/GuildeHeader";
+import VideoPlayer from "../components/VideoPlayer";
+import { Rank, RANK_FILTER_ORDER, type Member } from "../../data/members";
 
-/* ─── Sound Manager ─── */
-type HowlInstance = { play: () => void };
-class SoundManager {
-  private sounds: Record<string, HowlInstance> = {};
-  private _muted = false;
-
-  constructor() {
-    if (typeof window !== "undefined") {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
-      const { Howl } = require("howler") as { Howl: new (opts: { src: string[]; volume?: number }) => HowlInstance };
-      this.sounds = {
-        hover: new Howl({ src: ["/sounds/hover.mp3"], volume: 0.15 }),
-        select: new Howl({ src: ["/sounds/select.mp3"], volume: 0.3 }),
-        confirm: new Howl({ src: ["/sounds/confirm.mp3"], volume: 0.4 }),
-        fight: new Howl({ src: ["/sounds/fight.mp3"], volume: 0.5 }),
-        hit: new Howl({ src: ["/sounds/hit.mp3"], volume: 0.35 }),
-        critical: new Howl({ src: ["/sounds/critical.mp3"], volume: 0.5 }),
-        ko: new Howl({ src: ["/sounds/ko.mp3"], volume: 0.6 }),
-        whoosh: new Howl({ src: ["/sounds/whoosh.mp3"], volume: 0.25 }),
-        round: new Howl({ src: ["/sounds/round.mp3"], volume: 0.4 }),
-        victory: new Howl({ src: ["/sounds/victory.mp3"], volume: 0.5 }),
-      };
-    }
-  }
-
-  play(name: string) {
-    if (!this._muted && this.sounds[name]) this.sounds[name].play();
-  }
-
-  get muted() { return this._muted; }
-  set muted(v: boolean) { this._muted = v; }
-}
-
-const sfx = typeof window !== "undefined" ? new SoundManager() : null;
-
-/* ─── Rank Colors ─── */
-const RC: Record<string, { main: string; glow: string; gradient: string; dark: string }> = {
-  "Fondateur":     { main: "#FFD700", glow: "rgba(255,215,0,.6)",   gradient: "linear-gradient(135deg,#FFD700,#FFA000)",  dark: "#1a1500" },
-  "Monarque":      { main: "#FFD700", glow: "rgba(255,215,0,.6)",   gradient: "linear-gradient(135deg,#FFD700,#FF8C00)",  dark: "#1a1500" },
-  "Ex Monarque":   { main: "#FF6B35", glow: "rgba(255,107,53,.6)",  gradient: "linear-gradient(135deg,#FF6B35,#D35400)",  dark: "#1a0e00" },
-  "Ordre Céleste": { main: "#C084FC", glow: "rgba(192,132,252,.6)", gradient: "linear-gradient(135deg,#C084FC,#7C3AED)",  dark: "#0e0a1e" },
-  "New G dorée":   { main: "#F472B6", glow: "rgba(244,114,182,.6)", gradient: "linear-gradient(135deg,#F472B6,#BE185D)",  dark: "#1a0a12" },
-  "Vieux Briscard":{ main: "#34D399", glow: "rgba(52,211,153,.6)",  gradient: "linear-gradient(135deg,#34D399,#059669)",  dark: "#001a12" },
-  "Futurs Espoirs":{ main: "#60A5FA", glow: "rgba(96,165,250,.6)",  gradient: "linear-gradient(135deg,#60A5FA,#1D4ED8)",  dark: "#051a35" },
-  "Revenant":      { main: "#9CA3AF", glow: "rgba(156,163,175,.5)", gradient: "linear-gradient(135deg,#9CA3AF,#4B5563)",  dark: "#111827" },
-  "Fantôme":       { main: "#6B7280", glow: "rgba(107,114,128,.4)", gradient: "linear-gradient(135deg,#6B7280,#374151)", dark: "#0d1117" },
-};
-
-function rc(rank: string) { return RC[rank] ?? RC["Fondateur"]; }
-function pwr(m: Member) { const s = m.stats ?? { force: 80, vitesse: 80, technique: 80 }; return Math.round((s.force + s.vitesse + s.technique) / 3); }
-function img(m: Member, mode: ViewMode) { return mode === "anime" ? m.animeChar : m.photo; }
-function vid(m: Member, mode: ViewMode) { return mode === "anime" ? (m.animeVideo ?? "") : (m.photoVideo ?? ""); }
-
+/* ─── Types ─── */
+type ViewMode = "anime" | "real";
 type Phase = "select" | "intro" | "fight";
 
-/* ─── Global Styles ─── */
-function Styles() {
-  return (
-    <style jsx global>{`
-      @keyframes scanlines       { 0%{transform:translateY(0)} 100%{transform:translateY(4px)} }
-      @keyframes hpPulse         { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.5) saturate(2)} }
-      @keyframes comboPop        { 0%,100%{transform:scale(1)} 50%{transform:scale(1.15)} }
-      @keyframes vsSlam          { 0%{transform:scale(5) rotate(-15deg);opacity:0} 40%{transform:scale(.85) rotate(4deg);opacity:1} 60%{transform:scale(1.12) rotate(-2deg)} 80%{transform:scale(.97) rotate(1deg)} 100%{transform:scale(1) rotate(0);opacity:1} }
-      @keyframes screenShake     { 0%,100%{transform:translate(0,0) rotate(0)} 10%{transform:translate(-15px,-5px) rotate(-3deg)} 20%{transform:translate(12px,8px) rotate(2deg)} 30%{transform:translate(-8px,-3px) rotate(-1deg)} 40%{transform:translate(5px,2px) rotate(1deg)} 50%{transform:translate(-3px,-1px)} }
-      @keyframes hitShake        { 0%,100%{transform:translateX(0)} 10%{transform:translateX(-8px) rotate(-1deg)} 30%{transform:translateX(6px) rotate(1deg)} 50%{transform:translateX(-4px)} 70%{transform:translateX(3px)} }
-      @keyframes gridPulse       { 0%,100%{opacity:.03} 50%{opacity:.08} }
-      @keyframes marquee         { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
-      @keyframes glitchText      { 0%,90%,100%{transform:translate(0);filter:none} 92%{transform:translate(-2px,1px);filter:hue-rotate(90deg)} 94%{transform:translate(2px,-1px);filter:hue-rotate(-90deg)} 96%{transform:translate(-1px,-1px)} 98%{transform:translate(1px,1px);filter:hue-rotate(45deg)} }
-      @keyframes chevronScroll   { 0%{background-position:0 0} 100%{background-position:80px 40px} }
-      @keyframes lightSweep      { 0%{transform:translateX(-100%) skewX(-20deg)} 100%{transform:translateX(250%) skewX(-20deg)} }
-      @keyframes tileScanline    { 0%{top:-100%} 100%{top:110%} }
-      @keyframes neonFlicker     { 0%,19%,21%,23%,25%,54%,56%,100%{opacity:1;filter:drop-shadow(0 0 8px currentColor) drop-shadow(0 0 16px currentColor)} 20%,24%,55%{opacity:.55;filter:none} }
-      @keyframes arcadeCoin      { 0%,100%{color:#FFD700;text-shadow:0 0 8px rgba(255,215,0,.7)} 50%{color:#fffbcc;text-shadow:0 0 14px #FFD700,0 0 30px rgba(255,215,0,.55)} }
-      @keyframes fightBtnStripes { 0%{background-position:0 0} 100%{background-position:40px 0} }
-      @keyframes kofCursorPulse  { 0%,100%{opacity:1;filter:drop-shadow(0 0 5px var(--cc))} 50%{opacity:.35;filter:none} }
-      @keyframes kofSelectGlow   { 0%,100%{box-shadow:0 0 0 2px var(--cc),0 0 16px var(--cc),0 0 40px color-mix(in srgb,var(--cc) 50%,transparent)} 50%{box-shadow:0 0 0 2px var(--cc),0 0 28px var(--cc),0 0 60px color-mix(in srgb,var(--cc) 30%,transparent)} }
-      @keyframes panelBreath     { 0%,100%{opacity:.6} 50%{opacity:1} }
-      @keyframes kofPortraitFloat{ 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
-      @keyframes slashEnter      { 0%{clip-path:inset(0 100% 0 0)} 100%{clip-path:inset(0 0% 0 0)} }
-      @keyframes bgDrift         { 0%{background-position:0% 50%} 100%{background-position:100% 50%} }
+/* ─── Rank palette ─── */
+const RANK_COLORS: Record<string, { main: string; bg: string; glow: string }> = {
+  "Fondateur":      { main: "#FFD700", bg: "#1a1300", glow: "rgba(255,215,0,0.5)" },
+  "Monarque":       { main: "#FFD700", bg: "#1a1300", glow: "rgba(255,215,0,0.5)" },
+  "Ex Monarque":    { main: "#FF6B35", bg: "#1a0e00", glow: "rgba(255,107,53,0.5)" },
+  "Ordre Céleste":  { main: "#C084FC", bg: "#0e0a1e", glow: "rgba(192,132,252,0.5)" },
+  "New G dorée":    { main: "#F472B6", bg: "#1a0a12", glow: "rgba(244,114,182,0.5)" },
+  "Vieux Briscard": { main: "#34D399", bg: "#001a12", glow: "rgba(52,211,153,0.5)" },
+  "Futurs Espoirs": { main: "#60A5FA", bg: "#051a35", glow: "rgba(96,165,250,0.5)" },
+  "Revenant":       { main: "#9CA3AF", bg: "#111827", glow: "rgba(156,163,175,0.4)" },
+  "Fantôme":        { main: "#6B7280", bg: "#0d1117", glow: "rgba(107,114,128,0.3)" },
+};
+const rc = (rank: string) => RANK_COLORS[rank] ?? RANK_COLORS["Fondateur"];
+const pwr = (m: Member) => {
+  const s = m.stats ?? { force: 80, vitesse: 80, technique: 80 };
+  return Math.round((s.force + s.vitesse + s.technique) / 3);
+};
+const portrait = (m: Member, mode: ViewMode) => mode === "anime" ? m.animeChar : m.photo;
+const videoSrc = (m: Member, mode: ViewMode) => mode === "anime" ? (m.animeVideo ?? "") : (m.photoVideo ?? "");
 
-      /* ── NEW KEYFRAMES ── */
-      @keyframes rgbSplit {
-        0%,94%,100%{text-shadow:none;clip-path:none}
-        95%{text-shadow:-3px 0 #ff0000,3px 0 #00ffff;clip-path:inset(10% 0 85% 0)}
-        96%{text-shadow:3px 0 #ff0000,-3px 0 #00ffff;clip-path:inset(50% 0 30% 0)}
-        97%{text-shadow:-2px 0 #ff00ff,2px 0 #00ff00;clip-path:inset(80% 0 5% 0)}
-        98%,99%{clip-path:none;text-shadow:none}
-      }
-      @keyframes pixelBorderPulse {
-        0%,100%{box-shadow:0 0 0 2px var(--pb-color),0 0 15px var(--pb-color),inset 0 0 15px rgba(0,0,0,.5)}
-        50%{box-shadow:0 0 0 2px var(--pb-color),0 0 30px var(--pb-color),0 0 60px color-mix(in srgb,var(--pb-color) 40%,transparent),inset 0 0 20px rgba(0,0,0,.7)}
-      }
-      @keyframes titleFlicker {
-        0%,88%,90%,92%,100%{opacity:1}
-        89%,91%{opacity:.35}
-      }
-      @keyframes arcadeLoad {
-        0%{width:0%;box-shadow:none}
-        50%{box-shadow:0 0 20px #FFD700,0 0 40px rgba(255,215,0,.5)}
-        100%{width:100%;box-shadow:0 0 10px #FFD700}
-      }
-      @keyframes coinBlink {
-        0%,49%,100%{opacity:1}
-        50%,99%{opacity:0}
-      }
-      @keyframes selectBlink {
-        0%,49%,100%{opacity:.5}
-        50%,99%{opacity:0}
-      }
-
-      .hit-shake { animation: hitShake .3s ease-out; }
-      .ko-shake  { animation: screenShake .5s ease-out; }
-      .custom-scroll::-webkit-scrollbar       { width:3px; height:3px; }
-      .custom-scroll::-webkit-scrollbar-track { background:rgba(255,255,255,.02); }
-      .custom-scroll::-webkit-scrollbar-thumb { background:rgba(220,38,38,.4); border-radius:2px; }
-      .custom-scroll::-webkit-scrollbar-thumb:hover { background:rgba(220,38,38,.65); }
-
-      .r-pill { transition: all .2s ease; cursor: pointer; white-space: nowrap; }
-      .r-pill:hover { transform: translateY(-1px); }
-      .r-pill[data-active="true"]::before { content: "▶ "; font-size: 7px; }
-
-      /* ─── KOF Portrait grid ─── */
-      .kof-roster {
-        display: grid;
-        gap: 5px;
-        grid-template-columns: repeat(3, 1fr);
-      }
-      @media(min-width:480px)  { .kof-roster { grid-template-columns: repeat(4, 1fr); gap: 5px; } }
-      @media(min-width:760px)  { .kof-roster { grid-template-columns: repeat(5, 1fr); gap: 6px; } }
-      @media(min-width:1100px) { .kof-roster { grid-template-columns: repeat(6, 1fr); gap: 6px; } }
-
-      /* ─── Tile base ─── */
-      .kof-tile {
-        position: relative;
-        overflow: hidden;
-        aspect-ratio: 3 / 4;
-        background: #080814;
-      }
-      .kof-tile::before {
-        content: "";
-        position: absolute; inset: 0;
-        background: linear-gradient(180deg, transparent 55%, rgba(0,0,0,.7) 100%);
-        pointer-events: none;
-        z-index: 2;
-      }
-
-      /* Hover scanline sweep */
-      .kof-tile > .tile-scan {
-        position: absolute;
-        left: 0; right: 0;
-        height: 35%;
-        background: linear-gradient(180deg, transparent, rgba(255,255,255,.22), transparent);
-        mix-blend-mode: screen;
-        pointer-events: none;
-        opacity: 0;
-        transition: opacity .1s;
-        z-index: 6;
-      }
-      .kof-tile:hover > .tile-scan { opacity: 1; animation: tileScanline 1s linear infinite; }
-
-      /* Nameplate */
-      .kof-tile-plate {
-        position: absolute;
-        bottom: 0; left: 0; right: 0;
-        padding: 18px 5px 4px;
-        background: linear-gradient(to top, rgba(0,0,0,.95) 0%, rgba(0,0,0,.55) 65%, transparent 100%);
-        z-index: 3;
-        pointer-events: none;
-      }
-      .kof-tile-name {
-        font-family: 'Bebas Neue', sans-serif;
-        font-size: clamp(12px, 1.8vw, 15px);
-        color: #fff;
-        letter-spacing: 1px;
-        line-height: 1;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        text-align: center;
-        text-shadow: 0 1px 3px rgba(0,0,0,.9);
-      }
-
-      /* KOF-style animated selection cursor (4 corner brackets) */
-      .kof-cursor-corner {
-        position: absolute;
-        width: 11px; height: 11px;
-        border-style: solid;
-        animation: kofCursorPulse .55s ease-in-out infinite;
-        z-index: 10;
-        pointer-events: none;
-      }
-
-      /* ─── Arcade main background ─── */
-      .kof-screen-bg {
-        position: absolute; inset: 0;
-        z-index: 0;
-        pointer-events: none;
-        background:
-          radial-gradient(ellipse 70% 50% at 8% 50%,  rgba(200,15,15,.75) 0%, transparent 60%),
-          radial-gradient(ellipse 70% 50% at 92% 50%, rgba(15,50,220,.70) 0%, transparent 60%),
-          radial-gradient(ellipse 40% 60% at 50% 100%, rgba(80,10,10,.4) 0%, transparent 50%),
-          radial-gradient(ellipse 30% 30% at 50% 0%,  rgba(255,215,0,.06) 0%, transparent 60%),
-          linear-gradient(180deg, #080013 0%, #060411 40%, #050910 100%);
-      }
-      .kof-screen-bg::before {
-        content: "";
-        position: absolute; inset: 0;
-        background-image:
-          repeating-linear-gradient(45deg,
-            rgba(255,255,255,.025) 0 1px,
-            transparent 1px 36px),
-          repeating-linear-gradient(-45deg,
-            rgba(255,255,255,.025) 0 1px,
-            transparent 1px 36px);
-        background-size: 72px 72px;
-        animation: chevronScroll 30s linear infinite;
-        mix-blend-mode: overlay;
-      }
-      .kof-screen-bg::after {
-        content: "";
-        position: absolute; inset: 0;
-        background: repeating-linear-gradient(0deg, transparent 0 2px, rgba(0,0,0,.14) 2px 3px);
-        mix-blend-mode: multiply;
-      }
-
-      /* Central spotlight beam */
-      .kof-spotlight {
-        position: absolute; inset: 0;
-        pointer-events: none;
-        z-index: 1;
-        background: radial-gradient(ellipse 40% 80% at 50% 50%, rgba(255,220,100,.04) 0%, transparent 70%);
-      }
-
-      /* ─── Side panel backgrounds ─── */
-      .kof-panel-p1 {
-        background:
-          radial-gradient(ellipse 120% 90% at -20% 60%, rgba(220,30,30,.55) 0%, transparent 65%),
-          radial-gradient(ellipse 70% 50% at 50% 100%, rgba(180,20,20,.3) 0%, transparent 60%),
-          linear-gradient(160deg, rgba(100,10,15,.9) 0%, rgba(30,5,10,.95) 55%, rgba(5,5,20,.98) 100%);
-        border: 1px solid rgba(220,38,38,.45);
-        box-shadow: 0 0 50px rgba(220,38,38,.25), inset 0 0 80px rgba(0,0,0,.6);
-      }
-      .kof-panel-p2 {
-        background:
-          radial-gradient(ellipse 120% 90% at 120% 60%, rgba(30,70,220,.55) 0%, transparent 65%),
-          radial-gradient(ellipse 70% 50% at 50% 100%, rgba(20,50,180,.3) 0%, transparent 60%),
-          linear-gradient(200deg, rgba(10,20,100,.9) 0%, rgba(5,15,45,.95) 55%, rgba(5,5,20,.98) 100%);
-        border: 1px solid rgba(29,78,216,.5);
-        box-shadow: 0 0 50px rgba(29,78,216,.28), inset 0 0 80px rgba(0,0,0,.6);
-      }
-
-      /* Panel clip shapes */
-      .kof-panel-p1-clip {
-        clip-path: polygon(0 0, 100% 0, calc(100% - 22px) 100%, 0 100%);
-      }
-      .kof-panel-p2-clip {
-        clip-path: polygon(22px 0, 100% 0, 100% 100%, 0 100%);
-      }
-
-      /* Panel glow streak (top) */
-      .kof-panel-streak {
-        position: absolute;
-        top: 0; left: 0; right: 0;
-        height: 2px;
-        animation: panelBreath 3s ease-in-out infinite;
-      }
-
-      /* Portrait float animation */
-      .kof-portrait-float {
-        animation: kofPortraitFloat 4s ease-in-out infinite;
-      }
-
-      /* ─── Arcade title ─── */
-      .arcade-title {
-        font-family: 'Black Ops One','Orbitron',sans-serif;
-        letter-spacing: 7px;
-        color: #ffd700;
-        text-shadow:
-          0 0 6px #FFD700,
-          0 0 18px rgba(255,140,0,.8),
-          0 2px 0 #7a5700,
-          0 4px 0 #3d2b00;
-        animation: neonFlicker 5s infinite;
-      }
-      .arcade-coin {
-        font-family: 'Orbitron', monospace;
-        animation: arcadeCoin 1.4s ease-in-out infinite;
-      }
-
-      /* ─── FIGHT button ─── */
-      .kof-fight-btn {
-        position: relative;
-        clip-path: polygon(16px 0, 100% 0, calc(100% - 16px) 100%, 0 100%);
-        overflow: hidden;
-      }
-      .kof-fight-btn::before {
-        content: "";
-        position: absolute; inset: 0;
-        background: repeating-linear-gradient(45deg,
-          rgba(255,255,255,.1) 0 8px, transparent 8px 20px);
-        animation: fightBtnStripes 1s linear infinite;
-        pointer-events: none;
-      }
-      .kof-fight-btn::after {
-        content: "";
-        position: absolute; top: 0; left: 0; width: 40%; height: 100%;
-        background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.4) 50%, transparent 100%);
-        filter: blur(6px);
-        animation: lightSweep 2.2s cubic-bezier(.4,0,.2,1) infinite;
-        pointer-events: none;
-      }
-
-      /* ─── Roster panel glass ─── */
-      .kof-roster-panel {
-        background: rgba(0,0,0,.6);
-        border: 1px solid rgba(255,255,255,.09);
-        backdrop-filter: blur(10px);
-        box-shadow:
-          inset 0 0 60px rgba(0,0,0,.55),
-          0 20px 60px rgba(0,0,0,.5),
-          inset 0 1px 0 rgba(255,255,255,.05);
-      }
-
-      /* ─── P-tag badges ─── */
-      .kof-ptag {
-        position: absolute;
-        top: 10px;
-        z-index: 15;
-        padding: 3px 10px;
-        font-family: 'Orbitron', monospace;
-        font-size: 11px;
-        font-weight: 900;
-        letter-spacing: 3px;
-        border-radius: 2px;
-        backdrop-filter: blur(4px);
-        background: rgba(0,0,0,.65);
-      }
-
-      /* ─── Side panel P1/P2 watermarks ─── */
-      .kof-panel-p1 { position: relative; }
-      .kof-panel-p1::after {
-        content: "P1";
-        position: absolute; top: 50%; left: 50%;
-        transform: translate(-50%,-50%);
-        font-family: 'Orbitron',monospace;
-        font-size: clamp(60px,12vw,120px);
-        font-weight: 900;
-        color: rgba(220,38,38,.05);
-        pointer-events: none;
-        letter-spacing: 8px;
-        z-index: 0;
-      }
-      .kof-panel-p2 { position: relative; }
-      .kof-panel-p2::after {
-        content: "P2";
-        position: absolute; top: 50%; left: 50%;
-        transform: translate(-50%,-50%);
-        font-family: 'Orbitron',monospace;
-        font-size: clamp(60px,12vw,120px);
-        font-weight: 900;
-        color: rgba(29,78,216,.05);
-        pointer-events: none;
-        letter-spacing: 8px;
-        z-index: 0;
-      }
-
-      /* ─── Selected tile pixel-border glow ─── */
-      .kof-tile[data-selected="true"] {
-        --pb-color: var(--tile-rank-color, #FFD700);
-        animation: pixelBorderPulse 1.4s ease-in-out infinite;
-        z-index: 5;
-        transform: scale(1.04);
-      }
-      .kof-tile:not([data-selected="true"]):hover {
-        transform: scale(1.03) translateY(-2px);
-        transition: transform .12s ease;
-      }
-
-      /* ─── "CHOOSE YOUR FIGHTER" banner ─── */
-      .kof-choose-banner {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 6px 14px;
-        background: linear-gradient(90deg,
-          rgba(180,20,20,.35) 0%,
-          rgba(0,0,0,.55) 40%,
-          rgba(0,0,0,.55) 60%,
-          rgba(20,60,180,.35) 100%);
-        border-top: 2px solid rgba(255,215,0,.4);
-        border-bottom: 1px solid rgba(255,255,255,.07);
-        position: relative;
-        overflow: hidden;
-      }
-      .kof-choose-banner::before {
-        content: "";
-        position: absolute; top: 0; left: 0; right: 0; height: 1px;
-        background: linear-gradient(90deg, transparent, rgba(255,215,0,.7), transparent);
-        animation: lightSweep 3s linear infinite;
-      }
-    `}</style>
-  );
-}
-
-/* ─── KOF Cursor (4 corner brackets) ─── */
-function KofCursor({ color }: { color: string }) {
-  const s = (pos: React.CSSProperties): React.CSSProperties => ({
-    ...pos,
-    borderColor: color,
-    // CSS custom property for animation
-    ['--cc' as string]: color,
-  });
-  const base: React.CSSProperties = {
-    position: "absolute", width: 12, height: 12,
-    borderStyle: "solid", zIndex: 10, pointerEvents: "none",
-    filter: `drop-shadow(0 0 5px ${color})`,
-    animation: "kofCursorPulse .55s ease-in-out infinite",
-  };
-  return (
-    <>
-      <div style={{ ...base, ...s({ top: 3, left: 3, borderWidth: "2px 0 0 2px" }) }} />
-      <div style={{ ...base, ...s({ top: 3, right: 3, borderWidth: "2px 2px 0 0" }) }} />
-      <div style={{ ...base, ...s({ bottom: 3, left: 3, borderWidth: "0 0 2px 2px" }) }} />
-      <div style={{ ...base, ...s({ bottom: 3, right: 3, borderWidth: "0 2px 2px 0" }) }} />
-    </>
-  );
-}
-
-/* ─── Sparks Canvas ─── */
-function Sparks({ active, color = "#FFD700", intensity = 1 }: { active: boolean; color?: string; intensity?: number }) {
-  const ref = useRef<HTMLCanvasElement>(null);
-  const pts = useRef<Array<{ x: number; y: number; vx: number; vy: number; life: number; max: number; sz: number; c: string }>>([]);
-  const af = useRef(0);
-
+/* ═══════════════════════════════
+   LOADING
+═══════════════════════════════ */
+function LoadingScreen() {
+  const [dots, setDots] = useState(0);
+  const [pct, setPct] = useState(0);
   useEffect(() => {
-    if (!active || !ref.current) return;
-    const c = ref.current, ctx = c.getContext("2d")!;
-    c.width = c.offsetWidth * 2; c.height = c.offsetHeight * 2; ctx.scale(2, 2);
-    const cols = [color, "#FF4500", "#FF6347", "#FFA500", "#fff"];
-
-    const animate = () => {
-      ctx.clearRect(0, 0, c.offsetWidth, c.offsetHeight);
-      for (let i = 0; i < Math.floor(3 * intensity); i++) {
-        pts.current.push({ x: Math.random() * c.offsetWidth, y: c.offsetHeight + 5, vx: (Math.random() - .5) * 4, vy: -(Math.random() * 6 + 2), life: 0, max: 30 + Math.random() * 40, sz: Math.random() * 3 + .5, c: cols[Math.floor(Math.random() * cols.length)] });
-      }
-      pts.current = pts.current.filter(p => {
-        p.life++; p.x += p.vx; p.y += p.vy; p.vy += .06; p.vx *= .99;
-        const a = 1 - p.life / p.max; if (a <= 0) return false;
-        ctx.beginPath(); ctx.arc(p.x, p.y, p.sz * a, 0, Math.PI * 2);
-        ctx.fillStyle = p.c; ctx.globalAlpha = a; ctx.fill(); ctx.globalAlpha = 1;
-        return true;
-      });
-      af.current = requestAnimationFrame(animate);
-    };
-    af.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(af.current);
-  }, [active, color, intensity]);
-
-  return <canvas ref={ref} className="absolute inset-0 pointer-events-none z-20" style={{ width: "100%", height: "100%" }} />;
-}
-
-/* ─── Glitch Text ─── */
-function GlitchText({ text, style: sx = {} }: { text: string; style?: React.CSSProperties }) {
+    const d = setInterval(() => setDots(p => (p + 1) % 4), 400);
+    const p = setInterval(() => setPct(v => Math.min(100, v + Math.random() * 8 + 2)), 100);
+    return () => { clearInterval(d); clearInterval(p); };
+  }, []);
   return (
-    <span className="relative inline-block" style={sx}>
-      <span className="relative z-10">{text}</span>
-      <span className="absolute top-0 left-0 z-0 opacity-60" style={{ color: "#ff0040", animation: "glitchText 4s infinite", clipPath: "polygon(0 0,100% 0,100% 45%,0 45%)" }} aria-hidden="true">{text}</span>
-      <span className="absolute top-0 left-0 z-0 opacity-60" style={{ color: "#00ffff", animation: "glitchText 4s .15s infinite reverse", clipPath: "polygon(0 55%,100% 55%,100% 100%,0 100%)" }} aria-hidden="true">{text}</span>
-    </span>
+    <div className="fixed inset-0 flex flex-col items-center justify-center bg-[#050008]" style={{ gap: 32 }}>
+      {/* scanlines */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        backgroundImage: "repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.18) 3px,rgba(0,0,0,0.18) 4px)",
+        zIndex: 1,
+      }} />
+      <div className="relative z-10 text-center" style={{ fontFamily: "'Orbitron',monospace" }}>
+        <div style={{ fontSize: "clamp(10px,1.2vw,12px)", color: "rgba(255,215,0,0.3)", letterSpacing: 4, whiteSpace: "pre", marginBottom: 24 }}>
+          {"╔══════════════════╗\n║  GUILDE FIGHTERS ║\n╚══════════════════╝"}
+        </div>
+        <div style={{ fontSize: "clamp(24px,4vw,48px)", fontWeight: 900, color: "#DC2626", letterSpacing: 8, textShadow: "0 0 30px rgba(220,38,38,0.7)" }}>
+          LOADING{".".repeat(dots)}
+        </div>
+        <div style={{ marginTop: 6, fontSize: 9, color: "rgba(255,215,0,0.55)", letterSpacing: 5 }}>
+          ★ PLEASE WAIT ★
+        </div>
+      </div>
+      <div className="relative z-10" style={{ width: "clamp(260px,44vw,380px)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, fontFamily: "'Orbitron',monospace", fontSize: 8, letterSpacing: 2 }}>
+          <span style={{ color: "rgba(255,255,255,0.3)" }}>PLAYER DATA</span>
+          <span style={{ color: "#FFD700" }}>{Math.floor(pct)}%</span>
+        </div>
+        <div style={{ height: 10, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,215,0,0.2)", borderRadius: 2, overflow: "hidden", position: "relative" }}>
+          <div style={{ height: "100%", width: `${pct}%`, background: "linear-gradient(90deg,#DC2626,#FFD700)", transition: "width 0.1s linear", borderRadius: 2 }} />
+          <div style={{ position: "absolute", inset: 0, backgroundImage: "repeating-linear-gradient(90deg,transparent,transparent 6px,rgba(0,0,0,0.2) 6px,rgba(0,0,0,0.2) 12px)" }} />
+        </div>
+      </div>
+    </div>
   );
 }
 
-/* ─── Stat Bar ─── */
-function StatBar({ label, value, max = 100, color, icon, delay = 0 }: { label: string; value: number; max?: number; color: string; icon: React.ReactNode; delay?: number }) {
+/* ═══════════════════════════════
+   STAT BAR
+═══════════════════════════════ */
+function StatBar({ label, value, color, icon, delay = 0 }: { label: string; value: number; color: string; icon: React.ReactNode; delay?: number }) {
   const [show, setShow] = useState(false);
   useEffect(() => { const t = setTimeout(() => setShow(true), delay); return () => clearTimeout(t); }, [delay]);
   return (
     <div className="flex items-center gap-2">
-      <div className="shrink-0 w-4 h-4" style={{ color }}>{icon}</div>
-      <span className="shrink-0 w-7 text-right" style={{ fontFamily: "'Orbitron',monospace", fontSize: "9px", color: "rgba(255,255,255,.4)", letterSpacing: "1px" }}>{label}</span>
-      <div className="flex-1 relative h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,.05)" }}>
-        <motion.div initial={{ width: 0 }} animate={{ width: show ? `${(value / max) * 100}%` : 0 }} transition={{ duration: .8, ease: "easeOut" }} className="h-full rounded-full" style={{ background: color }} />
-      </div>
-      <span className="shrink-0 w-6 text-right text-xs font-bold tabular-nums" style={{ color }}>{value}</span>
-    </div>
-  );
-}
-
-/* ════════════════════════════════════════════════════
-   FIGHT INTRO
-   ════════════════════════════════════════════════════ */
-function FightIntro({ p1, p2, mode, onFinish }: { p1: Member; p2: Member; mode: ViewMode; onFinish: () => void }) {
-  const [step, setStep] = useState<"slash" | "p1" | "vs" | "p2" | "fight">("slash");
-  const c1 = rc(p1.rank), c2 = rc(p2.rank);
-
-  useEffect(() => {
-    sfx?.play("whoosh");
-    const t = [
-      setTimeout(() => { setStep("p1"); sfx?.play("whoosh"); }, 500),
-      setTimeout(() => { setStep("vs"); sfx?.play("confirm"); }, 1800),
-      setTimeout(() => { setStep("p2"); sfx?.play("whoosh"); }, 2800),
-      setTimeout(() => { setStep("fight"); sfx?.play("fight"); }, 4200),
-      setTimeout(() => onFinish(), 5400),
-    ];
-    return () => t.forEach(clearTimeout);
-  }, [onFinish]);
-
-  return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-black overflow-hidden">
-      {step !== "slash" && (
-        <motion.div initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: .3 }} className="absolute inset-0 origin-center" style={{ background: "linear-gradient(135deg,#07070f 0%,#0f0718 50%,#07070f 100%)" }} />
-      )}
-      {["p1", "vs", "p2", "fight"].includes(step) && (
-        <AnimatePresence>
-          <motion.div initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} transition={{ type: "spring", stiffness: 60, damping: 12 }}
-            className="absolute top-0 bottom-0 left-0 z-10 w-[50%]" style={{ clipPath: "polygon(0 0,100% 0,80% 100%,0 100%)" }}>
-            <div className="relative w-full h-full" style={{ background: `linear-gradient(135deg,${c1.dark},#030308)` }}>
-              {(vid(p1, mode) || img(p1, mode)) && (
-                <div className="absolute inset-0 flex items-end justify-center">
-                  {vid(p1, mode) ? (
-                    <div style={{ width: "80%", height: "90%", filter: `drop-shadow(0 0 50px ${c1.glow})` }}>
-                      <VideoPlayer src={vid(p1, mode)!} fit="contain" objectPosition="bottom" fullscreenBtn={false} />
-                    </div>
-                  ) : (
-                    <Image src={img(p1, mode)} alt={p1.name} fill={false} width={400} height={500} className="object-contain object-bottom" style={{ width: "80%", height: "90%", filter: `drop-shadow(0 0 50px ${c1.glow})` }} />
-                  )}
-                </div>
-              )}
-              <div className="absolute bottom-10 left-8 z-20">
-                <span style={{ fontFamily: "'Orbitron',monospace", fontSize: "10px", color: c1.main, letterSpacing: "3px" }}>PLAYER 1</span>
-                <h2 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(36px,6vw,80px)", color: "#fff", letterSpacing: "5px", lineHeight: .9, textShadow: `0 0 20px ${c1.glow}` }}>{p1.name.toUpperCase()}</h2>
-                <span style={{ fontFamily: "'Orbitron',monospace", fontSize: "9px", color: "rgba(255,255,255,.3)", letterSpacing: "2px" }}>{p1.rank}</span>
-              </div>
-              <Sparks active color={c1.main} intensity={.4} />
-            </div>
-          </motion.div>
-        </AnimatePresence>
-      )}
-      {["p2", "fight"].includes(step) && (
-        <AnimatePresence>
-          <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", stiffness: 60, damping: 12 }}
-            className="absolute top-0 bottom-0 right-0 z-10 w-[50%]" style={{ clipPath: "polygon(20% 0,100% 0,100% 100%,0 100%)" }}>
-            <div className="relative w-full h-full" style={{ background: `linear-gradient(225deg,${c2.dark},#030308)` }}>
-              {(vid(p2, mode) || img(p2, mode)) && (
-                <div className="absolute inset-0 flex items-end justify-center">
-                  {vid(p2, mode) ? (
-                    <div style={{ width: "80%", height: "90%", filter: `drop-shadow(0 0 50px ${c2.glow})`, transform: "scaleX(-1)" }}>
-                      <VideoPlayer src={vid(p2, mode)!} fit="contain" objectPosition="bottom" fullscreenBtn={false} />
-                    </div>
-                  ) : (
-                    <Image src={img(p2, mode)} alt={p2.name} fill={false} width={400} height={500} className="object-contain object-bottom" style={{ width: "80%", height: "90%", filter: `drop-shadow(0 0 50px ${c2.glow})`, transform: "scaleX(-1)" }} />
-                  )}
-                </div>
-              )}
-              <div className="absolute bottom-10 right-8 z-20 text-right">
-                <span style={{ fontFamily: "'Orbitron',monospace", fontSize: "10px", color: c2.main, letterSpacing: "3px" }}>PLAYER 2</span>
-                <h2 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(36px,6vw,80px)", color: "#fff", letterSpacing: "5px", lineHeight: .9, textShadow: `0 0 20px ${c2.glow}` }}>{p2.name.toUpperCase()}</h2>
-                <span style={{ fontFamily: "'Orbitron',monospace", fontSize: "9px", color: "rgba(255,255,255,.3)", letterSpacing: "2px" }}>{p2.rank}</span>
-              </div>
-              <Sparks active color={c2.main} intensity={.4} />
-            </div>
-          </motion.div>
-        </AnimatePresence>
-      )}
-      {step === "vs" && (
-        <div className="absolute inset-0 z-40 flex items-center justify-center">
-          <div className="absolute inset-0" style={{ background: "linear-gradient(135deg,transparent 49.4%,#FFD700 49.4%,#FFD700 50.6%,transparent 50.6%)" }} />
-          <div style={{ animation: "vsSlam .8s cubic-bezier(.34,1.56,.64,1)" }}>
-            <span style={{ fontFamily: "'Orbitron',monospace", fontSize: "clamp(90px,22vw,260px)", fontWeight: 900, color: "#FFD700", textShadow: "0 0 40px rgba(255,215,0,.8),0 0 80px rgba(255,69,0,.5),0 8px 0 #7a5700", letterSpacing: "12px" }}>VS</span>
-          </div>
-        </div>
-      )}
-      {step === "fight" && (
-        <div className="absolute inset-0 z-[60] flex items-center justify-center pointer-events-none">
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: [0, 0.55, 0] }} transition={{ duration: 0.55, times: [0, 0.25, 1], ease: "easeOut" }} className="absolute inset-0" style={{ background: "rgba(255,255,255,1)" }} />
-          <motion.div initial={{ scale: 4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 200, damping: 14, delay: .15 }}>
-            <GlitchText text="FIGHT!" style={{ fontFamily: "'Orbitron',monospace", fontSize: "clamp(60px,16vw,200px)", fontWeight: 900, color: "#FFD700", textShadow: "0 0 40px rgba(255,215,0,.8),0 0 80px rgba(255,69,0,.5),0 8px 0 #7a5700", letterSpacing: "14px" }} />
-          </motion.div>
-        </div>
-      )}
-    </motion.div>
-  );
-}
-
-/* ─── HP Bar ─── */
-function HPBar({ hp, color, glow, side, name, rank, combo }: { hp: number; color: string; glow: string; side: "left" | "right"; name: string; rank: string; combo: number }) {
-  const danger = hp <= 25;
-  const bc = danger ? "#FF1A1A" : color;
-  return (
-    <div className={`flex-1 ${side === "right" ? "text-right" : ""}`}>
-      <div className={`flex items-center gap-2 mb-1 ${side === "right" ? "justify-end" : ""}`}>
-        <div className="shrink-0 w-7 h-7 rounded flex items-center justify-center" style={{ background: `${color}15`, border: `1px solid ${color}30` }}>
-          <span style={{ fontFamily: "'Orbitron',monospace", fontSize: "8px", fontWeight: 700, color, letterSpacing: "1px" }}>{side === "left" ? "P1" : "P2"}</span>
-        </div>
-        <div>
-          <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(16px,2.5vw,22px)", color: "#fff", letterSpacing: "3px" }}>{name.toUpperCase()}</span>
-          <span className="ml-2" style={{ fontFamily: "'Orbitron',monospace", fontSize: "8px", color: `${color}70`, letterSpacing: "2px" }}>{rank.toUpperCase()}</span>
-        </div>
-      </div>
-      <div className="relative h-5 rounded-sm overflow-hidden" style={{ background: "rgba(0,0,0,.7)", border: `1px solid ${bc}20` }}>
-        <motion.div animate={{ width: `${hp}%` }} transition={{ type: "spring", stiffness: 140, damping: 18 }}
-          className="absolute top-0 bottom-0 rounded-sm"
-          style={{ [side === "right" ? "right" : "left"]: 0, background: danger ? `linear-gradient(${side === "right" ? 270 : 90}deg,#FF1A1A,#FF5500)` : `linear-gradient(${side === "right" ? 270 : 90}deg,${color}cc,${color})`, boxShadow: `0 0 10px ${glow}`, animation: danger ? "hpPulse .8s infinite" : undefined }}
-        >
-          <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom,rgba(255,255,255,.25) 0%,transparent 55%)" }} />
-        </motion.div>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span style={{ fontFamily: "'Orbitron',monospace", fontSize: "10px", fontWeight: 900, color: "#fff", textShadow: "0 1px 4px #000" }}>{hp}</span>
-        </div>
-      </div>
-      <AnimatePresence>
-        {combo > 1 && (
-          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} className={`mt-1 ${side === "right" ? "text-right" : "text-left"}`}>
-            <span className="inline-block px-2 py-0.5 text-white font-bold rounded" style={{ fontFamily: "'Orbitron',monospace", fontSize: "10px", background: "linear-gradient(135deg,#FF4500,#DC2626)", boxShadow: "0 0 12px rgba(255,69,0,.5)", animation: "comboPop .4s infinite" }}>{combo} HIT</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-/* ════════════════════════════════════════════════════
-   ARENA
-   ════════════════════════════════════════════════════ */
-function Arena({ p1, p2, mode, onExit }: { p1: Member; p2: Member; mode: ViewMode; onExit: () => void }) {
-  const [hp1, setHp1] = useState(100);
-  const [hp2, setHp2] = useState(100);
-  const [hitFlash, setHitFlash] = useState<"left" | "right" | null>(null);
-  const [combo1, setCombo1] = useState(0);
-  const [combo2, setCombo2] = useState(0);
-  const [roundText, setRoundText] = useState<string | null>("ROUND 1");
-  const [winner, setWinner] = useState<Member | null>(null);
-  const [shake, setShake] = useState(false);
-  const winnerRef = useRef<Member | null>(null);
-  const c1 = rc(p1.rank), c2 = rc(p2.rank);
-
-  useEffect(() => {
-    sfx?.play("round");
-    const t0 = setTimeout(() => { setRoundText("FIGHT!"); sfx?.play("fight"); }, 1200);
-    const t1 = setTimeout(() => setRoundText(null), 2400);
-    return () => { clearTimeout(t0); clearTimeout(t1); };
-  }, []);
-
-  useEffect(() => {
-    if (roundText || hp1 <= 0 || hp2 <= 0 || winner) return;
-    const s1 = p1.stats ?? { force: 80, vitesse: 80, technique: 80 };
-    const s2 = p2.stats ?? { force: 80, vitesse: 80, technique: 80 };
-    const t1 = s1.force + s1.vitesse + s1.technique;
-    const t2 = s2.force + s2.vitesse + s2.technique;
-    const b = t1 / (t1 + t2);
-
-    const iv = setInterval(() => {
-      if (winnerRef.current) return;
-      const r = Math.random();
-      if (r < b * .7) {
-        const crit = Math.random() < s1.technique / 400;
-        const dmg = crit ? Math.round((s1.force / 100) * (Math.random() * 6 + 3) * 2.5 + 8) : Math.round((s1.force / 100) * (Math.random() * 6 + 3));
-        setHp2(p => Math.max(0, p - dmg));
-        setHitFlash("right"); setCombo2(c => c + 1); setCombo1(0);
-        if (crit) { setShake(true); sfx?.play("critical"); setTimeout(() => setShake(false), 350); } else sfx?.play("hit");
-        setTimeout(() => setHitFlash(null), 200);
-      } else if (r < (b + (1 - b)) * .7) {
-        const crit = Math.random() < s2.technique / 400;
-        const dmg = crit ? Math.round((s2.force / 100) * (Math.random() * 6 + 3) * 2.5 + 8) : Math.round((s2.force / 100) * (Math.random() * 6 + 3));
-        setHp1(p => Math.max(0, p - dmg));
-        setHitFlash("left"); setCombo1(c => c + 1); setCombo2(0);
-        if (crit) { setShake(true); sfx?.play("critical"); setTimeout(() => setShake(false), 350); } else sfx?.play("hit");
-        setTimeout(() => setHitFlash(null), 200);
-      } else { setCombo1(0); setCombo2(0); }
-    }, 700);
-    return () => clearInterval(iv);
-  }, [roundText]);
-
-  useEffect(() => {
-    if (hp1 <= 0 && !winnerRef.current) { winnerRef.current = p2; setWinner(p2); setShake(true); sfx?.play("ko"); setTimeout(() => setShake(false), 500); }
-    if (hp2 <= 0 && !winnerRef.current) { winnerRef.current = p1; setWinner(p1); setShake(true); sfx?.play("ko"); setTimeout(() => setShake(false), 500); }
-  }, [hp1, hp2]);
-
-  return (
-    <div className={`relative w-full h-screen overflow-hidden ${shake ? "ko-shake" : ""}`} style={{ background: "#050510" }}>
-      <div className="absolute inset-0">
-        <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 50% 70%,#100a20,#060612 45%,#050510)" }} />
-        <div className="absolute bottom-0 left-0 right-0 h-[40%]" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.015) 1px,transparent 1px)", backgroundSize: "40px 40px", perspective: "500px", transform: "rotateX(55deg)", transformOrigin: "bottom", animation: "gridPulse 4s infinite" }} />
-        <div className="absolute bottom-0 left-1/4 right-1/4 h-px" style={{ background: `linear-gradient(90deg,transparent,${c1.glow}40,${c2.glow}40,transparent)` }} />
-      </div>
-      <div className="absolute top-0 left-0 right-0 z-40 px-4 sm:px-6 pt-4">
-        <div className="flex items-start gap-3 max-w-[1400px] mx-auto">
-          <HPBar hp={hp1} color={c1.main} glow={c1.glow} side="left" name={p1.name.split(" ")[0]} rank={p1.rank} combo={combo1} />
-          <div className="flex flex-col items-center pt-1">
-            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center" style={{ background: "rgba(0,0,0,.5)", border: "2px solid rgba(255,215,0,.25)" }}>
-              <span style={{ fontFamily: "'Orbitron',monospace", fontSize: "18px", fontWeight: 900, color: "#FFD700" }}>VS</span>
-            </div>
-          </div>
-          <HPBar hp={hp2} color={c2.main} glow={c2.glow} side="right" name={p2.name.split(" ")[0]} rank={p2.rank} combo={combo2} />
-        </div>
-      </div>
-      <div className="absolute inset-0 flex h-full items-end pb-8">
-        <motion.div initial={{ x: "-80%", opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 50, damping: 12, delay: .2 }} className="flex-1 relative flex items-end justify-center">
-          <div className={`relative ${hitFlash === "left" ? "hit-shake" : ""}`} style={{ width: "clamp(220px,30vw,420px)", height: "clamp(300px,55vh,600px)" }}>
-            {vid(p1, mode) ? (
-              <div style={{ width: "100%", height: "100%", filter: hitFlash === "left" ? "brightness(3) saturate(0)" : `drop-shadow(0 0 30px ${c1.glow})`, transition: "filter .1s" }}>
-                <VideoPlayer src={vid(p1, mode)!} fit="contain" objectPosition="bottom" fullscreenBtn={false} />
-              </div>
-            ) : img(p1, mode) ? (
-              <Image src={img(p1, mode)} alt={p1.name} fill={false} width={400} height={500} className="object-contain object-bottom" style={{ filter: hitFlash === "left" ? "brightness(3) saturate(0)" : `drop-shadow(0 0 30px ${c1.glow})`, transition: "filter .1s" }} />
-            ) : null}
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[80%] h-4 rounded-full" style={{ background: `radial-gradient(ellipse,${c1.glow}25,transparent 70%)`, filter: "blur(8px)" }} />
-          </div>
-        </motion.div>
-        <div className="w-px h-[60%] self-center shrink-0" style={{ background: "linear-gradient(to bottom,transparent,rgba(255,255,255,.06),transparent)" }} />
-        <motion.div initial={{ x: "80%", opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 50, damping: 12, delay: .2 }} className="flex-1 relative flex items-end justify-center">
-          <div className={`relative ${hitFlash === "right" ? "hit-shake" : ""}`} style={{ width: "clamp(220px,30vw,420px)", height: "clamp(300px,55vh,600px)" }}>
-            {vid(p2, mode) ? (
-              <div style={{ width: "100%", height: "100%", filter: hitFlash === "right" ? "brightness(3) saturate(0)" : `drop-shadow(0 0 30px ${c2.glow})`, transition: "filter .1s", transform: "scaleX(-1)" }}>
-                <VideoPlayer src={vid(p2, mode)!} fit="contain" objectPosition="bottom" fullscreenBtn={false} />
-              </div>
-            ) : img(p2, mode) ? (
-              <Image src={img(p2, mode)} alt={p2.name} fill={false} width={400} height={500} className="object-contain object-bottom" style={{ filter: hitFlash === "right" ? "brightness(3) saturate(0)" : `drop-shadow(0 0 30px ${c2.glow})`, transition: "filter .1s", transform: "scaleX(-1)" }} />
-            ) : null}
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[80%] h-4 rounded-full" style={{ background: `radial-gradient(ellipse,${c2.glow}25,transparent 70%)`, filter: "blur(8px)" }} />
-          </div>
-        </motion.div>
-      </div>
-      <Sparks active={!winner && !roundText} color="#FF4500" intensity={.25} />
-      <AnimatePresence>
-        {roundText && (
-          <motion.div initial={{ scale: 3, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: .3, opacity: 0, y: -50 }} transition={{ type: "spring", stiffness: 150, damping: 15 }} className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none">
-            <span style={{ fontFamily: "'Orbitron',monospace", fontSize: "clamp(48px,14vw,140px)", fontWeight: 900, color: "#FFD700", textShadow: "0 0 40px rgba(255,215,0,.6),0 0 80px rgba(255,69,0,.3),0 8px 0 #7a5700", letterSpacing: "10px" }}>{roundText}</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      <AnimatePresence>
-        {winner && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: .6 }} className="absolute inset-0 z-50 flex items-center justify-center">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-            <motion.div initial={{ scale: 0, rotate: -10 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 100, damping: 10, delay: .2 }} className="relative z-10 text-center">
-              <GlitchText text="K.O." style={{ fontFamily: "'Orbitron',monospace", fontSize: "clamp(80px,20vw,200px)", fontWeight: 900, color: "#FF1A1A", textShadow: "0 0 60px rgba(255,26,26,.8),0 0 120px rgba(255,0,0,.3),0 8px 0 #5c0000", letterSpacing: "14px" }} />
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .8 }}>
-                <div className="mt-4" style={{ color: rc(winner.rank).main, fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(28px,5vw,56px)", textShadow: `0 0 24px ${rc(winner.rank).glow}`, letterSpacing: "6px" }}>{winner.name.toUpperCase()}</div>
-              </motion.div>
-              <button onClick={onExit} className="mt-6 px-8 py-2.5 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10" style={{ background: "rgba(255,215,0,.08)", border: "1px solid rgba(255,215,0,.3)" }}>
-                <span style={{ fontFamily: "'Orbitron',monospace", fontSize: "11px", color: "#FFD700", letterSpacing: "4px" }}>NOUVEAU COMBAT</span>
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      <button onClick={onExit} className="absolute top-3 right-3 sm:top-4 sm:right-4 z-50 flex items-center gap-1.5 px-2.5 py-1.5 rounded cursor-pointer text-white/30 hover:text-white/60 transition-colors text-xs" style={{ fontFamily: "'Orbitron',monospace", fontSize: "9px", letterSpacing: "2px", background: "rgba(0,0,0,.5)", border: "1px solid rgba(255,255,255,.08)" }}>
-        RETOUR
-      </button>
-      <div className="absolute inset-0 pointer-events-none z-30" style={{ backgroundImage: "repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.01) 2px,rgba(255,255,255,.01) 4px)", animation: "scanlines 8s linear infinite", willChange: "transform" }} />
-      <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,.4) 100%)" }} />
-    </div>
-  );
-}
-
-/* ════════════════════════════════════════════════════
-   FIGHTER TILE — KOF portrait style
-   ════════════════════════════════════════════════════ */
-function FighterCard({ member, mode, selected, hovered, idx, onSelect, onHover }: {
-  member: Member; mode: ViewMode; selected: boolean; hovered: boolean;
-  idx: number; onSelect: (m: Member) => void; onHover: (m: Member | null) => void;
-}) {
-  const c = rc(member.rank);
-  const active = selected || hovered;
-  const portrait = img(member, mode);
-  const videoSrc = vid(member, mode);
-
-  return (
-    <motion.button
-      initial={{ opacity: 0, scale: .75 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: .22, delay: Math.min(idx * .01, .28), ease: "easeOut" }}
-      onClick={() => onSelect(member)}
-      onMouseEnter={() => { onHover(member); sfx?.play("hover"); }}
-      onMouseLeave={() => onHover(null)}
-      onFocus={() => onHover(member)}
-      onBlur={() => onHover(null)}
-      className="kof-tile cursor-pointer block"
-      data-selected={selected ? "true" : "false"}
-      style={{
-        "--tile-rank-color": c.main,
-        border: selected
-          ? `2px solid ${c.main}`
-          : hovered
-            ? `1px solid rgba(255,255,255,.6)`
-            : `1px solid rgba(255,255,255,.08)`,
-        boxShadow: hovered && !selected ? `0 0 18px rgba(255,255,255,.18)` : "none",
-        transition: "border .1s, box-shadow .15s",
-        zIndex: hovered || selected ? 3 : 1,
-      } as React.CSSProperties}
-    >
-      {/* Left rank accent stripe */}
-      <div style={{
-        position: "absolute", top: 0, bottom: 0, left: 0, width: 3,
-        background: c.gradient, zIndex: 5, pointerEvents: "none",
-        opacity: active ? 1 : .6, transition: "opacity .15s",
-      }} />
-
-      {/* Portrait — video takes priority over image */}
-      {videoSrc ? (
-        <div style={{ width: "100%", height: "calc(100% - 28px)", filter: active ? "saturate(1.1) brightness(1.05)" : "saturate(.75) brightness(.78)", transition: "filter .18s" }}>
-          <VideoPlayer src={videoSrc} fit="cover" objectPosition="smart" fullscreenBtn={active} />
-        </div>
-      ) : portrait ? (
-        <Image
-          src={portrait}
-          alt={member.name}
-          width={160}
-          height={210}
-          style={{
-            width: "100%",
-            height: "calc(100% - 28px)",
-            objectFit: "cover",
-            objectPosition: "center 12%",
-            filter: active
-              ? "saturate(1.1) brightness(1.05)"
-              : "saturate(.75) brightness(.78)",
-            transition: "filter .18s",
-            display: "block",
-          }}
+      <div style={{ color, width: 14, height: 14, flexShrink: 0 }}>{icon}</div>
+      <span style={{ fontFamily: "'Orbitron',monospace", fontSize: 8, color: "rgba(255,255,255,0.4)", letterSpacing: 1, width: 24, textAlign: "right", flexShrink: 0 }}>{label}</span>
+      <div style={{ flex: 1, height: 6, background: "rgba(255,255,255,0.05)", borderRadius: 1, overflow: "hidden", position: "relative" }}>
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: show ? `${value}%` : 0 }}
+          transition={{ duration: 0.7, ease: "easeOut" }}
+          style={{ height: "100%", background: color, borderRadius: 1 }}
         />
-      ) : (
-        <div style={{
-          width: "100%",
-          height: "calc(100% - 28px)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: `radial-gradient(ellipse at center, ${c.dark} 0%, #050510 100%)`,
-        }}>
-          <span style={{
-            fontFamily: "'Orbitron', monospace",
-            fontSize: "clamp(20px,4vw,36px)",
-            fontWeight: 900,
-            color: `${c.main}50`,
-            textShadow: `0 0 20px ${c.glow}`,
-          }}>?</span>
-        </div>
-      )}
-
-      {/* Scanline sweep on hover */}
-      <span className="tile-scan" aria-hidden="true" />
-
-      {/* Nameplate */}
-      <div className="kof-tile-plate">
-        <div className="kof-tile-name">{member.name.toUpperCase()}</div>
-        <div style={{
-          height: 2, marginTop: 2,
-          background: c.gradient, borderRadius: 1,
-          opacity: active ? 1 : .5, transition: "opacity .15s",
-        }} />
       </div>
-
-      {/* KOF selection cursor (4 corner brackets) */}
-      {selected && <KofCursor color={c.main} />}
-    </motion.button>
-  );
-}
-
-/* ════════════════════════════════════════════════════
-   DETAIL PANEL
-   ════════════════════════════════════════════════════ */
-function DetailPanel({ member, mode }: { member: Member; mode: ViewMode }) {
-  const c = rc(member.rank);
-  const s = member.stats ?? { force: 80, vitesse: 80, technique: 80 };
-  const power = pwr(member);
-
-  return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} transition={{ duration: .2 }}
-      style={{
-        background: "rgba(6,6,18,.95)",
-        border: `1px solid ${c.main}30`,
-        backdropFilter: "blur(16px)",
-        clipPath: "polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px))",
-        boxShadow: `0 0 40px ${c.glow}20, inset 0 0 40px rgba(0,0,0,.4)`,
-      }}
-    >
-      {/* Top bar — 4px neon accent */}
-      <div style={{ height: 4, background: c.gradient, position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg,transparent 0%,rgba(255,255,255,.35) 50%,transparent 100%)", animation: "lightSweep 2.5s ease-in-out infinite" }} />
-      </div>
-
-      <div className="flex flex-col sm:flex-row gap-5 p-5">
-        {/* Portrait */}
-        <div className="relative w-full h-56 sm:w-40 sm:h-52 shrink-0 overflow-hidden"
-          style={{
-            clipPath: "polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px))",
-            border: `1px solid ${c.main}25`,
-            background: `radial-gradient(ellipse at center, ${c.dark}, #030310)`,
-          }}
-        >
-          {vid(member, mode) ? (
-            <VideoPlayer src={vid(member, mode)!} fit="cover" objectPosition="smart" fullscreenBtn />
-          ) : img(member, mode) ? (
-            <Image src={img(member, mode)} alt={member.name} fill={false} width={200} height={260}
-              style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 10%", filter: `drop-shadow(0 0 16px ${c.glow})` }}
-            />
-          ) : (
-            <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span style={{ fontFamily: "'Orbitron',monospace", fontSize: 40, fontWeight: 900, color: `${c.main}40` }}>?</span>
-            </div>
-          )}
-          <div className="absolute inset-0" style={{ background: `linear-gradient(to top,rgba(5,5,20,.9) 0%,transparent 55%)` }} />
-          {/* Power badge */}
-          <div style={{
-            position: "absolute", bottom: 0, left: 0, right: 0,
-            padding: "8px 6px 6px",
-            background: "rgba(0,0,0,.88)",
-            borderTop: `1px solid ${c.main}40`,
-            textAlign: "center",
-          }}>
-            <span style={{ fontFamily: "'Orbitron',monospace", fontSize: 9, color: c.main, letterSpacing: "2px", fontWeight: 700 }}>
-              ◆ POWER {power} ◆
-            </span>
-          </div>
-        </div>
-
-        {/* Info */}
-        <div className="flex-1 min-w-0">
-          <h3 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(26px,3.5vw,38px)", color: "#fff", letterSpacing: "5px", lineHeight: 1, textShadow: `0 0 24px ${c.glow}50` }}>
-            {member.name.toUpperCase()}
-          </h3>
-          {member.rank && (
-            <span className="inline-block mt-1.5 px-2.5 py-0.5" style={{
-              background: c.gradient, color: "#000",
-              fontFamily: "'Orbitron',monospace", fontSize: 9, letterSpacing: "2px", fontWeight: 800,
-              clipPath: "polygon(0 0,calc(100% - 5px) 0,100% 5px,100% 100%,5px 100%,0 calc(100% - 5px))",
-            }}>
-              {member.rank.toUpperCase()}
-            </span>
-          )}
-          {member.special && (
-            <div className="mt-2 flex items-center gap-1.5" style={{ fontFamily: "'Orbitron',monospace", fontSize: 9, color: c.main, letterSpacing: "1px" }}>
-              <span style={{ color: c.main }}>▲</span>
-              <span>{member.special.name}</span>
-            </div>
-          )}
-          <div className="space-y-2 mt-4">
-            <StatBar label="▲ FOR" value={s.force}     color="#EF4444" icon={<Flame size={12} />} delay={0} />
-            <StatBar label="► VIT" value={s.vitesse}   color="#38BDF8" icon={<Wind  size={12} />} delay={80} />
-            <StatBar label="◆ TEC" value={s.technique} color="#A78BFA" icon={<Shield size={12} />} delay={160} />
-          </div>
-          {member.special?.effect && (
-            <div className="mt-3 px-3 py-2" style={{
-              background: "rgba(255,255,255,.025)",
-              borderLeft: `2px solid ${c.main}60`,
-              color: "rgba(255,255,255,.45)",
-              fontFamily: "'Barlow Condensed',sans-serif",
-              fontSize: 12, lineHeight: 1.6,
-            }}>
-              {member.special.effect}
-            </div>
-          )}
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-/* ════════════════════════════════════════════════════
-   LOADING
-   ════════════════════════════════════════════════════ */
-function LoadingScreen() {
-  const [dots, setDots] = useState(0);
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    const d = setInterval(() => setDots(p => (p + 1) % 4), 380);
-    const p = setInterval(() => setProgress(v => {
-      const next = v + Math.random() * 7 + 2;
-      return next >= 100 ? 100 : next;
-    }), 100);
-    return () => { clearInterval(d); clearInterval(p); };
-  }, []);
-
-  return (
-    <div style={{
-      minHeight: "100dvh", display: "flex", flexDirection: "column",
-      alignItems: "center", justifyContent: "center",
-      background: "linear-gradient(180deg,#050010 0%,#070614 50%,#060a10 100%)",
-      gap: 32,
-      backgroundImage: "repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.12) 3px,rgba(0,0,0,.12) 4px)",
-    }}>
-      {/* ASCII frame */}
-      <div style={{
-        fontFamily: "'Orbitron',monospace",
-        fontSize: "clamp(8px,1.1vw,11px)",
-        color: "rgba(255,215,0,.3)",
-        letterSpacing: 2,
-        lineHeight: 1.7,
-        textAlign: "center",
-        whiteSpace: "pre",
-      }}>{`╔══════════════════════╗\n║   GUILDE  FIGHTERS   ║\n╚══════════════════════╝`}</div>
-
-      <div style={{ textAlign: "center" }}>
-        <div style={{
-          fontFamily: "'Orbitron',monospace",
-          fontSize: "clamp(28px,5vw,52px)",
-          fontWeight: 900,
-          color: "#DC2626",
-          letterSpacing: 10,
-          textShadow: "0 0 28px rgba(220,38,38,.65),0 0 60px rgba(220,38,38,.2),0 4px 0 #5c0000",
-          animation: "neonFlicker 3s infinite",
-          marginBottom: 8,
-        }}>
-          LOADING{".".repeat(dots)}
-        </div>
-        <div style={{
-          fontFamily: "'Orbitron',monospace",
-          fontSize: 9,
-          color: "rgba(255,215,0,.5)",
-          letterSpacing: 4,
-          animation: "coinBlink 1s step-start infinite",
-        }}>
-          ★ PLEASE WAIT ★
-        </div>
-      </div>
-
-      {/* KOF progress bar */}
-      <div style={{ width: "clamp(240px,48vw,380px)" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-          <span style={{ fontFamily: "'Orbitron',monospace", fontSize: 8, color: "rgba(255,255,255,.3)", letterSpacing: 2 }}>PLAYER DATA</span>
-          <span style={{ fontFamily: "'Orbitron',monospace", fontSize: 8, color: "#FFD700", letterSpacing: 2 }}>{Math.floor(progress)}%</span>
-        </div>
-        <div style={{
-          height: 10, background: "rgba(255,255,255,.06)",
-          border: "1px solid rgba(255,215,0,.2)", borderRadius: 2, overflow: "hidden", position: "relative",
-        }}>
-          <div style={{
-            height: "100%", width: `${progress}%`,
-            background: "linear-gradient(90deg,#DC2626,#FFD700)",
-            transition: "width .1s linear",
-            boxShadow: "0 0 16px rgba(255,215,0,.5)",
-            borderRadius: 2,
-          }} />
-          <div style={{
-            position: "absolute", inset: 0,
-            backgroundImage: "repeating-linear-gradient(90deg,transparent,transparent 5px,rgba(0,0,0,.25) 5px,rgba(0,0,0,.25) 10px)",
-          }} />
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 5 }}>
-          {["P1","P2","P3","P4","P5"].map((p, i) => (
-            <span key={i} style={{
-              fontFamily: "'Orbitron',monospace", fontSize: 7,
-              color: progress > i * 20 ? "#FFD700" : "rgba(255,255,255,.14)",
-              letterSpacing: 1, transition: "color .3s",
-            }}>{p}</span>
-          ))}
-        </div>
-      </div>
-
-      <div style={{
-        fontFamily: "'Orbitron',monospace", fontSize: 8,
-        color: "rgba(255,255,255,.15)", letterSpacing: 4, textAlign: "center",
-      }}>
-        © GUILDE OTAKU 2025 · ALL RIGHTS RESERVED
-      </div>
+      <span style={{ fontFamily: "'Orbitron',monospace", fontSize: 9, color, fontWeight: 700, width: 22, textAlign: "right", flexShrink: 0 }}>{value}</span>
     </div>
   );
 }
 
-/* ════════════════════════════════════════════════════
-   KOF SIDE PORTRAIT
-   ════════════════════════════════════════════════════ */
-function SidePortrait({ member, mode, side }: { member: Member | null; mode: ViewMode; side: "left" | "right" }) {
+/* ═══════════════════════════════
+   FIGHTER SHOWCASE (panel gauche)
+═══════════════════════════════ */
+function FighterShowcase({ member, mode }: { member: Member | null; mode: ViewMode }) {
   const c = member ? rc(member.rank) : null;
-  const tag = side === "left" ? "P1" : "P2";
-  const tagColor = side === "left" ? "#FF3B30" : "#1DA1F2";
+  const s = member?.stats ?? { force: 80, vitesse: 80, technique: 80 };
+  const power = member ? pwr(member) : 0;
+  const vid = member ? videoSrc(member, mode) : "";
+  const img = member ? portrait(member, mode) : "";
 
   return (
-    <div className="relative w-full h-full flex flex-col justify-end overflow-hidden">
-      {/* Atmospheric inner glow */}
-      <div style={{
-        position: "absolute", inset: 0, pointerEvents: "none",
-        background: side === "left"
-          ? `radial-gradient(ellipse 80% 60% at 20% 80%, ${c?.glow ?? "rgba(220,38,38,.3)"} 0%, transparent 65%)`
-          : `radial-gradient(ellipse 80% 60% at 80% 80%, ${c?.glow ?? "rgba(29,78,216,.3)"} 0%, transparent 65%)`,
-        transition: "background .5s",
+    <div className="relative w-full h-full flex flex-col overflow-hidden" style={{ background: "#08050f" }}>
+      {/* BG ambiance */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        background: c
+          ? `radial-gradient(ellipse 80% 60% at 50% 80%, ${c.glow} 0%, transparent 70%)`
+          : "radial-gradient(ellipse 80% 60% at 50% 80%, rgba(220,38,38,0.15) 0%, transparent 70%)",
+        transition: "background 0.5s",
         zIndex: 0,
+      }} />
+      {/* scanlines */}
+      <div className="absolute inset-0 pointer-events-none z-[1]" style={{
+        backgroundImage: "repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.08) 2px,rgba(0,0,0,0.08) 3px)",
       }} />
 
       <AnimatePresence mode="wait">
         {member && c ? (
           <motion.div
             key={member.id}
-            className="absolute inset-0 flex items-end justify-center kof-portrait-float"
-            initial={{ opacity: 0, x: side === "left" ? -50 : 50, scale: .93 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: side === "left" ? -30 : 30, scale: .97 }}
-            transition={{ duration: .38, ease: [0.22, 1, 0.36, 1] }}
-            style={{ zIndex: 1 }}
+            className="flex flex-col h-full"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            style={{ position: "relative", zIndex: 2 }}
           >
-            {vid(member, mode) ? (
-              <div style={{
-                width: "100%", height: "100%", maxHeight: "100%",
-                filter: `drop-shadow(0 0 50px ${c.glow}) drop-shadow(0 12px 30px rgba(0,0,0,.8))`,
-                transform: side === "right" ? "scaleX(-1)" : undefined,
+            {/* Portrait zone — 60% de la hauteur */}
+            <div className="relative flex-1 overflow-hidden">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={`${member.id}-${mode}`}
+                  className="absolute inset-0 flex items-end justify-center"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.35 }}
+                >
+                  {vid ? (
+                    <div style={{ width: "100%", height: "100%", filter: `drop-shadow(0 0 40px ${c.glow})` }}>
+                      <VideoPlayer src={vid} fit="contain" objectPosition="bottom" fullscreenBtn={false} />
+                    </div>
+                  ) : img ? (
+                    <Image
+                      src={img}
+                      alt={member.name}
+                      fill={false}
+                      width={400}
+                      height={520}
+                      style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom", filter: `drop-shadow(0 0 40px ${c.glow})` }}
+                    />
+                  ) : (
+                    <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <span style={{ fontFamily: "'Orbitron',monospace", fontSize: 80, fontWeight: 900, color: `${c.main}20` }}>?</span>
+                    </div>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+              {/* gradient bas */}
+              <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
+                height: "50%",
+                background: "linear-gradient(to top, #08050f 0%, transparent 100%)",
+                zIndex: 2,
+              }} />
+              {/* Rank badge */}
+              <div className="absolute top-3 left-3 z-10" style={{
+                background: c.main,
+                color: "#000",
+                fontFamily: "'Orbitron',monospace",
+                fontSize: 8,
+                fontWeight: 900,
+                letterSpacing: 2,
+                padding: "3px 8px",
+                borderRadius: 2,
               }}>
-                <VideoPlayer src={vid(member, mode)!} fit="contain" objectPosition="bottom" fullscreenBtn />
+                {member.rank.toUpperCase()}
               </div>
-            ) : img(member, mode) ? (
-              <Image
-                src={img(member, mode)}
-                alt={member.name}
-                width={500}
-                height={700}
-                className="object-contain object-bottom"
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  maxHeight: "100%",
-                  filter: `drop-shadow(0 0 50px ${c.glow}) drop-shadow(0 12px 30px rgba(0,0,0,.8))`,
-                  transform: side === "right" ? "scaleX(-1)" : undefined,
-                }}
-              />
-            ) : null}
+              {/* P1 badge */}
+              <div className="absolute top-3 right-3 z-10" style={{
+                background: "rgba(220,38,38,0.85)",
+                color: "#fff",
+                fontFamily: "'Orbitron',monospace",
+                fontSize: 9,
+                fontWeight: 900,
+                letterSpacing: 3,
+                padding: "3px 10px",
+                borderRadius: 2,
+                border: "1px solid rgba(220,38,38,0.6)",
+              }}>
+                P1
+              </div>
+            </div>
+
+            {/* Info zone — bas */}
+            <div className="relative z-10 px-4 pb-4 pt-2" style={{ borderTop: `1px solid ${c.main}30` }}>
+              {/* Nom + power */}
+              <div className="flex items-end justify-between mb-3">
+                <div>
+                  <div style={{ fontFamily: "'Orbitron',monospace", fontSize: 8, color: c.main, letterSpacing: 3, marginBottom: 2 }}>
+                    FIGHTER
+                  </div>
+                  <div style={{
+                    fontFamily: "'Orbitron',monospace",
+                    fontSize: "clamp(14px,1.8vw,20px)",
+                    fontWeight: 900,
+                    color: "#fff",
+                    letterSpacing: 2,
+                    lineHeight: 1.1,
+                    textShadow: `0 0 20px ${c.glow}`,
+                  }}>
+                    {member.name.toUpperCase()}
+                  </div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontFamily: "'Orbitron',monospace", fontSize: 8, color: "rgba(255,255,255,0.4)", letterSpacing: 2 }}>PWR</div>
+                  <div style={{ fontFamily: "'Orbitron',monospace", fontSize: 22, fontWeight: 900, color: c.main, lineHeight: 1, textShadow: `0 0 15px ${c.glow}` }}>
+                    {power}
+                  </div>
+                </div>
+              </div>
+
+              {/* Stats */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                <StatBar label="FOR" value={s.force}     color="#EF4444" icon={<Flame size={12} />}  delay={0}   />
+                <StatBar label="VIT" value={s.vitesse}   color="#38BDF8" icon={<Wind  size={12} />}  delay={60}  />
+                <StatBar label="TEC" value={s.technique} color="#A78BFA" icon={<Shield size={12} />} delay={120} />
+              </div>
+
+              {/* Special */}
+              {member.special?.name && (
+                <div className="mt-3 px-3 py-2" style={{
+                  background: `${c.main}10`,
+                  borderLeft: `2px solid ${c.main}60`,
+                  borderRadius: "0 4px 4px 0",
+                }}>
+                  <div style={{ fontFamily: "'Orbitron',monospace", fontSize: 8, color: c.main, letterSpacing: 2, marginBottom: 2 }}>
+                    ▲ {member.special.name.toUpperCase()}
+                  </div>
+                  {member.special.effect && (
+                    <div style={{ fontFamily: "system-ui,sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)", lineHeight: 1.5 }}>
+                      {member.special.effect}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </motion.div>
         ) : (
           <motion.div
-            key="placeholder"
-            className="absolute inset-0 flex items-center justify-center"
+            key="empty"
+            className="absolute inset-0 flex flex-col items-center justify-center"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            style={{ zIndex: 1 }}
+            style={{ zIndex: 2 }}
           >
-            <div style={{
-              fontFamily: "'Orbitron', monospace",
-              fontSize: "clamp(60px,14vw,140px)",
-              fontWeight: 900,
-              color: tagColor === "#FF3B30" ? "rgba(220,38,38,.12)" : "rgba(29,78,216,.12)",
-              letterSpacing: "4px",
-            }}>?</div>
+            <div style={{ fontFamily: "'Orbitron',monospace", fontSize: "clamp(80px,14vw,140px)", fontWeight: 900, color: "rgba(220,38,38,0.06)" }}>?</div>
+            <div style={{ fontFamily: "'Orbitron',monospace", fontSize: 9, color: "rgba(255,255,255,0.15)", letterSpacing: 5, marginTop: 8, textAlign: "center" }}>
+              SELECT A FIGHTER
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════
+   FIGHTER CARD (tile grille)
+═══════════════════════════════ */
+function FighterCard({
+  member, mode, selected, hovered, idx, onSelect, onHover,
+}: {
+  member: Member; mode: ViewMode; selected: boolean; hovered: boolean; idx: number;
+  onSelect: (m: Member) => void; onHover: (m: Member | null) => void;
+}) {
+  const c = rc(member.rank);
+  const vid = videoSrc(member, mode);
+  const img = portrait(member, mode);
+  const active = selected || hovered;
+
+  return (
+    <motion.button
+      initial={{ opacity: 0, scale: 0.85 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: Math.min(idx * 0.015, 0.3), duration: 0.2 }}
+      onClick={() => onSelect(member)}
+      onMouseEnter={() => onHover(member)}
+      onMouseLeave={() => onHover(null)}
+      style={{
+        position: "relative",
+        aspectRatio: "3/4",
+        overflow: "hidden",
+        background: "#0a0812",
+        border: selected
+          ? `2px solid ${c.main}`
+          : hovered
+            ? `1px solid rgba(255,255,255,0.5)`
+            : `1px solid rgba(255,255,255,0.07)`,
+        borderRadius: 2,
+        cursor: "pointer",
+        outline: "none",
+        transform: selected ? "scale(1.05)" : "scale(1)",
+        zIndex: selected ? 3 : 1,
+        boxShadow: selected ? `0 0 20px ${c.glow}, 0 0 40px ${c.glow}` : "none",
+        transition: "border 0.1s, transform 0.1s, box-shadow 0.15s",
+      }}
+      whileHover={{ scale: selected ? 1.05 : 1.04, y: -2 }}
+      whileTap={{ scale: 0.97 }}
+    >
+      {/* Rank accent stripe gauche */}
+      <div style={{
+        position: "absolute", top: 0, bottom: 0, left: 0, width: 3,
+        background: `linear-gradient(180deg, ${c.main}, ${c.main}40)`,
+        zIndex: 5, opacity: active ? 1 : 0.5, transition: "opacity 0.15s",
+      }} />
+
+      {/* Portrait */}
+      {vid ? (
+        <div style={{ width: "100%", height: "calc(100% - 26px)", filter: active ? "saturate(1.1)" : "saturate(0.6) brightness(0.75)", transition: "filter 0.18s" }}>
+          <VideoPlayer src={vid} fit="cover" objectPosition="smart" fullscreenBtn={false} />
+        </div>
+      ) : img ? (
+        <Image
+          src={img}
+          alt={member.name}
+          width={160}
+          height={210}
+          style={{
+            width: "100%",
+            height: "calc(100% - 26px)",
+            objectFit: "cover",
+            objectPosition: "center 12%",
+            filter: active ? "saturate(1.1)" : "saturate(0.6) brightness(0.75)",
+            transition: "filter 0.18s",
+            display: "block",
+          }}
+        />
+      ) : (
+        <div style={{
+          width: "100%", height: "calc(100% - 26px)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          background: `radial-gradient(ellipse at center, ${c.bg}, #050508)`,
+        }}>
+          <span style={{ fontFamily: "'Orbitron',monospace", fontSize: "clamp(18px,3vw,28px)", fontWeight: 900, color: `${c.main}40` }}>?</span>
+        </div>
+      )}
+
+      {/* gradient bas */}
+      <div style={{
+        position: "absolute", bottom: 26, left: 0, right: 0, height: "40%",
+        background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)",
+        pointerEvents: "none", zIndex: 2,
+      }} />
+
+      {/* Nameplate */}
+      <div style={{
+        position: "absolute", bottom: 0, left: 0, right: 0,
+        height: 26,
+        background: "rgba(0,0,0,0.92)",
+        borderTop: `1px solid ${c.main}30`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        zIndex: 4,
+      }}>
+        <span style={{
+          fontFamily: "'Orbitron',monospace",
+          fontSize: "clamp(7px,1vw,10px)",
+          fontWeight: 700,
+          color: active ? "#fff" : "rgba(255,255,255,0.65)",
+          letterSpacing: 1,
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          maxWidth: "90%",
+          transition: "color 0.15s",
+        }}>
+          {member.name.toUpperCase()}
+        </span>
+      </div>
+
+      {/* Selected: corner brackets KOF style */}
+      {selected && (
+        <>
+          <div style={{ position: "absolute", top: 4, left: 4, width: 10, height: 10, borderTop: `2px solid ${c.main}`, borderLeft: `2px solid ${c.main}`, zIndex: 10 }} />
+          <div style={{ position: "absolute", top: 4, right: 4, width: 10, height: 10, borderTop: `2px solid ${c.main}`, borderRight: `2px solid ${c.main}`, zIndex: 10 }} />
+          <div style={{ position: "absolute", bottom: 30, left: 4, width: 10, height: 10, borderBottom: `2px solid ${c.main}`, borderLeft: `2px solid ${c.main}`, zIndex: 10 }} />
+          <div style={{ position: "absolute", bottom: 30, right: 4, width: 10, height: 10, borderBottom: `2px solid ${c.main}`, borderRight: `2px solid ${c.main}`, zIndex: 10 }} />
+        </>
+      )}
+    </motion.button>
+  );
+}
+
+/* ═══════════════════════════════
+   FIGHT INTRO
+═══════════════════════════════ */
+function FightIntro({ p1, p2, mode, onFinish }: { p1: Member; p2: Member; mode: ViewMode; onFinish: () => void }) {
+  const [step, setStep] = useState<"p1" | "vs" | "p2" | "fight">("p1");
+  const c1 = rc(p1.rank), c2 = rc(p2.rank);
+
+  useEffect(() => {
+    const timers = [
+      setTimeout(() => setStep("vs"),   900),
+      setTimeout(() => setStep("p2"),   1800),
+      setTimeout(() => setStep("fight"),3000),
+      setTimeout(() => onFinish(),      4200),
+    ];
+    return () => timers.forEach(clearTimeout);
+  }, [onFinish]);
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-[200] overflow-hidden flex"
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      style={{ background: "#060412" }}
+    >
+      {/* P1 */}
+      <motion.div
+        className="relative flex-1"
+        initial={{ x: "-100%" }} animate={{ x: 0 }}
+        transition={{ type: "spring", stiffness: 70, damping: 14 }}
+        style={{ clipPath: "polygon(0 0,85% 0,100% 100%,0 100%)", background: `linear-gradient(135deg,${c1.bg},#040308)` }}
+      >
+        {(videoSrc(p1, mode) || portrait(p1, mode)) && (
+          <div className="absolute inset-0 flex items-end justify-center pb-12">
+            {videoSrc(p1, mode) ? (
+              <div style={{ width: "75%", height: "85%", filter: `drop-shadow(0 0 40px ${c1.glow})` }}>
+                <VideoPlayer src={videoSrc(p1, mode)!} fit="contain" objectPosition="bottom" fullscreenBtn={false} />
+              </div>
+            ) : (
+              <Image src={portrait(p1, mode)} alt={p1.name} width={360} height={460} style={{ width: "75%", height: "85%", objectFit: "contain", objectPosition: "bottom", filter: `drop-shadow(0 0 40px ${c1.glow})` }} />
+            )}
+          </div>
+        )}
+        <div className="absolute bottom-8 left-6">
+          <div style={{ fontFamily: "'Orbitron',monospace", fontSize: 9, color: c1.main, letterSpacing: 4 }}>PLAYER 1</div>
+          <div style={{ fontFamily: "'Orbitron',monospace", fontSize: "clamp(28px,5vw,64px)", fontWeight: 900, color: "#fff", letterSpacing: 4, lineHeight: 0.9, textShadow: `0 0 20px ${c1.glow}` }}>{p1.name.toUpperCase()}</div>
+        </div>
+      </motion.div>
+
+      {/* P2 */}
+      <AnimatePresence>
+        {["p2", "fight"].includes(step) && (
+          <motion.div
+            className="absolute top-0 right-0 bottom-0"
+            style={{ width: "55%", clipPath: "polygon(15% 0,100% 0,100% 100%,0 100%)", background: `linear-gradient(225deg,${c2.bg},#040308)` }}
+            initial={{ x: "100%" }} animate={{ x: 0 }}
+            transition={{ type: "spring", stiffness: 70, damping: 14 }}
+          >
+            {(videoSrc(p2, mode) || portrait(p2, mode)) && (
+              <div className="absolute inset-0 flex items-end justify-center pb-12">
+                {videoSrc(p2, mode) ? (
+                  <div style={{ width: "75%", height: "85%", filter: `drop-shadow(0 0 40px ${c2.glow})`, transform: "scaleX(-1)" }}>
+                    <VideoPlayer src={videoSrc(p2, mode)!} fit="contain" objectPosition="bottom" fullscreenBtn={false} />
+                  </div>
+                ) : (
+                  <Image src={portrait(p2, mode)} alt={p2.name} width={360} height={460} style={{ width: "75%", height: "85%", objectFit: "contain", objectPosition: "bottom", filter: `drop-shadow(0 0 40px ${c2.glow})`, transform: "scaleX(-1)" }} />
+                )}
+              </div>
+            )}
+            <div className="absolute bottom-8 right-6 text-right">
+              <div style={{ fontFamily: "'Orbitron',monospace", fontSize: 9, color: c2.main, letterSpacing: 4 }}>PLAYER 2</div>
+              <div style={{ fontFamily: "'Orbitron',monospace", fontSize: "clamp(28px,5vw,64px)", fontWeight: 900, color: "#fff", letterSpacing: 4, lineHeight: 0.9, textShadow: `0 0 20px ${c2.glow}` }}>{p2.name.toUpperCase()}</div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* P-tag badge */}
-      <div
-        className="kof-ptag"
-        style={{
-          [side === "left" ? "left" : "right"]: 10,
-          color: tagColor,
-          border: `1px solid ${tagColor}55`,
-          boxShadow: `0 0 18px ${tagColor}44, inset 0 0 8px ${tagColor}22`,
-        }}
-      >
-        {tag}
+      {/* VS */}
+      <AnimatePresence>
+        {["vs", "p2", "fight"].includes(step) && step !== "fight" && (
+          <motion.div
+            className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none"
+            initial={{ scale: 6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 180, damping: 14 }}
+          >
+            <span style={{ fontFamily: "'Orbitron',monospace", fontSize: "clamp(80px,18vw,220px)", fontWeight: 900, color: "#FFD700", textShadow: "0 0 50px rgba(255,215,0,0.8),0 0 100px rgba(255,69,0,0.4),0 6px 0 #7a5700", letterSpacing: 10 }}>VS</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* FIGHT */}
+      <AnimatePresence>
+        {step === "fight" && (
+          <motion.div
+            className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none"
+            initial={{ scale: 4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ opacity: 0 }}
+            transition={{ type: "spring", stiffness: 200, damping: 16 }}
+          >
+            <span style={{ fontFamily: "'Orbitron',monospace", fontSize: "clamp(60px,14vw,180px)", fontWeight: 900, color: "#FFD700", textShadow: "0 0 50px rgba(255,215,0,0.8),0 0 100px rgba(255,69,0,0.5),0 6px 0 #7a5700", letterSpacing: 12 }}>FIGHT!</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+/* ═══════════════════════════════
+   HP BAR
+═══════════════════════════════ */
+function HPBar({ hp, color, glow, side, name, combo }: { hp: number; color: string; glow: string; side: "left" | "right"; name: string; combo: number }) {
+  const danger = hp <= 25;
+  const bc = danger ? "#FF1A1A" : color;
+  return (
+    <div className={`flex-1 ${side === "right" ? "text-right" : ""}`}>
+      <div className={`flex items-center gap-2 mb-1 ${side === "right" ? "flex-row-reverse" : ""}`}>
+        <span style={{ fontFamily: "'Orbitron',monospace", fontSize: 8, fontWeight: 700, color, letterSpacing: 1 }}>{side === "left" ? "P1" : "P2"}</span>
+        <span style={{ fontFamily: "'Orbitron',monospace", fontSize: "clamp(12px,2vw,18px)", fontWeight: 900, color: "#fff", letterSpacing: 2 }}>{name.toUpperCase()}</span>
+        <AnimatePresence>
+          {combo > 1 && (
+            <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
+              style={{ fontFamily: "'Orbitron',monospace", fontSize: 9, color: "#FF4500", fontWeight: 900, background: "rgba(255,69,0,0.15)", padding: "1px 6px", borderRadius: 2 }}>
+              {combo}HIT
+            </motion.span>
+          )}
+        </AnimatePresence>
       </div>
-
-      {/* Name block at bottom */}
-      {member && c && (
+      <div style={{ position: "relative", height: 18, background: "rgba(0,0,0,0.7)", border: `1px solid ${bc}20`, borderRadius: 1, overflow: "hidden" }}>
         <motion.div
-          key={`name-${member.id}`}
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: .35, delay: .12 }}
-          className={`absolute bottom-3 z-10 pointer-events-none ${side === "right" ? "right-3 text-right" : "left-3"}`}
-          style={{ maxWidth: "90%" }}
-        >
-          <div style={{
-            fontFamily: "'Orbitron', monospace",
-            fontSize: 9,
-            color: c.main,
-            letterSpacing: "3px",
-            textShadow: `0 0 10px ${c.glow}`,
-            marginBottom: 2,
-          }}>
-            {member.rank.toUpperCase()}
-          </div>
-          <div style={{
-            fontFamily: "'Bebas Neue', sans-serif",
-            fontSize: "clamp(20px,3vw,40px)",
-            color: "#fff",
-            letterSpacing: "3px",
-            lineHeight: .95,
-            textShadow: `0 2px 10px rgba(0,0,0,.9), 0 0 22px ${c.glow}`,
-          }}>
-            {member.name.toUpperCase()}
-          </div>
-          {/* Power bar */}
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
-            <span style={{ fontFamily: "'Orbitron', monospace", fontSize: 8, color: "rgba(255,255,255,.4)", letterSpacing: 1 }}>PWR</span>
-            <div style={{ flex: 1, height: 3, background: "rgba(255,255,255,.08)", borderRadius: 2, overflow: "hidden" }}>
-              <div style={{ height: "100%", width: `${pwr(member)}%`, background: c.gradient, borderRadius: 2 }} />
-            </div>
-            <span style={{ fontFamily: "'Orbitron', monospace", fontSize: 8, color: c.main, fontWeight: 700 }}>{pwr(member)}</span>
-          </div>
-        </motion.div>
-      )}
+          animate={{ width: `${hp}%` }}
+          transition={{ type: "spring", stiffness: 120, damping: 18 }}
+          style={{
+            position: "absolute", top: 0, bottom: 0,
+            [side === "right" ? "right" : "left"]: 0,
+            background: danger ? "linear-gradient(90deg,#FF1A1A,#FF5500)" : `linear-gradient(90deg,${color}cc,${color})`,
+            boxShadow: `0 0 8px ${glow}`,
+          }}
+        />
+        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <span style={{ fontFamily: "'Orbitron',monospace", fontSize: 9, fontWeight: 900, color: "#fff", textShadow: "0 1px 3px #000" }}>{hp}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-      {/* Scanline overlay */}
-      <div style={{
-        position: "absolute", inset: 0, pointerEvents: "none", zIndex: 8,
-        backgroundImage: "repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.06) 3px,rgba(0,0,0,.06) 4px)",
+/* ═══════════════════════════════
+   PARTICLE SYSTEM (canvas, object-pooled)
+   Game-developer pattern: pool of 120 pre-allocated particles,
+   driven by requestAnimationFrame + delta time — zero GC pressure.
+═══════════════════════════════ */
+interface Particle {
+  active: boolean;
+  x: number; y: number;
+  vx: number; vy: number;
+  life: number; maxLife: number;
+  size: number;
+  color: string;
+}
+
+const POOL_SIZE = 120;
+
+function useParticleSystem(canvasRef: React.RefObject<HTMLCanvasElement | null>) {
+  const pool = useRef<Particle[]>(
+    Array.from({ length: POOL_SIZE }, () => ({
+      active: false, x: 0, y: 0, vx: 0, vy: 0,
+      life: 0, maxLife: 1, size: 2, color: "#FFD700",
+    }))
+  );
+  const rafRef = useRef(0);
+  const lastTs  = useRef(0);
+
+  /* Spawn a burst at (x,y) — reuses inactive pool slots */
+  const burst = useCallback((x: number, y: number, color: string, count = 18, crit = false) => {
+    let spawned = 0;
+    for (let i = 0; i < POOL_SIZE && spawned < count; i++) {
+      const p = pool.current[i];
+      if (p.active) continue;
+      const angle  = Math.random() * Math.PI * 2;
+      const speed  = (crit ? 4 : 2.5) + Math.random() * (crit ? 5 : 3);
+      p.active  = true;
+      p.x       = x; p.y = y;
+      p.vx      = Math.cos(angle) * speed;
+      p.vy      = Math.sin(angle) * speed - (crit ? 4 : 2);
+      p.life    = 0;
+      p.maxLife = 0.35 + Math.random() * 0.4;
+      p.size    = crit ? 3 + Math.random() * 3 : 1.5 + Math.random() * 2;
+      p.color   = color;
+      spawned++;
+    }
+  }, []);
+
+  /* RAF game loop — delta time ensures frame-independence */
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d")!;
+
+    const resize = () => {
+      canvas.width  = canvas.offsetWidth  * devicePixelRatio;
+      canvas.height = canvas.offsetHeight * devicePixelRatio;
+      ctx.scale(devicePixelRatio, devicePixelRatio);
+    };
+    resize();
+    const ro = new ResizeObserver(resize);
+    ro.observe(canvas);
+
+    const tick = (ts: number) => {
+      const dt = Math.min((ts - lastTs.current) / 1000, 0.05); // cap at 50 ms
+      lastTs.current = ts;
+      const w = canvas.offsetWidth, h = canvas.offsetHeight;
+      ctx.clearRect(0, 0, w, h);
+
+      for (const p of pool.current) {
+        if (!p.active) continue;
+        p.life += dt;
+        if (p.life >= p.maxLife) { p.active = false; continue; }
+        p.x  += p.vx;
+        p.y  += p.vy;
+        p.vy += 80 * dt; // gravity
+        p.vx *= 0.96;
+        const alpha = 1 - p.life / p.maxLife;
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle   = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * alpha, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => { cancelAnimationFrame(rafRef.current); ro.disconnect(); };
+  }, [canvasRef]);
+
+  return burst;
+}
+
+/* ═══════════════════════════════
+   FIGHT STATE MACHINE
+   States: intro → fighting → ko → done
+   Driven by RAF + delta time — no setInterval drift.
+═══════════════════════════════ */
+type FightState = "intro" | "fighting" | "ko" | "done";
+
+interface FightStateData {
+  hp1: number; hp2: number;
+  combo1: number; combo2: number;
+  hitSide: "left" | "right" | null;
+  shake: boolean;
+  roundText: string | null;
+  winner: Member | null;
+  fightState: FightState;
+}
+
+function Arena({ p1, p2, mode, onExit }: { p1: Member; p2: Member; mode: ViewMode; onExit: () => void }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const burst = useParticleSystem(canvasRef);
+
+  /* All mutable fight data in a single ref — no re-render per tick */
+  const gs = useRef<FightStateData>({
+    hp1: 100, hp2: 100,
+    combo1: 0, combo2: 0,
+    hitSide: null, shake: false,
+    roundText: "ROUND 1",
+    winner: null,
+    fightState: "intro",
+  });
+
+  /* React state — only the values actually rendered */
+  const [snap, setSnap] = useState<FightStateData>({ ...gs.current });
+  const commit = useCallback(() => setSnap({ ...gs.current }), []);
+
+  const rafRef   = useRef(0);
+  const lastTs   = useRef(0);
+  const accumRef = useRef(0);       // time since last attack tick
+  const TICK_S   = 0.72;            // ~700ms attack cadence
+
+  const s1 = p1.stats ?? { force: 80, vitesse: 80, technique: 80 };
+  const s2 = p2.stats ?? { force: 80, vitesse: 80, technique: 80 };
+  const total = (s1.force + s1.vitesse + s1.technique) + (s2.force + s2.vitesse + s2.technique);
+  const p1Bias = (s1.force + s1.vitesse + s1.technique) / total;
+
+  const c1 = rc(p1.rank), c2 = rc(p2.rank);
+
+  /* Intro sequence: ROUND 1 → FIGHT! → fighting */
+  useEffect(() => {
+    const t0 = setTimeout(() => { gs.current.roundText = "FIGHT!"; commit(); }, 1200);
+    const t1 = setTimeout(() => { gs.current.roundText = null; gs.current.fightState = "fighting"; commit(); }, 2400);
+    return () => { clearTimeout(t0); clearTimeout(t1); };
+  }, [commit]);
+
+  /* Main game loop — RAF with delta time */
+  useEffect(() => {
+    const loop = (ts: number) => {
+      const dt = Math.min((ts - lastTs.current) / 1000, 0.05);
+      lastTs.current = ts;
+      const g = gs.current;
+
+      if (g.fightState === "fighting") {
+        accumRef.current += dt;
+        if (accumRef.current >= TICK_S) {
+          accumRef.current = 0;
+          const r    = Math.random();
+          const p1Hits = r < p1Bias * 0.72;
+          const attacker = p1Hits ? s1 : s2;
+          const crit = Math.random() < attacker.technique / 380;
+          const dmg  = crit
+            ? Math.round((attacker.force / 100) * (Math.random() * 6 + 4) * 2.4 + 8)
+            : Math.round((attacker.force / 100) * (Math.random() * 5 + 2));
+
+          if (p1Hits) {
+            g.hp2     = Math.max(0, g.hp2 - dmg);
+            g.hitSide = "right";
+            g.combo2++;  g.combo1 = 0;
+            /* spawn particles on right side ~65% x */
+            burst(
+              (canvasRef.current?.offsetWidth ?? 400) * 0.72,
+              (canvasRef.current?.offsetHeight ?? 300) * 0.55,
+              c1.main, crit ? 28 : 14, crit
+            );
+          } else {
+            g.hp1     = Math.max(0, g.hp1 - dmg);
+            g.hitSide = "left";
+            g.combo1++;  g.combo2 = 0;
+            burst(
+              (canvasRef.current?.offsetWidth ?? 400) * 0.28,
+              (canvasRef.current?.offsetHeight ?? 300) * 0.55,
+              c2.main, crit ? 28 : 14, crit
+            );
+          }
+          if (crit) { g.shake = true; setTimeout(() => { gs.current.shake = false; commit(); }, 350); }
+          setTimeout(() => { gs.current.hitSide = null; commit(); }, 200);
+
+          /* KO check */
+          if (g.hp1 <= 0 || g.hp2 <= 0) {
+            g.fightState = "ko";
+            g.winner     = g.hp1 <= 0 ? p2 : p1;
+            g.shake      = true;
+            burst(
+              (canvasRef.current?.offsetWidth ?? 400) * 0.5,
+              (canvasRef.current?.offsetHeight ?? 300) * 0.5,
+              "#FFD700", 60, true
+            );
+            setTimeout(() => { gs.current.shake = false; gs.current.fightState = "done"; commit(); }, 600);
+          }
+          commit();
+        }
+      }
+      rafRef.current = requestAnimationFrame(loop);
+    };
+    rafRef.current = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [burst, c1.main, c2.main, p1, p2, p1Bias, s1, s2, commit]);
+
+  return (
+    <div
+      className={snap.shake ? "arena-shake" : ""}
+      style={{ position: "relative", width: "100%", height: "100vh", overflow: "hidden", background: "#050510" }}
+    >
+      <style jsx global>{`
+        @keyframes arenaShake { 0%,100%{transform:translate(0)} 20%{transform:translate(-14px,-5px)} 40%{transform:translate(11px,7px)} 60%{transform:translate(-7px,-3px)} 80%{transform:translate(5px,2px)} }
+        @keyframes hitAnim    { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px) rotate(-1deg)} 50%{transform:translateX(6px)} 70%{transform:translateX(-4px)} }
+        .arena-shake { animation: arenaShake 0.5s ease-out; }
+        .hit-anim    { animation: hitAnim 0.28s ease-out; }
+      `}</style>
+
+      {/* Particle canvas — full screen, on top of fighters */}
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 pointer-events-none z-30"
+        style={{ width: "100%", height: "100%" }}
+      />
+
+      {/* BG */}
+      <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 50% 80%,#100a20,#060612 45%,#050510)" }} />
+      <div className="absolute bottom-0 left-0 right-0 h-[35%]" style={{
+        backgroundImage: "linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px)",
+        backgroundSize: "40px 40px",
+        transform: "perspective(500px) rotateX(55deg)",
+        transformOrigin: "bottom",
+        opacity: 0.7,
       }} />
 
-      {/* ▶ READY / SELECT ◀ label */}
-      <div style={{
-        position: "absolute", bottom: 8, left: 0, right: 0,
-        textAlign: "center",
-        fontFamily: "'Orbitron',monospace",
-        fontSize: 8, letterSpacing: 3,
-        color: side === "left" ? "rgba(220,38,38,.55)" : "rgba(29,78,216,.55)",
-        animation: "arcadeCoin 1.8s ease-in-out infinite",
-        zIndex: 15, pointerEvents: "none",
-      }}>
-        {member ? "▶ READY ◀" : "▶ SELECT ◀"}
+      {/* HP Bars */}
+      <div className="absolute top-0 left-0 right-0 z-40 px-4 pt-3">
+        <div className="flex items-start gap-3 max-w-[1200px] mx-auto">
+          <HPBar hp={snap.hp1} color={c1.main} glow={c1.glow} side="left"  name={p1.name.split(" ")[0]} combo={snap.combo1} />
+          <div style={{ fontFamily: "'Orbitron',monospace", fontSize: 16, fontWeight: 900, color: "#FFD700", padding: "0 6px", marginTop: 6, flexShrink: 0 }}>VS</div>
+          <HPBar hp={snap.hp2} color={c2.main} glow={c2.glow} side="right" name={p2.name.split(" ")[0]} combo={snap.combo2} />
+        </div>
       </div>
+
+      {/* Fighters */}
+      <div className="absolute inset-0 flex items-end pb-6">
+        <motion.div initial={{ x: "-80%", opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 50, damping: 12, delay: 0.2 }}
+          className="flex-1 flex items-end justify-center">
+          <div className={snap.hitSide === "left" ? "hit-anim" : ""} style={{ width: "clamp(200px,28vw,380px)", height: "clamp(280px,52vh,560px)", position: "relative" }}>
+            {videoSrc(p1, mode) ? (
+              <div style={{ width: "100%", height: "100%", filter: snap.hitSide === "left" ? "brightness(3) saturate(0)" : `drop-shadow(0 0 28px ${c1.glow})`, transition: "filter 0.1s" }}>
+                <VideoPlayer src={videoSrc(p1, mode)!} fit="contain" objectPosition="bottom" fullscreenBtn={false} />
+              </div>
+            ) : portrait(p1, mode) ? (
+              <Image src={portrait(p1, mode)} alt={p1.name} fill={false} width={380} height={480} style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom", filter: snap.hitSide === "left" ? "brightness(3) saturate(0)" : `drop-shadow(0 0 28px ${c1.glow})`, transition: "filter 0.1s" }} />
+            ) : null}
+          </div>
+        </motion.div>
+
+        <div style={{ width: 1, height: "55%", background: "linear-gradient(to bottom,transparent,rgba(255,255,255,0.05),transparent)", flexShrink: 0 }} />
+
+        <motion.div initial={{ x: "80%", opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 50, damping: 12, delay: 0.2 }}
+          className="flex-1 flex items-end justify-center">
+          <div className={snap.hitSide === "right" ? "hit-anim" : ""} style={{ width: "clamp(200px,28vw,380px)", height: "clamp(280px,52vh,560px)", position: "relative" }}>
+            {videoSrc(p2, mode) ? (
+              <div style={{ width: "100%", height: "100%", filter: snap.hitSide === "right" ? "brightness(3) saturate(0)" : `drop-shadow(0 0 28px ${c2.glow})`, transition: "filter 0.1s", transform: "scaleX(-1)" }}>
+                <VideoPlayer src={videoSrc(p2, mode)!} fit="contain" objectPosition="bottom" fullscreenBtn={false} />
+              </div>
+            ) : portrait(p2, mode) ? (
+              <Image src={portrait(p2, mode)} alt={p2.name} fill={false} width={380} height={480} style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom", filter: snap.hitSide === "right" ? "brightness(3) saturate(0)" : `drop-shadow(0 0 28px ${c2.glow})`, transition: "filter 0.1s", transform: "scaleX(-1)" }} />
+            ) : null}
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Round text overlay */}
+      <AnimatePresence>
+        {snap.roundText && (
+          <motion.div initial={{ scale: 3, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.4, opacity: 0 }} transition={{ type: "spring", stiffness: 160, damping: 15 }}
+            className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none">
+            <span style={{ fontFamily: "'Orbitron',monospace", fontSize: "clamp(48px,12vw,140px)", fontWeight: 900, color: "#FFD700", textShadow: "0 0 40px rgba(255,215,0,0.7),0 6px 0 #7a5700", letterSpacing: 8 }}>{snap.roundText}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Winner screen */}
+      <AnimatePresence>
+        {snap.winner && snap.fightState === "done" && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 z-[100] flex flex-col items-center justify-center" style={{ background: "rgba(0,0,0,0.88)" }}>
+            <motion.div initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2, type: "spring" }} className="text-center">
+              <div style={{ fontFamily: "'Orbitron',monospace", fontSize: "clamp(10px,1.5vw,14px)", color: "rgba(255,215,0,0.7)", letterSpacing: 8, marginBottom: 8 }}>WINNER</div>
+              <div style={{ fontFamily: "'Orbitron',monospace", fontSize: "clamp(36px,7vw,90px)", fontWeight: 900, color: "#FFD700", letterSpacing: 6, textShadow: "0 0 40px rgba(255,215,0,0.8),0 6px 0 #7a5700" }}>{snap.winner.name.toUpperCase()}</div>
+              <div style={{ fontFamily: "'Orbitron',monospace", fontSize: "clamp(28px,5vw,64px)", fontWeight: 900, color: "#FF4500", letterSpacing: 10, marginTop: 4, textShadow: "0 0 30px rgba(255,69,0,0.9)" }}>K.O.</div>
+              <motion.button onClick={onExit} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                className="mt-8 cursor-pointer"
+                style={{ fontFamily: "'Orbitron',monospace", fontSize: 12, fontWeight: 900, color: "#000", background: "#FFD700", padding: "12px 32px", borderRadius: 2, border: "none", letterSpacing: 4, boxShadow: "0 0 20px rgba(255,215,0,0.5)" }}>
+                RETOUR ▶
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-/* ─── Arcade Timer ─── */
-function ArcadeTimer() {
-  const [t, setT] = useState(99);
-  useEffect(() => {
-    const iv = setInterval(() => setT(p => p > 0 ? p - 1 : 99), 1200);
-    return () => clearInterval(iv);
-  }, []);
-  return (
-    <div style={{
-      fontFamily: "'Orbitron',monospace",
-      fontSize: "clamp(22px,3.2vw,38px)",
-      fontWeight: 900,
-      color: t <= 20 ? "#FF1A1A" : "#FFD700",
-      textShadow: `0 0 22px ${t <= 20 ? "rgba(255,26,26,.9)" : "rgba(255,215,0,.85)"}`,
-      letterSpacing: 3,
-      minWidth: 56,
-      textAlign: "center",
-      transition: "color .3s,text-shadow .3s",
-      lineHeight: 1,
-    }}>
-      {String(t).padStart(2,"0")}
-    </div>
-  );
-}
-
-/* ════════════════════════════════════════════════════
-   CHARACTER SELECT — KOF STYLE
-   ════════════════════════════════════════════════════ */
+/* ═══════════════════════════════
+   CHARACTER SELECT
+═══════════════════════════════ */
 function CharacterSelect({ members, mode, selected, onSelect, onFight }: {
   members: Member[]; mode: ViewMode;
-  selected: Member | null; onSelect: (m: Member) => void; onFight?: (m: Member) => void;
+  selected: Member | null; onSelect: (m: Member) => void; onFight: (m: Member) => void;
 }) {
   const [filter, setFilter] = useState<Rank | "Tous">("Tous");
   const [hovered, setHovered] = useState<Member | null>(null);
-  const [isMuted, setIsMuted] = useState(false);
+  const showcase = selected ?? hovered;
   const filtered = filter === "Tous" ? members : members.filter(m => m.rank === filter);
 
-  const leftFighter  = selected;
-  const rightFighter = hovered && hovered.id !== selected?.id ? hovered : null;
-
   return (
-    <div className="relative overflow-hidden" style={{ background: "#07060f", flex: 1, display: "flex", flexDirection: "column" }}>
-      {/* Main atmospheric background */}
-      <div className="kof-screen-bg" />
-      <div className="kof-spotlight" />
+    <div className="flex-1 flex flex-col overflow-hidden" style={{ background: "#07060f", position: "relative" }}>
 
-      {/* Floating light particles */}
-      <div className="absolute inset-0 pointer-events-none z-[1]">
-        {Array.from({ length: 16 }).map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute rounded-full"
-            style={{
-              width: 1 + (i % 3),
-              height: 1 + (i % 3),
-              left: `${(i * 6.25) % 100}%`,
-              background: i % 3 === 0 ? "#FFD700" : i % 3 === 1 ? "#DC2626" : "#1D4ED8",
-              opacity: .15 + (i % 4) * .06,
-              filter: "blur(.5px)",
-            }}
-            animate={{ y: ["110vh", "-10vh"] }}
-            transition={{
-              duration: 20 + (i % 5) * 5,
-              repeat: Infinity,
-              ease: "linear",
-              delay: -(i * 1.3),
-            }}
-          />
-        ))}
-      </div>
+      {/* Atmospheric BG */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        background: "radial-gradient(ellipse 80% 60% at 8% 50%, rgba(180,15,15,0.55) 0%, transparent 55%), radial-gradient(ellipse 80% 60% at 92% 50%, rgba(15,45,200,0.5) 0%, transparent 55%), linear-gradient(180deg,#080013 0%,#060411 50%,#050910 100%)",
+        zIndex: 0,
+      }} />
+      {/* Grid overlay */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        backgroundImage: "repeating-linear-gradient(45deg,rgba(255,255,255,0.02) 0 1px,transparent 1px 36px),repeating-linear-gradient(-45deg,rgba(255,255,255,0.02) 0 1px,transparent 1px 36px)",
+        backgroundSize: "72px 72px",
+        zIndex: 0,
+      }} />
+      {/* Scanlines */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        backgroundImage: "repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.1) 3px,rgba(0,0,0,0.1) 4px)",
+        zIndex: 0,
+      }} />
 
-      {/* ─── TOP BAR (arcade cab header) ─── */}
-      <div
-        className="relative z-40"
-        style={{
-          borderBottom: "2px solid rgba(255,215,0,.3)",
-          background: "linear-gradient(180deg, rgba(0,0,0,.9) 0%, rgba(10,5,22,.75) 100%)",
-          backdropFilter: "blur(10px)",
-          boxShadow: "0 10px 35px rgba(0,0,0,.6), inset 0 -1px 0 rgba(255,255,255,.04)",
-        }}
-      >
+      {/* ─── TOP BAR ─── */}
+      <div className="relative z-20 flex-shrink-0" style={{
+        background: "linear-gradient(180deg,rgba(0,0,0,0.92) 0%,rgba(8,4,20,0.78) 100%)",
+        borderBottom: "1px solid rgba(255,215,0,0.25)",
+        backdropFilter: "blur(12px)",
+      }}>
         {/* Tricolor ribbon */}
-        <div style={{
-          position: "absolute", left: 0, right: 0, bottom: 0, height: 3,
-          background: "repeating-linear-gradient(90deg, #FFD700 0 14px, #DC2626 14px 28px, #1D4ED8 28px 42px)",
-          opacity: .8,
-        }} />
+        <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 3, background: "repeating-linear-gradient(90deg,#FFD700 0 14px,#DC2626 14px 28px,#1D4ED8 28px 42px)", opacity: 0.7 }} />
 
-        <div className="px-4 py-3 flex items-center justify-between gap-3">
-          {/* LEFT: sound btn */}
+        <div className="flex items-center justify-between px-4 py-2.5 gap-3">
+          {/* Title */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            <button
-              onClick={() => { const next = !isMuted; setIsMuted(next); if (sfx) sfx.muted = next; }}
-              className="p-1.5 rounded cursor-pointer text-white/50 hover:text-white/90 transition-colors"
-              style={{ fontFamily: "'Orbitron', monospace", fontSize: 9, letterSpacing: 1, background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.08)" }}
-              aria-label="Toggle sound"
-            >
-              {isMuted ? "♪ OFF" : "♪ ON"}
-            </button>
-          </div>
-
-          {/* CENTER: title block */}
-          <div className="flex flex-col items-center leading-none text-center flex-1 min-w-0">
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <Swords size={18} style={{ color: "#FFD700", flexShrink: 0, filter: "drop-shadow(0 0 10px rgba(255,215,0,.9))" }} />
-              <span className="arcade-title" style={{
-                fontSize: "clamp(16px,2.8vw,32px)",
-                whiteSpace: "nowrap",
-                animation: "titleFlicker 6s infinite",
-                letterSpacing: 10,
-              }}>
-                GUILDE · FIGHTERS
-              </span>
-              <Swords size={18} style={{ color: "#FFD700", flexShrink: 0, filter: "drop-shadow(0 0 10px rgba(255,215,0,.9))", transform: "scaleX(-1)" }} />
-            </div>
-            <span style={{
-              fontFamily: "'Orbitron',monospace",
-              fontSize: 8, letterSpacing: 4,
-              color: "rgba(255,215,0,.6)",
-              marginTop: 3,
-              animation: "selectBlink 2s step-start infinite",
-              whiteSpace: "nowrap",
-            }}>
-              ▶ SELECT YOUR FIGHTER ◀
+            <Swords size={16} style={{ color: "#FFD700", filter: "drop-shadow(0 0 8px rgba(255,215,0,0.8))" }} />
+            <span style={{ fontFamily: "'Orbitron',monospace", fontSize: "clamp(13px,2vw,20px)", fontWeight: 900, color: "#FFD700", letterSpacing: 6, textShadow: "0 0 12px rgba(255,215,0,0.6)" }}>
+              FIGHTERS
             </span>
+            <Swords size={16} style={{ color: "#FFD700", filter: "drop-shadow(0 0 8px rgba(255,215,0,0.8))", transform: "scaleX(-1)" }} />
           </div>
-
-          {/* RIGHT: timer */}
-          <div className="flex-shrink-0">
-            <ArcadeTimer />
-          </div>
+          {/* Fighter count */}
+          <span style={{ fontFamily: "'Orbitron',monospace", fontSize: 9, color: "rgba(255,255,255,0.4)", letterSpacing: 3 }}>
+            {filtered.length.toString().padStart(2, "0")} FIGHTERS
+          </span>
         </div>
 
         {/* Rank filters */}
-        <div className="px-4 pb-2 flex gap-1.5 overflow-x-auto custom-scroll">
+        <div className="px-3 pb-2.5 flex gap-1.5 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
           {(["Tous", ...RANK_FILTER_ORDER] as (Rank | "Tous")[]).map(r => {
             const active = filter === r;
             const col = r === "Tous" ? "#FFD700" : rc(r).main;
             return (
               <button
                 key={r}
-                onClick={() => { setFilter(r as Rank | "Tous"); sfx?.play("hover"); }}
-                className="r-pill px-3 py-1.5 rounded flex-shrink-0"
-                data-active={active ? "true" : "false"}
+                onClick={() => setFilter(r as Rank | "Tous")}
+                className="cursor-pointer flex-shrink-0"
                 style={{
-                  fontFamily: "'Barlow Condensed', sans-serif",
-                  fontSize: 12,
+                  fontFamily: "'Orbitron',monospace",
+                  fontSize: 8,
                   fontWeight: 700,
-                  letterSpacing: "1.5px",
-                  background: active ? `${col}22` : "rgba(255,255,255,.04)",
-                  color: active ? col : "rgba(255,255,255,.55)",
-                  border: `1px solid ${active ? col + "60" : "rgba(255,255,255,.09)"}`,
-                  boxShadow: active ? `0 0 14px ${col}38, inset 0 0 0 1px ${col}30` : "none",
+                  letterSpacing: 1.5,
+                  padding: "4px 10px",
+                  borderRadius: 2,
+                  background: active ? `${col}20` : "rgba(255,255,255,0.03)",
+                  color: active ? col : "rgba(255,255,255,0.45)",
+                  border: `1px solid ${active ? col + "55" : "rgba(255,255,255,0.07)"}`,
+                  boxShadow: active ? `0 0 10px ${col}30` : "none",
+                  transition: "all 0.15s",
                   textTransform: "uppercase",
+                  whiteSpace: "nowrap",
                 }}
               >
-                {r === "Tous" ? "TOUS" : r}
+                {r}
               </button>
             );
           })}
@@ -1389,281 +942,173 @@ function CharacterSelect({ members, mode, selected, onSelect, onFight }: {
       </div>
 
       {/* ─── MAIN LAYOUT ─── */}
-      <div className="relative z-10" style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, padding: "8px 8px 0" }}>
+      <div className="relative z-10 flex-1 flex overflow-hidden">
 
-        {/* Layout CSS via local style */}
-        <style jsx>{`
-          .kof-layout {
-            display: grid;
-            gap: 8px;
-            grid-template-columns: 1fr;
-            grid-template-rows: auto 1fr;
-            grid-template-areas:
-              "previews"
-              "center";
-            flex: 1;
-            min-height: 0;
-          }
-          @media (min-width: 900px) {
-            .kof-layout {
-              grid-template-columns: 40% minmax(0, 1fr);
-              grid-template-rows: 1fr;
-              grid-template-areas: "left center";
-              gap: 10px;
-            }
-          }
-          @media (min-width: 1200px) {
-            .kof-layout {
-              grid-template-columns: 38% minmax(0, 1fr);
-            }
-          }
-          .kof-area-left     { grid-area: left;  display: none; flex-direction: column; min-height: 0; }
-          .kof-area-center   { grid-area: center; display: flex; flex-direction: column; min-height: 0; overflow-y: auto; overflow-x: hidden; }
-          .kof-area-right    { display: none !important; }
-          .kof-area-previews { grid-area: previews; }
-          @media (min-width: 900px) {
-            .kof-area-left { display: flex; }
-            .kof-area-previews { display: none !important; }
-          }
+        {/* Desktop: SHOWCASE GAUCHE */}
+        <div className="hidden lg:flex flex-col flex-shrink-0" style={{ width: "clamp(240px,30%,380px)", borderRight: "1px solid rgba(255,255,255,0.06)" }}>
+          <FighterShowcase member={showcase} mode={mode} />
+        </div>
 
-          /* Mobile preview strip */
-          .kof-mobile-previews {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 6px;
-          }
-          .kof-mobile-slot {
-            position: relative;
-            aspect-ratio: 3/4;
-            border-radius: 6px;
-            overflow: hidden;
-          }
-          /* scroll bottom padding pour le bouton FIGHT flottant */
-          .kof-area-center { padding-bottom: 100px; }
-          @media (min-width: 900px) { .kof-area-center { padding-bottom: 0; } }
-        `}</style>
+        {/* GRILLE */}
+        <div className="flex-1 flex flex-col overflow-hidden">
 
-        <div className="kof-layout" style={{ flex: 1, minHeight: 0 }}>
-
-          {/* Mobile: mini P1/P2 preview */}
-          <div className="kof-area-previews">
-            <div className="kof-mobile-previews">
-              <div className="kof-mobile-slot kof-panel-p1">
-                <SidePortrait member={leftFighter} mode={mode} side="left" />
-              </div>
-              <div className="kof-mobile-slot kof-panel-p2">
-                <SidePortrait member={rightFighter} mode={mode} side="right" />
-              </div>
-            </div>
-          </div>
-
-          {/* Desktop: LEFT panel — Showcase du fighter sélectionné/survolé */}
-          <div className="kof-area-left" style={{ minHeight: 0, gap: 8 }}>
-            {/* Portrait principal plein écran */}
-            <div className="kof-panel-p1 relative overflow-hidden rounded" style={{ flex: "0 0 62%", minHeight: 0 }}>
-              <div className="kof-panel-streak" style={{ background: "linear-gradient(90deg, transparent, rgba(220,38,38,.8), transparent)" }} />
-              <SidePortrait member={leftFighter ?? rightFighter} mode={mode} side="left" />
-              {/* Indicateur P1 sélectionné */}
-              {leftFighter && (
-                <div style={{
-                  position: "absolute", top: 10, left: 10, zIndex: 20,
-                  background: "rgba(220,38,38,.85)", color: "#fff",
-                  fontFamily: "'Orbitron',monospace", fontSize: 9, letterSpacing: 3,
-                  padding: "3px 10px", borderRadius: 2,
-                  boxShadow: "0 0 14px rgba(220,38,38,.6)",
-                }}>P1 SELECTED</div>
+          {/* Mobile: showcase compact (2 slots) */}
+          <div className="lg:hidden flex gap-2 px-2 pt-2 flex-shrink-0" style={{ height: 120 }}>
+            {/* P1 */}
+            <div className="flex-1 relative rounded overflow-hidden" style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(220,38,38,0.25)" }}>
+              {selected ? (
+                <>
+                  {portrait(selected, mode) && !videoSrc(selected, mode) && (
+                    <Image src={portrait(selected, mode)} alt={selected.name} fill style={{ objectFit: "cover", objectPosition: "top", filter: "saturate(0.9)" }} />
+                  )}
+                  <div className="absolute inset-0" style={{ background: "linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 60%)" }} />
+                  <div className="absolute bottom-1 left-1 right-1 text-center" style={{ fontFamily: "'Orbitron',monospace", fontSize: 7, color: "#fff", letterSpacing: 1 }}>
+                    <div style={{ color: "#FF3B30", fontSize: 6, letterSpacing: 2, marginBottom: 1 }}>P1</div>
+                    {selected.name.toUpperCase()}
+                  </div>
+                </>
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ fontFamily: "'Orbitron',monospace" }}>
+                  <span style={{ fontSize: 20, color: "rgba(220,38,38,0.15)", fontWeight: 900 }}>?</span>
+                  <span style={{ fontSize: 6, color: "rgba(255,255,255,0.2)", letterSpacing: 2, marginTop: 2 }}>P1</span>
+                </div>
               )}
             </div>
-            {/* Detail panel en dessous */}
-            <div style={{ flex: "0 0 38%", minHeight: 0, overflowY: "auto" }} className="custom-scroll">
-              <AnimatePresence mode="wait">
-                {(leftFighter ?? rightFighter) ? (
-                  <DetailPanel key={(leftFighter ?? rightFighter)!.id} member={(leftFighter ?? rightFighter)!} mode={mode} />
-                ) : (
-                  <motion.div
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                    style={{
-                      height: "100%", display: "flex", alignItems: "center", justifyContent: "center",
-                      flexDirection: "column", gap: 10,
-                      color: "rgba(255,255,255,.15)",
-                      fontFamily: "'Orbitron',monospace", fontSize: 11, letterSpacing: 3, textAlign: "center",
-                    }}
-                  >
-                    <span style={{ fontSize: 32, opacity: .3 }}>?</span>
-                    <span>SURVOLE UN FIGHTER</span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-
-          {/* CENTER: roster grid */}
-          <div className="kof-area-center flex flex-col gap-2">
-
-            {/* "CHOOSE YOUR FIGHTER" banner */}
-            <div className="kof-choose-banner rounded-sm">
-              <span className="arcade-coin" style={{ fontSize: 10, letterSpacing: 4 }}>
-                ★ CHOOSE · YOUR · FIGHTER ★
-              </span>
-              <span style={{
-                fontFamily: "'Orbitron', monospace",
-                fontSize: 9,
-                color: "rgba(255,255,255,.5)",
-                letterSpacing: 2,
-              }}>
-                [ {filtered.length.toString().padStart(2, "0")} · FIGHTERS ]
-              </span>
-            </div>
-
-            {/* Roster grid */}
-            <div className="kof-roster-panel rounded-sm p-1.5 sm:p-2 flex-1">
-              <div className="kof-roster">
-                {filtered.map((m, i) => (
-                  <FighterCard
-                    key={m.id}
-                    member={m}
-                    mode={mode}
-                    selected={selected?.id === m.id}
-                    hovered={hovered?.id === m.id}
-                    idx={i}
-                    onSelect={onSelect}
-                    onHover={setHovered}
-                  />
-                ))}
-
-                {/* Random tile */}
-                <motion.button
-                  initial={{ opacity: 0, scale: .7 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: Math.min(filtered.length * .01, .28) + .05 }}
-                  onClick={() => {
-                    const list = selected ? members.filter(m => m.id !== selected.id) : members;
-                    if (list.length) {
-                      onSelect(list[Math.floor(Math.random() * list.length)]);
-                      sfx?.play("select");
-                    }
-                  }}
-                  className="kof-tile cursor-pointer flex items-center justify-center"
-                  style={{
-                    background: "linear-gradient(160deg, rgba(255,215,0,.12), rgba(0,0,0,.85))",
-                    border: "1px dashed rgba(255,215,0,.35)",
-                  }}
-                  whileHover={{ scale: 1.06 }}
-                >
-                  <div className="flex flex-col items-center gap-1">
-                    <motion.div animate={{ rotate: [0, 12, -12, 6, -6, 0] }} transition={{ duration: 1.8, repeat: Infinity, repeatDelay: 2.5 }}>
-                      <Dices size={20} style={{ color: "#FFD700", filter: "drop-shadow(0 0 6px rgba(255,215,0,.5))" }} />
-                    </motion.div>
-                    <span style={{
-                      fontFamily: "'Orbitron', monospace",
-                      fontSize: 7,
-                      fontWeight: 900,
-                      color: "rgba(255,215,0,.7)",
-                      letterSpacing: 1,
-                    }}>RDM</span>
+            {/* P2 */}
+            <div className="flex-1 relative rounded overflow-hidden" style={{ background: "rgba(29,78,216,0.08)", border: "1px solid rgba(29,78,216,0.25)" }}>
+              {hovered && hovered.id !== selected?.id ? (
+                <>
+                  {portrait(hovered, mode) && !videoSrc(hovered, mode) && (
+                    <Image src={portrait(hovered, mode)} alt={hovered.name} fill style={{ objectFit: "cover", objectPosition: "top", filter: "saturate(0.9) scaleX(-1)", transform: "scaleX(-1)" }} />
+                  )}
+                  <div className="absolute inset-0" style={{ background: "linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 60%)" }} />
+                  <div className="absolute bottom-1 left-1 right-1 text-center" style={{ fontFamily: "'Orbitron',monospace", fontSize: 7, color: "#fff", letterSpacing: 1 }}>
+                    <div style={{ color: "#1DA1F2", fontSize: 6, letterSpacing: 2, marginBottom: 1 }}>P2</div>
+                    {hovered.name.toUpperCase()}
                   </div>
-                </motion.button>
-              </div>
+                </>
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ fontFamily: "'Orbitron',monospace" }}>
+                  <span style={{ fontSize: 20, color: "rgba(29,78,216,0.15)", fontWeight: 900 }}>?</span>
+                  <span style={{ fontSize: 6, color: "rgba(255,255,255,0.2)", letterSpacing: 2, marginTop: 2 }}>P2</span>
+                </div>
+              )}
             </div>
-
-            {/* Hovered/selected name caption */}
-            <div style={{ minHeight: 26, textAlign: "center" }}>
-              <AnimatePresence mode="wait">
-                {(hovered || selected) && (
-                  <motion.div
-                    key={(hovered ?? selected)!.id + "-cap"}
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -5 }}
-                    transition={{ duration: .14 }}
-                    style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 8 }}
-                  >
-                    <span style={{
-                      fontFamily: "'Bebas Neue', sans-serif",
-                      fontSize: "clamp(16px,2vw,22px)",
-                      color: "#fff",
-                      letterSpacing: 3,
-                      textShadow: `0 0 12px ${rc((hovered ?? selected)!.rank).glow}`,
-                    }}>
-                      {(hovered ?? selected)!.name.toUpperCase()}
-                    </span>
-                    <span style={{
-                      fontFamily: "'Orbitron', monospace",
-                      fontSize: 8,
-                      color: rc((hovered ?? selected)!.rank).main,
-                      letterSpacing: 2,
-                    }}>
-                      {(hovered ?? selected)!.rank.toUpperCase()}
-                    </span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Detail panel — visible only on mobile (desktop uses left panel) */}
-            {selected && (
-              <div className="mt-4 max-w-[720px] mx-auto w-full block lg:hidden">
-                <AnimatePresence mode="wait">
-                  <DetailPanel key={selected.id} member={selected} mode={mode} />
-                </AnimatePresence>
-              </div>
-            )}
           </div>
 
-        </div>
-        </div>{/* closes max-w inner */}
-      </div>{/* closes relative z-10 outer */}
+          {/* Banner */}
+          <div className="flex-shrink-0 px-2 pt-2 pb-1 lg:pt-3 lg:pb-2">
+            <div style={{ fontFamily: "'Orbitron',monospace", fontSize: 9, color: "rgba(255,215,0,0.5)", letterSpacing: 5, textAlign: "center" }}>
+              ★ CHOOSE YOUR FIGHTER ★
+            </div>
+          </div>
 
-      {/* ─── FIGHT BUTTON ─── */}
+          {/* Roster grid */}
+          <div className="flex-1 overflow-y-auto px-2 pb-32 lg:pb-4" style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(220,38,38,0.3) transparent" }}>
+            <div style={{
+              display: "grid",
+              gap: "clamp(4px,0.6vw,7px)",
+              gridTemplateColumns: "repeat(3,1fr)",
+            }}
+              className="roster-grid"
+            >
+              <style jsx>{`
+                @media(min-width:480px)  { .roster-grid { grid-template-columns: repeat(4,1fr) !important; } }
+                @media(min-width:768px)  { .roster-grid { grid-template-columns: repeat(5,1fr) !important; } }
+                @media(min-width:1280px) { .roster-grid { grid-template-columns: repeat(5,1fr) !important; } }
+                @media(min-width:1536px) { .roster-grid { grid-template-columns: repeat(6,1fr) !important; } }
+              `}</style>
+              {filtered.map((m, i) => (
+                <FighterCard
+                  key={m.id}
+                  member={m}
+                  mode={mode}
+                  selected={selected?.id === m.id}
+                  hovered={hovered?.id === m.id}
+                  idx={i}
+                  onSelect={onSelect}
+                  onHover={setHovered}
+                />
+              ))}
+              {/* Tile aléatoire */}
+              <motion.button
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: Math.min(filtered.length * 0.012, 0.3) + 0.05 }}
+                onClick={() => {
+                  const pool = selected ? members.filter(m => m.id !== selected.id) : members;
+                  if (pool.length) onSelect(pool[Math.floor(Math.random() * pool.length)]);
+                }}
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.97 }}
+                className="cursor-pointer"
+                style={{
+                  position: "relative",
+                  aspectRatio: "3/4",
+                  overflow: "hidden",
+                  background: "linear-gradient(160deg,rgba(255,215,0,0.08),rgba(0,0,0,0.85))",
+                  border: "1px dashed rgba(255,215,0,0.3)",
+                  borderRadius: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexDirection: "column",
+                  gap: 4,
+                }}
+              >
+                <motion.div animate={{ rotate: [0, 12, -12, 0] }} transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}>
+                  <Dices size={22} style={{ color: "#FFD700", filter: "drop-shadow(0 0 6px rgba(255,215,0,0.5))" }} />
+                </motion.div>
+                <span style={{ fontFamily: "'Orbitron',monospace", fontSize: 7, fontWeight: 900, color: "rgba(255,215,0,0.65)", letterSpacing: 1 }}>RDM</span>
+              </motion.button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ─── FIGHT BUTTON flottant ─── */}
       <AnimatePresence>
-        {selected && onFight && (
+        {selected && (
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 30 }}
+            exit={{ opacity: 0, y: 40 }}
             transition={{ type: "spring", stiffness: 200, damping: 18 }}
-            className="fixed bottom-0 left-0 right-0 z-[9998]"
+            className="fixed bottom-0 left-0 right-0 z-[9999]"
             style={{
-              background: "linear-gradient(to top, rgba(0,0,0,.95) 0%, rgba(0,0,0,.65) 70%, transparent 100%)",
+              background: "linear-gradient(to top,rgba(0,0,0,0.98) 0%,rgba(0,0,0,0.7) 60%,transparent 100%)",
               paddingTop: 24,
-              paddingBottom: "max(80px, calc(env(safe-area-inset-bottom) + 80px))",
+              paddingBottom: "max(28px,env(safe-area-inset-bottom,28px))",
             }}
           >
-            {/* Hint: P1 selected, click a second fighter to fight */}
-            <div className="text-center mb-2.5" style={{ fontFamily: "'Orbitron', monospace", fontSize: 9, color: "rgba(255,255,255,.38)", letterSpacing: "3px" }}>
-              <span style={{ color: "#FF3B30", fontWeight: 700 }}>P1 </span>
-              <span style={{ color: rc(selected.rank).main }}>{selected.name.toUpperCase()}</span>
-              <span style={{ margin: "0 8px", color: "rgba(255,255,255,.2)" }}>·</span>
-              CLIQUE UN 2ÈME FIGHTER OU LANCE UN COMBAT ALÉATOIRE
+            <div className="text-center mb-2" style={{ fontFamily: "'Orbitron',monospace", fontSize: 8, color: "rgba(255,255,255,0.35)", letterSpacing: 3 }}>
+              <span style={{ color: rc(selected.rank).main, fontWeight: 700 }}>{selected.name.toUpperCase()}</span>
+              <span style={{ margin: "0 6px", opacity: 0.3 }}>·</span>
+              CLIQUE UN 2ÈME FIGHTER OU LANCE UN COMBAT
             </div>
             <div className="flex justify-center px-4">
               <motion.button
                 onClick={() => onFight(selected)}
                 whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: .95 }}
-                className="kof-fight-btn px-12 sm:px-16 py-3.5 cursor-pointer font-bold"
+                whileTap={{ scale: 0.95 }}
+                className="cursor-pointer flex items-center gap-3"
                 style={{
-                  background: "linear-gradient(135deg,#FFD700 0%,#DC2626 50%,#7a0f12 100%)",
-                  fontFamily: "'Black Ops One', 'Orbitron', monospace",
-                  fontSize: "clamp(14px, 1.8vw, 18px)",
-                  color: "#fff",
-                  letterSpacing: 7,
-                  textShadow: "0 2px 4px rgba(0,0,0,.8), 0 0 16px rgba(255,215,0,.4)",
-                  boxShadow:
-                    "0 0 35px rgba(220,38,38,.65)," +
-                    "0 16px 44px rgba(0,0,0,.7)," +
-                    "inset 0 0 0 2px rgba(255,215,0,.55)," +
-                    "inset 0 2px 0 rgba(255,255,255,.22)," +
-                    "inset 0 -3px 0 rgba(0,0,0,.4)",
+                  fontFamily: "'Orbitron',monospace",
+                  fontSize: "clamp(11px,1.5vw,14px)",
+                  fontWeight: 900,
+                  color: "#000",
+                  background: "linear-gradient(135deg,#FFD700 0%,#FF6B35 100%)",
+                  padding: "13px 40px",
                   border: "none",
+                  borderRadius: 2,
+                  letterSpacing: 5,
+                  boxShadow: "0 0 30px rgba(255,107,53,0.55),0 12px 30px rgba(0,0,0,0.7)",
+                  clipPath: "polygon(14px 0,100% 0,calc(100% - 14px) 100%,0 100%)",
                 }}
               >
-                <span className="flex items-center gap-3 relative z-10">
-                  <Swords size={16} />
-                  COMBAT ALÉATOIRE
-                  <Swords size={16} style={{ transform: "scaleX(-1)" }} />
-                </span>
+                <Zap size={16} />
+                COMBAT ALÉATOIRE
+                <Zap size={16} />
               </motion.button>
             </div>
           </motion.div>
@@ -1671,24 +1116,69 @@ function CharacterSelect({ members, mode, selected, onSelect, onFight }: {
       </AnimatePresence>
 
       {/* CRT vignette */}
-      <div className="fixed inset-0 pointer-events-none z-[2]" style={{
-        background: "radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.55) 100%)",
-      }} />
+      <div className="fixed inset-0 pointer-events-none z-[1]" style={{ background: "radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,0.5) 100%)" }} />
     </div>
   );
 }
 
-/* ════════════════════════════════════════════════════
-   MAIN PAGE
-   ════════════════════════════════════════════════════ */
+/* ═══════════════════════════════
+   VIEW MODE TOGGLE
+═══════════════════════════════ */
+function ViewToggle({ mode, setMode }: { mode: ViewMode; setMode: (m: ViewMode) => void }) {
+  return (
+    <div style={{
+      position: "fixed",
+      bottom: "28px",
+      left: "50%",
+      transform: "translateX(-50%)",
+      zIndex: 10002,
+      display: "flex",
+      background: "rgba(4,4,12,0.92)",
+      backdropFilter: "blur(16px)",
+      padding: 4,
+      borderRadius: 100,
+      boxShadow: "0 8px 30px rgba(0,0,0,0.8)",
+      border: "1px solid rgba(255,215,0,0.12)",
+    }}>
+      {(["real", "anime"] as ViewMode[]).map(m => (
+        <motion.button
+          key={m}
+          onClick={() => setMode(m)}
+          whileTap={{ scale: 0.94 }}
+          className="cursor-pointer"
+          style={{
+            padding: "9px 22px",
+            borderRadius: 100,
+            border: "none",
+            fontFamily: "'Orbitron',monospace",
+            fontSize: 10,
+            fontWeight: 900,
+            textTransform: "uppercase",
+            letterSpacing: 2,
+            background: mode === m ? "#FFD700" : "transparent",
+            color: mode === m ? "#000" : "rgba(255,255,255,0.45)",
+            transition: "all 0.2s",
+            boxShadow: mode === m ? "0 3px 12px rgba(255,215,0,0.4)" : "none",
+          }}
+        >
+          {m === "real" ? "Réel" : "Anime"}
+        </motion.button>
+      ))}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════
+   PAGE PRINCIPALE
+═══════════════════════════════ */
 export default function FightersPage() {
-  const [members, setMembers]     = useState<Member[]>([]);
-  const [loading, setLoading]     = useState(true);
-  const [mode, setMode]           = useState<ViewMode>("anime");
-  const [selected, setSelected]   = useState<Member | null>(null);
-  const [phase, setPhase]         = useState<Phase>("select");
+  const [members, setMembers]   = useState<Member[]>([]);
+  const [loading, setLoading]   = useState(true);
+  const [mode, setMode]         = useState<ViewMode>("anime");
+  const [selected, setSelected] = useState<Member | null>(null);
+  const [phase, setPhase]       = useState<Phase>("select");
   const [fightData, setFightData] = useState<{ p1: Member; p2: Member } | null>(null);
-  const [mounted, setMounted]     = useState(false);
+  const [mounted, setMounted]   = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -1699,25 +1189,35 @@ export default function FightersPage() {
         const { data, error } = await supabase.from("fighters").select("*").order("id", { ascending: true });
         if (error) throw new Error(error.message);
         if (data && !cancelled) {
-          const mapped = data.map((m: any) => ({
-            id: m.id, name: m.name, rank: m.rank, birthday: m.birthday, bio: m.bio ?? "",
-            photo: m.photo ?? "", animeChar: m.animechar ?? "", color: m.color ?? "#FFD700",
-            badge: m.badge, rankJP: m.rankjp,
-            stats: m.stats ?? { force: 80, vitesse: 80, technique: 80 },
-            special: m.special ?? { name: "Inconnu", effect: "?" },
-            photoVideo: m.photovideo ?? "",
-            animeVideo: m.animevideo ?? "",
-          }));
-          setMembers(mapped);
+          setMembers(data.map((m: Record<string, unknown>) => ({
+            id: m.id as number,
+            name: m.name as string,
+            rank: m.rank as Rank,
+            birthday: (m.birthday as string) ?? "",
+            bio: (m.bio as string) ?? "",
+            photo: (m.photo as string) ?? "",
+            animeChar: (m.animechar as string) ?? "",
+            color: (m.color as string) ?? "#FFD700",
+            badge: m.badge as string | undefined,
+            rankJP: m.rankjp as string | undefined,
+            stats: (m.stats as { force: number; vitesse: number; technique: number }) ?? { force: 80, vitesse: 80, technique: 80 },
+            special: (m.special as { name: string; effect: string }) ?? { name: "Inconnu", effect: "" },
+            photoVideo: (m.photovideo as string) ?? "",
+            animeVideo: (m.animevideo as string) ?? "",
+          })));
         }
       } catch {
-        try { const { members: lm } = await import("../../data/members"); if (!cancelled) setMembers(lm); } catch { /* */ }
-      } finally { if (!cancelled) setLoading(false); }
+        try {
+          const { members: lm } = await import("../../data/members");
+          if (!cancelled) setMembers(lm);
+        } catch { /* */ }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     })();
     return () => { cancelled = true; };
   }, []);
 
-  // Déclaré avant handleSelect pour éviter la stale closure
   const startFight = useCallback((p1: Member, p2: Member) => {
     setFightData({ p1, p2 });
     setPhase("intro");
@@ -1735,11 +1235,9 @@ export default function FightersPage() {
     }
   }, [selected, startFight]);
 
-  const handleIntroDone = useCallback(() => setPhase("fight"), []);
-
   const handleFight = useCallback((fighter: Member) => {
-    if (members.length >= 2) {
-      const others = members.filter(m => m.id !== fighter.id);
+    const others = members.filter(m => m.id !== fighter.id);
+    if (others.length) {
       const random = others[Math.floor(Math.random() * others.length)];
       setSelected(null);
       startFight(fighter, random);
@@ -1752,61 +1250,25 @@ export default function FightersPage() {
     setPhase("select");
   }, []);
 
-  if (loading) return <><Styles /><LoadingScreen /></>;
+  if (loading) return <LoadingScreen />;
 
   return (
     <>
-      <Styles />
       {phase === "select" && (
-        <>
-          <div style={{ height: "100dvh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-            <GuildeHeader activePage="fighters" accentColor="#FFD700" bgColor="rgba(4,4,12,0.92)" textColor="#fff" />
-            <CharacterSelect members={members} mode={mode} selected={selected} onSelect={handleSelect} onFight={handleFight} />
-          </div>
-          {mounted && phase === "select" && createPortal(
-            <div style={{
-              position: "fixed",
-              bottom: "40px",
-              left: "50%",
-              transform: "translateX(-50%)",
-              zIndex: 10002,
-              display: "flex",
-              background: "rgba(4,4,12,0.92)",
-              backdropFilter: "blur(20px)",
-              WebkitBackdropFilter: "blur(20px)",
-              padding: "5px",
-              borderRadius: "100px",
-              boxShadow: "0 10px 40px rgba(0,0,0,0.8)",
-              border: "1px solid rgba(255,215,0,0.15)",
-            }}>
-              {(["real", "anime"] as ViewMode[]).map((m) => (
-                <motion.button
-                  key={m}
-                  onClick={() => { setMode(m); sfx?.play("select"); }}
-                  whileTap={{ scale: 0.93 }}
-                  style={{
-                    padding: "10px 24px",
-                    borderRadius: "100px",
-                    border: "none", cursor: "pointer",
-                    fontFamily: "'Barlow Condensed', sans-serif",
-                    fontSize: "15px", fontWeight: 800,
-                    textTransform: "uppercase", letterSpacing: "0.1em",
-                    background: mode === m ? "#FFD700" : "transparent",
-                    color: mode === m ? "#000" : "rgba(255,255,255,0.5)",
-                    transition: "all 0.2s",
-                    boxShadow: mode === m ? "0 4px 15px rgba(255,215,0,0.5)" : "none",
-                  }}
-                >
-                  {m === "real" ? "Réel" : "Anime"}
-                </motion.button>
-              ))}
-            </div>,
-            document.body
-          )}
-        </>
+        <div style={{ height: "100dvh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          <GuildeHeader activePage="fighters" accentColor="#FFD700" bgColor="rgba(4,4,12,0.92)" textColor="#fff" />
+          <CharacterSelect
+            members={members}
+            mode={mode}
+            selected={selected}
+            onSelect={handleSelect}
+            onFight={handleFight}
+          />
+          {mounted && createPortal(<ViewToggle mode={mode} setMode={setMode} />, document.body)}
+        </div>
       )}
       {phase === "intro" && fightData && (
-        <FightIntro p1={fightData.p1} p2={fightData.p2} mode={mode} onFinish={handleIntroDone} />
+        <FightIntro p1={fightData.p1} p2={fightData.p2} mode={mode} onFinish={() => setPhase("fight")} />
       )}
       {phase === "fight" && fightData && (
         <Arena p1={fightData.p1} p2={fightData.p2} mode={mode} onExit={handleExit} />
