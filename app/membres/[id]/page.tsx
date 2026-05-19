@@ -2,6 +2,8 @@ import { Metadata } from "next";
 import { supabase } from "../../../lib/supabase";
 import MemberProfileClient from "./MemberProfileClient";
 
+export const dynamic = "force-dynamic";
+
 interface Props {
   params: Promise<{ id: string }>;
 }
@@ -11,8 +13,10 @@ async function getMember(id: number) {
     .from("fighters")
     .select("*")
     .eq("id", id)
-    .eq("hidden", false)
     .single();
+
+  if (!data) return null;
+  if (data.hidden === true) return null;
   return data;
 }
 
@@ -24,6 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: "Membre introuvable — Guilde Otaku" };
   }
 
+  const baseUrl = "https://guilde-otaku.vercel.app";
   const ogParams = new URLSearchParams({
     name: member.name,
     rank: member.rank,
@@ -32,7 +37,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     ...(member.badge ? { badge: member.badge } : {}),
   });
 
-  const ogImageUrl = `/api/og/member?${ogParams.toString()}`;
+  const ogImageUrl = `${baseUrl}/api/og/member?${ogParams.toString()}`;
   const title = `${member.name} — Guilde Otaku`;
   const description = member.bio
     ? member.bio.slice(0, 155) + (member.bio.length > 155 ? "…" : "")
