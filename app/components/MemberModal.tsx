@@ -505,15 +505,16 @@ function ModalContent({ member, onClose, viewMode }: {
                   aria-label="Partager"
                   style={{
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    width: 36, height: 36, borderRadius: 100,
-                    background: "rgba(0,0,0,0.52)",
+                    width: 38, height: 38, borderRadius: 100,
+                    background: `linear-gradient(135deg, ${accent}dd, ${accent}88)`,
                     backdropFilter: "blur(14px)",
                     WebkitBackdropFilter: "blur(14px)",
-                    border: "1px solid rgba(255,255,255,0.22)",
-                    color: "#fff", cursor: "pointer",
+                    border: "none",
+                    color: "#000", cursor: "pointer",
+                    boxShadow: `0 4px 16px ${accent}55`,
                   }}
                 >
-                  <Share2 size={14} />
+                  <Share2 size={15} strokeWidth={2.5} />
                 </button>
               </motion.div>
 
@@ -588,13 +589,15 @@ function ModalContent({ member, onClose, viewMode }: {
                   onClick={handleShare}
                   aria-label="Partager le profil"
                   style={{
-                    display: "flex", alignItems: "center", gap: 6,
-                    padding: "8px 18px", borderRadius: 100,
-                    background: btnBg, border: `1px solid ${btnBorder}`,
-                    color: textPrimary, cursor: "pointer",
+                    display: "flex", alignItems: "center", gap: 7,
+                    padding: "8px 20px", borderRadius: 100,
+                    background: `linear-gradient(135deg, ${accent}22, ${accent}11)`,
+                    border: `1.5px solid ${accent}66`,
+                    color: accent, cursor: "pointer",
                     fontFamily: "'Barlow Condensed', sans-serif",
                     fontSize: 14, fontWeight: 700, textTransform: "uppercase",
-                    transition: "background 0.18s",
+                    letterSpacing: "0.06em",
+                    transition: "all 0.2s",
                   }}
                 >
                   <Share2 size={14} />
@@ -667,22 +670,45 @@ function ModalContent({ member, onClose, viewMode }: {
       <AnimatePresence>
         {shareToast && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.25 }}
+            initial={{ opacity: 0, y: 30, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
             style={{
-              position: "fixed", bottom: isMobile ? 80 : 100, left: "50%", transform: "translateX(-50%)",
+              position: "fixed", bottom: isMobile ? 90 : 110, left: "50%", transform: "translateX(-50%)",
               zIndex: 10010,
-              padding: "10px 24px", borderRadius: 100,
-              background: "rgba(201,168,76,0.95)",
-              color: "#000", fontFamily: "'Barlow Condensed', sans-serif",
-              fontSize: 13, fontWeight: 800, letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "14px 28px", borderRadius: 14,
+              background: "rgba(10,10,18,0.92)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              border: `1px solid ${accent}`,
+              boxShadow: `0 12px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(201,168,76,0.2), inset 0 1px 0 rgba(255,255,255,0.05)`,
             }}
           >
-            Lien copié !
+            <div style={{
+              width: 28, height: 28, borderRadius: 8,
+              background: `linear-gradient(135deg, ${accent}, #ffd700)`,
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <Share2 size={13} color="#000" strokeWidth={2.5} />
+            </div>
+            <div>
+              <p style={{
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontSize: 14, fontWeight: 800, color: "#fff",
+                letterSpacing: "0.04em", margin: 0, lineHeight: 1.2,
+              }}>
+                Lien copié
+              </p>
+              <p style={{
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.45)",
+                margin: 0, lineHeight: 1.2,
+              }}>
+                Prêt à partager sur WhatsApp, Insta...
+              </p>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
