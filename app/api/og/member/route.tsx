@@ -16,142 +16,64 @@ export async function GET(req: NextRequest) {
       (
         <div
           style={{
-            width: "100%",
             height: "100%",
+            width: "100%",
             display: "flex",
-            background: "linear-gradient(135deg, #0a0a12 0%, #1a1a2e 50%, #0d0d14 100%)",
-            position: "relative",
-            overflow: "hidden",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "#0a0a12",
+            backgroundImage: photo
+              ? `url(${photo})`
+              : "linear-gradient(135deg, #0d0d14 0%, #1a1a2e 100%)",
+            backgroundSize: "cover",
+            backgroundPosition: "center 20%",
+            color: "#fff",
+            fontFamily: "Inter, sans-serif",
           }}
         >
-          {/* Decorative circles */}
+          {/* Overlay sombre */}
           <div
             style={{
               position: "absolute",
-              top: -80,
-              right: -80,
-              width: 400,
-              height: 400,
-              borderRadius: "50%",
-              background: `radial-gradient(circle, ${color}15 0%, transparent 70%)`,
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              bottom: -120,
-              left: -60,
-              width: 500,
-              height: 500,
-              borderRadius: "50%",
-              background: `radial-gradient(circle, ${color}10 0%, transparent 60%)`,
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: photo
+                ? "linear-gradient(to right, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.85) 55%, rgba(0,0,0,0.95) 100%)"
+                : "transparent",
             }}
           />
 
-          {/* Photo section */}
+          {/* Contenu */}
           <div
             style={{
-              width: "45%",
-              height: "100%",
-              display: "flex",
               position: "relative",
-              overflow: "hidden",
-            }}
-          >
-            {photo ? (
-              <img
-                src={photo}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  objectPosition: "center 15%",
-                }}
-              />
-            ) : (
-              <div
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  background: `linear-gradient(135deg, ${color}20, ${color}05)`,
-                  fontSize: 140,
-                }}
-              >
-                ⚔
-              </div>
-            )}
-            {/* Photo overlay gradient */}
-            <div
-              style={{
-                position: "absolute",
-                top: 0,
-                right: 0,
-                width: "40%",
-                height: "100%",
-                background: "linear-gradient(to left, #0a0a12, transparent)",
-              }}
-            />
-            {/* Bottom fade */}
-            <div
-              style={{
-                position: "absolute",
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: "30%",
-                background: "linear-gradient(to top, #0a0a12, transparent)",
-              }}
-            />
-            {/* Accent line */}
-            <div
-              style={{
-                position: "absolute",
-                top: 0,
-                right: 0,
-                width: 4,
-                height: "100%",
-                background: color,
-              }}
-            />
-          </div>
-
-          {/* Info section */}
-          <div
-            style={{
-              width: "55%",
-              height: "100%",
               display: "flex",
               flexDirection: "column",
+              alignItems: "flex-end",
               justifyContent: "center",
-              padding: "60px 50px 60px 40px",
+              width: "100%",
+              height: "100%",
+              padding: "60px 80px",
             }}
           >
-            {/* Guild branding */}
+            {/* Branding */}
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: 12,
-                marginBottom: 32,
+                marginBottom: 24,
               }}
             >
-              <div
-                style={{
-                  width: 32,
-                  height: 3,
-                  background: color,
-                  borderRadius: 2,
-                }}
-              />
+              <div style={{ width: 28, height: 3, background: color, marginRight: 12 }} />
               <span
                 style={{
-                  fontSize: 18,
+                  fontSize: 20,
                   fontWeight: 700,
                   color: color,
-                  letterSpacing: "0.25em",
+                  letterSpacing: "0.2em",
                   textTransform: "uppercase",
                 }}
               >
@@ -159,51 +81,44 @@ export async function GET(req: NextRequest) {
               </span>
             </div>
 
-            {/* Name */}
-            <h1
+            {/* Nom */}
+            <div
               style={{
-                fontSize: 72,
+                fontSize: 76,
                 fontWeight: 900,
                 color: "#ffffff",
-                lineHeight: 0.9,
+                lineHeight: 1,
                 textTransform: "uppercase",
                 fontStyle: "italic",
-                margin: "0 0 16px 0",
-                letterSpacing: "-0.02em",
+                textAlign: "right",
+                marginBottom: 20,
+                textShadow: "0 4px 20px rgba(0,0,0,0.8)",
               }}
             >
               {name}
-            </h1>
+            </div>
 
-            {/* Rank */}
+            {/* Rang */}
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: 12,
-                marginBottom: badge ? 20 : 0,
+                padding: "10px 24px",
+                border: `2px solid ${color}`,
+                borderRadius: 8,
               }}
             >
-              <div
+              <span
                 style={{
-                  padding: "8px 20px",
-                  borderRadius: 6,
-                  border: `2px solid ${color}`,
-                  background: `${color}15`,
+                  fontSize: 24,
+                  fontWeight: 800,
+                  color: color,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.12em",
                 }}
               >
-                <span
-                  style={{
-                    fontSize: 22,
-                    fontWeight: 800,
-                    color: color,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.12em",
-                  }}
-                >
-                  {rank}
-                </span>
-              </div>
+                {rank}
+              </span>
             </div>
 
             {/* Badge */}
@@ -212,11 +127,10 @@ export async function GET(req: NextRequest) {
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 8,
-                  marginTop: 8,
+                  marginTop: 16,
                 }}
               >
-                <span style={{ fontSize: 22 }}>🏆</span>
+                <span style={{ fontSize: 20, marginRight: 8 }}>🏆</span>
                 <span
                   style={{
                     fontSize: 18,
@@ -230,52 +144,27 @@ export async function GET(req: NextRequest) {
                 </span>
               </div>
             )}
-
-            {/* Footer line */}
-            <div
-              style={{
-                position: "absolute",
-                bottom: 40,
-                right: 50,
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
-              <span
-                style={{
-                  fontSize: 14,
-                  color: "rgba(255,255,255,0.35)",
-                  letterSpacing: "0.15em",
-                  textTransform: "uppercase",
-                }}
-              >
-                guilde-otaku.vercel.app
-              </span>
-            </div>
           </div>
 
-          {/* Top-right corner accent */}
+          {/* Accent coins */}
+          <div style={{ position: "absolute", top: 0, left: 0, width: 100, height: 4, background: color }} />
+          <div style={{ position: "absolute", top: 0, left: 0, width: 4, height: 100, background: color }} />
+          <div style={{ position: "absolute", bottom: 0, right: 0, width: 100, height: 4, background: color }} />
+          <div style={{ position: "absolute", bottom: 0, right: 0, width: 4, height: 100, background: color }} />
+
+          {/* URL */}
           <div
             style={{
               position: "absolute",
-              top: 0,
-              right: 0,
-              width: 120,
-              height: 4,
-              background: color,
+              bottom: 28,
+              left: 40,
+              fontSize: 14,
+              color: "rgba(255,255,255,0.4)",
+              letterSpacing: "0.12em",
             }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              top: 0,
-              right: 0,
-              width: 4,
-              height: 120,
-              background: color,
-            }}
-          />
+          >
+            guilde-otaku.vercel.app
+          </div>
         </div>
       ),
       {

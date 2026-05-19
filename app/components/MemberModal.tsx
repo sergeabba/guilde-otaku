@@ -155,10 +155,10 @@ function ModalContent({ member, onClose, viewMode }: {
             {stats.map((s) => (
               <div key={s.label}>
                 <div style={{ height: 1.5, background: accent }} />
-                <div style={{ padding: "18px 20px", textAlign: "center" }}>
+                <div style={{ padding: "20px 20px", textAlign: "center" }}>
                   <p style={{
                     fontFamily: "'Barlow Condensed', sans-serif",
-                    fontSize: 10, fontWeight: 800,
+                    fontSize: 12, fontWeight: 800,
                     color: accent, textTransform: "uppercase",
                     letterSpacing: "0.22em", marginBottom: 6,
                   }}>
@@ -166,7 +166,7 @@ function ModalContent({ member, onClose, viewMode }: {
                   </p>
                   <p style={{
                     fontFamily: "'Barlow Condensed', sans-serif",
-                    fontSize: 22, fontWeight: 900,
+                    fontSize: 26, fontWeight: 900,
                     color: textPrimary, lineHeight: 1.1,
                   }}>
                     {s.value}
@@ -187,22 +187,22 @@ function ModalContent({ member, onClose, viewMode }: {
           }}>
             {stats.map((s) => (
               <div key={s.label} style={{
-                padding: "20px 14px",
+                padding: "24px 16px",
                 borderTop: `3px solid ${accent}`,
                 textAlign: "center",
                 background: cardBg,
               }}>
                 <p style={{
                   fontFamily: "'Barlow Condensed', sans-serif",
-                  fontSize: 9, fontWeight: 700,
+                  fontSize: 11, fontWeight: 700,
                   color: accent, textTransform: "uppercase",
-                  letterSpacing: "0.12em", marginBottom: 5,
+                  letterSpacing: "0.12em", marginBottom: 6,
                 }}>
                   {s.label}
                 </p>
                 <p style={{
                   fontFamily: "'Barlow Condensed', sans-serif",
-                  fontSize: 17, fontWeight: 900,
+                  fontSize: 20, fontWeight: 900,
                   color: textPrimary, lineHeight: 1.1,
                 }}>
                   {s.value}
@@ -214,11 +214,11 @@ function ModalContent({ member, onClose, viewMode }: {
 
         {/* BIO */}
         <div style={{ marginBottom: isMobile ? 36 : 52, padding: isMobile ? "0 20px" : "0" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
             <div style={{ width: 22, height: 2, background: accent, borderRadius: 2, flexShrink: 0 }} />
             <p style={{
               fontFamily: "'Barlow Condensed', sans-serif",
-              fontSize: 11, fontWeight: 800,
+              fontSize: 13, fontWeight: 800,
               color: accent, letterSpacing: "0.24em", textTransform: "uppercase",
             }}>
               BIOGRAPHIE
@@ -227,8 +227,8 @@ function ModalContent({ member, onClose, viewMode }: {
           </div>
           <p style={{
             fontFamily: "'Outfit', sans-serif",
-            fontSize: isMobile ? 15 : 16,
-            fontWeight: 700, lineHeight: 1.78,
+            fontSize: isMobile ? 17 : 18,
+            fontWeight: 600, lineHeight: 1.85,
             color: textPrimary,
           }}>
             {member.bio ?? "Aucune biographie disponible pour ce membre."}
@@ -237,11 +237,11 @@ function ModalContent({ member, onClose, viewMode }: {
 
         {/* ALTER EGO */}
         <div style={{ padding: isMobile ? "0 20px 48px" : "0" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
             <div style={{ width: 22, height: 2, background: accent, borderRadius: 2, flexShrink: 0 }} />
             <p style={{
               fontFamily: "'Barlow Condensed', sans-serif",
-              fontSize: 11, fontWeight: 800,
+              fontSize: 13, fontWeight: 800,
               color: accent, letterSpacing: "0.24em", textTransform: "uppercase",
             }}>
               PERSONNAGE ASSOCIÉ
@@ -374,28 +374,28 @@ function ModalContent({ member, onClose, viewMode }: {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        transition={{ duration: 0.28 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
         onClick={isMobile ? onClose : undefined}
         style={{
           position: "fixed", inset: 0, zIndex: 9997,
-          background: isMobile ? "rgba(0,0,0,0.6)" : "rgba(0,0,0,0.72)",
-          backdropFilter: isMobile ? undefined : "blur(6px)",
-          WebkitBackdropFilter: isMobile ? undefined : "blur(6px)",
+          background: isMobile ? "rgba(0,0,0,0.6)" : "rgba(0,0,0,0.75)",
+          backdropFilter: isMobile ? undefined : "blur(10px)",
+          WebkitBackdropFilter: isMobile ? undefined : "blur(10px)",
           cursor: isMobile ? "pointer" : "default",
         }}
       />
 
       {/* ── MODAL ────────────────────────────────────────────────────────────── */}
       <motion.div
-        initial={isMobile ? { y: "100%" } : { opacity: 0, scale: 0.97, y: 24 }}
+        initial={isMobile ? { y: "100%" } : { opacity: 0, scale: 0.94, y: 40 }}
         animate={isMobile ? { y: 0 }      : { opacity: 1, scale: 1,    y: 0  }}
         exit={isMobile
-          ? { y: "100%", transition: { type: "spring", stiffness: 320, damping: 34 } }
-          : { opacity: 0, scale: 0.97, y: 24 }
+          ? { y: "100%", transition: { type: "spring", stiffness: 260, damping: 30 } }
+          : { opacity: 0, scale: 0.96, y: 30, transition: { duration: 0.25, ease: [0.4, 0, 1, 1] } }
         }
         transition={isMobile
-          ? { type: "spring", stiffness: 300, damping: 32, mass: 0.9 }
-          : { duration: 0.38, ease: [0.22, 1, 0.36, 1] }
+          ? { type: "spring", stiffness: 240, damping: 28, mass: 0.85 }
+          : { duration: 0.55, ease: [0.16, 1, 0.3, 1] }
         }
         role="dialog"
         aria-modal="true"
@@ -526,9 +526,9 @@ function ModalContent({ member, onClose, viewMode }: {
               >
                 <p style={{
                   fontFamily: "'Barlow Condensed', sans-serif",
-                  fontSize: 10, fontWeight: 700,
+                  fontSize: 12, fontWeight: 700,
                   color: accent, letterSpacing: "0.28em",
-                  textTransform: "uppercase", marginBottom: 4,
+                  textTransform: "uppercase", marginBottom: 6,
                 }}>
                   {member.rank}
                 </p>
@@ -536,7 +536,7 @@ function ModalContent({ member, onClose, viewMode }: {
                   id={titleId}
                   style={{
                     fontFamily: "'Barlow Condensed', sans-serif",
-                    fontSize: "clamp(36px, 11vw, 60px)",
+                    fontSize: "clamp(40px, 12vw, 66px)",
                     fontWeight: 900, color: "#fff",
                     lineHeight: 0.88, fontStyle: "italic", textTransform: "uppercase",
                   }}
@@ -551,9 +551,9 @@ function ModalContent({ member, onClose, viewMode }: {
 
             {/* Contenu info */}
             <motion.div
-              initial={{ opacity: 0, y: 16 }}
+              initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.32, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ delay: 0.25, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             >
               {InfoSection}
             </motion.div>
@@ -604,15 +604,15 @@ function ModalContent({ member, onClose, viewMode }: {
                 <div style={{ textAlign: "center", flex: 1, padding: "0 8px", minWidth: 0 }}>
                   <p style={{
                     fontFamily: "'Barlow Condensed', sans-serif",
-                    fontSize: 10, fontWeight: 700,
+                    fontSize: 12, fontWeight: 700,
                     color: accent, letterSpacing: "0.22em",
-                    textTransform: "uppercase", marginBottom: 1,
+                    textTransform: "uppercase", marginBottom: 2,
                   }}>
                     {member.rank}
                   </p>
                   <p style={{
                     fontFamily: "'Barlow Condensed', sans-serif",
-                    fontSize: 20, fontWeight: 900,
+                    fontSize: 24, fontWeight: 900,
                     color: textPrimary, fontStyle: "italic",
                     textTransform: "uppercase", lineHeight: 1,
                     whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
@@ -627,20 +627,20 @@ function ModalContent({ member, onClose, viewMode }: {
             {/* BODY 2 colonnes */}
             <div style={{ flex: 1, minHeight: 0, display: "flex" }}>
               <motion.div
-                initial={{ opacity: 0, x: -32 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.08, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                initial={{ opacity: 0, x: -50, scale: 0.98 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                transition={{ delay: 0.1, duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
                 style={{ flex: "0 0 44%", position: "relative", overflow: "hidden" }}
               >
                 {HeroMedia}
                 <div style={{ position: "absolute", inset: 0, pointerEvents: "none", background: "linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.2) 45%, transparent 100%)" }} />
                 <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "28px 36px 36px", zIndex: 3 }}>
-                  <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 11, fontWeight: 700, color: accent, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 6 }}>
+                  <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 13, fontWeight: 700, color: accent, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 8 }}>
                     {member.rank}
                   </p>
                   <h1
                     id={titleId}
-                    style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "clamp(44px,5vw,80px)", fontWeight: 900, color: "#fff", lineHeight: 0.86, fontStyle: "italic", textTransform: "uppercase" }}
+                    style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "clamp(48px,5.5vw,86px)", fontWeight: 900, color: "#fff", lineHeight: 0.86, fontStyle: "italic", textTransform: "uppercase" }}
                   >
                     {member.name}
                   </h1>
@@ -650,9 +650,9 @@ function ModalContent({ member, onClose, viewMode }: {
 
               <motion.div
                 ref={scrollRef}
-                initial={{ opacity: 0, x: 32 }}
+                initial={{ opacity: 0, x: 50 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.18, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ delay: 0.2, duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
                 style={{ flex: 1, overflowY: "scroll", WebkitOverflowScrolling: "touch", overscrollBehavior: "contain" }}
               >
                 {InfoSection}
