@@ -35,6 +35,7 @@ export interface SupabaseMemberRow {
   special?:     SpecialAttack | null;
   photovideo?:  string | null;
   animevideo?:  string | null;
+  hidden?:      boolean | null;
 }
 
 // ─── BIBLIOTHÈQUE ENTRY ───────────────────────────────────────────────────────

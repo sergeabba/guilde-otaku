@@ -83,8 +83,8 @@ export async function fetchMembers(): Promise<Member[]> {
     });
 
     if (Array.isArray(result) && result.length > 0) {
-      const mapped = result.map(mapRowToMember);
-      // Mettre en cache
+      const visible = result.filter(row => !row.hidden);
+      const mapped = visible.map(mapRowToMember);
       membersCache = mapped;
       membersCacheTime = Date.now();
       return mapped;

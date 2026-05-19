@@ -11,8 +11,9 @@ import { colors, typography, components, font, filterPillStyle, cardHoverStyle }
 import type { BiblioEntry, SupabaseBiblioRow, BiblioCategory, BiblioTier } from "../types";
 import {
   Star, BookOpen, Tv, Gamepad2, Film, Quote, Flame, Gem, Meh,
-  TrendingDown, Search, X, Clock, Calendar, Youtube, ArrowUpDown, Pencil
+  TrendingDown, Search, X, Clock, Calendar, Youtube, ArrowUpDown, Pencil, Heart
 } from "lucide-react";
+import { useFavorites } from "../hooks/useFavorites";
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 type Category = "Tout" | "Anime" | "Manga" | "Film/Série" | "Jeu Vidéo";
@@ -38,8 +39,9 @@ const TIERS: Tier[] = ["Chef-d'œuvre", "Pépite", "Bof", "Surcoté", "A défini
 const CATEGORIES: Category[] = ["Tout", "Anime", "Manga", "Film/Série", "Jeu Vidéo"];
 
 // ─── ENTRY CARD ──────────────────────────────────────────────────────────────
-function EntryCard({ entry, index, onSelect }: { entry: any; index: number; onSelect: () => void }) {
+function EntryCard({ entry, index, onSelect, isFavorite, onToggleFavorite }: { entry: any; index: number; onSelect: () => void; isFavorite: boolean; onToggleFavorite: () => void }) {
   const [hovered, setHovered] = useState(false);
+  const [heartScale, setHeartScale] = useState(1);
   const tier = tierConfig[entry.tier as Tier] || tierConfig["A définir"];
   const cat  = categoryConfig[entry.category] || categoryConfig["Anime"];
 
@@ -57,8 +59,46 @@ function EntryCard({ entry, index, onSelect }: { entry: any; index: number; onSe
         cursor: "pointer",
         boxShadow: hovered ? tier.glow : "none",
         backdropFilter: "blur(12px)",
+        position: "relative",
       }}
     >
+      {/* Favorite heart button */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          setHeartScale(1.3);
+          setTimeout(() => setHeartScale(1), 200);
+          onToggleFavorite();
+        }}
+        style={{
+          position: "absolute",
+          top: "10px",
+          right: "10px",
+          zIndex: 10,
+          width: "32px",
+          height: "32px",
+          borderRadius: "50%",
+          background: "rgba(255,255,255,0.1)",
+          backdropFilter: "blur(8px)",
+          border: "1px solid rgba(255,255,255,0.15)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          cursor: "pointer",
+          padding: 0,
+          minHeight: "unset",
+          minWidth: "unset",
+          transform: `scale(${heartScale})`,
+          transition: "transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
+        }}
+      >
+        <Heart
+          size={16}
+          fill={isFavorite ? "#ef4444" : "none"}
+          color={isFavorite ? "#ef4444" : "rgba(255,255,255,0.6)"}
+          style={{ transition: "fill 0.2s, color 0.2s" }}
+        />
+      </button>
       <div style={{
         position: "absolute", top: 0, left: "20px", right: "20px", height: "2px",
         background: `linear-gradient(90deg, transparent, ${tier.color}, transparent)`,
@@ -116,6 +156,8 @@ export default function BibliothequePage() {
   const [sortBy, setSortBy]             = useState("recent");
   const [isMobile, setIsMobile]         = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<BiblioEntry | null>(null);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const { favorites, toggle, isFavorite, count: favoritesCount } = useFavorites();
 
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
@@ -193,7 +235,8 @@ export default function BibliothequePage() {
     const matchCat    = activeCategory === "Tout" || e.category === activeCategory;
     const matchTier   = activeTier === "Tous" || e.tier === activeTier;
     const matchSearch = e.title.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchCat && matchTier && matchSearch;
+    const matchFav    = !showFavoritesOnly || isFavorite(e.id);
+    return matchCat && matchTier && matchSearch && matchFav;
   });
 
   filtered.sort((a, b) => {
@@ -397,12 +440,30 @@ export default function BibliothequePage() {
                   {cat}
                 </motion.button>
               ))}
+              <motion.button
+                onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+                whileHover={{ scale: 1.07, y: -2 }}
+                whileTap={{ scale: 0.93 }}
+                transition={{ type: "spring", stiffness: 450, damping: 22 }}
+                style={{
+                  ...filterPillStyle(showFavoritesOnly),
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "5px",
+                  background: showFavoritesOnly ? "rgba(239,68,68,0.15)" : undefined,
+                  borderColor: showFavoritesOnly ? "rgba(239,68,68,0.4)" : undefined,
+                  color: showFavoritesOnly ? "#ef4444" : undefined,
+                }}
+              >
+                <Heart size={12} fill={showFavoritesOnly ? "#ef4444" : "none"} color={showFavoritesOnly ? "#ef4444" : "currentColor"} />
+                Favoris{favoritesCount > 0 ? ` (${favoritesCount})` : ""}
+              </motion.button>
             </div>
           </motion.div>
 
           {/* RÉSULTATS */}
           <AnimatePresence mode="wait">
-            <motion.div key={`${activeCategory}-${activeTier}-${searchTerm}-${sortBy}`}
+            <motion.div key={`${activeCategory}-${activeTier}-${searchTerm}-${sortBy}-${showFavoritesOnly}`}
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
               {loading ? (
                 <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(auto-fill,minmax(220px,1fr))", gap: isMobile ? "10px" : "16px" }}>
@@ -430,7 +491,7 @@ export default function BibliothequePage() {
                       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(auto-fill,minmax(220px,1fr))", gap: isMobile ? "10px" : "16px" }}>
                         <AnimatePresence>
                           {items.map((entry, i) => (
-                            <EntryCard key={entry.id} entry={entry} index={i} onSelect={() => setSelectedEntry(entry)} />
+                            <EntryCard key={entry.id} entry={entry} index={i} onSelect={() => setSelectedEntry(entry)} isFavorite={isFavorite(entry.id)} onToggleFavorite={() => toggle(entry.id)} />
                           ))}
                         </AnimatePresence>
                       </div>

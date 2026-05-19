@@ -12,6 +12,7 @@ import GuildeHeader from "./GuildeHeader";
 import { useIsMobile } from "../hooks/useIsMobile";
 import type { ViewMode } from "../types";
 import { ChroniqueBanner, AtelierBanner } from "./PromoBanners";
+import GuildeStats from "./GuildeStats";
 
 export default function HomePageClient({ initialMembers }: { initialMembers: Member[] }) {
   const [activeRank, setActiveRank] = useState<Rank | "Tous">("Tous");
@@ -21,6 +22,16 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
   const [mounted, setMounted] = useState(false);
   const isMobile = useIsMobile();
   useEffect(() => { setMounted(true); }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const membreId = params.get("membre");
+    if (membreId) {
+      const found = initialMembers.find(m => m.id === Number(membreId));
+      if (found) setSelectedMember(found);
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, [initialMembers]);
 
   const theme  = rankBg[activeRank] ?? rankBg["Tous"];
   const accent = rankAccents[activeRank as Rank | "Tous"];
@@ -134,7 +145,13 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
 
         {/* ── MAIN ── */}
         <main style={{ maxWidth: "1400px", margin: "0 auto", padding: isMobile ? "30px 15px" : "60px 40px" }}>
-          
+
+          <GuildeStats
+            memberCount={initialMembers.length}
+            fightCount={initialMembers.length * 2}
+            biblioCount={42}
+          />
+
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

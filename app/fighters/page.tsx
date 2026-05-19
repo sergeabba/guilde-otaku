@@ -1,11 +1,14 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import { AnimatePresence } from "framer-motion";
+import { Trophy } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { Rank, type Member } from "../../data/members";
 import "./fighters.css";
 import { KofLoadingScreen, KofCharacterSelect, KofFightIntro, type ViewMode } from "./kof-ui";
 import Arena from "./Arena";
+import Leaderboard from "./Leaderboard";
 
 type Phase = "select" | "intro" | "fight";
 
@@ -19,12 +22,13 @@ export default function FightersPage() {
   const [selected, setSelected] = useState<Member | null>(null);
   const [phase, setPhase]       = useState<Phase>("select");
   const [fightData, setFightData] = useState<{ p1: Member; p2: Member } | null>(null);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const { data, error } = await supabase.from("fighters").select("*").order("id", { ascending: true });
+        const { data, error } = await supabase.from("fighters").select("*").eq("hidden", false).order("id", { ascending: true });
         if (error) throw new Error(error.message);
         if (data && !cancelled) {
           setMembers(data.map((m: Record<string, unknown>) => ({
@@ -102,6 +106,27 @@ export default function FightersPage() {
             onSelect={handleSelect}
             onFight={handleFight}
           />
+          <button
+            onClick={() => setShowLeaderboard(true)}
+            style={{
+              position: "fixed", top: 14, right: 14, zIndex: 60,
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "8px 14px", borderRadius: 8,
+              background: "rgba(255,215,0,0.12)",
+              border: "1px solid rgba(255,215,0,0.3)",
+              color: "#FFD700",
+              fontFamily: "'Orbitron', monospace",
+              fontSize: 10, fontWeight: 700, letterSpacing: 2,
+              cursor: "pointer",
+            }}
+          >
+            <Trophy size={14} /> RANKING
+          </button>
+          <AnimatePresence>
+            {showLeaderboard && (
+              <Leaderboard members={members} onClose={() => setShowLeaderboard(false)} />
+            )}
+          </AnimatePresence>
         </div>
       )}
       {phase === "intro" && fightData && (

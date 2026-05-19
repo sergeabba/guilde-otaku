@@ -216,6 +216,15 @@ export default function AdminMembresPage() {
     setTimeout(() => setSaveToast(null), 3000);
   }
 
+  async function toggleHidden(member: SupabaseMemberRow) {
+    const newHidden = !member.hidden;
+    await supabase.from("fighters").update({ hidden: newHidden }).eq("id", member.id);
+    invalidateMembersCache();
+    setFighters(prev => prev.map(f => f.id === member.id ? { ...f, hidden: newHidden } : f));
+    setSaveToast(`${member.name} ${newHidden ? "masqué" : "réaffiché"}`);
+    setTimeout(() => setSaveToast(null), 3000);
+  }
+
   // ── MEDIA ────────────────────────────────────────────────────────────────
   async function fetchGallery(slug: string) {
     setGalleryLoading(true); setGalleryError(null);
@@ -420,7 +429,8 @@ export default function AdminMembresPage() {
                     aspectRatio: "2/3", borderRadius: 14,
                     overflow: "hidden",
                     background: `${c}18`,
-                    border: `1px solid ${c}28`,
+                    border: `1px solid ${f.hidden ? "rgba(251,191,36,0.3)" : `${c}28`}`,
+                    opacity: f.hidden ? 0.6 : 1,
                   }}
                 >
                   {/* Photo */}
@@ -469,12 +479,27 @@ export default function AdminMembresPage() {
                       <Pencil size={13} /> Éditer
                     </button>
                     <button
+                      onClick={(e) => { e.stopPropagation(); toggleHidden(f); }}
+                      style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 9, background: f.hidden ? "rgba(52,211,153,0.18)" : "rgba(251,191,36,0.18)", border: `1px solid ${f.hidden ? "rgba(52,211,153,0.4)" : "rgba(251,191,36,0.4)"}`, color: f.hidden ? "#34d399" : "#fbbf24", cursor: "pointer", fontFamily: F, fontSize: 12, fontWeight: 800, textTransform: "uppercase", backdropFilter: "blur(8px)" }}
+                    >
+                      {f.hidden ? <Eye size={13} /> : <EyeOff size={13} />}
+                      {f.hidden ? "Afficher" : "Masquer"}
+                    </button>
+                    <button
                       onClick={(e) => { e.stopPropagation(); setDeleteTarget(f); }}
                       style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 9, background: "rgba(248,113,113,0.18)", border: "1px solid rgba(248,113,113,0.35)", color: "#f87171", cursor: "pointer", fontFamily: F, fontSize: 12, fontWeight: 800, textTransform: "uppercase", backdropFilter: "blur(8px)" }}
                     >
                       <Trash2 size={13} /> Supprimer
                     </button>
                   </div>
+
+                  {/* Badge "masqué" */}
+                  {f.hidden && (
+                    <div style={{ position: "absolute", top: 7, left: 7, padding: "3px 8px", background: "rgba(251,191,36,0.2)", border: "1px solid rgba(251,191,36,0.45)", borderRadius: 6, display: "flex", alignItems: "center", gap: 4 }}>
+                      <EyeOff size={9} color="#fbbf24" />
+                      <span style={{ fontFamily: F, fontSize: 8, fontWeight: 800, color: "#fbbf24", letterSpacing: "0.1em" }}>MASQUÉ</span>
+                    </div>
+                  )}
 
                   {/* Badge "pas de photo" */}
                   {!avatar && (

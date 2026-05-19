@@ -7,7 +7,7 @@ import { Member } from "../../data/members";
 import { useEffect, useRef, useState } from "react";
 import type { ViewMode } from "../types";
 import { rankAccents, rankBg, darkRanks } from "../config/ranks";
-import { Trophy, ArrowLeft } from "lucide-react";
+import { Trophy, ArrowLeft, Share2 } from "lucide-react";
 import VideoPlayer from "./VideoPlayer";
 
 const PLACEHOLDER = "/placeholder.svg";
@@ -73,6 +73,20 @@ function ModalContent({ member, onClose, viewMode }: {
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
   }, [onClose, showBadge]);
+
+  const [shareToast, setShareToast] = useState(false);
+
+  const handleShare = async () => {
+    const url = `${window.location.origin}/membres/${member.id}`;
+    const shareData = { title: `${member.name} — Guilde Otaku`, text: `Découvre le profil de ${member.name} sur la Guilde Otaku !`, url };
+    if (navigator.share) {
+      try { await navigator.share(shareData); } catch { /* user cancelled */ }
+    } else {
+      await navigator.clipboard.writeText(url);
+      setShareToast(true);
+      setTimeout(() => setShareToast(false), 2200);
+    }
+  };
 
   // iOS Safari scroll lock
   useEffect(() => {
@@ -484,6 +498,23 @@ function ModalContent({ member, onClose, viewMode }: {
                     </button>
                   ))}
                 </div>
+
+                {/* Share */}
+                <button
+                  onClick={handleShare}
+                  aria-label="Partager"
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    width: 36, height: 36, borderRadius: 100,
+                    background: "rgba(0,0,0,0.52)",
+                    backdropFilter: "blur(14px)",
+                    WebkitBackdropFilter: "blur(14px)",
+                    border: "1px solid rgba(255,255,255,0.22)",
+                    color: "#fff", cursor: "pointer",
+                  }}
+                >
+                  <Share2 size={14} />
+                </button>
               </motion.div>
 
               {/* Nom + Rang en bas du hero */}
@@ -535,6 +566,7 @@ function ModalContent({ member, onClose, viewMode }: {
             {/* NAV */}
             <div style={{ flexShrink: 0, background: navBg, backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", borderBottom: `1px solid ${borderColor}`, zIndex: 2 }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 28px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
                 <button
                   ref={closeRef}
                   onClick={onClose}
@@ -552,6 +584,23 @@ function ModalContent({ member, onClose, viewMode }: {
                   <ArrowLeft size={14} />
                   Retour
                 </button>
+                <button
+                  onClick={handleShare}
+                  aria-label="Partager le profil"
+                  style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    padding: "8px 18px", borderRadius: 100,
+                    background: btnBg, border: `1px solid ${btnBorder}`,
+                    color: textPrimary, cursor: "pointer",
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontSize: 14, fontWeight: 700, textTransform: "uppercase",
+                    transition: "background 0.18s",
+                  }}
+                >
+                  <Share2 size={14} />
+                  Partager
+                </button>
+                </div>
                 <div style={{ textAlign: "center", flex: 1, padding: "0 8px", minWidth: 0 }}>
                   <p style={{
                     fontFamily: "'Barlow Condensed', sans-serif",
@@ -614,6 +663,30 @@ function ModalContent({ member, onClose, viewMode }: {
       </motion.div>
 
       {/* ── SWITCH FLOTTANT — desktop seulement ─────────────────────────────── */}
+      {/* ── SHARE TOAST ──────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {shareToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.25 }}
+            style={{
+              position: "fixed", bottom: isMobile ? 80 : 100, left: "50%", transform: "translateX(-50%)",
+              zIndex: 10010,
+              padding: "10px 24px", borderRadius: 100,
+              background: "rgba(201,168,76,0.95)",
+              color: "#000", fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: 13, fontWeight: 800, letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+            }}
+          >
+            Lien copié !
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {!isMobile && (
         <motion.div
           initial={{ opacity: 0, y: 24, scale: 0.88, x: "-50%" }}
