@@ -29,10 +29,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const baseUrl = "https://guilde-otaku.vercel.app";
+
+  const rawPhoto = member.animechar || member.photo || "";
+  const photo = rawPhoto.startsWith("http") ? rawPhoto : rawPhoto ? `${baseUrl}${rawPhoto.startsWith("/") ? "" : "/"}${rawPhoto}` : "";
+
   const ogParams = new URLSearchParams({
     name: member.name,
     rank: member.rank,
-    photo: member.animechar || member.photo || "",
+    photo,
     color: member.color || "#c9a84c",
     ...(member.badge ? { badge: member.badge } : {}),
   });
