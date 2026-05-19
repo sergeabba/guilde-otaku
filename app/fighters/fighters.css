@@ -1,0 +1,809 @@
+/* ═══ ARÈNE FIGHTERS — KOF '98 / Tekken arcade (hors design site) ═══ */
+
+.kof-root {
+  --kof-font: var(--font-orbitron), "Orbitron", var(--font-black-ops-one), "Black Ops One", monospace;
+  --kof-gold: #ffd700;
+  --kof-gold-dim: #b8860b;
+  --kof-red: #e63946;
+  --kof-red-deep: #8b0000;
+  --kof-blue: #1d4ed8;
+  --kof-blue-deep: #0a1628;
+  --kof-bg: #050008;
+  --kof-panel-p1: linear-gradient(135deg, rgba(139, 0, 0, 0.55) 0%, rgba(5, 0, 8, 0.95) 55%);
+  --kof-panel-p2: linear-gradient(225deg, rgba(29, 78, 216, 0.5) 0%, rgba(5, 0, 8, 0.95) 55%);
+
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  background: var(--kof-bg);
+  font-family: var(--kof-font);
+  color: #fff;
+}
+
+.kof-root * {
+  font-family: inherit;
+}
+
+/* Scanlines + vignette CRT */
+.kof-fx {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.kof-fx--scan {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.12) 2px,
+    rgba(0, 0, 0, 0.12) 3px
+  );
+}
+
+.kof-fx--vignette {
+  background: radial-gradient(ellipse at center, transparent 45%, rgba(0, 0, 0, 0.65) 100%);
+  z-index: 2;
+}
+
+.kof-fx--grid {
+  background-image:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 28px),
+    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 28px);
+  opacity: 0.6;
+}
+
+.kof-bg-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 55% 70% at 0% 50%, rgba(230, 57, 70, 0.35) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 70% at 100% 50%, rgba(29, 78, 216, 0.35) 0%, transparent 55%),
+    linear-gradient(180deg, #0a0014 0%, #050008 45%, #030610 100%);
+}
+
+/* Top bar arcade */
+.kof-topbar {
+  position: relative;
+  z-index: 20;
+  flex-shrink: 0;
+  border-bottom: 2px solid rgba(255, 215, 0, 0.35);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.95) 0%, rgba(8, 4, 20, 0.85) 100%);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+}
+
+.kof-topbar::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: repeating-linear-gradient(90deg, var(--kof-gold) 0 16px, var(--kof-red) 16px 32px, var(--kof-blue) 32px 48px);
+  opacity: 0.75;
+}
+
+.kof-topbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px 14px;
+  flex-wrap: wrap;
+}
+
+.kof-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(255, 215, 0, 0.35);
+  border-radius: 2px;
+  color: var(--kof-gold);
+  text-decoration: none;
+  background: rgba(0, 0, 0, 0.5);
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.kof-back:hover {
+  background: rgba(255, 215, 0, 0.12);
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.35);
+}
+
+.kof-logo-block {
+  flex: 1;
+  text-align: center;
+  min-width: 0;
+}
+
+.kof-logo-title {
+  font-size: clamp(18px, 3vw, 28px);
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  color: var(--kof-gold);
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.5), 0 2px 0 var(--kof-gold-dim);
+  line-height: 1;
+}
+
+.kof-logo-sub {
+  margin-top: 4px;
+  font-size: clamp(8px, 1.2vw, 10px);
+  font-weight: 700;
+  letter-spacing: 0.35em;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.kof-mode-toggle {
+  display: flex;
+  padding: 3px;
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.kof-mode-btn {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 1px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.kof-mode-btn.is-active {
+  background: var(--kof-gold);
+  color: #000;
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.45);
+}
+
+.kof-filters {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 0 12px 10px;
+  scrollbar-width: none;
+}
+
+.kof-filter-btn {
+  flex-shrink: 0;
+  padding: 5px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.45);
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.12s;
+  white-space: nowrap;
+}
+
+.kof-filter-btn.is-active {
+  border-color: var(--filter-accent, var(--kof-gold));
+  color: var(--filter-accent, var(--kof-gold));
+  background: color-mix(in srgb, var(--filter-accent, var(--kof-gold)) 18%, transparent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--filter-accent, var(--kof-gold)) 35%, transparent);
+}
+
+/* Stage: P1 | roster | P2 */
+.kof-stage {
+  position: relative;
+  z-index: 10;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media (min-width: 900px) {
+  .kof-stage {
+    flex-direction: row;
+  }
+}
+
+.kof-side {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.kof-side--p1 {
+  background: var(--kof-panel-p1);
+  border-bottom: 1px solid rgba(230, 57, 70, 0.35);
+}
+
+.kof-side--p2 {
+  background: var(--kof-panel-p2);
+  border-top: 1px solid rgba(29, 78, 216, 0.35);
+}
+
+@media (min-width: 900px) {
+  .kof-side {
+    flex: 0 0 clamp(200px, 26%, 320px);
+    border-bottom: none;
+    border-top: none;
+  }
+
+  .kof-side--p1 {
+    border-right: 2px solid rgba(230, 57, 70, 0.4);
+  }
+
+  .kof-side--p2 {
+    border-left: 2px solid rgba(29, 78, 216, 0.4);
+  }
+}
+
+@media (max-width: 899px) {
+  .kof-side {
+    flex: 0 0 auto;
+    max-height: 28vh;
+  }
+}
+
+.kof-side-label {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.25em;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.kof-side--p1 .kof-side-label {
+  color: #ff6b6b;
+  background: rgba(139, 0, 0, 0.35);
+}
+
+.kof-side--p2 .kof-side-label {
+  color: #60a5fa;
+  background: rgba(10, 22, 40, 0.6);
+}
+
+.kof-side-portrait {
+  flex: 1;
+  position: relative;
+  min-height: 120px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.kof-side-portrait img,
+.kof-side-portrait > div {
+  max-height: 100%;
+  width: auto;
+  max-width: 100%;
+}
+
+.kof-side-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  text-align: center;
+}
+
+.kof-side-empty-char {
+  font-size: clamp(48px, 10vw, 80px);
+  font-weight: 900;
+  line-height: 1;
+  opacity: 0.12;
+}
+
+.kof-side-empty-text {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: rgba(255, 255, 255, 0.25);
+  text-transform: uppercase;
+}
+
+.kof-side-meta {
+  flex-shrink: 0;
+  padding: 10px 12px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.kof-side-name {
+  font-size: clamp(14px, 2vw, 18px);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1.1;
+  text-shadow: 0 0 16px currentColor;
+}
+
+.kof-side--p1 .kof-side-name { color: #fff; }
+.kof-side--p2 .kof-side-name { color: #fff; }
+
+.kof-side-rank {
+  margin-top: 4px;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  opacity: 0.7;
+}
+
+.kof-side-pwr {
+  margin-top: 6px;
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+}
+
+.kof-roster-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.kof-roster-banner {
+  flex-shrink: 0;
+  padding: 8px;
+  text-align: center;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.35em;
+  color: rgba(255, 215, 0, 0.55);
+  border-bottom: 1px solid rgba(255, 215, 0, 0.15);
+  animation: kof-blink 2s ease-in-out infinite;
+}
+
+@keyframes kof-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+.kof-roster {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 10px 100px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 215, 0, 0.35) transparent;
+}
+
+@media (min-width: 900px) {
+  .kof-roster {
+    padding-bottom: 16px;
+  }
+}
+
+.kof-roster-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+@media (min-width: 480px) { .kof-roster-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 700px) { .kof-roster-grid { grid-template-columns: repeat(5, 1fr); } }
+@media (min-width: 1200px) { .kof-roster-grid { grid-template-columns: repeat(6, 1fr); } }
+
+/* Portrait tile KOF */
+.kof-tile {
+  position: relative;
+  aspect-ratio: 3/4;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  background: #0a0812;
+  cursor: pointer;
+  outline: none;
+  overflow: hidden;
+  transition: transform 0.12s, border-color 0.12s, box-shadow 0.15s;
+}
+
+.kof-tile:hover {
+  transform: translateY(-2px) scale(1.02);
+  border-color: rgba(255, 255, 255, 0.35);
+  z-index: 2;
+}
+
+.kof-tile.is-p1 {
+  border: 2px solid var(--kof-red);
+  box-shadow: 0 0 16px rgba(230, 57, 70, 0.55), inset 0 0 20px rgba(230, 57, 70, 0.15);
+  transform: scale(1.04);
+  z-index: 3;
+}
+
+.kof-tile.is-p2-preview {
+  border: 2px solid var(--kof-blue);
+  box-shadow: 0 0 16px rgba(29, 78, 216, 0.5);
+}
+
+.kof-tile-media {
+  width: 100%;
+  height: calc(100% - 24px);
+  filter: saturate(0.65) brightness(0.78);
+  transition: filter 0.15s;
+}
+
+.kof-tile:hover .kof-tile-media,
+.kof-tile.is-p1 .kof-tile-media,
+.kof-tile.is-p2-preview .kof-tile-media {
+  filter: saturate(1.05) brightness(1);
+}
+
+.kof-tile-name {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.92);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: clamp(7px, 1vw, 9px);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.75);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 4px;
+}
+
+.kof-tile.is-p1 .kof-tile-name,
+.kof-tile.is-p2-preview .kof-tile-name {
+  color: #fff;
+}
+
+/* Corner brackets KOF */
+.kof-tile.is-p1::before,
+.kof-tile.is-p1::after,
+.kof-tile.is-p2-preview::before,
+.kof-tile.is-p2-preview::after {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.kof-tile.is-p1::before {
+  top: 3px; left: 3px;
+  border-top: 2px solid var(--kof-red);
+  border-left: 2px solid var(--kof-red);
+}
+
+.kof-tile.is-p1::after {
+  top: 3px; right: 3px;
+  border-top: 2px solid var(--kof-red);
+  border-right: 2px solid var(--kof-red);
+}
+
+.kof-tile-random {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 100%;
+  background: linear-gradient(160deg, rgba(255, 215, 0, 0.1), rgba(0, 0, 0, 0.85));
+  border: 1px dashed rgba(255, 215, 0, 0.35);
+  color: var(--kof-gold);
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+
+.kof-center-vs {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 15;
+  pointer-events: none;
+  font-size: clamp(40px, 8vw, 72px);
+  font-weight: 900;
+  color: var(--kof-gold);
+  letter-spacing: 0.15em;
+  text-shadow:
+    0 0 30px rgba(255, 215, 0, 0.8),
+    0 4px 0 var(--kof-gold-dim),
+    0 0 60px rgba(255, 69, 0, 0.4);
+  opacity: 0;
+  animation: none;
+}
+
+.kof-center-vs.is-visible {
+  animation: kof-vs-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes kof-vs-pop {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(3); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* Bottom CTA */
+.kof-cta {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  padding: 16px 12px max(18px, env(safe-area-inset-bottom));
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.98) 50%, transparent);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.kof-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 28px;
+  border: none;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #ffe566 0%, #ff9500 100%);
+  color: #000;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+  clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+  box-shadow: 0 0 24px rgba(255, 149, 0, 0.5);
+}
+
+.kof-cta-hint {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: rgba(255, 255, 255, 0.4);
+  text-align: center;
+}
+
+/* Stats (showcase) */
+.kof-stat-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.kof-stat-label {
+  width: 22px;
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.4);
+  text-align: right;
+}
+
+.kof-stat-track {
+  flex: 1;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.kof-stat-fill {
+  height: 100%;
+  border-radius: 1px;
+}
+
+.kof-stat-val {
+  width: 20px;
+  font-size: 8px;
+  font-weight: 900;
+  text-align: right;
+}
+
+/* Loading */
+.kof-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  background: var(--kof-bg);
+  font-family: var(--kof-font);
+}
+
+.kof-loading-box {
+  text-align: center;
+  padding: 0 20px;
+}
+
+.kof-loading-pre {
+  font-size: 10px;
+  letter-spacing: 0.4em;
+  color: rgba(255, 215, 0, 0.35);
+  white-space: pre;
+  margin-bottom: 16px;
+}
+
+.kof-loading-title {
+  font-size: clamp(22px, 4vw, 40px);
+  font-weight: 900;
+  color: var(--kof-red);
+  letter-spacing: 0.15em;
+  text-shadow: 0 0 24px rgba(230, 57, 70, 0.7);
+}
+
+.kof-loading-sub {
+  margin-top: 8px;
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  color: rgba(255, 215, 0, 0.55);
+}
+
+.kof-loading-bar {
+  width: min(300px, 75vw);
+  height: 10px;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.kof-loading-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--kof-red), var(--kof-gold));
+  transition: width 0.1s linear;
+}
+
+/* ═══ INTRO TEKKEN + KOF ═══ */
+.kof-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  overflow: hidden;
+  background: #000;
+  font-family: var(--kof-font);
+}
+
+.kof-intro-announce {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at center, #1a0a20 0%, #000 70%);
+  padding: 24px;
+}
+
+.kof-tekken-line {
+  font-size: clamp(14px, 2.5vw, 22px);
+  font-weight: 700;
+  letter-spacing: 0.35em;
+  color: rgba(255, 255, 255, 0.85);
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.kof-tekken-line--main {
+  margin-top: 8px;
+  font-size: clamp(22px, 5vw, 48px);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: var(--kof-gold);
+  text-shadow:
+    0 0 40px rgba(255, 215, 0, 0.7),
+    0 4px 0 #7a5700;
+  animation: kof-tekken-pulse 0.8s ease-in-out infinite alternate;
+}
+
+.kof-tekken-sub {
+  margin-top: 14px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  color: rgba(255, 255, 255, 0.35);
+  text-transform: uppercase;
+}
+
+@keyframes kof-tekken-pulse {
+  from { transform: scale(1); filter: brightness(1); }
+  to { transform: scale(1.02); filter: brightness(1.15); }
+}
+
+.kof-intro-split {
+  position: absolute;
+  inset: 0;
+  display: flex;
+}
+
+.kof-intro-side {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+}
+
+.kof-intro-side--p1 {
+  clip-path: polygon(0 0, 88% 0, 100% 100%, 0 100%);
+}
+
+.kof-intro-side--p2 {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 58%;
+  clip-path: polygon(12% 0, 100% 0, 100% 100%, 0 100%);
+}
+
+.kof-intro-name {
+  position: absolute;
+  bottom: 32px;
+  font-size: clamp(20px, 4vw, 52px);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 0.95;
+  text-shadow: 0 0 24px currentColor;
+}
+
+.kof-intro-name--p1 { left: 24px; color: #fff; }
+.kof-intro-name--p2 { right: 24px; text-align: right; color: #fff; }
+
+.kof-intro-tag {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  margin-bottom: 6px;
+  opacity: 0.85;
+}
+
+.kof-intro-vs,
+.kof-intro-fight {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  font-weight: 900;
+  color: var(--kof-gold);
+  text-shadow:
+    0 0 50px rgba(255, 215, 0, 0.85),
+    0 6px 0 #7a5700;
+}
+
+.kof-intro-vs { font-size: clamp(72px, 16vw, 200px); letter-spacing: 0.1em; }
+.kof-intro-fight { font-size: clamp(56px, 12vw, 160px); letter-spacing: 0.15em; }
+
+@media (prefers-reduced-motion: reduce) {
+  .kof-roster-banner,
+  .kof-tekken-line--main {
+    animation: none;
+  }
+
+  .kof-tile:hover {
+    transform: none;
+  }
+}

@@ -26,7 +26,7 @@ html {
 }
 
 html, body {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--font-barlow-condensed), 'Barlow Condensed', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent; /* Supprime le flash bleu sur tap mobile */
@@ -43,7 +43,7 @@ html, body {
   --border-subtle: rgba(255, 255, 255, 0.07);
   --text-primary:  #fff;
   --text-muted:    rgba(255, 255, 255, 0.4);
-  --font-guilde:   'Barlow Condensed', sans-serif;
+  --font-guilde:   var(--font-barlow-condensed), 'Barlow Condensed', sans-serif;
   --radius-card:   16px;
   --radius-btn:    12px;
   --radius-pill:   100px;
@@ -244,11 +244,11 @@ textarea:focus {
 
 /* ─── UTILITAIRES TYPOGRAPHIE ────────────────────────────────────────────────── */
 .font-guilde {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--font-barlow-condensed), 'Barlow Condensed', sans-serif;
 }
 
 .font-bebas {
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: var(--font-bebas-neue), 'Bebas Neue', sans-serif;
 }
 
 .text-balance {
@@ -261,7 +261,7 @@ textarea:focus {
 
 /* Titre style Guilde */
 .title-guilde {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--font-barlow-condensed), 'Barlow Condensed', sans-serif;
   font-weight: 900;
   font-style: italic;
   text-transform: uppercase;
@@ -548,7 +548,7 @@ body {
 
 /* ─── TITRE PRINCIPAL — Cinzel Decorative (style Fairy Tail / Guilde fantasy) ── */
 .ft-title-main {
-  font-family: 'Cinzel Decorative', 'Barlow Condensed', serif;
+  font-family: var(--font-cinzel-decorative), 'Cinzel Decorative', 'Barlow Condensed', serif;
   font-size: clamp(26px, 6.5vw, 72px);
   font-weight: 900;
   letter-spacing: 0.12em;
@@ -595,7 +595,7 @@ body {
 /* ─── SOUS-TITRE ─────────────────────────────────────────────────────────────── */
 /* NB : letter-spacing animé par Framer Motion, ne pas mettre ici */
 .ft-title-sub {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--font-barlow-condensed), 'Barlow Condensed', sans-serif;
   font-size: clamp(10px, 2vw, 16px);
   font-weight: 600;
   color: rgba(255, 210, 120, 0.65);
@@ -708,7 +708,7 @@ body {
 }
 
 .ft-bar-percent {
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: var(--font-bebas-neue), 'Bebas Neue', sans-serif;
   font-size: 26px;
   color: #ffcc33;
   text-shadow:
@@ -720,7 +720,7 @@ body {
 }
 
 .ft-bar-label {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--font-barlow-condensed), 'Barlow Condensed', sans-serif;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -788,7 +788,7 @@ body {
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   color: #ffd27a;
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--font-barlow-condensed), 'Barlow Condensed', sans-serif;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -861,6 +861,66 @@ body {
     height: 18px;
     font-size: 11px;
   }
+}
+
+/* ─── SKIP BUTTON ────────────────────────────────────────────────────────────── */
+.ft-skip-btn {
+  position: absolute;
+  bottom: clamp(14px, 3vw, 28px);
+  right: clamp(14px, 3vw, 28px);
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 180, 60, 0.35);
+  background: linear-gradient(180deg,
+    rgba(30, 12, 0, 0.75) 0%,
+    rgba(10,  4, 0, 0.85) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #ffd27a;
+  font-family: var(--font-barlow-condensed), 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.03),
+    0 6px 18px rgba(0, 0, 0, 0.45),
+    0 0 14px rgba(255, 120, 0, 0.15);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ft-skip-btn:hover,
+.ft-skip-btn:focus-visible {
+  transform: translateY(-1px) scale(1.04);
+  border-color: rgba(255, 200, 90, 0.7);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 10px 24px rgba(0, 0, 0, 0.55),
+    0 0 28px rgba(255, 140, 0, 0.35);
+  outline: none;
+}
+
+.ft-skip-btn:active {
+  transform: translateY(0) scale(0.97);
+}
+
+@media (max-width: 480px) {
+  .ft-skip-btn {
+    bottom: 10px;
+    right: 10px;
+    padding: 7px 13px;
+    font-size: 10px;
+  }
+}
+
+/* ─── FOOTER ────────────────────────────────────────────────────────────────── */
+.footer-link:hover {
+  color: #c9a84c !important;
 }
 
 /* ─── REDUCED MOTION ─────────────────────────────────────────────────────────── */

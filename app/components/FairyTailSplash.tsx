@@ -398,6 +398,25 @@ export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) 
         )}
       </AnimatePresence>
 
+      {/* ── Bouton "Passer" (skip intro) ──────────────────────────────── */}
+      <AnimatePresence>
+        {(phase === "opening" || phase === "playing") && (
+          <motion.button
+            key="skip-btn"
+            type="button"
+            className="ft-skip-btn"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 6 }}
+            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+            onClick={onFinish}
+            aria-label="Passer l'introduction"
+          >
+            PASSER
+          </motion.button>
+        )}
+      </AnimatePresence>
+
       {/* ── Bouton "Activer le son" (fallback iOS) ──────────────────────── */}
       <AnimatePresence>
         {needsTap && !soundOn && phase === "playing" && (

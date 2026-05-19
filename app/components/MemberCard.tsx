@@ -67,7 +67,7 @@ export default function MemberCard({ member, index, viewMode, onClick, isMobile 
           ) : !hasError ? (
             <Image
               src={photoSrc}
-              alt={member.name}
+              alt={`${member.name} — ${isAnime ? "personnage anime" : "photo"}`}
               fill
               sizes={isMobile ? "50vw" : "(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 230px"}
               priority={index < 4}

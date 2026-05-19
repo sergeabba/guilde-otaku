@@ -2,6 +2,7 @@
 
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import { Member } from "../../data/members";
 import { useEffect, useRef, useState } from "react";
 import type { ViewMode } from "../types";
@@ -108,11 +109,13 @@ function ModalContent({ member, onClose, viewMode }: {
         {heroVideoSrc ? (
           <VideoPlayer src={heroVideoSrc} fit="cover" objectPosition="smart" fullscreenBtn />
         ) : (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={heroSrc}
             alt={`${member.name} — ${isAnime ? "avatar anime" : "photo réelle"}`}
-            style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 15%" }}
+            fill
+            sizes="(max-width: 767px) 100vw, 44vw"
+            className="object-cover"
+            style={{ objectPosition: "center 15%" }}
             onError={() => setHeroImgError(true)}
           />
         )}
@@ -247,12 +250,13 @@ function ModalContent({ member, onClose, viewMode }: {
                 {video ? (
                   <VideoPlayer src={video} fit="cover" objectPosition="smart" fullscreenBtn />
                 ) : (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                  <Image
                     src={img}
                     alt={`${member.name} — ${label}`}
-                    loading="lazy"
-                    style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 15%" }}
+                    fill
+                    sizes="(max-width: 767px) 100vw, 280px"
+                    className="object-cover"
+                    style={{ objectPosition: "center 15%" }}
                     onError={onErr}
                   />
                 )}

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { Sword, Flame, ArrowRight, Palette, Sparkles } from "lucide-react";
 import React from "react";
@@ -80,7 +81,7 @@ export function ChroniqueBanner({ isMobile, isDark, theme }: { isMobile?: boolea
         }}>
           {/* Image de fond subtile */}
           <div style={{ position: "absolute", inset: 0, opacity: 0.15, zIndex: 0 }}>
-            <img src="https://image.tmdb.org/t/p/original/lvndABJgYFihAGocI1hPgqv7yxu.jpg" alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <Image src="https://image.tmdb.org/t/p/original/lvndABJgYFihAGocI1hPgqv7yxu.jpg" alt="" fill sizes="100vw" className="object-cover" />
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: isMobile ? "16px" : "24px", position: "relative", zIndex: 1, transform: "translateZ(30px)" }}>

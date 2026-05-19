@@ -1,9 +1,61 @@
 import type { Metadata } from "next";
 import { cookies, headers } from "next/headers";
+import {
+  Barlow_Condensed,
+  Barlow,
+  Bebas_Neue,
+  Orbitron,
+  Black_Ops_One,
+  Cinzel_Decorative,
+} from "next/font/google";
 import "./globals.css";
 
 import BirthdayBanner from "./components/BirthdayBanner";
+import Footer from "./components/Footer";
 import SplashWrapper from "./components/SplashWrapper";
+
+const barlowCondensed = Barlow_Condensed({
+  subsets: ["latin"],
+  weight: ["400", "600", "700", "900"],
+  style: ["normal", "italic"],
+  display: "swap",
+  variable: "--font-barlow-condensed",
+});
+
+const barlow = Barlow({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600"],
+  display: "swap",
+  variable: "--font-barlow",
+});
+
+const bebasNeue = Bebas_Neue({
+  subsets: ["latin"],
+  weight: "400",
+  display: "swap",
+  variable: "--font-bebas-neue",
+});
+
+const orbitron = Orbitron({
+  subsets: ["latin"],
+  weight: ["400", "500", "700", "900"],
+  display: "swap",
+  variable: "--font-orbitron",
+});
+
+const blackOpsOne = Black_Ops_One({
+  subsets: ["latin"],
+  weight: "400",
+  display: "swap",
+  variable: "--font-black-ops-one",
+});
+
+const cinzelDecorative = Cinzel_Decorative({
+  subsets: ["latin"],
+  weight: ["700", "900"],
+  display: "swap",
+  variable: "--font-cinzel-decorative",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://guilde-otaku.vercel.app'), 
@@ -41,15 +93,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const hasSeenSplash = isBot || cookieStore.get("guilde-splash-seen")?.value === "1";
 
   return (
-    <html lang="fr">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,400;1,700;1,900&family=Barlow:wght@300;400;500;600&family=Bebas+Neue&family=Orbitron:wght@400;500;700;900&family=Black+Ops+One&family=Cinzel+Decorative:wght@700;900&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+    <html lang="fr" className={`${barlowCondensed.variable} ${barlow.variable} ${bebasNeue.variable} ${orbitron.variable} ${blackOpsOne.variable} ${cinzelDecorative.variable}`}>
       <body>
         {/* === BANNIÈRE D'ANNIVERSAIRE === */}
         {/* Elle s'affichera automatiquement sur toutes les pages le jour J */}
@@ -58,6 +102,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {/* === SPLASH SCREEN FAIRY TAIL === */}
         <SplashWrapper hasSeenSplash={hasSeenSplash}>
           {children}
+          <Footer />
         </SplashWrapper>
       </body>
     </html>
