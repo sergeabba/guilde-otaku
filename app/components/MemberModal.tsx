@@ -82,7 +82,18 @@ function ModalContent({ member, onClose, viewMode }: {
     if (navigator.share) {
       try { await navigator.share(shareData); } catch { /* user cancelled */ }
     } else {
-      await navigator.clipboard.writeText(url);
+      try {
+        await navigator.clipboard.writeText(url);
+      } catch {
+        const ta = document.createElement("textarea");
+        ta.value = url;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
       setShareToast(true);
       setTimeout(() => setShareToast(false), 2200);
     }

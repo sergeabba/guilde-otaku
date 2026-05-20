@@ -36,7 +36,7 @@ export default function WantedPage() {
 
   useEffect(() => {
     const fetchMembers = async () => {
-      const { data } = await supabase.from("fighters").select("*").order("id", { ascending: true });
+      const { data } = await supabase.from("fighters").select("*").eq("hidden", false).order("id", { ascending: true });
       if (data) {
         setMembers(data.map(m => ({
           ...m,

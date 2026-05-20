@@ -150,6 +150,7 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
             memberCount={initialMembers.length}
             fightCount={initialMembers.length * 2}
             biblioCount={42}
+            isDark={isDark}
           />
 
           <motion.div

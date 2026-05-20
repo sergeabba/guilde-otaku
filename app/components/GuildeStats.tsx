@@ -7,6 +7,7 @@ interface GuildeStatsProps {
   memberCount: number;
   fightCount: number;
   biblioCount: number;
+  isDark?: boolean;
 }
 
 function useAnimatedCounter(target: number, trigger: boolean, duration = 1500) {
@@ -37,7 +38,7 @@ function useAnimatedCounter(target: number, trigger: boolean, duration = 1500) {
   return value;
 }
 
-export default function GuildeStats({ memberCount, fightCount, biblioCount }: GuildeStatsProps) {
+export default function GuildeStats({ memberCount, fightCount, biblioCount, isDark = false }: GuildeStatsProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
 
@@ -83,8 +84,8 @@ export default function GuildeStats({ memberCount, fightCount, biblioCount }: Gu
       {/* Card */}
       <div
         style={{
-          background: "rgba(255,255,255,0.03)",
-          border: "1px solid rgba(255,255,255,0.07)",
+          background: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)",
+          border: `1px solid ${isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.08)"}`,
           borderTop: "none",
           borderRadius: "0 0 20px 20px",
           backdropFilter: "blur(12px)",
@@ -119,7 +120,7 @@ export default function GuildeStats({ memberCount, fightCount, biblioCount }: Gu
             <span
               style={{
                 fontSize: "clamp(12px, 2vw, 15px)",
-                color: "rgba(255,255,255,0.55)",
+                color: isDark ? "rgba(255,255,255,0.55)" : "rgba(0,0,0,0.55)",
                 fontFamily: "'Barlow Condensed', sans-serif",
                 fontWeight: 600,
                 letterSpacing: "0.05em",
