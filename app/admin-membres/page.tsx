@@ -7,7 +7,7 @@ import { supabase } from "../../lib/supabase";
 import {
   Lock, Eye, EyeOff, Plus, Trash2, Pencil, X, Check,
   Upload, RefreshCw, User, Sword, Video, Image as ImageIcon,
-  Search, AlertTriangle, ChevronLeft, Camera,
+  Search, AlertTriangle, ChevronLeft, Camera, GripVertical,
 } from "lucide-react";
 import { RANK_FILTER_ORDER, type Rank } from "../../data/members";
 import { useAdminAuth } from "../hooks/useAdminAuth";
@@ -15,6 +15,12 @@ import { useIsMobile } from "../hooks/useIsMobile";
 import { getAdminFormDataHeaders, getAdminHeaders } from "../../lib/admin-fetch";
 import { invalidateMembersCache } from "../utils/dataAdapter";
 import type { SupabaseMemberRow } from "../types";
+import {
+  DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 type PhotoType = "photo" | "anime";
 type MediaKind = "image" | "video";
@@ -95,6 +101,25 @@ function AuthScreen({ password, setPassword, login }: { password: string; setPas
   );
 }
 
+// ─── SORTABLE CARD WRAPPER ────────────────────────────────────────────────────
+function SortableCard({ id, children }: { id: number; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    position: "relative" as const,
+  };
+  return (
+    <div ref={setNodeRef} style={style}>
+      <div {...attributes} {...listeners} style={{ position: "absolute", top: 6, left: 6, zIndex: 10, padding: 4, borderRadius: 6, background: "rgba(0,0,0,0.6)", cursor: "grab", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <GripVertical size={14} color="rgba(255,255,255,0.7)" />
+      </div>
+      {children}
+    </div>
+  );
+}
+
 // ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 export default function AdminMembresPage() {
   const { authed, checking, password, setPassword, login } = useAdminAuth();
@@ -118,6 +143,10 @@ export default function AdminMembresPage() {
   const [formBirthday, setFormBirthday] = useState("");
   const [formBio, setFormBio] = useState("");
   const [formColor, setFormColor] = useState("#E91E8C");
+  const [formCountry, setFormCountry] = useState("");
+
+  // Reorder mode
+  const [reorderMode, setReorderMode] = useState(false);
 
   // Delete
   const [deleteTarget, setDeleteTarget] = useState<SupabaseMemberRow | null>(null);
@@ -160,7 +189,7 @@ export default function AdminMembresPage() {
 
   function openNew() {
     setEditingId(null); setEditingMember(null);
-    setFormName(""); setFormRank("New G dorée"); setFormBirthday(""); setFormBio(""); setFormColor("#E91E8C");
+    setFormName(""); setFormRank("New G dorée"); setFormBirthday(""); setFormBio(""); setFormColor("#E91E8C"); setFormCountry("");
     resetMedia();
     setPanelOpen(true);
   }
@@ -169,6 +198,7 @@ export default function AdminMembresPage() {
     setEditingId(f.id); setEditingMember(f);
     setFormName(f.name); setFormRank(f.rank as Rank);
     setFormBirthday(f.birthday || ""); setFormBio(f.bio || ""); setFormColor(f.color || "#E91E8C");
+    setFormCountry(f.country || "");
     resetMedia();
     fetchGallery(memberSlug(f.name));
     setPanelOpen(true);
@@ -178,7 +208,7 @@ export default function AdminMembresPage() {
     e.preventDefault();
     if (!formName.trim()) return;
     setSaving(true);
-    const payload = { name: formName.trim(), rank: formRank, birthday: formBirthday.trim(), bio: formBio.trim(), color: formColor };
+    const payload = { name: formName.trim(), rank: formRank, birthday: formBirthday.trim(), bio: formBio.trim(), color: formColor, country: formCountry.trim() || null };
     if (editingId) {
       await supabase.from("fighters").update(payload).eq("id", editingId);
       const updated = { ...editingMember!, ...payload };
@@ -222,6 +252,32 @@ export default function AdminMembresPage() {
     invalidateMembersCache();
     setFighters(prev => prev.map(f => f.id === member.id ? { ...f, hidden: newHidden } : f));
     setSaveToast(`${member.name} ${newHidden ? "masqué" : "réaffiché"}`);
+    setTimeout(() => setSaveToast(null), 3000);
+  }
+
+  // ── REORDER (DnD) ─────────────────────────────────────────────────────────
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
+  );
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = filtered.findIndex(f => f.id === active.id);
+    const newIndex = filtered.findIndex(f => f.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const reordered = arrayMove(filtered, oldIndex, newIndex);
+    setFighters(prev => {
+      const otherFighters = prev.filter(f => !reordered.find(r => r.id === f.id));
+      return [...reordered, ...otherFighters];
+    });
+    const updates = reordered.map((f, i) => ({ id: f.id, position: i }));
+    for (const u of updates) {
+      await supabase.from("fighters").update({ position: u.position }).eq("id", u.id);
+    }
+    invalidateMembersCache();
+    setSaveToast("Ordre mis à jour");
     setTimeout(() => setSaveToast(null), 3000);
   }
 
@@ -375,6 +431,10 @@ export default function AdminMembresPage() {
             style={{ ...inp, paddingLeft: 32 }}
           />
         </div>
+        <button onClick={() => setReorderMode(v => !v)}
+          style={{ display: "flex", alignItems: "center", gap: 7, padding: "10px 16px", background: reorderMode ? "rgba(96,165,250,0.15)" : "rgba(255,255,255,0.04)", border: `1px solid ${reorderMode ? "#60a5fa" : "rgba(255,255,255,0.1)"}`, borderRadius: 10, cursor: "pointer", fontFamily: F, fontSize: 13, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.06em", color: reorderMode ? "#60a5fa" : "rgba(255,255,255,0.5)", whiteSpace: "nowrap", flexShrink: 0 }}>
+          <GripVertical size={15} /> {!isMobile && "ORDRE"}
+        </button>
         <button onClick={openNew}
           style={{ display: "flex", alignItems: "center", gap: 7, padding: "10px 20px", background: "#c9a84c", border: "none", borderRadius: 10, cursor: "pointer", fontFamily: F, fontSize: 13, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.06em", color: "#000", boxShadow: "0 4px 16px rgba(201,168,76,0.3)", whiteSpace: "nowrap", flexShrink: 0 }}>
           <Plus size={15} /> {!isMobile && "AJOUTER"}
@@ -387,7 +447,40 @@ export default function AdminMembresPage() {
           <div style={{ display: "flex", justifyContent: "center", padding: "80px 0" }}>
             <div style={{ width: 32, height: 32, borderRadius: "50%", border: "3px solid rgba(201,168,76,0.2)", borderTopColor: "#c9a84c", animation: "spin 0.7s linear infinite" }} />
           </div>
+        ) : reorderMode ? (
+          /* ── MODE REORDER : liste verticale drag & drop ── */
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={filtered.map(f => f.id)} strategy={verticalListSortingStrategy}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {filtered.map((f, i) => {
+                  const c = RANK_COLORS[f.rank] ?? "#9CA3AF";
+                  const avatar = f.photo || f.animechar;
+                  return (
+                    <SortableCard key={f.id} id={f.id}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px 10px 40px", background: "rgba(255,255,255,0.03)", border: `1px solid ${c}30`, borderRadius: 10, opacity: f.hidden ? 0.5 : 1 }}>
+                        <span style={{ fontFamily: F, fontSize: 12, fontWeight: 800, color: "rgba(255,255,255,0.3)", width: 24, textAlign: "center" }}>{i + 1}</span>
+                        <div style={{ width: 36, height: 36, borderRadius: 8, overflow: "hidden", background: `${c}18`, flexShrink: 0, border: `1px solid ${c}40` }}>
+                          {avatar && !isVideoUrl(avatar) ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top" }} />
+                          ) : (
+                            <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}><User size={14} color={`${c}80`} /></div>
+                          )}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontFamily: F, fontSize: 14, fontWeight: 900, color: "#fff", fontStyle: "italic", textTransform: "uppercase", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</p>
+                          <span style={{ fontSize: 10, fontWeight: 800, color: c, fontFamily: F }}>{f.rank}</span>
+                        </div>
+                        {f.country && <span style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", fontFamily: F }}>{f.country}</span>}
+                      </div>
+                    </SortableCard>
+                  );
+                })}
+              </div>
+            </SortableContext>
+          </DndContext>
         ) : (
+          /* ── MODE NORMAL : grille cartes ── */
           <div style={{
             display: "grid",
             gridTemplateColumns: isMobile ? "repeat(auto-fill, minmax(130px, 1fr))" : "repeat(auto-fill, minmax(168px, 1fr))",
@@ -584,6 +677,10 @@ export default function AdminMembresPage() {
                       </div>
                     </Field>
                   </div>
+
+                  <Field label="PAYS">
+                    <input value={formCountry} onChange={(e) => setFormCountry(e.target.value)} placeholder="Ex: 🇫🇷 France" style={inp} />
+                  </Field>
 
                   <Field label="BIO">
                     <textarea value={formBio} onChange={(e) => setFormBio(e.target.value)}

@@ -40,6 +40,7 @@ function mapRowToMember(row: SupabaseMemberRow): Member {
     special:    row.special ?? defaultSpecial,
     photoVideo: row.photovideo ?? undefined,
     animeVideo: row.animevideo ?? undefined,
+    country:    row.country ?? undefined,
   };
 }
 
@@ -84,6 +85,7 @@ export async function fetchMembers(): Promise<Member[]> {
 
     if (Array.isArray(result) && result.length > 0) {
       const visible = result.filter(row => !row.hidden);
+      visible.sort((a, b) => (a.position ?? a.id) - (b.position ?? b.id));
       const mapped = visible.map(mapRowToMember);
       membersCache = mapped;
       membersCacheTime = Date.now();

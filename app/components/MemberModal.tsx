@@ -151,6 +151,7 @@ function ModalContent({ member, onClose, viewMode }: {
   const stats = [
     { label: "Rang",         value: member.rank     },
     { label: "Anniversaire", value: member.birthday },
+    ...(member.country ? [{ label: "Pays", value: member.country }] : []),
     { label: "Guilde",       value: "Otaku"         },
   ];
 
@@ -190,7 +191,7 @@ function ModalContent({ member, onClose, viewMode }: {
         ) : (
           // Desktop : grille 3 colonnes
           <div style={{
-            display: "grid", gridTemplateColumns: "repeat(3, 1fr)",
+            display: "grid", gridTemplateColumns: `repeat(${stats.length}, 1fr)`,
             gap: 2, borderRadius: 14, overflow: "hidden",
             border: `1px solid ${borderColor}`,
             marginBottom: 44,

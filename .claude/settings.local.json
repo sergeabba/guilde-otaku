@@ -34,7 +34,18 @@
       "Bash(git push *)",
       "Bash(curl -s \"https://guilde-otaku.vercel.app/membres/1\")",
       "Bash(curl -s \"https://guilde-otaku.vercel.app/membres/2\")",
-      "Bash(curl *)"
+      "Bash(curl *)",
+      "Bash(mkdir -p D:/guilde-fighters)",
+      "Bash(npm init *)",
+      "Bash(npm install *)",
+      "Bash(grep -E \"NEXT_PUBLIC_SUPABASE_\\(URL|ANON_KEY\\)\" .env.local)",
+      "Bash(grep -E \"SUPABASE_\\(URL|ANON_KEY\\)\" .env)",
+      "Bash(grep -E \"SUPABASE\" .env.local)",
+      "Bash(npx vite *)",
+      "Bash(start *)",
+      "Bash(taskkill /f /im node.exe)",
+      "Bash(npx caveman *)",
+      "Bash(timeout 10 tail -f \"C:\\\\Users\\\\hp\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\D--trombinoscope\\\\241b9152-3967-41b7-ae04-7a73743d9bda\\\\tasks\\\\b6xxp2yvy.output\")"
     ]
   }
 }

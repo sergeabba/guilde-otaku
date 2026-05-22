@@ -48,6 +48,7 @@ export interface Member {
   special: SpecialAttack;
   photoVideo?: string;
   animeVideo?: string;
+  country?: string;
 }
 
 export const members: Member[] = [

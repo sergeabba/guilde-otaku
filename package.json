@@ -10,11 +10,15 @@
     "test": "jest"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@supabase/supabase-js": "^2.100.0",
     "@tsparticles/engine": "^3.9.1",
     "@tsparticles/react": "^3.0.0",
     "@tsparticles/slim": "^3.9.1",
     "canvas-confetti": "^1.9.4",
+    "caveman": "github:JuliusBrussee/caveman",
     "framer-motion": "^12.38.0",
     "howler": "^2.2.4",
     "lucide-react": "^0.577.0",

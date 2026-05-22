@@ -36,6 +36,8 @@ export interface SupabaseMemberRow {
   photovideo?:  string | null;
   animevideo?:  string | null;
   hidden?:      boolean | null;
+  country?:     string | null;
+  position?:    number | null;
 }
 
 // ─── BIBLIOTHÈQUE ENTRY ───────────────────────────────────────────────────────
