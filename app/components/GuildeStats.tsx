@@ -118,8 +118,9 @@ export default function GuildeStats({ memberCount, countryCounts, isDark = false
           <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "10px 16px" }}>
             {topCountries.map(([country, count]) => (
               <div key={country} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 12px", background: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)", borderRadius: "8px", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)"}` }}>
-                <span style={{ fontSize: "14px" }}>{country}</span>
-                <span style={{ fontSize: "13px", fontWeight: 700, color: "#c9a84c", fontFamily: "'Barlow Condensed', sans-serif" }}>{count}</span>
+                <span style={{ fontSize: "13px", fontWeight: 600, color: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.7)", fontFamily: "'Barlow Condensed', sans-serif" }}>
+                  {count} {count > 1 ? "membres" : "membre"} en {country}
+                </span>
               </div>
             ))}
           </div>

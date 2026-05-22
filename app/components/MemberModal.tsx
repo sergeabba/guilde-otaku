@@ -151,8 +151,7 @@ function ModalContent({ member, onClose, viewMode }: {
   const stats = [
     { label: "Rang",         value: member.rank     },
     { label: "Anniversaire", value: member.birthday },
-    ...(member.country ? [{ label: "Pays", value: member.country }] : []),
-    { label: "Guilde",       value: "Otaku"         },
+    { label: "Guilde",       value: member.country ? `Otaku ${member.country}` : "Otaku" },
   ];
 
   // ── Section info — desktop garde la grille 3 colonnes, mobile garde les séparateurs ──
