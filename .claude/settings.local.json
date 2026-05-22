@@ -45,7 +45,8 @@
       "Bash(start *)",
       "Bash(taskkill /f /im node.exe)",
       "Bash(npx caveman *)",
-      "Bash(timeout 10 tail -f \"C:\\\\Users\\\\hp\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\D--trombinoscope\\\\241b9152-3967-41b7-ae04-7a73743d9bda\\\\tasks\\\\b6xxp2yvy.output\")"
+      "Bash(timeout 10 tail -f \"C:\\\\Users\\\\hp\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\D--trombinoscope\\\\241b9152-3967-41b7-ae04-7a73743d9bda\\\\tasks\\\\b6xxp2yvy.output\")",
+      "Bash(npm list *)"
     ]
   }
 }

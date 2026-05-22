@@ -8,7 +8,7 @@ import MemberModal from "./MemberModal";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, User, Sword, X } from "lucide-react";
 import { rankAccents, rankBg, rankLogos, darkRanks } from "../config/ranks";
-import { COUNTRIES, flagUrl } from "../config/countries";
+import { COUNTRIES, flagEmoji } from "../config/countries";
 import GuildeHeader from "./GuildeHeader";
 import { useIsMobile } from "../hooks/useIsMobile";
 import type { ViewMode } from "../types";
@@ -280,7 +280,7 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
                     fontFamily: "'Barlow Condensed', sans-serif", fontSize: "13px", fontWeight: 700,
                   }}
                 >
-                  <img src={flagUrl(c.code)} alt={c.label} style={{ width: 18, height: 13, objectFit: "cover", borderRadius: 2 }} />
+                  <span style={{ fontSize: 14 }}>{flagEmoji(c.code)}</span>
                   {c.label}
                 </button>
               ))}

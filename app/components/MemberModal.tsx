@@ -7,7 +7,7 @@ import { Member } from "../../data/members";
 import { useEffect, useRef, useState } from "react";
 import type { ViewMode } from "../types";
 import { rankAccents, rankBg, darkRanks } from "../config/ranks";
-import { COUNTRIES, flagUrl } from "../config/countries";
+import { COUNTRIES, flagEmoji } from "../config/countries";
 import { Trophy, ArrowLeft, Share2 } from "lucide-react";
 import VideoPlayer from "./VideoPlayer";
 
@@ -179,7 +179,7 @@ function ModalContent({ member, onClose, viewMode }: {
                     {s.label}
                   </p>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                    {s.flagCode && <img src={flagUrl(s.flagCode)} alt="" style={{ width: 28, height: 21, objectFit: "cover", borderRadius: 3 }} />}
+                    {s.flagCode && <span style={{ fontSize: 24 }}>{flagEmoji(s.flagCode)}</span>}
                     <p style={{
                       fontFamily: "'Barlow Condensed', sans-serif",
                       fontSize: 26, fontWeight: 900,
@@ -218,7 +218,7 @@ function ModalContent({ member, onClose, viewMode }: {
                   {s.label}
                 </p>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                  {s.flagCode && <img src={flagUrl(s.flagCode)} alt="" style={{ width: 24, height: 18, objectFit: "cover", borderRadius: 2 }} />}
+                  {s.flagCode && <span style={{ fontSize: 20 }}>{flagEmoji(s.flagCode)}</span>}
                   <p style={{
                     fontFamily: "'Barlow Condensed', sans-serif",
                     fontSize: 20, fontWeight: 900,

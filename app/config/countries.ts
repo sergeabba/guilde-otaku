@@ -66,6 +66,14 @@ export function flagUrl(code: string): string {
   return `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
 }
 
+export function flagEmoji(code: string): string {
+  return code
+    .toUpperCase()
+    .split("")
+    .map(c => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65))
+    .join("");
+}
+
 export function findCountryByLabel(label: string): Country | undefined {
   return COUNTRIES.find(c => c.label === label);
 }

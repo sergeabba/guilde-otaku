@@ -22,7 +22,7 @@ import {
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-import { COUNTRIES, flagUrl } from "../config/countries";
+import { COUNTRIES, flagEmoji } from "../config/countries";
 
 type PhotoType = "photo" | "anime";
 type MediaKind = "image" | "video";
@@ -473,7 +473,7 @@ export default function AdminMembresPage() {
                           <p style={{ fontFamily: F, fontSize: 14, fontWeight: 900, color: "#fff", fontStyle: "italic", textTransform: "uppercase", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</p>
                           <span style={{ fontSize: 10, fontWeight: 800, color: c, fontFamily: F }}>{f.rank}</span>
                         </div>
-                        {f.country && <img src={flagUrl(f.country)} alt={f.country} style={{ width: 20, height: 15, objectFit: "cover", borderRadius: 2 }} />}
+                        {f.country && <span style={{ fontSize: 16 }}>{flagEmoji(f.country)}</span>}
                       </div>
                     </SortableCard>
                   );

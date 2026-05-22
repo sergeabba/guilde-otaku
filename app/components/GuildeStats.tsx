@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useMemo } from "react";
 import { Users, Globe } from "lucide-react";
-import { COUNTRIES, flagUrl } from "../config/countries";
+import { COUNTRIES, flagEmoji } from "../config/countries";
 
 interface GuildeStatsProps {
   memberCount: number;
@@ -122,7 +122,7 @@ export default function GuildeStats({ memberCount, countryCounts, isDark = false
               const prep = c?.prep || `en ${code}`;
               return (
                 <div key={code} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "6px 12px", background: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)", borderRadius: "8px", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)"}` }}>
-                  <img src={flagUrl(code)} alt={c?.label || code} style={{ width: 20, height: 15, objectFit: "cover", borderRadius: 2 }} />
+                  <span style={{ fontSize: 18 }}>{flagEmoji(code)}</span>
                   <span style={{ fontSize: "13px", fontWeight: 600, color: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.7)", fontFamily: "'Barlow Condensed', sans-serif" }}>
                     {count} {count > 1 ? "membres" : "membre"} {prep}
                   </span>
