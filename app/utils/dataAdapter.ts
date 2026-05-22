@@ -5,8 +5,8 @@ import type { SupabaseMemberRow, FighterStats, SpecialAttack } from "../types";
 
 // ─── CACHE MÉMOIRE ────────────────────────────────────────────────────────────
 // Évite les refetch inutiles lors des navigations rapides entre pages.
-// TTL de 5 minutes — suffisant pour une session normale.
-const CACHE_TTL_MS = 5 * 60 * 1000;
+// TTL court pour refléter rapidement les changements admin.
+const CACHE_TTL_MS = 15 * 1000;
 
 let membersCache: Member[] | null = null;
 let membersCacheTime = 0;

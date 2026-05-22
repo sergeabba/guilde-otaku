@@ -37,6 +37,14 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
   const accent = rankAccents[activeRank as Rank | "Tous"];
   const isDark = darkRanks.includes(activeRank as Rank);
 
+  const countryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const m of initialMembers) {
+      if (m.country) counts[m.country] = (counts[m.country] || 0) + 1;
+    }
+    return counts;
+  }, [initialMembers]);
+
   const filteredMembers = useMemo(() => {
     return initialMembers.filter((m) => {
       const matchesRank   = activeRank === "Tous" || m.rank === activeRank;
@@ -148,8 +156,7 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
 
           <GuildeStats
             memberCount={initialMembers.length}
-            fightCount={initialMembers.length * 2}
-            biblioCount={42}
+            countryCounts={countryCounts}
             isDark={isDark}
           />
 
