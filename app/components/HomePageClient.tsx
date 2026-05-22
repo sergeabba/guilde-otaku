@@ -280,7 +280,7 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
                     fontFamily: "'Barlow Condensed', sans-serif", fontSize: "13px", fontWeight: 700,
                   }}
                 >
-                  <img src={flagUrl(c.code, 24)} alt={c.label} style={{ width: 18, height: 13, objectFit: "cover", borderRadius: 2 }} />
+                  <img src={flagUrl(c.code)} alt={c.label} style={{ width: 18, height: 13, objectFit: "cover", borderRadius: 2 }} />
                   {c.label}
                 </button>
               ))}

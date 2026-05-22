@@ -179,7 +179,7 @@ function ModalContent({ member, onClose, viewMode }: {
                     {s.label}
                   </p>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                    {s.flagCode && <img src={flagUrl(s.flagCode, 32)} alt="" style={{ width: 28, height: 21, objectFit: "cover", borderRadius: 3 }} />}
+                    {s.flagCode && <img src={flagUrl(s.flagCode)} alt="" style={{ width: 28, height: 21, objectFit: "cover", borderRadius: 3 }} />}
                     <p style={{
                       fontFamily: "'Barlow Condensed', sans-serif",
                       fontSize: 26, fontWeight: 900,
@@ -218,7 +218,7 @@ function ModalContent({ member, onClose, viewMode }: {
                   {s.label}
                 </p>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                  {s.flagCode && <img src={flagUrl(s.flagCode, 32)} alt="" style={{ width: 24, height: 18, objectFit: "cover", borderRadius: 2 }} />}
+                  {s.flagCode && <img src={flagUrl(s.flagCode)} alt="" style={{ width: 24, height: 18, objectFit: "cover", borderRadius: 2 }} />}
                   <p style={{
                     fontFamily: "'Barlow Condensed', sans-serif",
                     fontSize: 20, fontWeight: 900,
