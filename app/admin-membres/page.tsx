@@ -22,6 +22,64 @@ import {
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
+const COUNTRIES = [
+  { code: "FR", label: "🇫🇷 France" },
+  { code: "BE", label: "🇧🇪 Belgique" },
+  { code: "CH", label: "🇨🇭 Suisse" },
+  { code: "CA", label: "🇨🇦 Canada" },
+  { code: "US", label: "🇺🇸 États-Unis" },
+  { code: "GB", label: "🇬🇧 Royaume-Uni" },
+  { code: "DE", label: "🇩🇪 Allemagne" },
+  { code: "ES", label: "🇪🇸 Espagne" },
+  { code: "IT", label: "🇮🇹 Italie" },
+  { code: "PT", label: "🇵🇹 Portugal" },
+  { code: "NL", label: "🇳🇱 Pays-Bas" },
+  { code: "PL", label: "🇵🇱 Pologne" },
+  { code: "RO", label: "🇷🇴 Roumanie" },
+  { code: "SE", label: "🇸🇪 Suède" },
+  { code: "TR", label: "🇹🇷 Turquie" },
+  { code: "RU", label: "🇷🇺 Russie" },
+  { code: "JP", label: "🇯🇵 Japon" },
+  { code: "KR", label: "🇰🇷 Corée du Sud" },
+  { code: "CN", label: "🇨🇳 Chine" },
+  { code: "IN", label: "🇮🇳 Inde" },
+  { code: "BR", label: "🇧🇷 Brésil" },
+  { code: "MX", label: "🇲🇽 Mexique" },
+  { code: "AR", label: "🇦🇷 Argentine" },
+  { code: "CO", label: "🇨🇴 Colombie" },
+  { code: "AU", label: "🇦🇺 Australie" },
+  // Afrique
+  { code: "MA", label: "🇲🇦 Maroc" },
+  { code: "DZ", label: "🇩🇿 Algérie" },
+  { code: "TN", label: "🇹🇳 Tunisie" },
+  { code: "SN", label: "🇸🇳 Sénégal" },
+  { code: "CI", label: "🇨🇮 Côte d'Ivoire" },
+  { code: "CM", label: "🇨🇲 Cameroun" },
+  { code: "CD", label: "🇨🇩 RD Congo" },
+  { code: "CG", label: "🇨🇬 Congo" },
+  { code: "GA", label: "🇬🇦 Gabon" },
+  { code: "ML", label: "🇲🇱 Mali" },
+  { code: "BF", label: "🇧🇫 Burkina Faso" },
+  { code: "GN", label: "🇬🇳 Guinée" },
+  { code: "NE", label: "🇳🇪 Niger" },
+  { code: "TD", label: "🇹🇩 Tchad" },
+  { code: "BJ", label: "🇧🇯 Bénin" },
+  { code: "TG", label: "🇹🇬 Togo" },
+  { code: "MG", label: "🇲🇬 Madagascar" },
+  { code: "GH", label: "🇬🇭 Ghana" },
+  { code: "NG", label: "🇳🇬 Nigeria" },
+  { code: "KE", label: "🇰🇪 Kenya" },
+  { code: "ZA", label: "🇿🇦 Afrique du Sud" },
+  { code: "EG", label: "🇪🇬 Égypte" },
+  { code: "ET", label: "🇪🇹 Éthiopie" },
+  { code: "AO", label: "🇦🇴 Angola" },
+  { code: "MR", label: "🇲🇷 Mauritanie" },
+  { code: "DJ", label: "🇩🇯 Djibouti" },
+  { code: "KM", label: "🇰🇲 Comores" },
+  { code: "RW", label: "🇷🇼 Rwanda" },
+  { code: "BI", label: "🇧🇮 Burundi" },
+];
+
 type PhotoType = "photo" | "anime";
 type MediaKind = "image" | "video";
 interface StorageFile { name: string; url: string; path: string; }
@@ -679,7 +737,10 @@ export default function AdminMembresPage() {
                   </div>
 
                   <Field label="PAYS">
-                    <input value={formCountry} onChange={(e) => setFormCountry(e.target.value)} placeholder="Ex: 🇫🇷 France" style={inp} />
+                    <select value={formCountry} onChange={(e) => setFormCountry(e.target.value)} style={{ ...inp, appearance: "none", backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center" }}>
+                      <option value="">— Aucun —</option>
+                      {COUNTRIES.map(c => <option key={c.code} value={c.label}>{c.label}</option>)}
+                    </select>
                   </Field>
 
                   <Field label="BIO">
