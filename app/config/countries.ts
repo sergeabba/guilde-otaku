@@ -62,8 +62,8 @@ export const COUNTRIES: Country[] = [
   { code: "TR", label: "Turquie", prep: "en Turquie" },
 ];
 
-export function flagUrl(code: string, size = 24): string {
-  return `https://flagcdn.com/${size}x${Math.round(size * 0.75)}/${code.toLowerCase()}.png`;
+export function flagUrl(code: string, size = 40): string {
+  return `https://flagcdn.com/w${size}/${code.toLowerCase()}.png`;
 }
 
 export function findCountryByLabel(label: string): Country | undefined {
