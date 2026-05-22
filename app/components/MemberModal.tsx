@@ -7,6 +7,7 @@ import { Member } from "../../data/members";
 import { useEffect, useRef, useState } from "react";
 import type { ViewMode } from "../types";
 import { rankAccents, rankBg, darkRanks } from "../config/ranks";
+import { COUNTRIES, flagUrl } from "../config/countries";
 import { Trophy, ArrowLeft, Share2 } from "lucide-react";
 import VideoPlayer from "./VideoPlayer";
 
@@ -148,10 +149,12 @@ function ModalContent({ member, onClose, viewMode }: {
     </AnimatePresence>
   );
 
+  const countryInfo = member.country ? COUNTRIES.find(c => c.code === member.country) : null;
+
   const stats = [
     { label: "Rang",         value: member.rank     },
     { label: "Anniversaire", value: member.birthday },
-    { label: "Guilde",       value: member.country ? `Otaku ${member.country}` : "Otaku" },
+    { label: "Guilde",       value: countryInfo ? `Otaku ${countryInfo.label}` : "Otaku", flagCode: countryInfo?.code },
   ];
 
   // ── Section info — desktop garde la grille 3 colonnes, mobile garde les séparateurs ──
@@ -175,13 +178,16 @@ function ModalContent({ member, onClose, viewMode }: {
                   }}>
                     {s.label}
                   </p>
-                  <p style={{
-                    fontFamily: "'Barlow Condensed', sans-serif",
-                    fontSize: 26, fontWeight: 900,
-                    color: textPrimary, lineHeight: 1.1,
-                  }}>
-                    {s.value}
-                  </p>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                    {s.flagCode && <img src={flagUrl(s.flagCode, 32)} alt="" style={{ width: 28, height: 21, objectFit: "cover", borderRadius: 3 }} />}
+                    <p style={{
+                      fontFamily: "'Barlow Condensed', sans-serif",
+                      fontSize: 26, fontWeight: 900,
+                      color: textPrimary, lineHeight: 1.1,
+                    }}>
+                      {s.value}
+                    </p>
+                  </div>
                 </div>
               </div>
             ))}
@@ -211,13 +217,16 @@ function ModalContent({ member, onClose, viewMode }: {
                 }}>
                   {s.label}
                 </p>
-                <p style={{
-                  fontFamily: "'Barlow Condensed', sans-serif",
-                  fontSize: 20, fontWeight: 900,
-                  color: textPrimary, lineHeight: 1.1,
-                }}>
-                  {s.value}
-                </p>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                  {s.flagCode && <img src={flagUrl(s.flagCode, 32)} alt="" style={{ width: 24, height: 18, objectFit: "cover", borderRadius: 2 }} />}
+                  <p style={{
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontSize: 20, fontWeight: 900,
+                    color: textPrimary, lineHeight: 1.1,
+                  }}>
+                    {s.value}
+                  </p>
+                </div>
               </div>
             ))}
           </div>

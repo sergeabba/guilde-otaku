@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useMemo } from "react";
 import { Users, Globe } from "lucide-react";
+import { COUNTRIES, flagUrl } from "../config/countries";
 
 interface GuildeStatsProps {
   memberCount: number;
@@ -116,13 +117,18 @@ export default function GuildeStats({ memberCount, countryCounts, isDark = false
         {/* Country breakdown */}
         {topCountries.length > 0 && (
           <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "10px 16px" }}>
-            {topCountries.map(([country, count]) => (
-              <div key={country} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 12px", background: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)", borderRadius: "8px", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)"}` }}>
-                <span style={{ fontSize: "13px", fontWeight: 600, color: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.7)", fontFamily: "'Barlow Condensed', sans-serif" }}>
-                  {count} {count > 1 ? "membres" : "membre"} en {country}
-                </span>
-              </div>
-            ))}
+            {topCountries.map(([code, count]) => {
+              const c = COUNTRIES.find(x => x.code === code);
+              const label = c?.label || code;
+              return (
+                <div key={code} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "6px 12px", background: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)", borderRadius: "8px", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)"}` }}>
+                  <img src={flagUrl(code, 24)} alt={label} style={{ width: 20, height: 15, objectFit: "cover", borderRadius: 2 }} />
+                  <span style={{ fontSize: "13px", fontWeight: 600, color: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.7)", fontFamily: "'Barlow Condensed', sans-serif" }}>
+                    {count} {count > 1 ? "membres" : "membre"} en {label}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

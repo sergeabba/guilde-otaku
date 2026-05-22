@@ -22,62 +22,7 @@ import {
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-const COUNTRIES = [
-  { code: "ZA", label: "Afrique du Sud", flag: "🇿🇦" },
-  { code: "DZ", label: "Algérie", flag: "🇩🇿" },
-  { code: "DE", label: "Allemagne", flag: "🇩🇪" },
-  { code: "AO", label: "Angola", flag: "🇦🇴" },
-  { code: "AR", label: "Argentine", flag: "🇦🇷" },
-  { code: "AU", label: "Australie", flag: "🇦🇺" },
-  { code: "BE", label: "Belgique", flag: "🇧🇪" },
-  { code: "BJ", label: "Bénin", flag: "🇧🇯" },
-  { code: "BR", label: "Brésil", flag: "🇧🇷" },
-  { code: "BF", label: "Burkina Faso", flag: "🇧🇫" },
-  { code: "BI", label: "Burundi", flag: "🇧🇮" },
-  { code: "CM", label: "Cameroun", flag: "🇨🇲" },
-  { code: "CA", label: "Canada", flag: "🇨🇦" },
-  { code: "CN", label: "Chine", flag: "🇨🇳" },
-  { code: "CO", label: "Colombie", flag: "🇨🇴" },
-  { code: "KM", label: "Comores", flag: "🇰🇲" },
-  { code: "CG", label: "Congo", flag: "🇨🇬" },
-  { code: "KR", label: "Corée du Sud", flag: "🇰🇷" },
-  { code: "CI", label: "Côte d'Ivoire", flag: "🇨🇮" },
-  { code: "DJ", label: "Djibouti", flag: "🇩🇯" },
-  { code: "EG", label: "Égypte", flag: "🇪🇬" },
-  { code: "ES", label: "Espagne", flag: "🇪🇸" },
-  { code: "US", label: "États-Unis", flag: "🇺🇸" },
-  { code: "ET", label: "Éthiopie", flag: "🇪🇹" },
-  { code: "FR", label: "France", flag: "🇫🇷" },
-  { code: "GA", label: "Gabon", flag: "🇬🇦" },
-  { code: "GH", label: "Ghana", flag: "🇬🇭" },
-  { code: "GN", label: "Guinée", flag: "🇬🇳" },
-  { code: "IN", label: "Inde", flag: "🇮🇳" },
-  { code: "IT", label: "Italie", flag: "🇮🇹" },
-  { code: "JP", label: "Japon", flag: "🇯🇵" },
-  { code: "KE", label: "Kenya", flag: "🇰🇪" },
-  { code: "MG", label: "Madagascar", flag: "🇲🇬" },
-  { code: "ML", label: "Mali", flag: "🇲🇱" },
-  { code: "MA", label: "Maroc", flag: "🇲🇦" },
-  { code: "MR", label: "Mauritanie", flag: "🇲🇷" },
-  { code: "MX", label: "Mexique", flag: "🇲🇽" },
-  { code: "NE", label: "Niger", flag: "🇳🇪" },
-  { code: "NG", label: "Nigeria", flag: "🇳🇬" },
-  { code: "NL", label: "Pays-Bas", flag: "🇳🇱" },
-  { code: "PL", label: "Pologne", flag: "🇵🇱" },
-  { code: "PT", label: "Portugal", flag: "🇵🇹" },
-  { code: "CD", label: "RD Congo", flag: "🇨🇩" },
-  { code: "RO", label: "Roumanie", flag: "🇷🇴" },
-  { code: "GB", label: "Royaume-Uni", flag: "🇬🇧" },
-  { code: "RU", label: "Russie", flag: "🇷🇺" },
-  { code: "RW", label: "Rwanda", flag: "🇷🇼" },
-  { code: "SN", label: "Sénégal", flag: "🇸🇳" },
-  { code: "SE", label: "Suède", flag: "🇸🇪" },
-  { code: "CH", label: "Suisse", flag: "🇨🇭" },
-  { code: "TD", label: "Tchad", flag: "🇹🇩" },
-  { code: "TG", label: "Togo", flag: "🇹🇬" },
-  { code: "TN", label: "Tunisie", flag: "🇹🇳" },
-  { code: "TR", label: "Turquie", flag: "🇹🇷" },
-];
+import { COUNTRIES, flagUrl } from "../config/countries";
 
 type PhotoType = "photo" | "anime";
 type MediaKind = "image" | "video";
@@ -528,7 +473,7 @@ export default function AdminMembresPage() {
                           <p style={{ fontFamily: F, fontSize: 14, fontWeight: 900, color: "#fff", fontStyle: "italic", textTransform: "uppercase", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</p>
                           <span style={{ fontSize: 10, fontWeight: 800, color: c, fontFamily: F }}>{f.rank}</span>
                         </div>
-                        {f.country && <span style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", fontFamily: F }}>{f.country}</span>}
+                        {f.country && <img src={flagUrl(f.country, 24)} alt={f.country} style={{ width: 20, height: 15, objectFit: "cover", borderRadius: 2 }} />}
                       </div>
                     </SortableCard>
                   );
@@ -738,7 +683,7 @@ export default function AdminMembresPage() {
                   <Field label="PAYS">
                     <select value={formCountry} onChange={(e) => setFormCountry(e.target.value)} style={{ ...inp, appearance: "none", backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center" }}>
                       <option value="">— Aucun —</option>
-                      {COUNTRIES.map(c => <option key={c.code} value={`${c.flag} ${c.label}`}>{c.flag} {c.label}</option>)}
+                      {COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.label}</option>)}
                     </select>
                   </Field>
 

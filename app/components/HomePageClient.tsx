@@ -8,6 +8,7 @@ import MemberModal from "./MemberModal";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, User, Sword, X } from "lucide-react";
 import { rankAccents, rankBg, rankLogos, darkRanks } from "../config/ranks";
+import { COUNTRIES, flagUrl } from "../config/countries";
 import GuildeHeader from "./GuildeHeader";
 import { useIsMobile } from "../hooks/useIsMobile";
 import type { ViewMode } from "../types";
@@ -16,6 +17,7 @@ import GuildeStats from "./GuildeStats";
 
 export default function HomePageClient({ initialMembers }: { initialMembers: Member[] }) {
   const [activeRank, setActiveRank] = useState<Rank | "Tous">("Tous");
+  const [activeCountry, setActiveCountry] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("anime");
@@ -45,13 +47,19 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
     return counts;
   }, [initialMembers]);
 
+  const availableCountries = useMemo(() => {
+    const codes = new Set(initialMembers.map(m => m.country).filter(Boolean) as string[]);
+    return COUNTRIES.filter(c => codes.has(c.code));
+  }, [initialMembers]);
+
   const filteredMembers = useMemo(() => {
     return initialMembers.filter((m) => {
-      const matchesRank   = activeRank === "Tous" || m.rank === activeRank;
-      const matchesSearch = m.name.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesRank && matchesSearch;
+      const matchesRank    = activeRank === "Tous" || m.rank === activeRank;
+      const matchesSearch  = m.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCountry = !activeCountry || m.country === activeCountry;
+      return matchesRank && matchesSearch && matchesCountry;
     });
-  }, [activeRank, searchTerm, initialMembers]);
+  }, [activeRank, searchTerm, activeCountry, initialMembers]);
 
 
   return (
@@ -237,6 +245,47 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
               )}
             </motion.div>
           </motion.div>
+
+          {/* ── FILTRE PAR PAYS ── */}
+          {availableCountries.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.6 }}
+              style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "20px", alignItems: "center" }}
+            >
+              <button
+                onClick={() => setActiveCountry(null)}
+                style={{
+                  padding: "6px 14px", borderRadius: "8px", cursor: "pointer",
+                  background: !activeCountry ? `${accent}20` : (isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)"),
+                  border: `1px solid ${!activeCountry ? accent : (isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)")}`,
+                  color: !activeCountry ? accent : (isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.5)"),
+                  fontFamily: "'Barlow Condensed', sans-serif", fontSize: "13px", fontWeight: 700,
+                  textTransform: "uppercase", letterSpacing: "0.05em",
+                }}
+              >
+                Tous
+              </button>
+              {availableCountries.map(c => (
+                <button
+                  key={c.code}
+                  onClick={() => setActiveCountry(activeCountry === c.code ? null : c.code)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: "6px",
+                    padding: "6px 12px", borderRadius: "8px", cursor: "pointer",
+                    background: activeCountry === c.code ? `${accent}20` : (isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)"),
+                    border: `1px solid ${activeCountry === c.code ? accent : (isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)")}`,
+                    color: activeCountry === c.code ? accent : (isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.5)"),
+                    fontFamily: "'Barlow Condensed', sans-serif", fontSize: "13px", fontWeight: 700,
+                  }}
+                >
+                  <img src={flagUrl(c.code, 24)} alt={c.label} style={{ width: 18, height: 13, objectFit: "cover", borderRadius: 2 }} />
+                  {c.label}
+                </button>
+              ))}
+            </motion.div>
+          )}
 
           {/* ── BANNIÈRES EXTRAITES ── */}
           <ChroniqueBanner isMobile={isMobile} isDark={isDark} theme={theme} />
