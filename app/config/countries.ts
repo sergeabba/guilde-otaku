@@ -63,7 +63,7 @@ export const COUNTRIES: Country[] = [
 ];
 
 export function flagUrl(code: string): string {
-  return `https://flagcdn.com/${code.toLowerCase()}.svg`;
+  return `/flags/${code.toLowerCase()}.svg`;
 }
 
 export function flagEmoji(code: string): string {
