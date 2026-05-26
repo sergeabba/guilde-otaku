@@ -2,6 +2,19 @@ import { members as localMembers, Rank } from "../../data/members";
 import type { Member } from "../../data/members";
 import { supabase } from "../../lib/supabase";
 import type { SupabaseMemberRow, FighterStats, SpecialAttack } from "../types";
+import { COUNTRIES } from "../config/countries";
+
+const countryLabelToCode = new Map(COUNTRIES.map(c => [c.label.toLowerCase(), c.code]));
+
+function normalizeCountryCode(raw: string | undefined | null): string | undefined {
+  if (!raw) return undefined;
+  const trimmed = raw.trim();
+  const upper = trimmed.toUpperCase();
+  if (COUNTRIES.some(c => c.code === upper)) return upper;
+  // Strip flag emoji prefix (regional indicators like 🇫🇷) if present
+  const stripped = trimmed.replace(/^[\p{So}\p{Cf}\s]+/u, "").trim().toLowerCase();
+  return countryLabelToCode.get(stripped) || countryLabelToCode.get(trimmed.toLowerCase()) || raw;
+}
 
 // ─── CACHE MÉMOIRE ────────────────────────────────────────────────────────────
 // Évite les refetch inutiles lors des navigations rapides entre pages.
@@ -40,7 +53,7 @@ function mapRowToMember(row: SupabaseMemberRow): Member {
     special:    row.special ?? defaultSpecial,
     photoVideo: row.photovideo ?? undefined,
     animeVideo: row.animevideo ?? undefined,
-    country:    row.country ?? undefined,
+    country:    normalizeCountryCode(row.country),
   };
 }
 
