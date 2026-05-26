@@ -6,6 +6,7 @@ import { useIsMobile } from "../hooks/useIsMobile";
 import { usePathname } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
+import { useTheme } from "../context/ThemeContext";
 
 interface GuildeHeaderProps {
   activePage:
@@ -37,13 +38,17 @@ const navLinks = [
 export default function GuildeHeader({
   activePage,
   accentColor = "#c9a84c",
-  bgColor     = "rgba(5,5,8,0.82)",
-  textColor   = "#fff",
+  bgColor,
+  textColor,
   rightSlot,
 }: GuildeHeaderProps) {
   const isMobile  = useIsMobile();
   const pathname  = usePathname();
   const isHome    = pathname === "/";
+  const { isDark } = useTheme();
+
+  const resolvedBg = bgColor || (isDark ? "rgba(5,5,8,0.82)" : "rgba(255,255,255,0.85)");
+  const resolvedText = textColor || (isDark ? "#fff" : "#111");
 
   return (
     <motion.header
@@ -54,11 +59,12 @@ export default function GuildeHeader({
         position: "sticky",
         top: 0,
         zIndex: 100,
-        background: bgColor,
+        background: resolvedBg,
         backdropFilter: "blur(28px)",
         WebkitBackdropFilter: "blur(28px)",
-        borderBottom: `1px solid rgba(255,255,255,0.07)`,
-        boxShadow: "0 4px 32px rgba(0,0,0,0.18)",
+        borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)"}`,
+        boxShadow: isDark ? "0 4px 32px rgba(0,0,0,0.18)" : "0 4px 24px rgba(0,0,0,0.06)",
+        transition: "background 0.4s, border-color 0.4s, box-shadow 0.4s",
       }}
     >
       {/* ── LIGNE 1 : Logo + back + rightSlot ─────────────────────────────── */}
@@ -83,13 +89,13 @@ export default function GuildeHeader({
                 width: isMobile ? "34px" : "38px",
                 height: isMobile ? "34px" : "38px",
                 borderRadius: "50%",
-                background: textColor === "#111"
+                background: resolvedText === "#111"
                   ? "rgba(0,0,0,0.07)"
                   : "rgba(255,255,255,0.09)",
-                border: textColor === "#111"
+                border: resolvedText === "#111"
                   ? "1px solid rgba(0,0,0,0.1)"
                   : "1px solid rgba(255,255,255,0.13)",
-                color: textColor,
+                color: resolvedText,
                 textDecoration: "none",
                 flexShrink: 0,
                 transition: "background 0.2s",
@@ -120,7 +126,7 @@ export default function GuildeHeader({
                 <div style={{
                   fontSize: "22px",
                   fontWeight: 900,
-                  color: textColor,
+                  color: resolvedText,
                   lineHeight: 1,
                   fontFamily: "'Barlow Condensed', sans-serif",
                   letterSpacing: "0.04em",
@@ -159,7 +165,7 @@ export default function GuildeHeader({
           scrollbarWidth: "none",
           padding: isMobile ? "0 4px" : "0 40px",
           gap: 0,
-          borderTop: textColor === "#111"
+          borderTop: resolvedText === "#111"
             ? "1px solid rgba(0,0,0,0.06)"
             : "1px solid rgba(255,255,255,0.05)",
         }}
@@ -184,7 +190,7 @@ export default function GuildeHeader({
                 textTransform: "uppercase",
                 color: isActive
                   ? accentColor
-                  : textColor === "#111"
+                  : resolvedText === "#111"
                   ? "#111111"
                   : "#ffffff",
                 opacity: isActive ? 1 : 0.72,

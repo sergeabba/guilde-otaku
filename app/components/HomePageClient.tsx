@@ -109,8 +109,8 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
         <GuildeHeader
           activePage="membres"
           accentColor={accent}
-          bgColor={rankBg[activeRank as Rank | "Tous"].nav}
-          textColor={isDark ? "#fff" : "#111"}
+          bgColor={activeRank !== "Tous" ? rankBg[activeRank as Rank].nav : undefined}
+          textColor={activeRank !== "Tous" ? (rankIsDark ? "#fff" : "#111") : undefined}
         />
 
         {/* ── BARRE DE FILTRES ── */}
