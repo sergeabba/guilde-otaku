@@ -20,147 +20,89 @@ export async function GET(req: NextRequest) {
             width: "100%",
             display: "flex",
             backgroundColor: "#050508",
-            fontFamily: "Inter, sans-serif",
             position: "relative",
+            overflow: "hidden",
           }}
         >
-          {/* Photo — occupe 50% gauche */}
+          {/* Background glow from accent color */}
+          <div style={{ position: "absolute", top: "-30%", left: "-20%", width: "70%", height: "100%", display: "flex", background: `radial-gradient(ellipse, ${color}15 0%, transparent 65%)`, borderRadius: "50%" }} />
+
+          {/* Photo — left side with cinematic crop */}
           {photo ? (
-            <div
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: "55%",
-                height: "100%",
-                display: "flex",
-                overflow: "hidden",
-              }}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
+            <div style={{ position: "absolute", top: 0, left: 0, width: "52%", height: "100%", display: "flex", overflow: "hidden" }}>
               <img
                 src={photo}
-                width={660}
+                width={624}
                 height={630}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  objectPosition: "center 15%",
-                }}
+                style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 15%" }}
               />
+              {/* Fade to right */}
+              <div style={{ position: "absolute", inset: 0, display: "flex", background: "linear-gradient(to right, transparent 30%, #050508 95%)" }} />
+              {/* Fade top */}
+              <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "25%", display: "flex", background: "linear-gradient(to bottom, rgba(5,5,8,0.6), transparent)" }} />
+              {/* Fade bottom */}
+              <div style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: "35%", display: "flex", background: "linear-gradient(to top, #050508, transparent)" }} />
             </div>
           ) : (
-            <div
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: "55%",
-                height: "100%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: "#0d0d14",
-              }}
-            >
-              <span style={{ fontSize: 180, opacity: 0.15 }}>⚔</span>
+            <div style={{ position: "absolute", top: 0, left: 0, width: "52%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#0a0a12" }}>
+              <span style={{ fontSize: 160, opacity: 0.08, color }}>&#9876;</span>
             </div>
           )}
 
-          {/* Gradient overlay gauche → droite */}
-          <div
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: "55%",
-              height: "100%",
-              background: "linear-gradient(to right, transparent 40%, #050508 100%)",
-            }}
-          />
-          {/* Gradient haut */}
-          <div
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: "55%",
-              height: "35%",
-              background: "linear-gradient(to bottom, rgba(5,5,8,0.7), transparent)",
-            }}
-          />
-          {/* Gradient bas */}
-          <div
-            style={{
-              position: "absolute",
-              bottom: 0,
-              left: 0,
-              width: "55%",
-              height: "40%",
-              background: "linear-gradient(to top, #050508, transparent)",
-            }}
-          />
+          {/* Vertical accent line */}
+          <div style={{ position: "absolute", top: "12%", bottom: "12%", left: "50%", width: 3, display: "flex", borderRadius: 2, background: `linear-gradient(to bottom, transparent, ${color}, transparent)` }} />
 
-          {/* Accent line verticale */}
-          <div
-            style={{
-              position: "absolute",
-              top: "10%",
-              bottom: "10%",
-              left: "53%",
-              width: 3,
-              background: color,
-              borderRadius: 2,
-            }}
-          />
-
-          {/* Contenu droite */}
+          {/* Right content */}
           <div
             style={{
               position: "absolute",
               top: 0,
               right: 0,
-              width: "50%",
+              width: "52%",
               height: "100%",
               display: "flex",
               flexDirection: "column",
               justifyContent: "center",
-              padding: "50px 60px 50px 40px",
+              padding: "50px 60px 50px 50px",
             }}
           >
             {/* Branding */}
-            <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
-              <div style={{ width: 24, height: 3, backgroundColor: color, marginRight: 10 }} />
-              <span style={{ fontSize: 13, fontWeight: 700, color: color, letterSpacing: "0.3em", textTransform: "uppercase" }}>
+            <div style={{ display: "flex", alignItems: "center", marginBottom: 16 }}>
+              <div style={{ width: 28, height: 3, backgroundColor: color, borderRadius: 2 }} />
+              <span style={{ marginLeft: 10, fontSize: 12, fontWeight: 800, color, letterSpacing: "0.3em", textTransform: "uppercase" }}>
                 GUILDE OTAKU
               </span>
             </div>
 
-            {/* Rang */}
-            <span
-              style={{
-                fontSize: 18,
-                fontWeight: 700,
-                color: color,
-                textTransform: "uppercase",
-                letterSpacing: "0.2em",
-                marginBottom: 12,
-              }}
-            >
-              {rank}
-            </span>
+            {/* Rank */}
+            <div style={{ display: "flex", alignItems: "center", marginBottom: 16 }}>
+              <span
+                style={{
+                  fontSize: 16,
+                  fontWeight: 800,
+                  color,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.2em",
+                  padding: "4px 12px",
+                  borderRadius: 4,
+                  background: `${color}18`,
+                  border: `1px solid ${color}40`,
+                }}
+              >
+                {rank}
+              </span>
+            </div>
 
-            {/* Nom — gros et bold */}
+            {/* Name */}
             <span
               style={{
-                fontSize: name.length > 12 ? 62 : 78,
+                fontSize: name.length > 14 ? 56 : 72,
                 fontWeight: 900,
                 color: "#ffffff",
                 lineHeight: 1,
                 textTransform: "uppercase",
                 fontStyle: "italic",
-                marginBottom: 24,
+                marginBottom: 20,
               }}
             >
               {name}
@@ -168,39 +110,37 @@ export async function GET(req: NextRequest) {
 
             {/* Badge */}
             {badge && (
-              <div style={{ display: "flex", alignItems: "center", marginBottom: 16 }}>
+              <div style={{ display: "flex", alignItems: "center", marginBottom: 20 }}>
                 <div
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    padding: "8px 16px",
+                    padding: "6px 14px",
                     borderRadius: 6,
                     background: "linear-gradient(90deg, #b8860b, #ffd700, #b8860b)",
                   }}
                 >
-                  <span style={{ fontSize: 14, fontWeight: 900, color: "#000", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                    🏆 {badge}
+                  <span style={{ fontSize: 13, fontWeight: 900, color: "#000", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                    {badge}
                   </span>
                 </div>
               </div>
             )}
 
-            {/* Séparateur */}
-            <div style={{ width: 60, height: 1, backgroundColor: "rgba(255,255,255,0.15)", marginBottom: 16 }} />
+            {/* Separator */}
+            <div style={{ display: "flex", width: 50, height: 1, background: "rgba(255,255,255,0.12)", marginBottom: 14 }} />
 
             {/* URL */}
-            <span style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", letterSpacing: "0.1em" }}>
+            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", letterSpacing: "0.12em" }}>
               guilde-otaku.vercel.app
             </span>
           </div>
 
-          {/* Déco coin haut-gauche */}
-          <div style={{ position: "absolute", top: 0, left: 0, width: 80, height: 4, backgroundColor: color }} />
-          <div style={{ position: "absolute", top: 0, left: 0, width: 4, height: 80, backgroundColor: color }} />
-
-          {/* Déco coin bas-droite */}
-          <div style={{ position: "absolute", bottom: 0, right: 0, width: 80, height: 4, backgroundColor: color }} />
-          <div style={{ position: "absolute", bottom: 0, right: 0, width: 4, height: 80, backgroundColor: color }} />
+          {/* Corner accents */}
+          <div style={{ position: "absolute", top: 0, left: 0, width: 70, height: 3, backgroundColor: color }} />
+          <div style={{ position: "absolute", top: 0, left: 0, width: 3, height: 70, backgroundColor: color }} />
+          <div style={{ position: "absolute", bottom: 0, right: 0, width: 70, height: 3, backgroundColor: color }} />
+          <div style={{ position: "absolute", bottom: 0, right: 0, width: 3, height: 70, backgroundColor: color }} />
         </div>
       ),
       {

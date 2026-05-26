@@ -251,8 +251,22 @@ export default function AdminMembresPage() {
   }
 
   async function toggleHidden(member: SupabaseMemberRow) {
-    const newHidden = !member.hidden;
-    await supabase.from("fighters").update({ hidden: newHidden }).eq("id", member.id);
+    const newHidden = !(member.hidden === true);
+    const { data, error } = await supabase
+      .from("fighters")
+      .update({ hidden: newHidden })
+      .eq("id", member.id)
+      .select("id, hidden");
+    if (error) {
+      setSaveToast(`Erreur masquage: ${error.message}`);
+      setTimeout(() => setSaveToast(null), 5000);
+      return;
+    }
+    if (!data || data.length === 0) {
+      setSaveToast("Erreur: mise a jour non confirmee");
+      setTimeout(() => setSaveToast(null), 5000);
+      return;
+    }
     invalidateMembersCache();
     setFighters(prev => prev.map(f => f.id === member.id ? { ...f, hidden: newHidden } : f));
     setSaveToast(`${member.name} ${newHidden ? "masqué" : "réaffiché"}`);
