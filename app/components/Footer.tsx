@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useTheme } from "../context/ThemeContext";
 
 const links = [
   { href: "/", label: "Membres" },
@@ -9,13 +12,16 @@ const links = [
 ];
 
 export default function Footer() {
+  const { isDark } = useTheme();
+
   return (
     <footer style={{
-      background: "rgba(5,5,8,0.9)",
+      background: isDark ? "rgba(5,5,8,0.9)" : "rgba(245,243,240,0.95)",
       backdropFilter: "blur(20px)",
-      borderTop: "1px solid rgba(255,255,255,0.07)",
+      borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)"}`,
       padding: "40px 20px",
       fontFamily: "'Barlow Condensed', sans-serif",
+      transition: "background 0.5s, border-color 0.5s",
     }}>
       <div style={{
         maxWidth: "1400px",
@@ -23,9 +29,10 @@ export default function Footer() {
         textAlign: "center",
       }}>
         <p style={{
-          color: "rgba(255,255,255,0.5)",
+          color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)",
           fontSize: "14px",
           margin: "0 0 16px",
+          transition: "color 0.5s",
         }}>
           &copy; 2025 Guilde Otaku &mdash; Tous droits r&eacute;serv&eacute;s
         </p>
@@ -41,10 +48,10 @@ export default function Footer() {
               href={href}
               className="footer-link"
               style={{
-                color: "rgba(255,255,255,0.5)",
+                color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)",
                 textDecoration: "none",
                 fontSize: "15px",
-                transition: "color 0.2s",
+                transition: "color 0.3s",
               }}
             >
               {label}

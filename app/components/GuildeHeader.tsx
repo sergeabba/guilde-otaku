@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { usePathname } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import ThemeToggle from "./ThemeToggle";
 
 interface GuildeHeaderProps {
   activePage:
@@ -141,12 +142,11 @@ export default function GuildeHeader({
           </Link>
         </div>
 
-        {/* DROITE : rightSlot */}
-        {rightSlot && (
-          <div style={{ flexShrink: 0, marginLeft: "12px" }}>
-            {rightSlot}
-          </div>
-        )}
+        {/* DROITE : toggle + rightSlot */}
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0, marginLeft: "12px" }}>
+          <ThemeToggle size={isMobile ? 16 : 18} />
+          {rightSlot}
+        </div>
       </div>
 
       {/* ── LIGNE 2 : Navigation ────────────────────────────────────────────── */}

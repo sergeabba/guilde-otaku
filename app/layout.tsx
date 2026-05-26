@@ -13,6 +13,7 @@ import "./globals.css";
 import BirthdayBanner from "./components/BirthdayBanner";
 import Footer from "./components/Footer";
 import SplashWrapper from "./components/SplashWrapper";
+import { ThemeProvider } from "./context/ThemeContext";
 
 const barlowCondensed = Barlow_Condensed({
   subsets: ["latin"],
@@ -95,15 +96,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="fr" className={`${barlowCondensed.variable} ${barlow.variable} ${bebasNeue.variable} ${orbitron.variable} ${blackOpsOne.variable} ${cinzelDecorative.variable}`}>
       <body>
-        {/* === BANNIÈRE D'ANNIVERSAIRE === */}
-        {/* Elle s'affichera automatiquement sur toutes les pages le jour J */}
-        <BirthdayBanner />
-        
-        {/* === SPLASH SCREEN FAIRY TAIL === */}
-        <SplashWrapper hasSeenSplash={hasSeenSplash}>
-          {children}
-          <Footer />
-        </SplashWrapper>
+        <ThemeProvider>
+          <BirthdayBanner />
+          <SplashWrapper hasSeenSplash={hasSeenSplash}>
+            {children}
+            <Footer />
+          </SplashWrapper>
+        </ThemeProvider>
       </body>
     </html>
   );

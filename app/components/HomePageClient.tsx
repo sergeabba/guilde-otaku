@@ -8,9 +8,10 @@ import MemberModal from "./MemberModal";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, User, Sword, X } from "lucide-react";
 import { rankAccents, rankBg, rankLogos, darkRanks } from "../config/ranks";
-import { COUNTRIES, flagUrl } from "../config/countries";
+import { COUNTRIES, flagUrl, countryAccents } from "../config/countries";
+import { useTheme } from "../context/ThemeContext";
 import GuildeHeader from "./GuildeHeader";
-import { useIsMobile } from "../hooks/useIsMobile";
+import { useIsMobile, useBreakpoint } from "../hooks/useIsMobile";
 import type { ViewMode } from "../types";
 import { ChroniqueBanner, AtelierBanner } from "./PromoBanners";
 import GuildeStats from "./GuildeStats";
@@ -23,6 +24,9 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
   const [viewMode, setViewMode] = useState<ViewMode>("anime");
   const [mounted, setMounted] = useState(false);
   const isMobile = useIsMobile();
+  const breakpoint = useBreakpoint();
+  const isTablet = breakpoint === "sm" || breakpoint === "md";
+  const { isDark: globalDark } = useTheme();
   useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
@@ -35,9 +39,17 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
     }
   }, [initialMembers]);
 
-  const theme  = rankBg[activeRank] ?? rankBg["Tous"];
-  const accent = rankAccents[activeRank as Rank | "Tous"];
-  const isDark = darkRanks.includes(activeRank as Rank);
+  const rankTheme = rankBg[activeRank] ?? rankBg["Tous"];
+  const rankAccent = rankAccents[activeRank as Rank | "Tous"];
+  const rankIsDark = darkRanks.includes(activeRank as Rank);
+
+  const isDark = activeRank !== "Tous" ? rankIsDark : globalDark;
+  const accent = activeCountry && countryAccents[activeCountry] ? countryAccents[activeCountry] : rankAccent;
+  const theme = activeRank !== "Tous" ? rankTheme : {
+    bg: isDark ? "#0a0a0f" : "#fcfaf8",
+    nav: isDark ? "rgba(10,10,15,0.92)" : "rgba(252,250,248,0.75)",
+    text: isDark ? "#fff" : "#111",
+  };
 
   const countryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -65,8 +77,8 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
   return (
     <>
     <motion.div
-      animate={{ backgroundColor: theme.bg }}
-      transition={{ duration: 0.8, ease: "easeInOut" }}
+      animate={{ backgroundColor: theme.bg, color: theme.text }}
+      transition={{ duration: 0.6, ease: "easeInOut" }}
       style={{
         minHeight: "100vh",
         color: theme.text,
@@ -160,7 +172,7 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
         </div>
 
         {/* ── MAIN ── */}
-        <main style={{ maxWidth: "1400px", margin: "0 auto", padding: isMobile ? "30px 15px" : "60px 40px" }}>
+        <main style={{ maxWidth: "1400px", margin: "0 auto", padding: isMobile ? "24px 12px" : isTablet ? "40px 24px" : "60px 40px" }}>
 
           <GuildeStats
             memberCount={initialMembers.length}
@@ -252,7 +264,8 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.6 }}
-              style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "20px", alignItems: "center" }}
+              className="scrollbar-hide"
+              style={{ display: "flex", flexWrap: isMobile ? "nowrap" : "wrap", gap: "8px", marginBottom: "20px", alignItems: "center", overflowX: isMobile ? "auto" : "visible", WebkitOverflowScrolling: "touch", paddingBottom: isMobile ? "4px" : 0 }}
             >
               <button
                 onClick={() => setActiveCountry(null)}
@@ -272,12 +285,13 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
                   key={c.code}
                   onClick={() => setActiveCountry(activeCountry === c.code ? null : c.code)}
                   style={{
-                    display: "flex", alignItems: "center", gap: "6px",
+                    display: "flex", alignItems: "center", gap: "6px", flexShrink: 0,
                     padding: "6px 12px", borderRadius: "8px", cursor: "pointer",
                     background: activeCountry === c.code ? `${accent}20` : (isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)"),
                     border: `1px solid ${activeCountry === c.code ? accent : (isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)")}`,
                     color: activeCountry === c.code ? accent : (isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.5)"),
                     fontFamily: "'Barlow Condensed', sans-serif", fontSize: "13px", fontWeight: 700,
+                    whiteSpace: "nowrap", transition: "all 0.3s",
                   }}
                 >
                   <img src={flagUrl(c.code)} alt={c.label} style={{ width: 18, height: 13, objectFit: "cover", borderRadius: 2 }} />
@@ -341,8 +355,8 @@ export default function HomePageClient({ initialMembers }: { initialMembers: Mem
 
                     <div style={{
                       display: "grid",
-                      gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(auto-fill, minmax(230px, 1fr))",
-                      gap: isMobile ? "16px" : "25px",
+                      gridTemplateColumns: breakpoint === "xs" ? "repeat(2, 1fr)" : isTablet ? "repeat(3, 1fr)" : "repeat(auto-fill, minmax(230px, 1fr))",
+                      gap: isMobile ? "12px" : isTablet ? "18px" : "25px",
                     }}>
                       {rankMembers.map((member, i) => (
                         <MemberCard

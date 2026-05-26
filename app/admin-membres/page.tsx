@@ -7,7 +7,7 @@ import { supabase } from "../../lib/supabase";
 import {
   Lock, Eye, EyeOff, Plus, Trash2, Pencil, X, Check,
   Upload, RefreshCw, User, Sword, Video, Image as ImageIcon,
-  Search, AlertTriangle, ChevronLeft, Camera, GripVertical,
+  Search, AlertTriangle, ChevronLeft, Camera, GripVertical, Globe,
 } from "lucide-react";
 import { RANK_FILTER_ORDER, type Rank } from "../../data/members";
 import { useAdminAuth } from "../hooks/useAdminAuth";
@@ -149,6 +149,8 @@ export default function AdminMembresPage() {
 
   // Reorder mode
   const [reorderMode, setReorderMode] = useState(false);
+  // Quick country assign mode
+  const [quickCountry, setQuickCountry] = useState<string | null>(null);
 
   // Delete
   const [deleteTarget, setDeleteTarget] = useState<SupabaseMemberRow | null>(null);
@@ -255,6 +257,17 @@ export default function AdminMembresPage() {
     setFighters(prev => prev.map(f => f.id === member.id ? { ...f, hidden: newHidden } : f));
     setSaveToast(`${member.name} ${newHidden ? "masqué" : "réaffiché"}`);
     setTimeout(() => setSaveToast(null), 3000);
+  }
+
+  // ── QUICK COUNTRY ASSIGN ───────────────────────────────────────────────────
+  async function quickAssignCountry(member: SupabaseMemberRow) {
+    if (!quickCountry) return;
+    await supabase.from("fighters").update({ country: quickCountry }).eq("id", member.id);
+    invalidateMembersCache();
+    setFighters(prev => prev.map(f => f.id === member.id ? { ...f, country: quickCountry } : f));
+    const c = COUNTRIES.find(x => x.code === quickCountry);
+    setSaveToast(`${member.name} → ${c?.label || quickCountry}`);
+    setTimeout(() => setSaveToast(null), 2000);
   }
 
   // ── REORDER (DnD) ─────────────────────────────────────────────────────────
@@ -443,6 +456,32 @@ export default function AdminMembresPage() {
         </button>
       </div>
 
+      {/* ── QUICK COUNTRY ASSIGN BAR ── */}
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: isMobile ? "0 16px 10px" : "0 28px 10px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: quickCountry ? "rgba(52,211,153,0.08)" : "rgba(255,255,255,0.02)", border: `1px solid ${quickCountry ? "rgba(52,211,153,0.3)" : "rgba(255,255,255,0.06)"}`, borderRadius: 10, transition: "all 0.3s" }}>
+          <Globe size={14} color={quickCountry ? "#34d399" : "rgba(255,255,255,0.3)"} />
+          <span style={{ fontSize: 11, fontWeight: 800, color: quickCountry ? "#34d399" : "rgba(255,255,255,0.4)", letterSpacing: "0.1em", textTransform: "uppercase", whiteSpace: "nowrap" }}>
+            {quickCountry ? "CLIQUEZ POUR ASSIGNER" : "ASSIGN RAPIDE"}
+          </span>
+          <select
+            value={quickCountry || ""}
+            onChange={(e) => setQuickCountry(e.target.value || null)}
+            style={{ ...inp, flex: 1, maxWidth: 200, padding: "6px 10px", fontSize: 12, background: "rgba(255,255,255,0.06)" }}
+          >
+            <option value="">-- Choisir pays --</option>
+            {COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.label}</option>)}
+          </select>
+          {quickCountry && (
+            <>
+              <img src={flagUrl(quickCountry)} alt="" style={{ width: 22, height: 16, objectFit: "cover", borderRadius: 2 }} />
+              <button onClick={() => setQuickCountry(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.4)", padding: 4, display: "flex" }}>
+                <X size={14} />
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
       {/* ── GRILLE MEMBRES ── */}
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: isMobile ? "0 16px 40px" : "0 28px 40px" }}>
         {loadingMembers ? (
@@ -520,10 +559,12 @@ export default function AdminMembresPage() {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.2, delay: Math.min(i * 0.025, 0.35) }}
                   className="mc"
+                  onClick={quickCountry ? () => quickAssignCountry(f) : undefined}
                   style={{
                     aspectRatio: "2/3", borderRadius: 14,
                     overflow: "hidden",
                     background: `${c}18`,
+                    outline: quickCountry && f.country === quickCountry ? "2px solid #34d399" : undefined,
                     border: `1px solid ${f.hidden ? "rgba(251,191,36,0.3)" : `${c}28`}`,
                     opacity: f.hidden ? 0.6 : 1,
                   }}
