@@ -123,3 +123,6 @@
 .pf-music-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .pf-music-note { font: 500 0.82rem/1.4 var(--gk-font-body); color: var(--gk-faint); }
 .pf-track-player iframe[style] { aspect-ratio: auto; border-radius: 12px; }
+.pf-music-cover { width: 64px; height: 64px; object-fit: cover; border: 2px solid var(--gk-border); display: block; }
+.pf-music-album { font-size: 0.82rem !important; color: var(--gk-faint) !important; }
+.pf-ws-synopsis { margin-top: 10px; font: 500 0.98rem/1.55 var(--gk-font-body); }

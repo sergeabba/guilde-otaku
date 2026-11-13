@@ -218,10 +218,11 @@ function Cover({ src, kind, width, height }: { src: string | null; kind: string;
 export async function renderMemberCard(m: Member, origin: string): Promise<ImageResponse> {
   const { awards, anime: favA, manga: favM, track, trackLine } = richContent(m);
   const favs = [...favA, ...favM];
-  const [fonts, real, anime, ...covers] = await Promise.all([
+  const [fonts, real, anime, trackCover, ...covers] = await Promise.all([
     loadFonts(),
     portraitData(m.photo, origin, 1080),
     portraitData(m.animeChar, origin, 1080),
+    portraitData(track?.cover, origin, 128),
     ...favs.map((w) => portraitData(w.coverUrl, origin, 256)),
   ]);
   const { accent, romaji, country } = rankInfo(m);
@@ -299,8 +300,12 @@ export async function renderMemberCard(m: Member, origin: string): Promise<Image
 
           {trackLine && track && (
             <div style={{ display: "flex", alignItems: "center", marginTop: 16, maxWidth: W }}>
+              {trackCover && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={trackCover} width={52} height={52} alt="" style={{ width: 52, height: 52, objectFit: "cover", border: `3px solid ${INK}`, marginRight: 12 }} />
+              )}
               <div style={{ display: "flex", padding: "4px 10px", background: INK, color: PAPER, fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 24, letterSpacing: 2 }}>ONGAKU</div>
-              <div style={{ ...ONE_LINE, marginLeft: 12, fontFamily: "Barlow Condensed", fontWeight: 700, fontSize: 30, maxWidth: W - 280 }}>{trackLine}</div>
+              <div style={{ ...ONE_LINE, marginLeft: 12, fontFamily: "Barlow Condensed", fontWeight: 700, fontSize: 30, maxWidth: W - (trackCover ? 344 : 280) }}>{trackLine}</div>
               <div style={{ display: "flex", marginLeft: 12, fontFamily: "Barlow Condensed", fontWeight: 700, fontSize: 22, color: "rgba(13,12,16,0.55)" }}>{PROVIDER_LABEL[track.provider]}</div>
             </div>
           )}

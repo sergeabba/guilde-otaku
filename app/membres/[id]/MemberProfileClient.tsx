@@ -356,6 +356,7 @@ function WorkSheet({ work, chronique, onClose }: { work: FavoriteWork; chronique
           <div>
             <h2 id="pf-ws-title">{workTitle(work)}</h2>
             {sub && <p className="pf-ws-sub">{sub}</p>}
+            {work.synopsis && <p className="pf-ws-synopsis">{work.synopsis}</p>}
             {work.personalNote && <p className="pf-ws-note">« {work.personalNote} »</p>}
           </div>
         </div>
