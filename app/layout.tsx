@@ -1,16 +1,7 @@
 import type { Metadata } from "next";
 import { cookies, headers } from "next/headers";
-import {
-  Barlow_Condensed,
-  Barlow,
-  Bebas_Neue,
-  Orbitron,
-  Black_Ops_One,
-  Cinzel_Decorative,
-  Bricolage_Grotesque,
-  Caveat,
-  Dela_Gothic_One,
-} from "next/font/google";
+// Polices auto-hébergées (public/fonts) : le build ne dépend plus de Google Fonts.
+import "./styles/fonts.css";
 import "./globals.css";
 import "./styles/shonen.css";
 import "./styles/motion.css";
@@ -23,78 +14,6 @@ import MotionSettings from "./components/MotionSettings";
 import CommandPalette from "./components/CommandPalette";
 import SplashWrapper from "./components/SplashWrapper";
 import { ThemeProvider } from "./context/ThemeContext";
-
-const barlowCondensed = Barlow_Condensed({
-  subsets: ["latin", "latin-ext"],
-  weight: ["400", "600", "700", "900"],
-  style: ["normal", "italic"],
-  display: "swap",
-  variable: "--font-barlow-condensed",
-});
-
-const barlow = Barlow({
-  subsets: ["latin", "latin-ext"],
-  weight: ["300", "400", "500", "600"],
-  display: "swap",
-  variable: "--font-barlow",
-});
-
-const bebasNeue = Bebas_Neue({
-  subsets: ["latin"],
-  weight: "400",
-  display: "swap",
-  preload: false,
-  variable: "--font-bebas-neue",
-});
-
-const orbitron = Orbitron({
-  subsets: ["latin"],
-  weight: ["400", "500", "700", "900"],
-  display: "swap",
-  preload: false,
-  variable: "--font-orbitron",
-});
-
-const blackOpsOne = Black_Ops_One({
-  subsets: ["latin"],
-  weight: "400",
-  display: "swap",
-  preload: false,
-  variable: "--font-black-ops-one",
-});
-
-const cinzelDecorative = Cinzel_Decorative({
-  subsets: ["latin"],
-  weight: ["700", "900"],
-  display: "swap",
-  preload: false,
-  variable: "--font-cinzel-decorative",
-});
-
-const bricolageGrotesque = Bricolage_Grotesque({
-  subsets: ["latin"],
-  weight: ["400", "600", "700", "800"],
-  display: "swap",
-  preload: false,
-  variable: "--font-bricolage",
-});
-
-const caveat = Caveat({
-  subsets: ["latin"],
-  weight: ["500", "700"],
-  display: "swap",
-  preload: false,
-  variable: "--font-caveat",
-});
-
-// Police de couverture : gothique japonaise lourde, latin + kana/kanji.
-const delaGothic = Dela_Gothic_One({
-  subsets: ["latin", "latin-ext"],
-  weight: "400",
-  display: "swap",
-  preload: false,
-  variable: "--font-dela",
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://guilde-otaku.vercel.app'), 
@@ -134,7 +53,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const hasSeenSplash = isBot || isMobileVisitor || cookieStore.get("guilde-splash-seen")?.value === "1";
 
   return (
-    <html lang="fr" className={`${barlowCondensed.variable} ${barlow.variable} ${bebasNeue.variable} ${orbitron.variable} ${blackOpsOne.variable} ${cinzelDecorative.variable} ${bricolageGrotesque.variable} ${caveat.variable} ${delaGothic.variable}`}>
+    <html lang="fr">
+      <head>
+        {/* Police de l'interface et du texte courant, visibles dès le premier écran. */}
+        <link rel="preload" href="/fonts/barlow-condensed/barlow-condensed-latin-700-normal.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+        <link rel="preload" href="/fonts/barlow/barlow-latin-400-normal.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+      </head>
       <body>
         <a href="#contenu" className="gk-skip">Aller au contenu</a>
         <ThemeProvider>
