@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { requireAdmin } from "../../../../lib/auth";
 import { parseAdminDbRequest } from "../../../../lib/admin-db";
+import { getServiceClient, SERVICE_KEY_MISSING } from "../../../../lib/supabase-admin";
 
 const NO_STORE = { "Cache-Control": "no-store" };
 
@@ -11,16 +11,13 @@ export async function POST(req: NextRequest) {
   const denied = requireAdmin(req);
   if (denied) return denied;
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) {
-    return NextResponse.json({ error: "Base non configurée sur le serveur (SUPABASE_SERVICE_ROLE_KEY)" }, { status: 503, headers: NO_STORE });
-  }
+  const client = getServiceClient();
+  if (!client) return NextResponse.json({ error: SERVICE_KEY_MISSING }, { status: 503, headers: NO_STORE });
 
   const parsed = parseAdminDbRequest(await req.json().catch(() => null));
   if ("error" in parsed) return NextResponse.json({ error: parsed.error }, { status: 400, headers: NO_STORE });
 
-  const db = createClient(url, key, { auth: { persistSession: false } }).from(parsed.table);
+  const db = client.from(parsed.table);
   const { data, error } =
     parsed.op === "insert" ? await db.insert(parsed.rows).select("id")
     : parsed.op === "update" ? await db.update(parsed.values).eq("id", parsed.id).select("id")

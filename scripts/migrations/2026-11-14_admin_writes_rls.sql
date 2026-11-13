@@ -1,7 +1,12 @@
 -- Guilde Otaku : verrouillage des écritures anonymes (fighters, bibliotheque, bons_plans).
 -- À exécuter MANUELLEMENT dans l'éditeur SQL Supabase, après relecture, et seulement
--- APRÈS la mise en production du code qui passe par /api/admin/db (sinon l'admin
--- ne peut plus écrire). Ne modifie aucune donnée. Réversible (voir DOWN).
+-- APRÈS la mise en production du code où TOUTES les écritures admin utilisent la clé
+-- serveur : /api/admin/db (écrans admin) ET lib/supabase-admin.ts (routes
+-- bibliotheque-sync-covers, bibliotheque-sync-dossier-bash, migrate-fighters).
+-- Sinon ces fonctions échouent. Ne modifie aucune donnée. Réversible (voir DOWN).
+--
+-- Hors périmètre de ce script : film_semaine, atelier et le stockage (leurs écritures
+-- passent déjà par la clé serveur ; leurs policies sont à auditer séparément).
 --
 -- Pourquoi : la clé "anon" est publique (elle est dans le navigateur). Tant que les
 -- policies RLS autorisent l'écriture anonyme, n'importe qui peut modifier ces tables

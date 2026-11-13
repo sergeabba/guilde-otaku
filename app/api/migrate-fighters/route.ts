@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "../../../lib/supabase";
+import { getServiceClient, SERVICE_KEY_MISSING } from "../../../lib/supabase-admin";
 import { members } from "../../../data/members";
 import { isAdmin } from "../../../lib/auth";
 
@@ -7,6 +7,10 @@ export async function POST(req: NextRequest) {
   if (!isAdmin(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  // Écritures avec la clé serveur : elles restent possibles quand RLS refuse la clé anon.
+  const supabase = getServiceClient();
+  if (!supabase) return NextResponse.json({ error: SERVICE_KEY_MISSING }, { status: 503 });
 
   try {
 
