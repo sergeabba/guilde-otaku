@@ -2,6 +2,8 @@
 // Fichier de types partagés pour toute l'application Guilde Otaku.
 // Source unique de vérité pour tous les types — évite les définitions multiples.
 
+import { daysUntil } from "../utils/birthdays";
+
 // ─── VIEW MODE ────────────────────────────────────────────────────────────────
 export type ViewMode = "real" | "anime";
 
@@ -143,28 +145,17 @@ export function parseBirthday(birthday: string): { day: number; month: number } 
 }
 
 // ─── GET DAYS UNTIL ───────────────────────────────────────────────────────────
-// Calcule le nombre de jours jusqu'au prochain anniversaire.
+// Nombre de jours jusqu'au prochain anniversaire (0 = aujourd'hui).
+// Le calcul vit dans utils/birthdays (années bissextiles, changements d'heure).
 export function getDaysUntil(birthday: string): number {
   const parsed = parseBirthday(birthday);
   if (!parsed) return Infinity;
-
-  const now   = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  let next    = new Date(now.getFullYear(), parsed.month - 1, parsed.day);
-
-  if (next < today) {
-    next = new Date(now.getFullYear() + 1, parsed.month - 1, parsed.day);
-  }
-
-  return Math.round((next.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  return daysUntil(parsed.day, parsed.month);
 }
 
 // ─── IS TODAY BIRTHDAY ────────────────────────────────────────────────────────
 export function isTodayBirthday(birthday: string): boolean {
-  const parsed = parseBirthday(birthday);
-  if (!parsed) return false;
-  const now = new Date();
-  return parsed.day === now.getDate() && parsed.month === now.getMonth() + 1;
+  return getDaysUntil(birthday) === 0;
 }
 
 // ─── FORMAT BIRTHDAY DISPLAY ─────────────────────────────────────────────────

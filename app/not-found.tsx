@@ -1,50 +1,33 @@
 import Link from "next/link";
+import type { Metadata } from "next";
+import { NAV, chapterNo } from "./config/nav";
+
+export const metadata: Metadata = { title: "Page introuvable | Guilde Otaku" };
 
 export default function NotFound() {
   return (
-    <div style={{
-      minHeight: "100vh",
-      background: "#050508",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      fontFamily: "'Barlow Condensed', sans-serif",
-      padding: "20px",
-    }}>
-      <h1 style={{
-        fontSize: "clamp(100px, 20vw, 200px)",
-        color: "#c9a84c",
-        margin: 0,
-        lineHeight: 1,
-        fontWeight: 900,
-      }}>
-        404
-      </h1>
-      <p style={{
-        fontSize: "clamp(18px, 3vw, 24px)",
-        color: "rgba(255,255,255,0.7)",
-        margin: "16px 0 40px",
-        textAlign: "center",
-      }}>
-        Cette page n&apos;existe pas dans la Guilde.
-      </p>
-      <Link
-        href="/"
-        style={{
-          display: "inline-block",
-          padding: "12px 32px",
-          background: "#c9a84c",
-          color: "#050508",
-          borderRadius: "999px",
-          textDecoration: "none",
-          fontWeight: 700,
-          fontSize: "16px",
-          fontFamily: "'Barlow Condensed', sans-serif",
-        }}
-      >
-        Retour à l&apos;accueil
-      </Link>
-    </div>
+    <main className="gk-page tone-dark" style={{ display: "grid", placeItems: "center", position: "relative", overflow: "hidden", padding: "48px 0" }}>
+      <div className="gk-speed" aria-hidden="true" style={{ position: "absolute", inset: "-30%", pointerEvents: "none" }} />
+      <div className="gk-wrap gk-reveal" style={{ position: "relative", maxWidth: 860 }}>
+        <p className="gk-chapter"><b>404</b><span>CHAPITRE MANQUANT</span></p>
+        <h1 className="gk-display gk-inked" style={{ fontSize: "clamp(5rem, 26vw, 15rem)", lineHeight: 0.85, marginTop: 20 }}>
+          404
+        </h1>
+        <p className="gk-display gk-h4" style={{ marginTop: 24 }}>
+          Cette page a quitté la Guilde.
+        </p>
+        <p className="gk-body" style={{ marginTop: 12 }}>
+          Lien périmé ou adresse mal tapée. Le sommaire, lui, est toujours là.
+        </p>
+        <nav aria-label="Rubriques" style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 28 }}>
+          <Link href="/" className="gk-btn">Retour à l&apos;accueil</Link>
+          {NAV.slice(1).map((n, i) => (
+            <Link key={n.id} href={n.href} className="gk-btn gk-btn--ghost gk-btn--sm">
+              <span style={{ opacity: 0.6 }}>{chapterNo(i + 1)}</span> {n.label}
+            </Link>
+          ))}
+        </nav>
+      </div>
+    </main>
   );
 }

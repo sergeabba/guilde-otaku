@@ -7,11 +7,17 @@ import {
   Orbitron,
   Black_Ops_One,
   Cinzel_Decorative,
+  Bricolage_Grotesque,
+  Caveat,
+  Dela_Gothic_One,
 } from "next/font/google";
 import "./globals.css";
+import "./styles/shonen.css";
 
 import BirthdayBanner from "./components/BirthdayBanner";
 import Footer from "./components/Footer";
+import BackToTop from "./components/BackToTop";
+import CommandPalette from "./components/CommandPalette";
 import SplashWrapper from "./components/SplashWrapper";
 import { ThemeProvider } from "./context/ThemeContext";
 
@@ -34,6 +40,7 @@ const bebasNeue = Bebas_Neue({
   subsets: ["latin"],
   weight: "400",
   display: "swap",
+  preload: false,
   variable: "--font-bebas-neue",
 });
 
@@ -41,6 +48,7 @@ const orbitron = Orbitron({
   subsets: ["latin"],
   weight: ["400", "500", "700", "900"],
   display: "swap",
+  preload: false,
   variable: "--font-orbitron",
 });
 
@@ -48,6 +56,7 @@ const blackOpsOne = Black_Ops_One({
   subsets: ["latin"],
   weight: "400",
   display: "swap",
+  preload: false,
   variable: "--font-black-ops-one",
 });
 
@@ -55,7 +64,30 @@ const cinzelDecorative = Cinzel_Decorative({
   subsets: ["latin"],
   weight: ["700", "900"],
   display: "swap",
+  preload: false,
   variable: "--font-cinzel-decorative",
+});
+
+const bricolageGrotesque = Bricolage_Grotesque({
+  subsets: ["latin"],
+  weight: ["400", "600", "700", "800"],
+  display: "swap",
+  variable: "--font-bricolage",
+});
+
+const caveat = Caveat({
+  subsets: ["latin"],
+  weight: ["500", "700"],
+  display: "swap",
+  variable: "--font-caveat",
+});
+
+// Police de couverture : gothique japonaise lourde, latin + kana/kanji.
+const delaGothic = Dela_Gothic_One({
+  subsets: ["latin"],
+  weight: "400",
+  display: "swap",
+  variable: "--font-dela",
 });
 
 export const metadata: Metadata = {
@@ -94,14 +126,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const hasSeenSplash = isBot || cookieStore.get("guilde-splash-seen")?.value === "1";
 
   return (
-    <html lang="fr" className={`${barlowCondensed.variable} ${barlow.variable} ${bebasNeue.variable} ${orbitron.variable} ${blackOpsOne.variable} ${cinzelDecorative.variable}`}>
+    <html lang="fr" className={`${barlowCondensed.variable} ${barlow.variable} ${bebasNeue.variable} ${orbitron.variable} ${blackOpsOne.variable} ${cinzelDecorative.variable} ${bricolageGrotesque.variable} ${caveat.variable} ${delaGothic.variable}`}>
       <body>
+        <a href="#contenu" className="gk-skip">Aller au contenu</a>
         <ThemeProvider>
           <BirthdayBanner />
           <SplashWrapper hasSeenSplash={hasSeenSplash}>
-            {children}
+            <div id="contenu">{children}</div>
             <Footer />
           </SplashWrapper>
+          <CommandPalette />
+          <BackToTop />
         </ThemeProvider>
       </body>
     </html>

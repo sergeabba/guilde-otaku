@@ -1,131 +1,78 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { Member } from "../../data/members";
 import { useState } from "react";
+import { Cake, Trophy } from "lucide-react";
+import { Member } from "../../data/members";
 import type { ViewMode } from "../types";
-import { rankAccents, darkRanks } from "../config/ranks";
-import { User, Sword, Cake, Trophy } from "lucide-react";
+import { rankAccents } from "../config/ranks";
+import { onColor } from "../utils/color";
 import VideoPlayer from "./VideoPlayer";
 
-export default function MemberCard({ member, index, viewMode, onClick, isMobile }: {
-  member: Member; index: number; viewMode: ViewMode; onClick: () => void; isMobile?: boolean;
+export default function MemberCard({ member, index, viewMode, onClick }: {
+  member: Member;
+  index: number;
+  viewMode: ViewMode;
+  onClick: () => void;
+  /** Conservé pour compatibilité : la mise en page est désormais gérée en CSS. */
+  isMobile?: boolean;
 }) {
-  const [imgErrorReal, setImgErrorReal] = useState(false);
-  const [imgErrorAnime, setImgErrorAnime] = useState(false);
-  const [hovered, setHovered] = useState(false);
+  const [errors, setErrors] = useState<{ real?: boolean; anime?: boolean }>({});
 
   const accent = rankAccents[member.rank as keyof typeof rankAccents] ?? "#c9a84c";
-  const isDark  = darkRanks.includes(member.rank as any);
-  const isAnime   = viewMode === "anime";
-  const videoSrc  = isAnime ? member.animeVideo : member.photoVideo;
-  const photoSrc  = isAnime ? member.animeChar : member.photo;
-  const hasError  = isAnime ? imgErrorAnime : imgErrorReal;
-  const onError   = isAnime ? () => setImgErrorAnime(true) : () => setImgErrorReal(true);
+  const isAnime = viewMode === "anime";
+  const videoSrc = isAnime ? member.animeVideo : member.photoVideo;
+  const photoSrc = isAnime ? member.animeChar : member.photo;
+  const hasError = !photoSrc || (isAnime ? errors.anime : errors.real);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={isMobile ? {} : {
-        y: -8,
-        scale: 1.02,
-        rotateX: 1,
-        boxShadow: `0 32px 64px rgba(0,0,0,0.28), 0 0 0 2px ${accent}, 0 0 40px ${accent}55`,
-        transition: { duration: 0.4, ease: [0.23, 1, 0.32, 1] },
-      }}
-      transition={{ duration: 0.45, delay: index * 0.04 }}
-      onClick={onClick}
-      onMouseEnter={() => !isMobile && setHovered(true)}
-      onMouseLeave={() => !isMobile && setHovered(false)}
+    <div
+      className="mc"
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
-      style={{
-        cursor: "pointer",
-        borderRadius: isMobile ? "12px" : "16px",
-        overflow: "hidden",
-        position: "relative",
-        aspectRatio: isMobile ? "3/4" : "2/3",
-        boxShadow: `0 4px 20px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.07)`,
-        background: isDark ? "#0d0d14" : "#f5f5f2",
-        perspective: "1000px",
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); }
       }}
+      aria-label={`Ouvrir la fiche de ${member.name}, ${member.rank}`}
+      style={{ "--rk": accent, "--rk-on": onColor(accent), "--i": index } as React.CSSProperties}
     >
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={viewMode}
-          initial={{ opacity: 0, scale: 1.05 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.97 }}
-          transition={{ duration: 0.35 }}
-          style={{ position: "absolute", inset: 0 }}
-        >
-          {videoSrc ? (
-            <VideoPlayer src={videoSrc} fit="cover" objectPosition="smart" fullscreenBtn />
-          ) : !hasError ? (
-            <Image
-              src={photoSrc}
-              alt={`${member.name} — ${isAnime ? "personnage anime" : "photo"}`}
-              fill
-              sizes={isMobile ? "50vw" : "(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 230px"}
-              priority={index < 4}
-              className="object-cover object-top"
-              onError={onError}
-            />
-          ) : (
-            <div style={{ position: "absolute", inset: 0, background: isDark ? "#0d0d14" : "#f5f5f3", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "8px" }}>
-              <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: `${accent}20`, border: `2px solid ${accent}40`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                {isAnime ? <Sword size={20} color={accent} /> : <User size={20} color={accent} />}
-              </div>
-            </div>
-          )}
-        </motion.div>
-      </AnimatePresence>
-
-      <div style={{ position: "absolute", inset: 0, background: isDark ? "linear-gradient(to bottom, transparent 35%, rgba(0,0,0,0.95) 100%)" : "linear-gradient(to bottom, transparent 35%, rgba(0,0,0,0.82) 100%)", opacity: hasError ? 0 : 1, pointerEvents: "none" }} />
-
-      {/* Watermark ID */}
-      <div style={{
-        position: "absolute", top: isMobile ? "2px" : "8px", right: isMobile ? "6px" : "12px",
-        fontFamily: "'Barlow Condensed', sans-serif",
-        fontSize: isMobile ? "40px" : "72px", fontWeight: 900,
-        color: accent, opacity: hovered ? 0.18 : 0.08,
-        lineHeight: 1, letterSpacing: "-0.05em", pointerEvents: "none",
-      }}>
-        {String(member.id).padStart(2, "0")}
+      <div key={viewMode} className="mc-media is-swap">
+        {videoSrc ? (
+          <VideoPlayer src={videoSrc} fit="cover" objectPosition="smart" fullscreenBtn />
+        ) : !hasError ? (
+          <Image
+            src={photoSrc}
+            alt=""
+            fill
+            sizes="(max-width: 600px) 50vw, (max-width: 900px) 33vw, (max-width: 1180px) 25vw, 250px"
+            priority={index < 2}
+            onError={() => setErrors((e) => ({ ...e, [isAnime ? "anime" : "real"]: true }))}
+          />
+        ) : (
+          <div className="mc-fallback" aria-hidden="true">{isAnime ? "影" : "顔"}</div>
+        )}
       </div>
+      <div className="mc-tone" aria-hidden="true" />
 
-      {/* Info bottom */}
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: isMobile ? "12px" : "20px 18px", zIndex: 2 }}>
-        <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: isMobile ? "9px" : "11px", fontWeight: 800, color: accent, letterSpacing: "0.22em", textTransform: "uppercase", marginBottom: "2px" }}>
-          {member.rank}
-        </div>
+      <span className="mc-rank">{member.rank}</span>
+      <span className="mc-no" aria-hidden="true">{String(member.id).padStart(2, "0")}</span>
 
+      <div className="mc-plate">
         {member.badge && (
-          <div style={{
-            display: "inline-flex", alignItems: "center", gap: "4px",
-            marginTop: "2px", marginBottom: "6px",
-            background: "linear-gradient(90deg, #b8860b 0%, #ffd700 50%, #b8860b 100%)",
-            padding: isMobile ? "2px 6px" : "4px 8px", borderRadius: "4px",
-            boxShadow: "0 4px 10px rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.4)"
-          }}>
-            <Trophy size={isMobile ? 10 : 12} color="#000" strokeWidth={3} />
-            <span style={{ fontSize: isMobile ? "9px" : "10px", fontWeight: 900, color: "#000", textTransform: "uppercase", fontFamily: "'Barlow Condensed', sans-serif" }}>
-              {member.badge}
-            </span>
+          <span className="mc-badge">
+            <Trophy size={10} strokeWidth={3} aria-hidden="true" />
+            {member.badge}
+          </span>
+        )}
+        <div className="mc-name">{member.name}</div>
+        {member.birthday && (
+          <div className="mc-meta">
+            <Cake size={12} aria-hidden="true" />
+            {member.birthday}
           </div>
         )}
-
-        <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: isMobile ? "18px" : "26px", fontWeight: 900, color: "#fff", lineHeight: 1, textTransform: "uppercase", fontStyle: "italic", textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>
-          {member.name}
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "5px", fontFamily: "'Barlow Condensed', sans-serif", fontSize: isMobile ? "10px" : "12px", fontWeight: 700, color: "rgba(255,255,255,0.65)", marginTop: "4px" }}>
-          <Cake size={isMobile ? 10 : 11} />
-          {member.birthday}
-        </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

@@ -1,10 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { ArrowLeft, Dices, Zap } from "lucide-react";
+import { Dices, Zap } from "lucide-react";
 import VideoPlayer from "../components/VideoPlayer";
 import { Rank, RANK_FILTER_ORDER, type Member } from "../../data/members";
 import { rankAccents } from "../config/ranks";
@@ -123,14 +122,18 @@ function KofFighterTile({
       onClick={() => onSelect(member)}
       onMouseEnter={() => onHover(member)}
       onMouseLeave={() => onHover(null)}
+      onFocus={() => onHover(member)}
+      onBlur={() => onHover(null)}
       className={`kof-tile${isP1 ? " is-p1" : ""}${isP2Preview ? " is-p2-preview" : ""}`}
+      aria-pressed={isP1}
+      aria-label={isP1 ? `${member.name}, joueur 1. Appuyer pour annuler.` : `Choisir ${member.name}, ${member.rank}`}
       whileTap={{ scale: 0.96 }}
     >
       <div className="kof-tile-media">
         {vid ? (
           <VideoPlayer src={vid} fit="cover" objectPosition="smart" fullscreenBtn={false} />
         ) : img ? (
-          <Image src={img} alt={member.name} width={140} height={180} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 15%", display: "block" }} />
+          <Image src={img} alt="" width={140} height={180} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 15%", display: "block" }} />
         ) : (
           <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", background: "#0a0812" }}>
             <span style={{ fontSize: 24, fontWeight: 900, opacity: 0.2 }}>?</span>
@@ -146,7 +149,7 @@ function KofModeToggle({ mode, setMode }: { mode: ViewMode; setMode: (m: ViewMod
   return (
     <div className="kof-mode-toggle">
       {(["real", "anime"] as ViewMode[]).map(m => (
-        <button key={m} type="button" onClick={() => setMode(m)} className={`kof-mode-btn${mode === m ? " is-active" : ""}`}>
+        <button key={m} type="button" onClick={() => setMode(m)} aria-pressed={mode === m} className={`kof-mode-btn${mode === m ? " is-active" : ""}`}>
           {m === "real" ? "RÉEL" : "ANIME"}
         </button>
       ))}
@@ -176,9 +179,6 @@ export function KofCharacterSelect({
 
       <header className="kof-topbar">
         <div className="kof-topbar-inner">
-          <Link href="/" className="kof-back" aria-label="Retour">
-            <ArrowLeft size={18} />
-          </Link>
           <div className="kof-logo-block">
             <div className="kof-logo-title">THE KING OF FIGHTERS &apos;98</div>
             <div className="kof-logo-sub">GUILDE OTAKU — TEAM BATTLE</div>
@@ -193,6 +193,7 @@ export function KofCharacterSelect({
                 key={r}
                 type="button"
                 onClick={() => setFilter(r as Rank | "Tous")}
+                aria-pressed={filter === r}
                 className={`kof-filter-btn${filter === r ? " is-active" : ""}`}
                 style={{ "--filter-accent": accent } as React.CSSProperties}
               >
@@ -230,8 +231,9 @@ export function KofCharacterSelect({
                 }}
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.95 }}
+                aria-label={selected ? "Adversaire au hasard" : "Combattant au hasard"}
               >
-                <Dices size={22} />
+                <Dices size={22} aria-hidden="true" />
                 <span>RANDOM</span>
               </motion.button>
             </div>

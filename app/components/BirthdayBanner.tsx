@@ -58,7 +58,7 @@ export default function BirthdayBanner() {
           animate={{ height: "auto", opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
           transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-          style={{ overflow: "hidden", position: "relative", zIndex: 9999 }}
+          style={{ overflow: "hidden", position: "relative", zIndex: 101 }}
           // ✅ Accessibilité : annonce la bannière aux lecteurs d'écran
           role="alert"
           aria-live="polite"

@@ -67,15 +67,15 @@ export async function GET(req: NextRequest) {
             }}
           >
             {/* Branding */}
-            <div style={{ display: "flex", alignItems: "center", marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", marginBottom: 14 }}>
               <div style={{ width: 28, height: 3, backgroundColor: color, borderRadius: 2 }} />
-              <span style={{ marginLeft: 10, fontSize: 12, fontWeight: 800, color, letterSpacing: "0.3em", textTransform: "uppercase" }}>
-                GUILDE OTAKU
+              <span style={{ marginLeft: 10, fontSize: 13, fontWeight: 900, color, letterSpacing: "0.25em", textTransform: "uppercase" }}>
+                GUILDE OTAKU • 『オタクギルド』
               </span>
             </div>
 
-            {/* Rank */}
-            <div style={{ display: "flex", alignItems: "center", marginBottom: 16 }}>
+            {/* Rank + Manga Stamp */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
               <span
                 style={{
                   fontSize: 16,
@@ -83,13 +83,26 @@ export async function GET(req: NextRequest) {
                   color,
                   textTransform: "uppercase",
                   letterSpacing: "0.2em",
-                  padding: "4px 12px",
+                  padding: "4px 14px",
                   borderRadius: 4,
-                  background: `${color}18`,
-                  border: `1px solid ${color}40`,
+                  background: `${color}22`,
+                  border: `1.5px solid ${color}66`,
                 }}
               >
                 {rank}
+              </span>
+              <span
+                style={{
+                  fontSize: 13,
+                  fontWeight: 900,
+                  color: "#ef4444",
+                  padding: "2px 8px",
+                  borderRadius: 3,
+                  border: "1.5px solid #ef4444",
+                  background: "rgba(239,68,68,0.15)",
+                }}
+              >
+                『公認』
               </span>
             </div>
 

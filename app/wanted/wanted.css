@@ -1,0 +1,109 @@
+/* ═══ WANTED · AVIS DE RECHERCHE ══════════════════════════════════════════ */
+.wt-page {
+  --gk-accent: #c9a84c;
+  --wt-ink: #36220f;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, #23160a 0%, transparent 70%),
+    #0d0a04;
+}
+.wt-hero { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 32px; }
+.wt-title { font-family: "Times New Roman", Times, serif; font-weight: 900; font-size: clamp(3.2rem, 13vw, 6.4rem); line-height: 0.8; letter-spacing: 0.01em; transform: scaleY(1.25); transform-origin: bottom; color: #e8cba3; }
+
+.wt-bar { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); align-items: center; margin-top: clamp(20px, 3vw, 32px); }
+@media (min-width: 900px) { .wt-bar { grid-template-columns: minmax(0, 340px) auto 1fr auto; } }
+.wt-bar-right { display: flex; gap: 8px; justify-content: flex-start; flex-wrap: wrap; }
+@media (min-width: 900px) { .wt-bar-right { justify-content: flex-end; } }
+.wt-select {
+  min-height: 44px; padding: 6px 12px;
+  font: 800 0.95rem var(--gk-font-ui); letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--gk-text); background: var(--gk-surface);
+  border: var(--gk-stroke) solid var(--gk-border); border-radius: 0; cursor: pointer;
+}
+
+/* Scène : affiche + notice */
+.wt-stage { display: grid; gap: clamp(20px, 4vw, 56px); grid-template-columns: minmax(0, 1fr); align-items: center; margin-top: clamp(24px, 4vw, 44px); }
+@media (min-width: 900px) { .wt-stage { grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr); } }
+.wt-poster-slot { display: flex; align-items: center; justify-content: center; gap: clamp(4px, 2vw, 20px); }
+.wt-poster-wrap { width: min(400px, 100%); flex: 1 1 auto; max-width: 400px; }
+.wt-arrow { flex: none; width: 46px; height: 46px; display: grid; place-items: center; color: #e8cba3; background: transparent; border: 2px solid rgba(232,203,163,0.35); cursor: pointer; transition: background var(--gk-fast), color var(--gk-fast); }
+@media (hover: hover) { .wt-arrow:hover { background: #e8cba3; color: #1a1008; } }
+@media (max-width: 480px) { .wt-arrow { width: 40px; height: 40px; } }
+
+.wt-notice h2 { font: 900 italic clamp(2.2rem, 7vw, 4.2rem)/0.9 var(--gk-font-ui); text-transform: uppercase; text-wrap: balance; overflow-wrap: anywhere; }
+.wt-notice dl { display: grid; grid-template-columns: auto 1fr; gap: 8px 18px; margin-top: 20px; padding-top: 16px; border-top: 2px dashed var(--gk-rule); }
+.wt-notice dt { font: 800 0.78rem var(--gk-font-ui); letter-spacing: 0.12em; text-transform: uppercase; color: var(--gk-dim); align-self: center; }
+.wt-notice dd { font: 800 1.15rem var(--gk-font-ui); }
+.wt-notice dd.wt-prime { font: 400 clamp(1.5rem, 5vw, 2.3rem)/1 var(--gk-font-display); color: var(--gk-accent); }
+.wt-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+.wt-counter { font: 800 0.9rem var(--gk-font-ui); letter-spacing: 0.1em; color: var(--gk-dim); }
+.wt-note { margin-top: 18px; font: 500 0.82rem/1.4 var(--gk-font-body); color: var(--gk-faint); max-width: 46ch; }
+
+/* ─── L'affiche : tout est en cqw, elle garde ses proportions à toute taille ─ */
+.wp { container-type: inline-size; width: 100%; display: block; }
+.wp-paper {
+  position: relative; aspect-ratio: 2 / 3;
+  padding: 4.2cqw;
+  background: linear-gradient(135deg, #e8cba3 0%, #d1ae7b 50%, #bc9257 100%);
+  box-shadow: 0 6cqw 14cqw rgba(0,0,0,0.7), inset 0 0 13cqw rgba(90,50,20,0.4);
+  border-radius: 0.5cqw 1cqw 0.8cqw 0.5cqw;
+  color: var(--wt-ink, #36220f);
+  font-family: "Times New Roman", Times, serif;
+  text-align: center;
+}
+.wp-paper::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0.16; mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+/* Pliures du papier */
+.wp-paper::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(90deg, transparent 49.6%, rgba(60,35,10,0.16) 50%, transparent 50.6%),
+    linear-gradient(0deg, transparent 49.7%, rgba(60,35,10,0.12) 50%, transparent 50.5%);
+}
+.wp-in { position: relative; height: 100%; display: flex; flex-direction: column; border: 1cqw solid #36220f; padding: 2.6cqw; }
+.wp-title { font-size: 18.4cqw; font-weight: 900; line-height: 0.8; transform: scaleY(1.4); transform-origin: bottom; margin-top: 3.5cqw; }
+.wp-sub { font-size: 3.7cqw; font-weight: 700; letter-spacing: 0.4em; margin: 2.2cqw 0 3cqw; padding-left: 0.4em; }
+.wp-photo { position: relative; flex: 1; min-height: 0; border: 1cqw solid #36220f; overflow: hidden; background: #4a331c; box-shadow: inset 0 0 6cqw rgba(0,0,0,0.6); margin-bottom: 4cqw; }
+.wp-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 10%; filter: sepia(0.8) contrast(1.2) brightness(0.9) grayscale(0.2); }
+.wp-photo img.is-swap { animation: wp-develop 520ms var(--gk-ease) both; }
+@keyframes wp-develop { from { clip-path: inset(0 0 100% 0); filter: sepia(1) contrast(2) brightness(1.6); } }
+.wp-photo-empty { position: absolute; inset: 0; display: grid; place-items: center; background: #b08d5b; font-size: 20cqw; color: rgba(0,0,0,0.18); font-family: var(--gk-font-display); }
+.wp-name { font-size: 9cqw; font-weight: 900; line-height: 0.9; letter-spacing: 0.04em; text-transform: uppercase; transform: scaleY(1.25); margin-bottom: 3cqw; overflow-wrap: anywhere; }
+.wp-name.is-long { font-size: 6.6cqw; }
+.wp-prime { font-size: 8cqw; font-weight: 900; letter-spacing: 0.05em; margin-bottom: 1.4cqw; }
+.wp-prime span { font-size: 6cqw; margin-right: 1cqw; }
+.wp-foot { display: flex; justify-content: space-between; align-items: flex-end; border-top: 0.5cqw solid #36220f; padding-top: 1.5cqw; margin-top: auto; }
+.wp-foot small { font-family: monospace; font-size: 1.6cqw; letter-spacing: 0.05em; max-width: 66%; text-align: left; }
+.wp-foot b { font-size: 4.7cqw; letter-spacing: 0.1em; }
+
+.wt-main-poster { animation: wt-pin 420ms var(--gk-ease-snap) both; cursor: zoom-in; background: none; border: 0; padding: 0; width: 100%; }
+@keyframes wt-pin { from { opacity: 0; transform: translateY(18px) rotate(-5deg) scale(0.94); } }
+
+/* ─── Le mur ──────────────────────────────────────────────────────────────── */
+.wt-wall { display: grid; gap: clamp(12px, 2.4vw, 26px); grid-template-columns: repeat(auto-fill, minmax(min(44vw, 150px), 1fr)); margin-top: 20px; }
+@media (min-width: 700px) { .wt-wall { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); } }
+.wt-wall-item { background: none; border: 0; padding: 0; cursor: pointer; text-align: inherit; transition: transform var(--gk-med) var(--gk-ease); transform: rotate(var(--tilt, 0deg)); }
+.wt-wall-item .wp-paper { box-shadow: 0 3cqw 7cqw rgba(0,0,0,0.6), inset 0 0 13cqw rgba(90,50,20,0.4); }
+@media (hover: hover) { .wt-wall-item:hover { transform: rotate(0deg) translateY(-6px) scale(1.03); z-index: 2; position: relative; } }
+.wt-wall-item[aria-current="true"] { outline: 3px solid var(--gk-accent); outline-offset: 5px; transform: rotate(0deg); }
+
+/* ─── Lightbox ────────────────────────────────────────────────────────────── */
+.wt-lightbox {
+  position: fixed; inset: 0; z-index: var(--z-modal, 9000);
+  background: rgba(8, 5, 2, 0.94);
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px;
+  padding: 56px clamp(6px, 2vw, 28px) 20px;
+  animation: gk-fade 180ms both;
+}
+.wt-lightbox-poster { width: min(100%, calc((100dvh - 96px) * 2 / 3)); margin-inline: auto; animation: wt-pin 360ms var(--gk-ease-snap) both; }
+.wt-lightbox-close { position: absolute; top: 8px; right: 8px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .wt-main-poster, .wt-lightbox-poster, .wp-photo img.is-swap { animation: none; }
+  .wt-wall-item { transform: none; }
+}
+
+/* L'affiche est construite en <span> (elle vit dans des boutons) */
+.wp-in > span { display: block; }
+.wp-in > .wp-foot { display: flex; }

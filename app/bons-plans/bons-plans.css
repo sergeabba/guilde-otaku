@@ -1,0 +1,42 @@
+/* ═══ BONS PLANS · LES PETITES ANNONCES DE LA GUILDE ══════════════════════ */
+.bp-page { --gk-accent: #c9a84c; }
+.bp-tools { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); align-items: center; }
+@media (min-width: 760px) { .bp-tools { grid-template-columns: minmax(0, 420px) 1fr auto; } }
+
+/* Dernier ajout */
+.bp-lead { display: grid; grid-template-columns: minmax(0, 1fr); overflow: hidden; margin-top: clamp(20px, 3vw, 32px); }
+@media (min-width: 820px) { .bp-lead { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); } }
+.bp-lead-media { position: relative; min-height: 200px; background: color-mix(in srgb, var(--bp) 30%, var(--gk-ink)); border-bottom: var(--gk-stroke) solid var(--gk-border); display: grid; place-items: center; overflow: hidden; }
+@media (min-width: 820px) { .bp-lead-media { border-bottom: 0; border-right: var(--gk-stroke) solid var(--gk-border); min-height: 300px; } }
+.bp-lead-media > img.bp-shot { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.bp-lead-media .bp-logo { position: relative; width: 96px; height: 96px; }
+.bp-lead-body { padding: clamp(18px, 3.4vw, 36px); display: flex; flex-direction: column; gap: 12px; justify-content: center; min-width: 0; }
+.bp-lead-body h2 { font: 400 clamp(1.9rem, 6vw, 3.4rem)/1 var(--gk-font-display); letter-spacing: -0.02em; overflow-wrap: anywhere; }
+
+/* Coupons */
+.bp-grid { display: grid; gap: clamp(14px, 2.2vw, 24px); grid-template-columns: minmax(0, 1fr); margin-top: clamp(22px, 3.4vw, 36px); }
+@media (min-width: 700px)  { .bp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1100px) { .bp-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.bp-coupon { position: relative; display: grid; grid-template-columns: 84px minmax(0, 1fr); background: var(--gk-surface); border: var(--gk-stroke) solid var(--gk-border); transition: transform var(--gk-fast) var(--gk-ease), box-shadow var(--gk-fast) var(--gk-ease); }
+.bp-stub { position: relative; background: var(--bp); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 12px 6px; border-right: 2.5px dashed var(--gk-bg); }
+/* Encoches du talon détachable */
+.bp-stub::before, .bp-stub::after { content: ""; position: absolute; right: -9px; width: 16px; height: 16px; border-radius: 50%; background: var(--gk-bg); border: var(--gk-stroke) solid var(--gk-border); }
+.bp-stub::before { top: -10px; }
+.bp-stub::after { bottom: -10px; }
+.bp-logo { width: 52px; height: 52px; display: grid; place-items: center; background: #111; border: 2px solid #111; overflow: hidden; color: #fff; }
+.bp-logo img { width: 70%; height: 70%; object-fit: contain; }
+.bp-stub-cat { writing-mode: vertical-rl; transform: rotate(180deg); font: 900 0.7rem var(--gk-font-ui); letter-spacing: 0.16em; text-transform: uppercase; color: var(--bp-on, #111); white-space: nowrap; }
+.bp-body { padding: 14px 16px 12px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.bp-body h3 { font: 900 italic 1.5rem/1 var(--gk-font-ui); text-transform: uppercase; overflow-wrap: anywhere; }
+.bp-domain { font: 600 0.82rem var(--gk-font-body); color: var(--gk-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bp-desc { font: 500 0.98rem/1.5 var(--gk-font-body); color: var(--gk-dim); flex: 1; }
+.bp-actions { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.bp-actions .gk-btn { flex: 1; }
+.bp-mini { width: 40px; height: 40px; min-width: 0; min-height: 0; flex: none; display: grid; place-items: center; background: transparent; color: var(--gk-text); border: 2px solid var(--gk-rule); cursor: pointer; transition: transform var(--gk-fast) var(--gk-ease-snap), background var(--gk-fast), border-color var(--gk-fast); }
+.bp-mini[aria-pressed="true"] { background: var(--gk-hanko); border-color: var(--gk-hanko); color: #fff; }
+.bp-mini:active { transform: scale(1.2); }
+@media (hover: hover) {
+  .bp-coupon:hover { transform: translate(-3px, -3px); box-shadow: 7px 7px 0 var(--bp); }
+  .bp-mini:hover { border-color: var(--gk-text); }
+}
+.bp-legal { margin-top: clamp(30px, 5vw, 52px); padding-top: 16px; border-top: 2px dashed var(--gk-rule); font: 500 0.86rem/1.5 var(--gk-font-body); color: var(--gk-faint); max-width: 70ch; }

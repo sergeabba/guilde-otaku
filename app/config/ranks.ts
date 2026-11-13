@@ -1,4 +1,5 @@
 import { Rank } from "../../data/members";
+export type { Rank };
 
 // ─── COULEURS PRINCIPALES PAR RANG ───────────────────────────────────────────
 export const rankAccents: Record<Rank | "Tous", string> = {
@@ -50,6 +51,20 @@ export const rankLogos: Record<Rank, string> = {
   "Revenant":       "/ranks/revenant.png",
 };
 
+// ─── RANGS EN JAPONAIS (AESTHETIC MANGA / ANIME) ───────────────────────────
+export const rankJapanese: Record<Rank | "Tous", string> = {
+  "Fondateur":      "創設者",
+  "Monarque":       "君主",
+  "Ex Monarque":    "先代君主",
+  "Ordre Céleste":  "天の騎士",
+  "New G dorée":    "新世代",
+  "Futurs Espoirs": "若き希望",
+  "Vieux Briscard": "歴戦の勇士",
+  "Fantôme":        "亡霊",
+  "Revenant":       "再生者",
+  "Tous":           "全メンバー",
+};
+
 // ─── HELPER : couleur d'un rang ───────────────────────────────────────────────
 export function getRankAccent(rank: Rank | "Tous"): string {
   return rankAccents[rank] ?? "#c9a84c";
@@ -59,3 +74,4 @@ export function getRankAccent(rank: Rank | "Tous"): string {
 export function isDarkRank(rank: Rank | "Tous"): boolean {
   return darkRanks.includes(rank as Rank);
 }
+

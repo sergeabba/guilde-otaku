@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { Trophy, Zap, Shield, Wind } from "lucide-react";
@@ -21,8 +22,19 @@ export default function Leaderboard({ members, onClose }: Props) {
     }))
     .sort((a, b) => b.power - a.power);
 
+  const closeRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    closeRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
   return (
     <motion.div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Classement de puissance"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -52,6 +64,7 @@ export default function Leaderboard({ members, onClose }: Props) {
           </span>
         </div>
         <button
+          ref={closeRef}
           onClick={onClose}
           style={{
             padding: "8px 20px",

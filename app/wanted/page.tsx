@@ -1,316 +1,441 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { supabase } from "../../lib/supabase";
-import { Volume2, VolumeX, ChevronLeft, ChevronRight, User, Sword, Search, Play, Pause } from "lucide-react";
+import { createPortal } from "react-dom";
+import { ChevronLeft, ChevronRight, Download, Maximize2, Pause, Play, Search, Share2, Sword, User, Volume2, VolumeX, X } from "lucide-react";
 import GuildeHeader from "../components/GuildeHeader";
-import type { SupabaseMemberRow } from "../types";
+import { fetchMembers } from "../utils/dataAdapter";
+import { normalize } from "../utils/text";
+import { useShare } from "../hooks/useShare";
+import type { Member } from "../../data/members";
+import "./wanted.css";
 
 type ViewMode = "real" | "anime";
+type SortMode = "registre" | "prime-desc" | "prime-asc";
 
-interface WantedMember extends SupabaseMemberRow {
-  animeChar: string;
-  rankJP: string;
+// Les primes font partie du jeu : elles sont dérivées du numéro de membre,
+// donc stables d'une visite à l'autre. Ce ne sont pas des votes.
+function getPrimeValue(id: number): number {
+  const bases = [50, 80, 120, 150, 200, 250, 300, 400, 500, 750, 800, 999];
+  return bases[id % bases.length] * (((id * 7) % 9) + 1) * 1_000_000;
+}
+const formatPrime = (v: number) => v.toLocaleString("en-US") + "-";
+const posterName = (name: string) => name.replace(/"/g, "·");
+
+function Poster({ member, viewMode, eager = false }: { member: Member; viewMode: ViewMode; eager?: boolean }) {
+  const src = viewMode === "anime" ? member.animeChar : member.photo;
+  const [failed, setFailed] = useState<string | null>(null);
+  const name = posterName(member.name);
+  return (
+    <span className="wp">
+      <span className="wp-paper" style={{ display: "block" }}>
+        <span className="wp-in">
+          <span className="wp-title" aria-hidden="true">WANTED</span>
+          <span className="wp-sub" aria-hidden="true">DEAD OR ALIVE</span>
+          <span className="wp-photo">
+            {src && failed !== src ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={src}
+                className="is-swap"
+                src={src}
+                alt=""
+                loading={eager ? "eager" : "lazy"}
+                decoding="async"
+                onError={() => setFailed(src)}
+              />
+            ) : (
+              <span className="wp-photo-empty" aria-hidden="true">?</span>
+            )}
+          </span>
+          <span className={`wp-name${name.length > 13 ? " is-long" : ""}`}>{name}</span>
+          <span className="wp-prime"><span>฿</span>{formatPrime(getPrimeValue(member.id))}</span>
+          <span className="wp-foot" aria-hidden="true">
+            <small>KONO SOSHIKI WA FICTION DETHU NODE JITSU ZAISURU...</small>
+            <b>MARINE</b>
+          </span>
+        </span>
+      </span>
+    </span>
+  );
 }
 
-function getPrime(id: number): string {
-  const bases = [50, 80, 120, 150, 200, 250, 300, 400, 500, 750, 800, 999];
-  const base = bases[id % bases.length];
-  const mul = ((id * 7) % 9) + 1;
-  const val = base * mul * 1_000_000;
-  return val.toLocaleString("en-US").replace(/,/g, ",") + "-";
+/** Dessine l'affiche sur un canvas pour la proposer en PNG. */
+async function renderPosterPng(member: Member, viewMode: ViewMode): Promise<Blob> {
+  const W = 1000, H = 1500;
+  const canvas = document.createElement("canvas");
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("canvas");
+
+  const grad = ctx.createLinearGradient(0, 0, W, H);
+  grad.addColorStop(0, "#e8cba3"); grad.addColorStop(0.5, "#d1ae7b"); grad.addColorStop(1, "#bc9257");
+  ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+
+  const ink = "#36220f";
+  ctx.strokeStyle = ink; ctx.lineWidth = 10;
+  ctx.strokeRect(47, 47, W - 94, H - 94);
+  ctx.fillStyle = ink; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+
+  ctx.save();
+  ctx.translate(W / 2, 255); ctx.scale(1, 1.4);
+  ctx.font = "900 184px 'Times New Roman', Times, serif";
+  ctx.fillText("WANTED", 0, 0);
+  ctx.restore();
+  ctx.font = "700 37px 'Times New Roman', Times, serif";
+  ctx.fillText("D E A D   O R   A L I V E", W / 2, 312);
+
+  const px = 82, py = 345, pw = W - 164, ph = 760;
+  ctx.fillStyle = "#4a331c"; ctx.fillRect(px, py, pw, ph);
+  const src = viewMode === "anime" ? member.animeChar : member.photo;
+  if (src) {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    await new Promise<void>((res, rej) => { img.onload = () => res(); img.onerror = () => rej(new Error("image")); img.src = src; });
+    const scale = Math.max(pw / img.width, ph / img.height);
+    const sw = pw / scale, sh = ph / scale;
+    const sx = (img.width - sw) / 2, sy = (img.height - sh) * 0.1;
+    ctx.filter = "sepia(0.8) contrast(1.2) brightness(0.9) grayscale(0.2)";
+    ctx.drawImage(img, sx, sy, sw, sh, px, py, pw, ph);
+    ctx.filter = "none";
+  }
+  ctx.strokeStyle = ink; ctx.lineWidth = 10; ctx.strokeRect(px, py, pw, ph);
+
+  ctx.fillStyle = ink;
+  const name = posterName(member.name).toUpperCase();
+  let size = 92;
+  ctx.font = `900 ${size}px 'Times New Roman', Times, serif`;
+  while (ctx.measureText(name).width > pw - 20 && size > 40) { size -= 4; ctx.font = `900 ${size}px 'Times New Roman', Times, serif`; }
+  ctx.save(); ctx.translate(W / 2, 1218); ctx.scale(1, 1.25); ctx.fillText(name, 0, 0); ctx.restore();
+  ctx.font = "900 80px 'Times New Roman', Times, serif";
+  ctx.fillText("฿ " + formatPrime(getPrimeValue(member.id)), W / 2, 1322);
+
+  ctx.fillRect(px, 1356, pw, 5);
+  ctx.font = "900 47px 'Times New Roman', Times, serif"; ctx.textAlign = "right";
+  ctx.fillText("MARINE", px + pw, 1420);
+  ctx.font = "16px monospace"; ctx.textAlign = "left";
+  ctx.fillText("GUILDE OTAKU · guilde-otaku.vercel.app/wanted", px, 1416);
+
+  return new Promise((res, rej) => canvas.toBlob((b) => (b ? res(b) : rej(new Error("blob"))), "image/png"));
 }
 
 export default function WantedPage() {
-  // --- ÉTATS ---
-  const [current, setCurrent] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isAutoPlay, setIsAutoPlay] = useState(false); // Mode diaporama
-  const [imgError, setImgError] = useState(false);
+  const [members, setMembers] = useState<Member[] | null>(null);
+  const [currentId, setCurrentId] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("real");
   const [searchTerm, setSearchTerm] = useState("");
-  const [members, setMembers] = useState<WantedMember[]>([]);
-  
+  const [sort, setSort] = useState<SortMode>("registre");
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isAutoPlay, setIsAutoPlay] = useState(false);
+  const [lightbox, setLightbox] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const lightboxRef = useRef<HTMLDivElement>(null);
+  const { share, notify, Toast } = useShare();
 
   useEffect(() => {
-    const fetchMembers = async () => {
-      const { data } = await supabase.from("fighters").select("*").eq("hidden", false).order("id", { ascending: true });
-      if (data) {
-        setMembers(data.map(m => ({
-          ...m,
-          animeChar: m.animechar,
-          rankJP: m.rankjp
-        })));
-      }
-    };
-    fetchMembers();
+    let cancelled = false;
+    fetchMembers().then((list) => {
+      if (cancelled) return;
+      setMembers(list);
+      // Lien profond : /wanted?avis=12
+      const wanted = Number(new URLSearchParams(window.location.search).get("avis"));
+      setCurrentId(list.find((m) => m.id === wanted)?.id ?? list[0]?.id ?? null);
+    });
+    return () => { cancelled = true; };
   }, []);
 
-  // --- FILTRAGE ET RECHERCHE ---
-  const filteredMembers = useMemo(() => {
-    return members.filter((m) => 
-      m.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      m.rank.toLowerCase().includes(searchTerm.toLowerCase())
+  const list = useMemo(() => {
+    const q = normalize(searchTerm.trim());
+    const base = (members ?? []).filter((m) => !q || normalize(m.name).includes(q) || normalize(m.rank).includes(q));
+    if (sort === "registre") return base;
+    return [...base].sort((a, b) =>
+      sort === "prime-desc" ? getPrimeValue(b.id) - getPrimeValue(a.id) : getPrimeValue(a.id) - getPrimeValue(b.id)
     );
-  }, [searchTerm, members]);
+  }, [members, searchTerm, sort]);
 
-  // Reset l'index si la recherche change
+  const index = Math.max(0, list.findIndex((m) => m.id === currentId));
+  const member = list[index];
+
+  // Si le filtre exclut l'affiche courante, on prend la première de la liste
   useEffect(() => {
-    setCurrent(0);
-  }, [searchTerm]);
+    if (list.length && !list.some((m) => m.id === currentId)) setCurrentId(list[0].id);
+  }, [list, currentId]);
 
-  const member = filteredMembers[current];
-  const prime = member ? getPrime(member.id) : "0";
-
-  // --- LOGIQUE SON ET DIAPORAMA ---
-  const toggleSound = () => {
-    if (!audioRef.current) return;
-    if (isPlaying) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.volume = 0.5;
-      audioRef.current.play().catch(e => console.log("Lecture bloquée :", e));
-    }
-    setIsPlaying(!isPlaying);
-  };
-
-  const next = useCallback(() => { setImgError(false); setCurrent((c) => (c + 1) % filteredMembers.length); }, [filteredMembers.length]);
-  const prev = useCallback(() => { setImgError(false); setCurrent((c) => (c - 1 + filteredMembers.length) % filteredMembers.length); }, [filteredMembers.length]);
-
-  // Effet Diaporama (Autoplay) — CORRIGÉ : next est dans les deps via useCallback
+  // L'adresse suit l'affiche affichée, pour pouvoir la partager
   useEffect(() => {
-    if (!isAutoPlay || filteredMembers.length <= 1) return;
-    const interval = setInterval(next, 4000);
-    return () => clearInterval(interval);
-  }, [isAutoPlay, filteredMembers.length, next]);
+    if (currentId == null) return;
+    const url = new URL(window.location.href);
+    url.searchParams.set("avis", String(currentId));
+    window.history.replaceState({}, "", url);
+  }, [currentId]);
 
-  // Navigation clavier
+  const step = useCallback((dir: 1 | -1) => {
+    if (!list.length) return;
+    setCurrentId(list[(index + dir + list.length) % list.length].id);
+  }, [list, index]);
+
+  useEffect(() => {
+    if (!isAutoPlay || list.length <= 1) return;
+    const t = setInterval(() => step(1), 4000);
+    return () => clearInterval(t);
+  }, [isAutoPlay, list.length, step]);
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft" && filteredMembers.length > 0) prev();
-      if (e.key === "ArrowRight" && filteredMembers.length > 0) next();
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
+      if (e.key === "ArrowLeft") step(-1);
+      else if (e.key === "ArrowRight") step(1);
+      else if (e.key === "Escape") setLightbox(false);
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [filteredMembers.length]);
+  }, [step]);
 
   useEffect(() => {
-    setImgError(false);
-  }, [viewMode, current]);
+    if (!lightbox) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    lightboxRef.current?.querySelector<HTMLElement>("button")?.focus();
+    return () => { document.body.style.overflow = prev; };
+  }, [lightbox]);
+
+  const toggleSound = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (isPlaying) { audio.pause(); setIsPlaying(false); return; }
+    audio.volume = 0.5;
+    audio.play().then(() => setIsPlaying(true)).catch(() => notify("Lecture bloquée par le navigateur"));
+  };
+
+  const pick = (id: number) => {
+    setCurrentId(id);
+    setIsAutoPlay(false);
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    stageRef.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  };
+
+  const download = async () => {
+    if (!member || downloading) return;
+    setDownloading(true);
+    try {
+      const blob = await renderPosterPng(member, viewMode);
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `wanted-${normalize(member.name).replace(/[^a-z0-9]+/g, "-")}.png`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+      notify("Affiche téléchargée");
+    } catch {
+      notify("Portrait protégé : téléchargement impossible");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const loading = members === null;
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      background: "radial-gradient(ellipse at center, #1a1008 0%, #0d0a04 100%)",
-      display: "flex", flexDirection: "column",
-      alignItems: "center", justifyContent: "flex-start",
-      paddingBottom: "140px",
-      position: "relative", overflow: "hidden",
-    }}>
+    <div className="gk-page tone-dark wt-page">
+      <audio ref={audioRef} src="/wanted.mp3" loop preload="none" />
+      <GuildeHeader activePage="wanted" accentColor="#c9a84c" bgColor="#0d0a04" tone="dark" />
 
-      <audio ref={audioRef} src="/wanted.mp3" loop />
-
-      {/* Navigation unifiée */}
-      <div style={{ width: "100%", position: "relative", zIndex: 50 }}>
-        <GuildeHeader activePage="wanted" accentColor="#c9a84c" bgColor="rgba(13,10,4,0.85)" textColor="#fff" />
-      </div>
-
-        {/* BARRE DE RECHERCHE CENTRALE */}
-        {/* BARRE DE RECHERCHE */}
-        <div style={{
-          display: "flex", alignItems: "center", background: "rgba(255,255,255,0.05)",
-          border: "1px solid rgba(255,255,255,0.1)", borderRadius: "100px",
-          padding: "6px 16px", width: "min(300px, 100%)",
-        }}>
-          <Search size={14} color="rgba(255,255,255,0.4)" style={{ marginRight: "8px" }} />
-          <input
-            type="text"
-            placeholder="Rechercher une prime..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{
-              background: "transparent", border: "none", color: "#fff",
-              fontFamily: "'Barlow Condensed', sans-serif", fontSize: "14px",
-              outline: "none", width: "100%", letterSpacing: "0.05em"
-            }}
-          />
+      <main className="gk-wrap" style={{ paddingBlock: "clamp(24px, 5vw, 56px) clamp(48px, 8vw, 96px)" }}>
+        <div className="wt-hero gk-reveal">
+          <div>
+            <p className="gk-chapter"><b>03</b><span>AVIS DE RECHERCHE</span></p>
+            <h1 className="wt-title" style={{ marginTop: 26 }}>WANTED</h1>
+          </div>
+          <p className="gk-body" style={{ maxWidth: "38ch" }}>
+            Chaque membre a sa tête mise à prix. Feuillette les avis, change de portrait, emporte l&apos;affiche.
+          </p>
         </div>
 
-      {/* ── CONTRÔLES ── */}
-      <div style={{
-        width: "100%", padding: "12px 20px", zIndex: 10,
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        gap: "12px", flexWrap: "wrap",
-      }}>
-        {/* Switch Réel/Anime */}
-        <div style={{ display: "flex", alignItems: "center", background: "rgba(255,255,255,0.08)", borderRadius: "100px", padding: "4px", gap: "2px" }}>
-          {(["real", "anime"] as ViewMode[]).map((mode) => (
+        <div className="wt-bar">
+          <div className="gk-field">
+            <Search size={18} aria-hidden="true" />
+            <input
+              type="search"
+              className="gk-input"
+              placeholder="Chercher un nom ou un grade"
+              aria-label="Chercher une affiche par nom ou par grade"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            {searchTerm && (
+              <button type="button" className="gk-clear no-min" onClick={() => setSearchTerm("")} aria-label="Effacer la recherche">
+                <X size={17} aria-hidden="true" />
+              </button>
+            )}
+          </div>
+          <select className="wt-select" value={sort} onChange={(e) => setSort(e.target.value as SortMode)} aria-label="Trier les affiches">
+            <option value="registre">Ordre du registre</option>
+            <option value="prime-desc">Plus grosses primes</option>
+            <option value="prime-asc">Plus petites primes</option>
+          </select>
+          <span />
+          <div className="wt-bar-right">
+            <div className="gk-switch" role="group" aria-label="Type de portrait">
+              <button type="button" aria-pressed={viewMode === "real"} onClick={() => setViewMode("real")}>
+                <User size={15} aria-hidden="true" /> Réel
+              </button>
+              <button type="button" aria-pressed={viewMode === "anime"} onClick={() => setViewMode("anime")}>
+                <Sword size={15} aria-hidden="true" /> Anime
+              </button>
+            </div>
             <button
-              key={mode} onClick={() => setViewMode(mode)}
-              style={{
-                fontFamily: "'Barlow Condensed', sans-serif", fontSize: "11px", fontWeight: 700,
-                letterSpacing: "0.1em", textTransform: "uppercase", padding: "6px 14px", borderRadius: "100px",
-                border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px",
-                background: viewMode === mode ? "#c9a84c" : "transparent",
-                color: viewMode === mode ? "#fff" : "rgba(255,255,255,0.4)",
-                boxShadow: viewMode === mode ? `0 2px 8px rgba(201,168,76,0.5)` : "none",
-              }}
+              type="button"
+              className="gk-icon-btn"
+              aria-pressed={isAutoPlay}
+              onClick={() => setIsAutoPlay((v) => !v)}
+              aria-label={isAutoPlay ? "Arrêter le diaporama" : "Lancer le diaporama"}
+              title={isAutoPlay ? "Arrêter le diaporama" : "Lancer le diaporama"}
             >
-              {mode === "real" ? <User size={13} strokeWidth={2.5} /> : <Sword size={13} strokeWidth={2.5} />}
-              {mode === "real" ? "Réel" : "Anime"}
+              {isAutoPlay ? <Pause size={17} aria-hidden="true" /> : <Play size={17} aria-hidden="true" />}
             </button>
-          ))}
-        </div>
-
-        <div style={{ display: "flex", gap: "8px" }}>
-          {/* Autoplay */}
-          <button onClick={() => setIsAutoPlay(!isAutoPlay)} style={{
-            background: isAutoPlay ? "#c9a84c" : "rgba(255,255,255,0.08)", border: "none",
-            borderRadius: "50%", width: "36px", height: "36px",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            cursor: "pointer", color: isAutoPlay ? "#fff" : "rgba(255,255,255,0.4)",
-          }}>
-            {isAutoPlay ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" style={{ marginLeft: "2px" }} />}
-          </button>
-
-          {/* Son */}
-          <button onClick={toggleSound} style={{
-            background: "rgba(255,255,255,0.08)", border: "none",
-            borderRadius: "50%", width: "36px", height: "36px",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            cursor: "pointer", color: isPlaying ? "#c9a84c" : "rgba(255,255,255,0.4)",
-          }}>
-            {isPlaying ? <Volume2 size={16} /> : <VolumeX size={16} />}
-          </button>
-        </div>
-      </div>
-
-      {/* --- AFFICHE PRINCIPALE --- */}
-      {filteredMembers.length > 0 ? (
-        <div style={{ position: "relative", display: "flex", alignItems: "center", gap: "20px", marginTop: "20px" }}>
-          <button onClick={prev} style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", zIndex: 20 }}>
-            <ChevronLeft size={40} />
-          </button>
-
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={member.id}
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0, rotate: (member.id % 4 - 2) * 1.5 }}
-              exit={{ opacity: 0, scale: 0.9, filter: "blur(5px)", transition: { duration: 0.2 } }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
-              style={{
-                width: "min(380px, 80vw)", aspectRatio: "2/3", position: "relative", zIndex: 10,
-                background: "linear-gradient(135deg, #e8cba3 0%, #d1ae7b 50%, #bc9257 100%)",
-                boxShadow: "0 25px 60px rgba(0,0,0,0.8), inset 0 0 50px rgba(90,50,20,0.4)",
-                padding: "16px", borderRadius: "2px 4px 3px 2px",
-              }}
+            <button
+              type="button"
+              className="gk-icon-btn"
+              aria-pressed={isPlaying}
+              onClick={toggleSound}
+              aria-label={isPlaying ? "Couper la musique" : "Lancer la musique"}
+              title={isPlaying ? "Couper la musique" : "Lancer la musique"}
             >
-              <div style={{ position: "absolute", inset: 0, zIndex: 1, pointerEvents: "none", opacity: 0.15, backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23n)' /%3E%3C/svg%3E")` }} />
-
-              <div style={{ position: "relative", zIndex: 2, border: "4px solid #36220f", height: "100%", display: "flex", flexDirection: "column", padding: "10px" }}>
-                
-                <h1 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: "68px", fontWeight: 900, color: "#36220f", lineHeight: 0.8, textAlign: "center", transform: "scaleY(1.4)", transformOrigin: "bottom" }}>
-                  WANTED
-                </h1>
-                <p style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: "14px", fontWeight: 700, color: "#36220f", letterSpacing: "0.4em", textAlign: "center", margin: "14px 0 12px", marginTop: "-2px" }}>
-                  DEAD OR ALIVE
-                </p>
-
-                {/* PHOTO AVEC EFFET KEN BURNS (Zoom lent) */}
-                <div style={{ flex: 1, border: "4px solid #36220f", position: "relative", overflow: "hidden", marginBottom: "16px", boxShadow: "inset 0 0 25px rgba(0,0,0,0.6)", background: "#4a331c" }}>
-                  {!imgError ? (
-                    <motion.img
-                      key={viewMode}
-                      src={viewMode === "anime" ? member.animeChar : member.photo}
-                      alt={member.name}
-                      onError={() => setImgError(true)}
-                      // L'animation de zoom lent
-                      animate={{ scale: [1, 1.15, 1], x: ["0%", "-1%", "1%", "0%"] }}
-                      transition={{ duration: 20, ease: "linear", repeat: Infinity }}
-                      style={{
-                        width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 10%",
-                        filter: "sepia(0.8) contrast(1.2) brightness(0.9) grayscale(0.2)",
-                      }}
-                    />
-                  ) : (
-                    <div style={{ width: "100%", height: "100%", background: "#b08d5b", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <Sword size={48} color="rgba(0,0,0,0.2)" />
-                    </div>
-                  )}
-                </div>
-
-                <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: "clamp(26px, 7vw, 36px)", fontWeight: 900, color: "#36220f", lineHeight: 0.9, letterSpacing: "0.05em", textTransform: "uppercase", textAlign: "center", transform: "scaleY(1.25)", marginBottom: "10px" }}>
-                  {member.name.replace(/"/g, "·")}
-                </h2>
-
-                <p style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: "clamp(24px, 6vw, 32px)", fontWeight: 900, color: "#36220f", letterSpacing: "0.05em", textAlign: "center", marginBottom: "6px" }}>
-                  <span style={{ fontSize: "24px", marginRight: "4px" }}>฿</span>{prime}
-                </p>
-
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", borderTop: "2px solid #36220f", paddingTop: "6px", marginTop: "auto" }}>
-                  <p style={{ fontFamily: "monospace", fontSize: "6px", color: "#4a331c", letterSpacing: "0.05em", lineHeight: 1.2, maxWidth: "68%", textAlign: "justify" }}>
-                    KONO SOSHIKI WA FICTION DETHU NODE JITSU ZAISURU...
-                  </p>
-                  <p style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: "18px", fontWeight: 900, color: "#36220f", letterSpacing: "0.1em" }}>MARINE</p>
-                </div>
-              </div>
-            </motion.div>
-          </AnimatePresence>
-
-          <button onClick={next} style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", zIndex: 20 }}>
-            <ChevronRight size={40} />
-          </button>
+              {isPlaying ? <Volume2 size={17} aria-hidden="true" /> : <VolumeX size={17} aria-hidden="true" />}
+            </button>
+          </div>
         </div>
-      ) : (
-        <div style={{ color: "rgba(255,255,255,0.4)", fontFamily: "'Barlow Condensed', sans-serif", fontSize: "24px", fontStyle: "italic" }}>
-          Aucune prime trouvée pour ce pirate...
-        </div>
-      )}
 
-      {/* --- LISTE DES MINI-PRIMES EN BAS --- */}
-      <div style={{
-        position: "fixed", bottom: 0, left: 0, right: 0,
-        background: "linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0.6), transparent)",
-        padding: "20px 20px 10px", zIndex: 40,
-        display: "flex", overflowX: "auto", gap: "12px",
-        scrollBehavior: "smooth", alignItems: "flex-end",
-        // Cache la scrollbar sur Chrome/Safari
-        msOverflowStyle: "none", scrollbarWidth: "none",
-      }}>
-        {filteredMembers.map((m, idx) => {
-          const isSelected = current === idx;
-          return (
-            <div 
-              key={m.id}
-              onClick={() => { setCurrent(idx); setIsAutoPlay(false); }}
-              style={{
-                flexShrink: 0, cursor: "pointer",
-                width: isSelected ? "80px" : "60px", 
-                height: isSelected ? "110px" : "80px",
-                background: "#d1ae7b", padding: "4px",
-                border: isSelected ? "2px solid #c9a84c" : "1px solid #36220f",
-                boxShadow: isSelected ? "0 -5px 20px rgba(201,168,76,0.4)" : "0 5px 10px rgba(0,0,0,0.5)",
-                transition: "all 0.3s cubic-bezier(0.23, 1, 0.32, 1)",
-                opacity: isSelected ? 1 : 0.5,
-                transformOrigin: "bottom",
-                filter: isSelected ? "none" : "grayscale(0.5)",
-              }}
-            >
-              <div style={{ border: "1px solid #36220f", height: "100%", overflow: "hidden", position: "relative" }}>
-                <img 
-                  src={viewMode === "anime" ? m.animeChar : m.photo} 
-                  alt={m.name} 
-                  style={{ width: "100%", height: "100%", objectFit: "cover", filter: "sepia(0.8) contrast(1.2)" }}
-                />
+        <div ref={stageRef} style={{ scrollMarginTop: 120 }}>
+          {loading ? (
+            <div className="wt-stage" role="status" aria-label="Chargement des affiches">
+              <div className="wt-poster-slot"><div className="gk-skel" style={{ width: "min(400px, 80%)", aspectRatio: "2 / 3" }} /></div>
+              <div>
+                <div className="gk-skel" style={{ height: 70, width: "80%" }} />
+                <div className="gk-skel" style={{ height: 120, marginTop: 20 }} />
               </div>
             </div>
-          );
-        })}
-      </div>
+          ) : !member ? (
+            <div className="gk-empty" style={{ marginTop: 32 }}>
+              <div className="gk-empty-glyph" aria-hidden="true">逃亡</div>
+              <h3>Ce pirate court toujours</h3>
+              <p>
+                {members.length === 0
+                  ? "Les affiches n'ont pas pu être chargées. Recharge la page dans un instant."
+                  : `Aucune affiche ne correspond à « ${searchTerm} ».`}
+              </p>
+              {searchTerm && <button type="button" className="gk-btn" onClick={() => setSearchTerm("")}>Revoir toutes les affiches</button>}
+            </div>
+          ) : (
+            <div className="wt-stage">
+              <div className="wt-poster-slot">
+                <button type="button" className="wt-arrow" onClick={() => step(-1)} aria-label="Affiche précédente">
+                  <ChevronLeft size={26} aria-hidden="true" />
+                </button>
+                <div className="wt-poster-wrap">
+                  <button
+                    key={member.id}
+                    type="button"
+                    className="wt-main-poster"
+                    onClick={() => setLightbox(true)}
+                    aria-label={`Agrandir l'affiche de ${member.name}`}
+                    style={{ transform: `rotate(${((member.id % 4) - 1.5) * 1.2}deg)` }}
+                  >
+                    <Poster member={member} viewMode={viewMode} eager />
+                  </button>
+                </div>
+                <button type="button" className="wt-arrow" onClick={() => step(1)} aria-label="Affiche suivante">
+                  <ChevronRight size={26} aria-hidden="true" />
+                </button>
+              </div>
 
+              <div className="wt-notice" aria-live="polite">
+                <p className="wt-counter">AVIS {String(index + 1).padStart(2, "0")} / {String(list.length).padStart(2, "0")}</p>
+                <h2 style={{ marginTop: 8 }}>{member.name}</h2>
+                <dl>
+                  <dt>Prime</dt>
+                  <dd className="wt-prime">฿ {formatPrime(getPrimeValue(member.id))}</dd>
+                  <dt>Grade</dt>
+                  <dd>{member.rank}</dd>
+                  {member.badge && (<><dt>Distinction</dt><dd>{member.badge}</dd></>)}
+                </dl>
+                <div className="wt-actions">
+                  <button type="button" className="gk-btn" onClick={() => setLightbox(true)}>
+                    <Maximize2 size={16} aria-hidden="true" /> Agrandir
+                  </button>
+                  <button
+                    type="button"
+                    className="gk-btn gk-btn--ghost"
+                    onClick={() => share({ title: `WANTED : ${member.name}`, text: `${member.name}, prime de ฿${formatPrime(getPrimeValue(member.id))}`, url: `/wanted?avis=${member.id}` })}
+                  >
+                    <Share2 size={16} aria-hidden="true" /> Partager
+                  </button>
+                  <button type="button" className="gk-btn gk-btn--ghost" onClick={download} aria-busy={downloading}>
+                    <Download size={16} aria-hidden="true" /> {downloading ? "Préparation" : "Télécharger"}
+                  </button>
+                  <a href={`/membres/${member.id}`} className="gk-btn gk-btn--ghost">Voir la fiche</a>
+                </div>
+                <p className="wt-note">
+                  Les primes sont un jeu : elles sont calculées à partir du numéro de membre, pas d&apos;un vote.
+                  Flèches gauche et droite pour feuilleter.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {!loading && list.length > 0 && (
+          <section aria-labelledby="wt-wall-title" style={{ marginTop: "clamp(48px, 8vw, 96px)" }}>
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+              <h2 id="wt-wall-title" className="gk-display gk-h3">Le mur des primes</h2>
+              <span className="gk-tag">{list.length} {list.length > 1 ? "avis placardés" : "avis placardé"}</span>
+            </div>
+            <div className="wt-wall">
+              {list.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  className="wt-wall-item"
+                  onClick={() => pick(m.id)}
+                  aria-current={m.id === member?.id ? "true" : undefined}
+                  aria-label={`Afficher l'avis de ${m.name}, prime ${formatPrime(getPrimeValue(m.id))}`}
+                  style={{ "--tilt": `${((m.id * 37) % 5) - 2}deg` } as React.CSSProperties}
+                >
+                  <Poster member={m} viewMode={viewMode} />
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+      </main>
+
+      {lightbox && member && typeof document !== "undefined" && createPortal(
+        <div
+          ref={lightboxRef}
+          className="wt-lightbox tone-dark"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Affiche de ${member.name}`}
+          onClick={(e) => { if (e.target === e.currentTarget) setLightbox(false); }}
+        >
+          <button type="button" className="gk-icon-btn wt-lightbox-close" onClick={() => setLightbox(false)} aria-label="Fermer l'affiche">
+            <X size={20} aria-hidden="true" />
+          </button>
+          <button type="button" className="wt-arrow" onClick={() => step(-1)} aria-label="Affiche précédente">
+            <ChevronLeft size={26} aria-hidden="true" />
+          </button>
+          <div key={member.id} className="wt-lightbox-poster" onClick={(e) => e.stopPropagation()}>
+            <Poster member={member} viewMode={viewMode} eager />
+          </div>
+          <button type="button" className="wt-arrow" onClick={() => step(1)} aria-label="Affiche suivante">
+            <ChevronRight size={26} aria-hidden="true" />
+          </button>
+        </div>,
+        document.body
+      )}
+      <Toast />
     </div>
   );
 }

@@ -10,6 +10,7 @@ import { rankAccents, rankBg, darkRanks } from "../config/ranks";
 import { COUNTRIES, flagUrl } from "../config/countries";
 import { Trophy, ArrowLeft, Share2 } from "lucide-react";
 import VideoPlayer from "./VideoPlayer";
+import MangaShareModal from "./MangaShareModal";
 
 const PLACEHOLDER = "/placeholder.svg";
 
@@ -47,6 +48,7 @@ function ModalContent({ member, onClose, viewMode }: {
   const scrollRef = useRef<HTMLDivElement>(null);
   const closeRef  = useRef<HTMLButtonElement>(null);
   const titleId   = "modal-member-title";
+  const [shareToast, setShareToast] = useState(false);
 
   useEffect(() => {
     setLocalMode(viewMode);
@@ -66,6 +68,12 @@ function ModalContent({ member, onClose, viewMode }: {
   }, [showBadge]);
 
   useEffect(() => {
+    if (!shareToast) return;
+    const t = setTimeout(() => setShareToast(false), 3000);
+    return () => clearTimeout(t);
+  }, [shareToast]);
+
+  useEffect(() => {
     const h = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       if (showBadge) setShowBadge(false);
@@ -75,29 +83,10 @@ function ModalContent({ member, onClose, viewMode }: {
     return () => window.removeEventListener("keydown", h);
   }, [onClose, showBadge]);
 
-  const [shareToast, setShareToast] = useState(false);
+  const [showMangaShare, setShowMangaShare] = useState(false);
 
-  const handleShare = async () => {
-    const url = `${window.location.origin}/membres/${member.id}`;
-    const shareData = { title: `${member.name} — Guilde Otaku`, text: `Découvre le profil de ${member.name} sur la Guilde Otaku !`, url };
-    if (navigator.share) {
-      try { await navigator.share(shareData); } catch { /* user cancelled */ }
-    } else {
-      try {
-        await navigator.clipboard.writeText(url);
-      } catch {
-        const ta = document.createElement("textarea");
-        ta.value = url;
-        ta.style.position = "fixed";
-        ta.style.opacity = "0";
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand("copy");
-        document.body.removeChild(ta);
-      }
-      setShareToast(true);
-      setTimeout(() => setShareToast(false), 2200);
-    }
+  const handleShare = () => {
+    setShowMangaShare(true);
   };
 
   // iOS Safari scroll lock
@@ -157,15 +146,45 @@ function ModalContent({ member, onClose, viewMode }: {
     { label: "Guilde",       value: countryInfo ? `Otaku ${countryInfo.prep}` : "Otaku", flagCode: countryInfo?.code },
   ];
 
-  // ── Section info — desktop garde la grille 3 colonnes, mobile garde les séparateurs ──
+  // ── Section info — scrapbook / dossier aventurier homologué ──
   const InfoSection = (
     <div style={{ background: infoBg, minHeight: "100%" }}>
-      <div style={{ padding: isMobile ? "0" : "52px 56px 72px", maxWidth: isMobile ? "none" : 560 }}>
+      <div style={{ padding: isMobile ? "0" : "48px 52px 64px", maxWidth: isMobile ? "none" : 580 }}>
+
+        {/* DOSSIER HEADER STAMP */}
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: isMobile ? 22 : 32,
+          padding: isMobile ? "24px 20px 0" : "0",
+          flexWrap: "wrap",
+          gap: 10,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span className="tampon tampon-gold" style={{ fontSize: 10, letterSpacing: "0.2em", padding: "3px 10px" }}>
+              DOSSIER HOMOLOGUÉ
+            </span>
+            <span className="font-hand" style={{ fontSize: isMobile ? 15 : 18, color: accent, transform: "rotate(-2deg)" }}>
+              ★ archive officielle 2026
+            </span>
+          </div>
+          <span style={{
+            fontFamily: "'Barlow Condensed', sans-serif",
+            fontSize: 13,
+            fontWeight: 800,
+            color: textMuted,
+            letterSpacing: "0.18em",
+            textTransform: "uppercase",
+          }}>
+            #GUILDE-{String(member.id).padStart(3, "0")}
+          </span>
+        </div>
 
         {/* STATS */}
         {isMobile ? (
           // Mobile : sections verticales avec lignes séparatrices pleine largeur
-          <div style={{ marginBottom: 36 }}>
+          <div style={{ marginBottom: 36, position: "relative" }}>
             {stats.map((s) => (
               <div key={s.label}>
                 <div style={{ height: 1.5, background: accent }} />
@@ -194,14 +213,16 @@ function ModalContent({ member, onClose, viewMode }: {
             <div style={{ height: 1.5, background: accent }} />
           </div>
         ) : (
-          // Desktop : grille 3 colonnes
+          // Desktop : grille 3 colonnes façon passeport
           <div style={{
+            position: "relative",
             display: "grid", gridTemplateColumns: `repeat(${stats.length}, 1fr)`,
             gap: 2, borderRadius: 14, overflow: "hidden",
             border: `1px solid ${borderColor}`,
             marginBottom: 44,
-            boxShadow: isDark ? "none" : "0 2px 12px rgba(0,0,0,0.05)",
+            boxShadow: isDark ? "0 8px 30px rgba(0,0,0,0.4)" : "0 8px 24px rgba(0,0,0,0.06)",
           }}>
+            <div className="scotch vert" style={{ position: "absolute", top: -5, left: 32, width: 48, height: 14, transform: "rotate(-2deg)", zIndex: 5 }} />
             {stats.map((s) => (
               <div key={s.label} style={{
                 padding: "24px 16px",
@@ -233,88 +254,124 @@ function ModalContent({ member, onClose, viewMode }: {
         )}
 
         {/* BIO */}
-        <div style={{ marginBottom: isMobile ? 36 : 52, padding: isMobile ? "0 20px" : "0" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+        <div style={{ marginBottom: isMobile ? 36 : 48, padding: isMobile ? "0 20px" : "0" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}>
             <div style={{ width: 22, height: 2, background: accent, borderRadius: 2, flexShrink: 0 }} />
-            <p style={{
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontSize: 13, fontWeight: 800,
-              color: accent, letterSpacing: "0.24em", textTransform: "uppercase",
+            <h3 className="font-bricolage" style={{
+              fontSize: 18, fontWeight: 800,
+              color: accent, letterSpacing: "-0.01em", textTransform: "uppercase",
             }}>
               BIOGRAPHIE
-            </p>
+            </h3>
+            <span className="font-hand" style={{ fontSize: 16, color: textMuted, transform: "rotate(-1deg)" }}>
+              — carnet de bord
+            </span>
             <div style={{ flex: 1, height: 1, background: borderColor }} />
           </div>
-          <p style={{
-            fontFamily: "'Outfit', sans-serif",
-            fontSize: isMobile ? 17 : 18,
-            fontWeight: 600, lineHeight: 1.85,
-            color: textPrimary,
+          <div style={{
+            padding: isMobile ? "18px 16px" : "22px 24px",
+            borderRadius: 14,
+            background: isDark ? "rgba(255,255,255,0.025)" : "rgba(255,255,255,0.7)",
+            border: `1px solid ${borderColor}`,
+            boxShadow: isDark ? "none" : "0 4px 16px rgba(0,0,0,0.03)",
           }}>
-            {member.bio ?? "Aucune biographie disponible pour ce membre."}
-          </p>
+            <p style={{
+              fontFamily: "'Outfit', sans-serif",
+              fontSize: isMobile ? 16 : 17,
+              fontWeight: 500, lineHeight: 1.8,
+              color: textPrimary,
+              margin: 0,
+            }}>
+              {member.bio ?? "Aucune biographie disponible pour ce membre."}
+            </p>
+          </div>
         </div>
 
         {/* ALTER EGO */}
         <div style={{ padding: isMobile ? "0 20px 48px" : "0" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
             <div style={{ width: 22, height: 2, background: accent, borderRadius: 2, flexShrink: 0 }} />
-            <p style={{
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontSize: 13, fontWeight: 800,
-              color: accent, letterSpacing: "0.24em", textTransform: "uppercase",
+            <h3 className="font-bricolage" style={{
+              fontSize: 18, fontWeight: 800,
+              color: accent, letterSpacing: "-0.01em", textTransform: "uppercase",
             }}>
               PERSONNAGE ASSOCIÉ
-            </p>
+            </h3>
+            <span className="font-hand" style={{ fontSize: 16, color: textMuted, transform: "rotate(1deg)" }}>
+              ★ polaroids
+            </span>
             <div style={{ flex: 1, height: 1, background: borderColor }} />
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16 }}>
             {[
-              { video: heroVideoSrc,  img: card1Src, label: card1Label, onErr: () => setCard1ImgError(true) },
-              { video: card2VideoSrc, img: card2Src, label: card2Label, onErr: () => setCard2ImgError(true) },
-            ].map(({ video, img, label, onErr }) => (
+              { video: heroVideoSrc,  img: card1Src, label: card1Label, onErr: () => setCard1ImgError(true), tape: "rose", rot: "-1.5deg" },
+              { video: card2VideoSrc, img: card2Src, label: card2Label, onErr: () => setCard2ImgError(true), tape: "bleu", rot: "1.5deg" },
+            ].map(({ video, img, label, onErr, tape, rot }) => (
               <div key={label} style={{
                 position: "relative",
-                height: isMobile ? 200 : 220,
-                borderRadius: 12, overflow: "hidden",
+                padding: "8px 8px 12px 8px",
+                borderRadius: 14,
                 border: `1px solid ${borderColor}`,
-                background: isDark ? "#050508" : "#e8e8ec",
-                boxShadow: isDark ? "none" : "0 2px 8px rgba(0,0,0,0.08)",
+                background: isDark ? "#08080d" : "#ffffff",
+                boxShadow: isDark ? "0 6px 20px rgba(0,0,0,0.5)" : "0 6px 20px rgba(0,0,0,0.06)",
+                transform: isMobile ? "none" : `rotate(${rot})`,
+                transition: "transform 0.3s ease",
               }}>
-                {video ? (
-                  <VideoPlayer src={video} fit="cover" objectPosition="smart" fullscreenBtn />
-                ) : (
-                  <Image
-                    src={img}
-                    alt={`${member.name} — ${label}`}
-                    fill
-                    sizes="(max-width: 767px) 100vw, 280px"
-                    className="object-cover"
-                    style={{ objectPosition: "center 15%" }}
-                    onError={onErr}
-                  />
-                )}
+                {/* Polaroid scotch tape */}
+                <div
+                  className={`scotch ${tape}`}
+                  style={{
+                    position: "absolute",
+                    top: -6,
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    width: 44,
+                    height: 14,
+                    zIndex: 10,
+                  }}
+                />
+
                 <div style={{
-                  position: "absolute", inset: 0,
-                  background: "linear-gradient(to top, rgba(0,0,0,0.82) 0%, transparent 52%)",
-                }} />
-                <div style={{ position: "absolute", bottom: 12, left: 10, right: 10, textAlign: "center" }}>
-                  <p style={{
-                    fontFamily: "'Barlow Condensed', sans-serif",
-                    fontSize: 9, fontWeight: 800,
-                    color: accent, textTransform: "uppercase",
-                    letterSpacing: "0.16em", marginBottom: 2,
-                  }}>
-                    {label}
-                  </p>
-                  <p style={{
-                    fontFamily: "'Barlow Condensed', sans-serif",
-                    fontSize: 18, fontWeight: 900,
-                    color: "#fff", lineHeight: 1,
-                    textTransform: "uppercase", fontStyle: "italic",
-                  }}>
-                    {member.name}
-                  </p>
+                  position: "relative",
+                  height: isMobile ? 190 : 205,
+                  borderRadius: 10,
+                  overflow: "hidden",
+                  background: isDark ? "#050508" : "#e8e8ec",
+                }}>
+                  {video ? (
+                    <VideoPlayer src={video} fit="cover" objectPosition="smart" fullscreenBtn />
+                  ) : (
+                    <Image
+                      src={img}
+                      alt={`${member.name} — ${label}`}
+                      fill
+                      sizes="(max-width: 767px) 100vw, 280px"
+                      className="object-cover"
+                      style={{ objectPosition: "center 15%" }}
+                      onError={onErr}
+                    />
+                  )}
+                  <div style={{
+                    position: "absolute", inset: 0,
+                    background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 55%)",
+                  }} />
+                  <div style={{ position: "absolute", bottom: 10, left: 8, right: 8, textAlign: "center" }}>
+                    <p style={{
+                      fontFamily: "'Barlow Condensed', sans-serif",
+                      fontSize: 10, fontWeight: 800,
+                      color: accent, textTransform: "uppercase",
+                      letterSpacing: "0.18em", marginBottom: 2,
+                    }}>
+                      {label}
+                    </p>
+                    <p className="font-bricolage" style={{
+                      fontSize: 17, fontWeight: 800,
+                      color: "#fff", lineHeight: 1.1,
+                      textTransform: "uppercase", letterSpacing: "-0.01em",
+                    }}>
+                      {member.name}
+                    </p>
+                  </div>
                 </div>
               </div>
             ))}
@@ -555,11 +612,12 @@ function ModalContent({ member, onClose, viewMode }: {
                 </p>
                 <h1
                   id={titleId}
+                  className="font-bricolage"
                   style={{
-                    fontFamily: "'Barlow Condensed', sans-serif",
-                    fontSize: "clamp(40px, 12vw, 66px)",
-                    fontWeight: 900, color: "#fff",
-                    lineHeight: 0.88, fontStyle: "italic", textTransform: "uppercase",
+                    fontSize: "clamp(38px, 11vw, 62px)",
+                    fontWeight: 800, color: "#fff",
+                    lineHeight: 0.9, textTransform: "uppercase",
+                    letterSpacing: "-0.03em",
                   }}
                 >
                   {member.name}
@@ -663,7 +721,13 @@ function ModalContent({ member, onClose, viewMode }: {
                   </p>
                   <h1
                     id={titleId}
-                    style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "clamp(48px,5.5vw,86px)", fontWeight: 900, color: "#fff", lineHeight: 0.86, fontStyle: "italic", textTransform: "uppercase" }}
+                    className="font-bricolage"
+                    style={{
+                      fontSize: "clamp(44px, 5.2vw, 80px)",
+                      fontWeight: 800, color: "#fff",
+                      lineHeight: 0.88, textTransform: "uppercase",
+                      letterSpacing: "-0.03em",
+                    }}
                   >
                     {member.name}
                   </h1>
@@ -780,6 +844,14 @@ function ModalContent({ member, onClose, viewMode }: {
           ))}
         </motion.div>
       )}
+
+      {/* ── MANGA GUILD LICENSE SHARE MODAL ── */}
+      <MangaShareModal
+        member={member}
+        viewMode={localMode}
+        isOpen={showMangaShare}
+        onClose={() => setShowMangaShare(false)}
+      />
 
     </>
   );

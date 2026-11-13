@@ -807,3 +807,6 @@
     transform: none;
   }
 }
+
+/* Coque du site : le bouton classement vit dans l'en-tête commun */
+@media (max-width: 520px) { .kof-ranking-label { display: none; } }

@@ -1,9 +1,15 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 
-const STORAGE_KEY = "guilde-favorites";
+const BASE_KEY = "guilde-favorites";
 
-export function useFavorites() {
+/**
+ * Favoris locaux (localStorage, aucun compte requis).
+ * `scope` isole chaque rubrique : useFavorites("atelier"), useFavorites("biblio")...
+ * Sans scope, on garde la clé historique.
+ */
+export function useFavorites(scope?: string) {
+  const STORAGE_KEY = scope ? `${BASE_KEY}:${scope}` : BASE_KEY;
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -11,7 +17,7 @@ export function useFavorites() {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) setFavorites(new Set(JSON.parse(stored)));
     } catch {}
-  }, []);
+  }, [STORAGE_KEY]);
 
   const toggle = useCallback((id: string | number) => {
     setFavorites(prev => {
@@ -22,7 +28,7 @@ export function useFavorites() {
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify([...next])); } catch {}
       return next;
     });
-  }, []);
+  }, [STORAGE_KEY]);
 
   const isFavorite = useCallback((id: string | number) => {
     return favorites.has(String(id));

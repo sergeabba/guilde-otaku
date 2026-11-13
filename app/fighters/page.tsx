@@ -9,6 +9,7 @@ import "./fighters.css";
 import { KofLoadingScreen, KofCharacterSelect, KofFightIntro, type ViewMode } from "./kof-ui";
 import Arena from "./Arena";
 import Leaderboard from "./Leaderboard";
+import GuildeHeader from "../components/GuildeHeader";
 
 type Phase = "select" | "intro" | "fight";
 
@@ -92,12 +93,31 @@ export default function FightersPage() {
     setPhase("select");
   }, []);
 
+  // Échap annule la sélection du premier combattant
+  useEffect(() => {
+    if (phase !== "select" || !selected) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setSelected(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [phase, selected]);
+
   if (loading) return <KofLoadingScreen />;
 
   return (
     <>
       {phase === "select" && (
         <div style={{ height: "100dvh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          <GuildeHeader
+            activePage="fighters"
+            accentColor="#ffd700"
+            bgColor="#050008"
+            tone="dark"
+            rightSlot={
+              <button type="button" className="gk-btn gk-btn--sm" onClick={() => setShowLeaderboard(true)} aria-haspopup="dialog">
+                <Trophy size={15} aria-hidden="true" /> <span className="kof-ranking-label">Classement</span>
+              </button>
+            }
+          />
           <KofCharacterSelect
             members={members}
             mode={mode}
@@ -106,22 +126,6 @@ export default function FightersPage() {
             onSelect={handleSelect}
             onFight={handleFight}
           />
-          <button
-            onClick={() => setShowLeaderboard(true)}
-            style={{
-              position: "fixed", top: 14, right: 14, zIndex: 60,
-              display: "flex", alignItems: "center", gap: 6,
-              padding: "8px 14px", borderRadius: 8,
-              background: "rgba(255,215,0,0.12)",
-              border: "1px solid rgba(255,215,0,0.3)",
-              color: "#FFD700",
-              fontFamily: "'Orbitron', monospace",
-              fontSize: 10, fontWeight: 700, letterSpacing: 2,
-              cursor: "pointer",
-            }}
-          >
-            <Trophy size={14} /> RANKING
-          </button>
           <AnimatePresence>
             {showLeaderboard && (
               <Leaderboard members={members} onClose={() => setShowLeaderboard(false)} />

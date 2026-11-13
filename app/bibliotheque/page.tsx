@@ -1,183 +1,90 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
+import { ArrowRight, Calendar, ChevronLeft, ChevronRight, Eye, EyeOff, Heart, Search, Share2, X } from "lucide-react";
 import GuildeHeader from "../components/GuildeHeader";
-import OptimizedImage, { SkeletonCard } from "../components/OptimizedImage";
+import OptimizedImage from "../components/OptimizedImage";
 import { supabase } from "../../lib/supabase";
 import { DOSSIER_BASH_DATA, normalizeDossierBashKey } from "../../lib/dossier-bash";
-import { colors, typography, components, font, filterPillStyle, cardHoverStyle } from "../../outputs/styles/tokens";
 import type { BiblioEntry, SupabaseBiblioRow, BiblioCategory, BiblioTier } from "../types";
-import {
-  Star, BookOpen, Tv, Gamepad2, Film, Quote, Flame, Gem, Meh,
-  TrendingDown, Search, X, Clock, Calendar, Youtube, ArrowUpDown, Pencil, Heart
-} from "lucide-react";
 import { useFavorites } from "../hooks/useFavorites";
+import { useShare } from "../hooks/useShare";
+import { normalize } from "../utils/text";
+import "./biblio.css";
 
-// ─── TYPES ───────────────────────────────────────────────────────────────────
-type Category = "Tout" | "Anime" | "Manga" | "Film/Série" | "Jeu Vidéo";
-type Tier = "Chef-d'œuvre" | "Pépite" | "Bof" | "Surcoté" | "A définir";
+type Category = "Tout" | BiblioCategory;
+type Tier = BiblioTier;
+type SortBy = "recent" | "oldest" | "note" | "alpha";
 
-// ─── CONFIG TIERS & CATÉGORIES ───────────────────────────────────────────────
-const tierConfig: Record<Tier, { color: string; bg: string; icon: React.ReactNode; label: string; glow: string }> = {
-  "Chef-d'œuvre": { color: "#FFD700", bg: "rgba(255,215,0,0.08)",   icon: <Flame size={16} />,       label: "CHEFS-D'ŒUVRE", glow: "0 0 30px rgba(255,215,0,0.3)"   },
-  "Pépite":       { color: "#34d399", bg: "rgba(52,211,153,0.08)",  icon: <Gem size={16} />,          label: "PÉPITES",       glow: "0 0 30px rgba(52,211,153,0.3)"  },
-  "Bof":          { color: "#94a3b8", bg: "rgba(148,163,184,0.08)", icon: <Meh size={16} />,          label: "BOF",           glow: "0 0 30px rgba(148,163,184,0.2)" },
-  "Surcoté":      { color: "#f87171", bg: "rgba(248,113,113,0.08)", icon: <TrendingDown size={16} />, label: "SURCOTÉS",      glow: "0 0 30px rgba(248,113,113,0.3)" },
-  "A définir":    { color: "#a1a1aa", bg: "rgba(161,161,170,0.08)", icon: <Clock size={16} />,        label: "EN ATTENTE",    glow: "0 0 10px rgba(161,161,170,0.2)" },
+const tierConfig: Record<Tier, { color: string; label: string }> = {
+  "Chef-d'œuvre": { color: "#ffd700", label: "Chefs-d'œuvre" },
+  "Pépite":       { color: "#34d399", label: "Pépites" },
+  "Bof":          { color: "#94a3b8", label: "Bof" },
+  "Surcoté":      { color: "#f87171", label: "Surcotés" },
+  "A définir":    { color: "#a1a1aa", label: "En attente de verdict" },
 };
-
-const categoryConfig: Record<string, { icon: React.ReactNode; color: string }> = {
-  "Anime":      { icon: <Tv size={12} />,       color: "#a78bfa" },
-  "Manga":      { icon: <BookOpen size={12} />, color: "#f472b6" },
-  "Film/Série": { icon: <Film size={12} />,      color: "#60a5fa" },
-  "Jeu Vidéo":  { icon: <Gamepad2 size={12} />, color: "#4ade80" },
-};
-
+const categoryColor: Record<string, string> = { "Anime": "#a78bfa", "Manga": "#f472b6", "Film/Série": "#60a5fa", "Jeu Vidéo": "#4ade80" };
 const TIERS: Tier[] = ["Chef-d'œuvre", "Pépite", "Bof", "Surcoté", "A définir"];
 const CATEGORIES: Category[] = ["Tout", "Anime", "Manga", "Film/Série", "Jeu Vidéo"];
+const SPOILER_KEY = "guilde-anti-spoiler";
 
-// ─── ENTRY CARD ──────────────────────────────────────────────────────────────
-function EntryCard({ entry, index, onSelect, isFavorite, onToggleFavorite }: { entry: any; index: number; onSelect: () => void; isFavorite: boolean; onToggleFavorite: () => void }) {
-  const [hovered, setHovered] = useState(false);
-  const [heartScale, setHeartScale] = useState(1);
-  const tier = tierConfig[entry.tier as Tier] || tierConfig["A définir"];
-  const cat  = categoryConfig[entry.category] || categoryConfig["Anime"];
+type Chronique = (typeof DOSSIER_BASH_DATA)[number];
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      transition={{ duration: 0.4, delay: index * 0.04 }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      onClick={onSelect}
-      style={{
-       ...cardHoverStyle(hovered, (tier.color + "60") as any),
-        cursor: "pointer",
-        boxShadow: hovered ? tier.glow : "none",
-        backdropFilter: "blur(12px)",
-        position: "relative",
-      }}
-    >
-      {/* Favorite heart button */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          setHeartScale(1.3);
-          setTimeout(() => setHeartScale(1), 200);
-          onToggleFavorite();
-        }}
-        style={{
-          position: "absolute",
-          top: "10px",
-          right: "10px",
-          zIndex: 10,
-          width: "32px",
-          height: "32px",
-          borderRadius: "50%",
-          background: "rgba(255,255,255,0.1)",
-          backdropFilter: "blur(8px)",
-          border: "1px solid rgba(255,255,255,0.15)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          cursor: "pointer",
-          padding: 0,
-          minHeight: "unset",
-          minWidth: "unset",
-          transform: `scale(${heartScale})`,
-          transition: "transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
-        }}
-      >
-        <Heart
-          size={16}
-          fill={isFavorite ? "#ef4444" : "none"}
-          color={isFavorite ? "#ef4444" : "rgba(255,255,255,0.6)"}
-          style={{ transition: "fill 0.2s, color 0.2s" }}
-        />
-      </button>
-      <div style={{
-        position: "absolute", top: 0, left: "20px", right: "20px", height: "2px",
-        background: `linear-gradient(90deg, transparent, ${tier.color}, transparent)`,
-        borderRadius: "0 0 4px 4px",
-        opacity: hovered ? 1 : 0.4, transition: "opacity 0.3s",
-      }} />
-
-      <div style={{ height: "200px", marginBottom: "12px", borderRadius: "12px", overflow: "hidden", boxShadow: "0 4px 12px rgba(0,0,0,0.5)" }}>
-        <OptimizedImage src={entry.cover_image} alt={entry.title} />
-      </div>
-
-      {/* Badge catégorie */}
-      <div style={{ display: "inline-flex", alignItems: "center", gap: "4px", background: `${cat.color}18`, border: `1px solid ${cat.color}40`, borderRadius: "100px", padding: "3px 8px", marginBottom: "10px" }}>
-        <span style={{ color: cat.color }}>{cat.icon}</span>
-        <span style={{ fontFamily: font, fontSize: "10px", fontWeight: 700, color: cat.color, letterSpacing: "0.1em", textTransform: "uppercase" }}>{entry.category}</span>
-      </div>
-
-      <h3 style={{ fontFamily: font, fontSize: "18px", fontWeight: 900, color: colors.textPrimary, lineHeight: 1.1, textTransform: "uppercase", letterSpacing: "0.02em", marginBottom: "6px" }}>
-        {entry.title}
-      </h3>
-
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "14px" }}>
-        <span style={{ ...typography.meta }}>
-          {entry.status}{entry.year ? ` · ${entry.year}` : ""}
-        </span>
-        {entry.trailer_url && (
-          <span style={{ ...components.tag, color: colors.youtube, background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)" }}>
-            ▶ Trailer
-          </span>
-        )}
-      </div>
-
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: `1px solid ${colors.border}`, paddingTop: "12px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-          <Star size={13} fill={tier.color} color={tier.color} />
-          <span style={{ fontFamily: font, fontSize: "22px", fontWeight: 900, color: tier.color, lineHeight: 1 }}>{entry.note}</span>
-          <span style={{ ...typography.meta }}>/10</span>
-        </div>
-        <span style={{ fontFamily: font, fontSize: "10px", fontWeight: 800, color: tier.color, background: tier.bg, border: `1px solid ${tier.color}30`, padding: "3px 8px", borderRadius: "100px", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-          {entry.tier}
-        </span>
-      </div>
-    </motion.div>
-  );
+/** Ce que le lecteur affiche : une chronique du Bash ou une fiche de la base. */
+interface Reading {
+  key: string;
+  kind: "chronique" | "fiche";
+  title: string;
+  cover: string;
+  tag?: string;
+  color?: string;
+  date?: string;
+  category?: string;
+  tier?: Tier;
+  note?: number;
+  year?: number;
+  status?: string;
+  avis?: string;
+  synopsis?: string;
+  trailer?: string;
+  favKey?: string;
 }
 
-// ─── PAGE ────────────────────────────────────────────────────────────────────
+const slug = (s: string) => normalizeDossierBashKey(s).replace(/\s+/g, "-");
+
+function youtubeId(url?: string): string | null {
+  if (!url) return null;
+  const m = url.match(/(?:youtu\.be\/|[?&]v=|\/embed\/|\/shorts\/)([\w-]{11})/);
+  return m ? m[1] : null;
+}
+
+const numericNote = (n: unknown) => { const v = Number(n); return Number.isFinite(v) && v > 0 ? v : undefined; };
+
 export default function BibliothequePage() {
-  const [oeuvres, setOeuvres]           = useState<SupabaseBiblioRow[]>([]);
-  const [loading, setLoading]           = useState(true);
-  const [dossierBash, setDossierBash]   = useState(DOSSIER_BASH_DATA);
+  const [oeuvres, setOeuvres] = useState<SupabaseBiblioRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [dossierBash, setDossierBash] = useState<Chronique[]>(DOSSIER_BASH_DATA);
   const [activeCategory, setActiveCategory] = useState<Category>("Tout");
-  const [activeTier, setActiveTier]     = useState<Tier | "Tous">("Tous");
-  const [searchTerm, setSearchTerm]     = useState("");
-  const [sortBy, setSortBy]             = useState("recent");
-  const [isMobile, setIsMobile]         = useState(false);
-  const [selectedEntry, setSelectedEntry] = useState<BiblioEntry | null>(null);
+  const [activeTier, setActiveTier] = useState<Tier | "Tous">("Tous");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState<SortBy>("recent");
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
-  const { favorites, toggle, isFavorite, count: favoritesCount } = useFavorites();
+  const [showAllBriefs, setShowAllBriefs] = useState(false);
+  const [reading, setReading] = useState<{ item: Reading; list: Reading[] } | null>(null);
+  const [antiSpoiler, setAntiSpoiler] = useState(false);
+  const { toggle, isFavorite, count: favoritesCount } = useFavorites();
+  const { share, Toast } = useShare();
+  const pendingLink = useRef<{ fiche?: string; chronique?: string } | null>(null);
 
-  const heroRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
-  const heroY       = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+  const fetchOeuvres = useCallback(async () => {
+    setLoading(true);
+    setLoadError(false);
+    const { data, error } = await supabase.from("bibliotheque").select("*").order("created_at", { ascending: false });
 
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    fetchOeuvres();
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  const fetchOeuvres = async () => {
-    const { data, error } = await supabase
-      .from("bibliotheque")
-      .select("*")
-      .order("created_at", { ascending: false });
-
+    if (error) setLoadError(true);
     if (!error && data) {
       setOeuvres(data);
 
@@ -189,8 +96,7 @@ export default function BibliothequePage() {
             [normalizeDossierBashKey(entry.searchQuery), entry],
           ])
         );
-
-        const hydratedDossier = dossierRows.map((item) => {
+        const hydrated = dossierRows.map((item) => {
           const match = dossierByKey.get(normalizeDossierBashKey(item.title));
           return {
             ...match,
@@ -199,402 +105,640 @@ export default function BibliothequePage() {
             title: item.title,
             date: item.dossier_bash_date || match?.date || "",
             tag: item.dossier_bash_tag || match?.tag || "DOSSIER BASH",
-            color: item.dossier_bash_color || match?.color || colors.gold,
+            color: item.dossier_bash_color || match?.color || "#c9a84c",
             review: item.avis_guilde || match?.review || item.synopsis || "",
             cover: item.cover_image || match?.localCover || match?.cover || "",
             localCover: match?.localCover,
             trailer_url: item.trailer_url || match?.trailer_url || undefined,
           };
         });
-
-        hydratedDossier.sort((a, b) => (a.date || "").localeCompare(b.date || "", "fr"));
-        setDossierBash(hydratedDossier);
+        hydrated.sort((a, b) => (a.date || "").localeCompare(b.date || "", "fr"));
+        setDossierBash(hydrated);
       }
     }
-
     setLoading(false);
-  };
+  }, []);
 
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    pendingLink.current = { fiche: p.get("fiche") ?? undefined, chronique: p.get("chronique") ?? undefined };
+    try { setAntiSpoiler(localStorage.getItem(SPOILER_KEY) === "on"); } catch {}
+    fetchOeuvres();
+  }, [fetchOeuvres]);
 
-  const mappedEntries: BiblioEntry[] = oeuvres.map((d) => ({
-    id:          d.id,
-    title:       d.title,
-    category:    (d.type as BiblioCategory | undefined) || "Anime",
-    tier:        (d.tier as BiblioTier | undefined) || "A définir",
-    year:        d.year || new Date(d.created_at).getFullYear(),
+  const entries: BiblioEntry[] = useMemo(() => oeuvres.map((d) => ({
+    id: d.id,
+    title: d.title,
+    category: (d.type as BiblioCategory | undefined) || "Anime",
+    tier: (d.tier as BiblioTier | undefined) || "A définir",
+    year: d.year || new Date(d.created_at).getFullYear(),
     cover_image: d.cover_image || "",
-    status:      d.status || "Terminé",
-    note:        d.score || 0,
-    synopsis:    d.synopsis,
+    status: d.status || "Terminé",
+    note: d.score || 0,
+    synopsis: d.synopsis,
     avis_guilde: d.avis_guilde,
     trailer_url: d.trailer_url,
-    created_at:  d.created_at,
-  }));
+    created_at: d.created_at,
+  })), [oeuvres]);
 
-  let filtered = mappedEntries.filter((e) => {
-    const matchCat    = activeCategory === "Tout" || e.category === activeCategory;
-    const matchTier   = activeTier === "Tous" || e.tier === activeTier;
-    const matchSearch = e.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchFav    = !showFavoritesOnly || isFavorite(e.id);
-    return matchCat && matchTier && matchSearch && matchFav;
+  const ficheToReading = useCallback((e: BiblioEntry): Reading => ({
+    key: `fiche-${e.id}`,
+    kind: "fiche",
+    title: e.title,
+    cover: e.cover_image,
+    category: e.category,
+    tier: e.tier,
+    note: numericNote(e.note),
+    year: e.year,
+    status: e.status,
+    avis: e.avis_guilde,
+    synopsis: e.synopsis,
+    trailer: e.trailer_url,
+    favKey: String(e.id),
+  }), []);
+
+  // Une chronique hérite du verdict de sa fiche quand celle-ci existe en base.
+  const chroniqueToReading = useCallback((c: Chronique): Reading => {
+    const key = normalizeDossierBashKey(c.title);
+    const search = normalizeDossierBashKey(c.searchQuery);
+    const match = entries.find((e) => {
+      const t = normalizeDossierBashKey(e.title);
+      return t === key || (search && t.includes(search));
+    });
+    return {
+      key: `chronique-${slug(c.title)}`,
+      kind: "chronique",
+      title: c.title,
+      cover: c.cover,
+      tag: c.tag,
+      color: c.color,
+      date: c.date,
+      category: match?.category ?? "Anime",
+      tier: match && match.tier !== "A définir" ? match.tier : undefined,
+      note: match ? numericNote(match.note) : undefined,
+      year: match?.year,
+      status: match?.status,
+      avis: c.review,
+      synopsis: match?.synopsis,
+      trailer: c.trailer_url || match?.trailer_url,
+      favKey: match ? String(match.id) : undefined,
+    };
+  }, [entries]);
+
+  const chroniques = useMemo(() => dossierBash.map(chroniqueToReading), [dossierBash, chroniqueToReading]);
+
+  const filtered = useMemo(() => {
+    const q = normalize(searchTerm.trim());
+    const list = entries.filter((e) =>
+      (activeCategory === "Tout" || e.category === activeCategory) &&
+      (activeTier === "Tous" || e.tier === activeTier) &&
+      (!q || normalize(e.title).includes(q)) &&
+      (!showFavoritesOnly || isFavorite(e.id))
+    );
+    list.sort((a, b) => {
+      if (sortBy === "recent") return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+      if (sortBy === "oldest") return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
+      if (sortBy === "note") return (Number(b.note) || 0) - (Number(a.note) || 0);
+      return a.title.localeCompare(b.title, "fr");
+    });
+    return list;
+  }, [entries, activeCategory, activeTier, searchTerm, showFavoritesOnly, isFavorite, sortBy]);
+
+  const byTier = TIERS.map((tier) => ({ tier, items: filtered.filter((e) => e.tier === tier) })).filter((g) => g.items.length > 0);
+  const filteredReadings = useMemo(() => filtered.map(ficheToReading), [filtered, ficheToReading]);
+
+  const open = useCallback((item: Reading, list: Reading[]) => {
+    setReading({ item, list });
+    const url = new URL(window.location.href);
+    url.searchParams.delete("fiche"); url.searchParams.delete("chronique");
+    if (item.kind === "fiche") url.searchParams.set("fiche", item.key.replace("fiche-", ""));
+    else url.searchParams.set("chronique", item.key.replace("chronique-", ""));
+    window.history.replaceState({}, "", url);
+  }, []);
+
+  const close = useCallback(() => {
+    setReading(null);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("fiche"); url.searchParams.delete("chronique");
+    window.history.replaceState({}, "", url);
+  }, []);
+
+  // Liens profonds : /bibliotheque?fiche=12 ou ?chronique=titre-de-l-oeuvre
+  useEffect(() => {
+    const link = pendingLink.current;
+    if (!link || loading) return;
+    pendingLink.current = null;
+    if (link.fiche) {
+      const e = entries.find((x) => String(x.id) === link.fiche);
+      if (e) open(ficheToReading(e), entries.map(ficheToReading));
+    } else if (link.chronique) {
+      const c = chroniques.find((x) => x.key === `chronique-${link.chronique}`);
+      if (c) open(c, chroniques);
+    }
+  }, [loading, entries, chroniques, open, ficheToReading]);
+
+  const toggleSpoiler = () => setAntiSpoiler((v) => {
+    try { localStorage.setItem(SPOILER_KEY, v ? "off" : "on"); } catch {}
+    return !v;
   });
 
-  filtered.sort((a, b) => {
-    if (sortBy === "recent")  return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
-    if (sortBy === "oldest")  return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
-    if (sortBy === "note")    return (Number(b.note) || 0) - (Number(a.note) || 0);
-    if (sortBy === "alpha")   return a.title.localeCompare(b.title);
-    return 0;
-  });
-
-  const entriesByTier = TIERS.map((tier) => ({
-    tier,
-    items: filtered.filter((e) => e.tier === tier),
-  })).filter((g) => g.items.length > 0);
-
-  // ─── STYLES LOCAUX (tokens) ──────────────────────────────────────────────
-  const sectionAccentBar: React.CSSProperties = { width: "32px", height: "3px", background: colors.gold, borderRadius: "2px" };
+  const [une, ...restChroniques] = chroniques;
+  const duo = restChroniques.slice(0, 2);
+  const briefs = restChroniques.slice(2);
+  const visibleBriefs = showAllBriefs ? briefs : briefs.slice(0, 8);
+  const hasFilters = activeCategory !== "Tout" || activeTier !== "Tous" || !!searchTerm || showFavoritesOnly;
+  const resetFilters = () => { setActiveCategory("Tout"); setActiveTier("Tous"); setSearchTerm(""); setShowFavoritesOnly(false); };
 
   return (
-    <div style={{ minHeight: "100vh", background: colors.bg, color: colors.textPrimary, fontFamily: font, overflowX: "hidden", position: "relative" }}>
+    <div className="gk-page tone-dark bb-page">
+      <GuildeHeader activePage="bibliotheque" tone="dark" />
 
-      <style>{`
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: ${colors.bg}; }
-        ::-webkit-scrollbar-thumb { background: ${colors.goldBorder}; border-radius: 2px; }
-      `}</style>
-
-      {/* ── BACKGROUND ── */}
-      <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none", overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: "-20%", left: "-10%", width: "70vw", height: "70vw", background: `radial-gradient(circle, ${colors.goldLight} 0%, transparent 65%)`, filter: "blur(60px)" }} />
-        <div style={{ position: "absolute", bottom: "-10%", right: "-10%", width: "60vw", height: "60vw", background: "radial-gradient(circle, rgba(167,139,250,0.1) 0%, transparent 65%)", filter: "blur(80px)" }} />
-      </div>
-
-      <GuildeHeader activePage="bibliotheque" />
-
-      <div style={{ position: "relative", zIndex: 10 }}>
-
-        {/* ── HERO ── */}
-        <motion.section ref={heroRef} style={{ position: "relative", y: heroY, opacity: heroOpacity }}>
-          <div style={{ padding: isMobile ? "60px 20px 40px" : "90px 48px 60px", maxWidth: "1100px", margin: "0 auto" }}>
-            <motion.p initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}
-              style={{ ...typography.overline, marginBottom: "16px" }}>
-              Guilde Otaku · Saison 2025/26
-            </motion.p>
-            <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-              style={{ fontSize: isMobile ? "clamp(40px,12vw,64px)" : "clamp(72px,9vw,120px)", fontWeight: 900, fontStyle: "italic", lineHeight: 0.9, textTransform: "uppercase", letterSpacing: "-0.03em", marginBottom: "24px" }}>
-              LA <span style={{ color: colors.gold }}>BIBLIOTHÈQUE</span>
-            </motion.h1>
-            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
-              style={{ ...typography.body, letterSpacing: "0.08em", maxWidth: "480px" }}>
+      <main className="gk-wrap" style={{ paddingBottom: "clamp(56px, 9vw, 110px)" }}>
+        <header className="bb-masthead gk-reveal">
+          <div>
+            <div className="gk-hero-kicker">
+              <p className="gk-chapter"><b>06</b><span>LE MAGAZINE DE LA GUILDE</span></p>
+              <span className="gk-jp" aria-hidden="true">図書館</span>
+            </div>
+            <h1 className="gk-display bb-title">La <span className="gk-inked">Bibliothèque</span></h1>
+            <p className="gk-body" style={{ marginTop: 16 }}>
               Les verdicts définitifs de la Guilde. Animes, mangas, films, séries et jeux vidéo jugés sans pitié.
-            </motion.p>
+            </p>
           </div>
-        </motion.section>
+          <p className="bb-issue">
+            Saison 2025/26
+            <b>Printemps 2026</b>
+            {chroniques.length} chroniques{entries.length > 0 ? `, ${entries.length} fiches` : ""}
+          </p>
+        </header>
 
-        {/* ── DOSSIER DU BASH ── */}
-        <section style={{ padding: isMobile ? "0 20px 60px" : "0 48px 80px", maxWidth: "1100px", margin: "0 auto" }}>
-          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "32px" }}>
-              <div style={sectionAccentBar} />
-              <span style={{ ...typography.sectionLabel }}>LE DOSSIER DU BASH · PRINTEMPS 2026</span>
+        <hr className="gk-rule" />
+
+        {/* ── LA CHRONIQUE DU BASH ───────────────────────────────────── */}
+        {une && (
+          <section className="bb-section" aria-labelledby="bb-bash">
+            <div className="bb-head">
+              <div>
+                <span className="gk-hand">le dossier du printemps 2026</span>
+                <h2 id="bb-bash" className="gk-display gk-h3">La Chronique du Bash</h2>
+              </div>
+              <span className="gk-stamp" aria-hidden="true">特集</span>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "40px" }}>
-              {dossierBash.map((anime, index) => (
-                <motion.div
-                  key={index}
-                  whileHover={{ scale: 1.015, borderColor: anime.color }}
-                  transition={{ duration: 0.2 }}
-                  onClick={() => {
-                    const dbMatch = mappedEntries.find(e => {
-                      const normalizedTitle = normalizeDossierBashKey(e.title);
-                      return normalizedTitle.includes(normalizeDossierBashKey(anime.searchQuery)) || normalizedTitle === normalizeDossierBashKey(anime.title);
-                    });
-                    setSelectedEntry({
-                      id: -1,
-                      title:       anime.title,
-                      category:    "Anime" as BiblioCategory,
-                      tier:        index === 0 ? "Chef-d'œuvre" : ("A définir" as BiblioTier),
-                      year:        2026,
-                      cover_image: anime.cover,
-                      status:      "Saison Printemps",
-                      note:        "✨",
-                      avis_guilde: anime.review,
-                      trailer_url: anime.trailer_url,
-                      synopsis:    "Cette œuvre n'a pas encore sa fiche complète dans la base de données de la Guilde.",
-                    });
-                  }}
-                  style={{
-                    position: "relative", overflow: "hidden", cursor: "pointer",
-                    background: index === 0
-                      ? "linear-gradient(135deg, rgba(74,222,128,0.08) 0%, rgba(255,255,255,0.02) 50%, rgba(74,222,128,0.05) 100%)"
-                      : colors.bgCard,
-                    border: `1px solid ${index === 0 ? "rgba(74,222,128,0.3)" : colors.border}`,
-                    borderRadius: "24px",
-                    padding: isMobile ? "28px 24px" : "40px",
-                    backdropFilter: "blur(20px)",
-                    display: "flex",
-                    flexDirection: isMobile ? "column" : "row",
-                    gap: "32px",
-                    alignItems: isMobile ? "flex-start" : "center",
-                  }}
-                >
-                  {/* Affiche */}
-                  <div style={{ flexShrink: 0, width: isMobile ? "100%" : "320px", height: isMobile ? "auto" : "480px", aspectRatio: isMobile ? "2/3" : "auto", borderRadius: "16px", overflow: "hidden", border: `1px solid ${anime.color}40`, boxShadow: `0 20px 40px ${anime.color}30`, background: colors.bgCard, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    {anime.cover
-                      ? <OptimizedImage src={anime.cover} alt={anime.title} />
-                      : <span style={{ ...typography.meta, fontStyle: "italic" }}>Chargement...</span>
-                    }
+            <button type="button" className="gk-panel gk-press bb-une" onClick={() => open(une, chroniques)} style={{ "--tag": une.color } as React.CSSProperties}>
+              <div className="bb-une-cover">
+                {une.cover && <OptimizedImage src={une.cover} alt="" priority />}
+              </div>
+              <div className="bb-une-body">
+                <div className="bb-kicker">
+                  <span className="gk-tag gk-tag--solid">À la une</span>
+                  {une.tag && <span className="bb-colortag">{une.tag}</span>}
+                  {une.date && <span><Calendar size={14} aria-hidden="true" style={{ verticalAlign: "-2px" }} /> {une.date}</span>}
+                </div>
+                <h3>{une.title}</h3>
+                {une.avis && <p className="bb-quote">{une.avis.split("\n\n")[0]}</p>}
+                <span className="bb-readmore">Lire la chronique <ArrowRight size={17} aria-hidden="true" /></span>
+              </div>
+            </button>
+
+            {duo.length > 0 && (
+              <div className="bb-duo">
+                {duo.map((c) => (
+                  <button key={c.key} type="button" className="gk-panel gk-press bb-dossier" onClick={() => open(c, chroniques)} style={{ "--tag": c.color } as React.CSSProperties}>
+                    <div className="bb-dossier-cover">{c.cover && <OptimizedImage src={c.cover} alt="" />}</div>
+                    <div className="bb-dossier-body">
+                      <div className="bb-kicker">
+                        {c.tag && <span className="bb-colortag">{c.tag}</span>}
+                        {c.date && <span>{c.date}</span>}
+                      </div>
+                      <h3>{c.title}</h3>
+                      {c.avis && <p>{c.avis.split("\n\n")[0]}</p>}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {briefs.length > 0 && (
+              <>
+                <ol className="bb-briefs" start={4}>
+                  {visibleBriefs.map((c, i) => (
+                    <li key={c.key}>
+                      <button type="button" className="bb-brief" onClick={() => open(c, chroniques)} style={{ "--tag": c.color } as React.CSSProperties}>
+                        <b aria-hidden="true">{String(i + 4).padStart(2, "0")}</b>
+                        <span className="bb-brief-thumb">{c.cover && <OptimizedImage src={c.cover} alt="" />}</span>
+                        <span style={{ minWidth: 0 }}>
+                          <strong>{c.title}</strong>
+                          <small>{c.tag}</small>
+                          {c.avis && <em>{c.avis.split("\n\n")[0]}</em>}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ol>
+                {briefs.length > 8 && (
+                  <div style={{ marginTop: 18 }}>
+                    <button type="button" className="gk-btn gk-btn--ghost" onClick={() => setShowAllBriefs((v) => !v)} aria-expanded={showAllBriefs}>
+                      {showAllBriefs ? "Replier la liste" : `Afficher les ${briefs.length - 8} autres chroniques`}
+                    </button>
                   </div>
+                )}
+              </>
+            )}
+          </section>
+        )}
 
-                  {/* Texte */}
-                  <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", marginBottom: "16px" }}>
-                      <span style={{ fontFamily: font, fontSize: "12px", fontWeight: 800, color: anime.color, letterSpacing: "0.15em", textTransform: "uppercase", background: `${anime.color}15`, border: `1px solid ${anime.color}30`, padding: "6px 14px", borderRadius: "100px" }}>
-                        {anime.tag}
-                      </span>
-                      <span style={{ ...typography.meta, display: "flex", alignItems: "center", gap: "4px" }}>
-                        <Calendar size={14} style={{ display: "inline", verticalAlign: "middle" }} />
-                        {anime.date}
-                      </span>
-                    </div>
+        <hr className="gk-rule" />
 
-                    <h2 style={{ fontFamily: "'Outfit', sans-serif", fontSize: isMobile ? "32px" : "48px", fontWeight: 900, lineHeight: 1.1, textTransform: "uppercase", fontStyle: "italic", marginBottom: "24px", color: colors.textPrimary, letterSpacing: "-0.02em" }}>
-                      {anime.title}
-                    </h2>
-
-                    <div style={{ position: "relative", paddingLeft: "28px", borderLeft: `4px solid ${anime.color}50`, marginBottom: "24px" }}>
-                      <Quote size={24} color={`${anime.color}60`} style={{ position: "absolute", top: -4, left: "-14px", background: index === 0 ? "none" : colors.bg, padding: "2px" }} />
-                      {anime.review.split("\n\n").map((para, pi) => (
-                        <p key={pi} style={{ fontFamily: "'Outfit', sans-serif", fontSize: isMobile ? "16px" : "18px", fontWeight: 500, lineHeight: 1.7, color: "rgba(255,255,255,0.9)", marginBottom: pi === anime.review.split("\n\n").length - 1 ? 0 : "20px" }}>
-                          {para}
-                        </p>
-                      ))}
-                    </div>
-
-                    {anime.trailer_url && (
-                      <a href={anime.trailer_url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
-                        style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "10px 20px", background: "rgba(248,113,113,0.1)", border: `1px solid rgba(248,113,113,0.3)`, borderRadius: "10px", fontFamily: font, fontSize: "14px", fontWeight: 900, color: colors.youtube, textTransform: "uppercase", letterSpacing: "0.1em", textDecoration: "none" }}>
-                        <Youtube size={18} /> Voir le Trailer
-                      </a>
-                    )}
-
-                    <div style={{ marginTop: "24px", ...typography.meta, fontStyle: "italic", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", borderTop: `1px solid ${colors.border}`, paddingTop: "12px" }}>
-                      → Cliquer pour voir la fiche détaillée
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
+        {/* ── LES VERDICTS ───────────────────────────────────────────── */}
+        <section className="bb-section" aria-labelledby="bb-tiers">
+          <div className="bb-head">
+            <div>
+              <span className="gk-hand">du chef-d&apos;œuvre au surcoté</span>
+              <h2 id="bb-tiers" className="gk-display gk-h3">Tier list Otaku</h2>
             </div>
-          </motion.div>
-        </section>
+            <button type="button" className="gk-chip" aria-pressed={antiSpoiler} onClick={toggleSpoiler} title="Masque les avis et synopsis dans les fiches tant que tu ne les dévoiles pas">
+              {antiSpoiler ? <EyeOff size={15} aria-hidden="true" /> : <Eye size={15} aria-hidden="true" />}
+              <span>Anti-spoiler {antiSpoiler ? "activé" : "désactivé"}</span>
+            </button>
+          </div>
 
-        {/* ── TIER LIST ── */}
-        <section style={{ padding: isMobile ? "0 20px 80px" : "0 48px 100px", maxWidth: "1100px", margin: "0 auto" }}>
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-            style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "32px" }}>
-            <div style={sectionAccentBar} />
-            <span style={{ ...typography.sectionLabel }}>TIER LIST OTAKU</span>
-          </motion.div>
-
-          {/* FILTERS & SORT */}
-          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
-            style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: "12px", marginBottom: "40px", flexWrap: "wrap", alignItems: isMobile ? "stretch" : "center" }}>
-
-            {/* Recherche */}
-            <div style={{ position: "relative", flex: 1, minWidth: "200px" }}>
-              <Search size={15} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: colors.textMuted }} />
-              <input type="text" placeholder="Rechercher un titre..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-                style={{ ...components.input, padding: "10px 14px 10px 38px", borderRadius: "100px" }} />
+          {(loading || entries.length > 0) && (<>
+          <div className="bb-tools">
+            <div className="gk-field">
+              <Search size={18} aria-hidden="true" />
+              <input type="search" className="gk-input" placeholder="Chercher un titre" aria-label="Chercher un titre dans la bibliothèque" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
               {searchTerm && (
-                <button onClick={() => setSearchTerm("")} style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: colors.textMuted, cursor: "pointer", minHeight: "unset", minWidth: "unset" }}>
-                  <X size={15} />
+                <button type="button" className="gk-clear no-min" onClick={() => setSearchTerm("")} aria-label="Effacer la recherche">
+                  <X size={17} aria-hidden="true" />
                 </button>
               )}
             </div>
+            <select className="bb-select" value={sortBy} onChange={(e) => setSortBy(e.target.value as SortBy)} aria-label="Trier les fiches">
+              <option value="recent">Plus récents</option>
+              <option value="oldest">Plus anciens</option>
+              <option value="note">Mieux notés</option>
+              <option value="alpha">De A à Z</option>
+            </select>
+            <span />
+            <button type="button" className="gk-chip" aria-pressed={showFavoritesOnly} onClick={() => setShowFavoritesOnly((v) => !v)}>
+              <Heart size={15} aria-hidden="true" fill={showFavoritesOnly ? "currentColor" : "none"} />
+              <span>Mes favoris <small>{favoritesCount}</small></span>
+            </button>
+          </div>
 
-            {/* Tri */}
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", background: colors.bgCard, border: `1px solid ${colors.border}`, padding: "8px 14px", borderRadius: "100px" }}>
-              <ArrowUpDown size={14} color={colors.textSecondary} />
-              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
-                style={{ background: "transparent", border: "none", color: colors.textPrimary, fontFamily: font, fontSize: "14px", outline: "none", cursor: "pointer", textTransform: "uppercase", fontWeight: 700 }}>
-                <option value="recent"  style={{ background: colors.bg }}>Plus récents</option>
-                <option value="oldest"  style={{ background: colors.bg }}>Plus anciens</option>
-                <option value="note"    style={{ background: colors.bg }}>Mieux notés</option>
-                <option value="alpha"   style={{ background: colors.bg }}>De A à Z</option>
-              </select>
-            </div>
-
-            {/* Catégories */}
-            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+          <div className="bb-filters">
+            <div className="gk-chips" role="group" aria-label="Filtrer par catégorie">
               {CATEGORIES.map((cat) => (
-                <motion.button
-                  key={cat}
-                  onClick={() => setActiveCategory(cat)}
-                  whileHover={{ scale: 1.07, y: -2 }}
-                  whileTap={{ scale: 0.93 }}
-                  transition={{ type: "spring", stiffness: 450, damping: 22 }}
-                  style={filterPillStyle(activeCategory === cat)}
-                >
-                  {cat}
-                </motion.button>
+                <button key={cat} type="button" className="gk-chip" aria-pressed={activeCategory === cat} onClick={() => setActiveCategory(cat)}>
+                  <span>{cat}</span>
+                </button>
               ))}
-              <motion.button
-                onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-                whileHover={{ scale: 1.07, y: -2 }}
-                whileTap={{ scale: 0.93 }}
-                transition={{ type: "spring", stiffness: 450, damping: 22 }}
-                style={{
-                  ...filterPillStyle(showFavoritesOnly),
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "5px",
-                  background: showFavoritesOnly ? "rgba(239,68,68,0.15)" : undefined,
-                  borderColor: showFavoritesOnly ? "rgba(239,68,68,0.4)" : undefined,
-                  color: showFavoritesOnly ? "#ef4444" : undefined,
-                }}
-              >
-                <Heart size={12} fill={showFavoritesOnly ? "#ef4444" : "none"} color={showFavoritesOnly ? "#ef4444" : "currentColor"} />
-                Favoris{favoritesCount > 0 ? ` (${favoritesCount})` : ""}
-              </motion.button>
             </div>
-          </motion.div>
+            <div className="gk-chips" role="group" aria-label="Filtrer par verdict">
+              <button type="button" className="gk-chip" aria-pressed={activeTier === "Tous"} onClick={() => setActiveTier("Tous")}><span>Tous les verdicts</span></button>
+              {TIERS.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  className="gk-chip"
+                  aria-pressed={activeTier === t}
+                  onClick={() => setActiveTier(activeTier === t ? "Tous" : t)}
+                  style={{ "--gk-accent": tierConfig[t].color } as React.CSSProperties}
+                >
+                  <span>{tierConfig[t].label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
 
-          {/* RÉSULTATS */}
-          <AnimatePresence mode="wait">
-            <motion.div key={`${activeCategory}-${activeTier}-${searchTerm}-${sortBy}-${showFavoritesOnly}`}
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
-              {loading ? (
-                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(auto-fill,minmax(220px,1fr))", gap: isMobile ? "10px" : "16px" }}>
-                  {[1,2,3,4,5,6,7,8].map((i) => <SkeletonCard key={i} />)}
-                </div>
-              ) : entriesByTier.length === 0 ? (
-                <div style={{ textAlign: "center", padding: "60px 0", ...typography.body, fontSize: "20px", fontStyle: "italic" }}>
-                  Aucune œuvre trouvée dans ces filtres...
+          <p role="status" aria-live="polite" style={{ margin: "14px 0 0", font: "700 0.95rem var(--gk-font-ui)", color: "var(--gk-dim)" }}>
+            {loading ? "Chargement des fiches..." : `${filtered.length} ${filtered.length > 1 ? "fiches" : "fiche"}`}
+          </p>
+
+          </>)}
+
+          {loading ? (
+            <div className="bb-grid" style={{ marginTop: 24 }} aria-hidden="true">
+              {Array.from({ length: 12 }, (_, i) => <div key={i} className="gk-skel" style={{ aspectRatio: "2 / 3.5" }} />)}
+            </div>
+          ) : loadError ? (
+            <div className="gk-empty" style={{ marginTop: 24 }}>
+              <div className="gk-empty-glyph" aria-hidden="true">断</div>
+              <h3>Les rayons sont inaccessibles</h3>
+              <p>Les fiches n&apos;ont pas pu être chargées. Vérifie ta connexion puis réessaie.</p>
+              <button type="button" className="gk-btn" onClick={fetchOeuvres}>Réessayer</button>
+            </div>
+          ) : entries.length === 0 ? (
+            <div className="gk-empty" style={{ marginTop: 8 }}>
+              <div className="gk-empty-glyph" aria-hidden="true">準備中</div>
+              <h3>Les verdicts arrivent</h3>
+              <p>Aucune fiche n&apos;est encore publiée dans la tier list. En attendant, la Chronique du Bash est juste au-dessus.</p>
+            </div>
+          ) : byTier.length === 0 ? (
+            <div className="gk-empty" style={{ marginTop: 24 }}>
+              <div className="gk-empty-glyph" aria-hidden="true">空</div>
+              <h3>{showFavoritesOnly && favoritesCount === 0 ? "Aucun favori pour l'instant" : "Rayon vide"}</h3>
+              <p>
+                {showFavoritesOnly && favoritesCount === 0
+                  ? "Touche le cœur d'une fiche pour la retrouver ici. Tes favoris restent sur cet appareil."
+                  : "Aucune œuvre ne correspond à ces filtres."}
+              </p>
+              {hasFilters && <button type="button" className="gk-btn" onClick={resetFilters}>Tout réafficher</button>}
+            </div>
+          ) : (
+            <div key={`${activeCategory}-${activeTier}-${sortBy}-${showFavoritesOnly}`}>
+              {byTier.map(({ tier, items }) => (
+                <section key={tier} className="bb-tier" style={{ "--tier": tierConfig[tier].color } as React.CSSProperties} aria-label={tierConfig[tier].label}>
+                  <div className="bb-tier-head">
+                    <h3>{tierConfig[tier].label}</h3>
+                    <span>{items.length} {items.length > 1 ? "titres" : "titre"}</span>
+                  </div>
+                  <div className={`bb-grid gk-stagger${tier === "Chef-d'œuvre" ? " is-top" : ""}`}>
+                    {items.map((e, i) => {
+                      const fav = isFavorite(e.id);
+                      const note = numericNote(e.note);
+                      return (
+                        <article key={e.id} className="bb-card" style={{ "--i": i, "--cat": categoryColor[e.category] ?? "#f3eee2" } as React.CSSProperties}>
+                          <button
+                            type="button"
+                            className="bb-fav no-min"
+                            aria-pressed={fav}
+                            aria-label={fav ? `Retirer ${e.title} des favoris` : `Ajouter ${e.title} aux favoris`}
+                            onClick={() => toggle(e.id)}
+                          >
+                            <Heart size={17} fill={fav ? "currentColor" : "none"} aria-hidden="true" />
+                          </button>
+                          <button type="button" className="bb-card-open" onClick={() => open(ficheToReading(e), filteredReadings)} aria-label={`Ouvrir la fiche de ${e.title}`}>
+                            <div className="bb-card-cover">
+                              {e.cover_image ? <OptimizedImage src={e.cover_image} alt="" /> : null}
+                              <span className="bb-cat">{e.category}</span>
+                              {note !== undefined && <span className="bb-note">{note}<small>/10</small></span>}
+                            </div>
+                            <div className="bb-card-body">
+                              <strong>{e.title}</strong>
+                              <small>{[e.status, e.year].filter(Boolean).join(", ")}</small>
+                            </div>
+                          </button>
+                        </article>
+                      );
+                    })}
+                  </div>
+                </section>
+              ))}
+            </div>
+          )}
+        </section>
+      </main>
+
+      {reading && (
+        <Reader
+          key={reading.item.key}
+          item={reading.item}
+          list={reading.list}
+          all={entries}
+          antiSpoiler={antiSpoiler}
+          isFavorite={reading.item.favKey ? isFavorite(reading.item.favKey) : false}
+          onToggleFavorite={reading.item.favKey ? () => toggle(reading.item.favKey!) : undefined}
+          onOpen={(r) => open(r, reading.list.some((x) => x.key === r.key) ? reading.list : [r])}
+          onClose={close}
+          onShare={() => share({
+            title: `${reading.item.title} | Bibliothèque de la Guilde`,
+            text: reading.item.kind === "chronique" ? `La Chronique du Bash : ${reading.item.title}` : `Le verdict de la Guilde sur ${reading.item.title}`,
+          })}
+          toReading={ficheToReading}
+        />
+      )}
+      <Toast />
+    </div>
+  );
+}
+
+function Reader({ item, list, all, antiSpoiler, isFavorite, onToggleFavorite, onOpen, onClose, onShare, toReading }: {
+  item: Reading;
+  list: Reading[];
+  all: BiblioEntry[];
+  antiSpoiler: boolean;
+  isFavorite: boolean;
+  onToggleFavorite?: () => void;
+  onOpen: (r: Reading) => void;
+  onClose: () => void;
+  onShare: () => void;
+  toReading: (e: BiblioEntry) => Reading;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const barRef = useRef<HTMLElement>(null);
+  const [revealed, setRevealed] = useState<Record<string, boolean>>({});
+  const tierColor = item.tier ? tierConfig[item.tier].color : item.color ?? "#c9a84c";
+  const idx = list.findIndex((x) => x.key === item.key);
+  const prev = idx > 0 ? list[idx - 1] : null;
+  const next = idx >= 0 && idx < list.length - 1 ? list[idx + 1] : null;
+  const video = youtubeId(item.trailer);
+
+  // Recommandations : même catégorie, en priorité même verdict. Données réelles uniquement.
+  const reco = useMemo(() => {
+    const pool = all.filter((e) => e.category === item.category && normalize(e.title) !== normalize(item.title));
+    const same = pool.filter((e) => item.tier && e.tier === item.tier);
+    const others = pool.filter((e) => !same.includes(e)).sort((a, b) => (Number(b.note) || 0) - (Number(a.note) || 0));
+    return [...same, ...others].slice(0, 4);
+  }, [all, item]);
+
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    scrollRef.current?.querySelector<HTMLElement>("button")?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      else if (e.key === "ArrowRight" && next) onOpen(next);
+      else if (e.key === "ArrowLeft" && prev) onOpen(prev);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", onKey);
+      previous?.focus?.();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const onScroll = () => {
+    const el = scrollRef.current;
+    if (!el || !barRef.current) return;
+    const max = el.scrollHeight - el.clientHeight;
+    barRef.current.style.setProperty("--p", String(max > 0 ? Math.min(1, el.scrollTop / max) : 1));
+  };
+  useEffect(onScroll, []);
+
+  const sections = [
+    item.avis ? { id: "avis", label: item.kind === "chronique" ? "La chronique" : "L'avis de la Guilde" } : null,
+    item.synopsis ? { id: "synopsis", label: "Synopsis" } : null,
+    item.trailer ? { id: "trailer", label: "Bande-annonce" } : null,
+    reco.length ? { id: "reco", label: "Dans le même rayon" } : null,
+  ].filter(Boolean) as { id: string; label: string }[];
+
+  const jump = (id: string) => scrollRef.current?.querySelector(`#bb-${id}`)?.scrollIntoView({ block: "start" });
+  const masked = (id: string) => antiSpoiler && !revealed[id];
+
+  const prose = (id: string, text: string, lead = false) => (
+    <div className={`bb-spoiler${masked(id) ? " is-hidden" : ""}`}>
+      <div className={`bb-prose${lead ? " is-lead" : ""}`} aria-hidden={masked(id) || undefined}>
+        {text.split("\n\n").map((p, i) => <p key={i}>{p}</p>)}
+      </div>
+      {masked(id) && (
+        <div className="bb-spoiler-btn">
+          <button type="button" className="gk-btn" onClick={() => setRevealed((r) => ({ ...r, [id]: true }))}>
+            <Eye size={16} aria-hidden="true" /> Dévoiler ce passage
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
+  if (typeof document === "undefined") return null;
+  return createPortal(
+    <div className="bb-reader-back tone-dark" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div
+        ref={scrollRef}
+        className="bb-reader"
+        role="dialog"
+        aria-modal="true"
+        aria-label={item.title}
+        onScroll={onScroll}
+        style={{ "--tier": tierColor, "--gk-accent": "#c9a84c" } as React.CSSProperties}
+      >
+        <div className="bb-reader-bar">
+          <div className="bb-reader-actions">
+            <button type="button" className="gk-icon-btn" onClick={onClose} aria-label="Fermer la lecture">
+              <X size={20} aria-hidden="true" />
+            </button>
+            <span>{item.kind === "chronique" ? "La Chronique du Bash" : "Fiche de la Bibliothèque"}</span>
+            {onToggleFavorite && (
+              <button type="button" className="gk-icon-btn" aria-pressed={isFavorite} onClick={onToggleFavorite} aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}>
+                <Heart size={18} fill={isFavorite ? "currentColor" : "none"} aria-hidden="true" />
+              </button>
+            )}
+            <button type="button" className="gk-icon-btn" onClick={onShare} aria-label="Partager cette page">
+              <Share2 size={18} aria-hidden="true" />
+            </button>
+          </div>
+          <div className="bb-progress" role="progressbar" aria-label="Progression de lecture"><i ref={barRef} /></div>
+        </div>
+
+        <article className="bb-article">
+          <div className="bb-article-top">
+            <div className="bb-article-cover">{item.cover && <OptimizedImage src={item.cover} alt={`Couverture de ${item.title}`} priority />}</div>
+            <div style={{ minWidth: 0 }}>
+              <div className="bb-kicker" style={{ "--tag": item.color } as React.CSSProperties}>
+                {item.tag && <span className="bb-colortag">{item.tag}</span>}
+                {item.category && <span className="gk-tag">{item.category}</span>}
+                {item.date && <span>{item.date}</span>}
+              </div>
+              <h2>{item.title}</h2>
+              {(item.status || item.year) && (
+                <p style={{ marginTop: 10, font: "700 0.95rem var(--gk-font-ui)", color: "var(--gk-dim)" }}>
+                  {[item.status, item.year].filter(Boolean).join(", ")}
+                </p>
+              )}
+              {(item.tier || item.note !== undefined) && (
+                <p className="bb-verdict">
+                  {item.note !== undefined && <b>{item.note}<small>/10</small></b>}
+                  {item.tier && <span>{item.tier === "A définir" ? "En attente de verdict" : item.tier}</span>}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {sections.length > 1 && (
+            <nav className="bb-toc" aria-label="Sommaire de la fiche">
+              <span>Sommaire</span>
+              {sections.map((s) => (
+                <button key={s.id} type="button" className="gk-btn gk-btn--ghost gk-btn--sm" onClick={() => jump(s.id)}>{s.label}</button>
+              ))}
+            </nav>
+          )}
+
+          {item.avis && (
+            <section id="bb-avis" className="bb-block">
+              <h3>{item.kind === "chronique" ? "La chronique" : "L'avis de la Guilde"}</h3>
+              {prose("avis", item.avis, true)}
+            </section>
+          )}
+          {item.synopsis ? (
+            <section id="bb-synopsis" className="bb-block">
+              <h3>Synopsis</h3>
+              {prose("synopsis", item.synopsis)}
+            </section>
+          ) : item.kind === "chronique" ? (
+            <p className="gk-body" style={{ marginTop: 28, fontSize: "0.92rem" }}>
+              Cette œuvre n&apos;a pas encore sa fiche complète dans la base de la Guilde.
+            </p>
+          ) : null}
+          {item.trailer && (
+            <section id="bb-trailer" className="bb-block">
+              <h3>Bande-annonce</h3>
+              {video ? (
+                <div className="bb-video">
+                  <iframe
+                    src={`https://www.youtube-nocookie.com/embed/${video}?rel=0`}
+                    title={`Bande-annonce de ${item.title}`}
+                    loading="lazy"
+                    allow="encrypted-media; picture-in-picture"
+                    allowFullScreen
+                  />
                 </div>
               ) : (
-                entriesByTier.map(({ tier, items }) => {
-                  const cfg = tierConfig[tier as Tier];
-                  return (
-                    <motion.div key={tier} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-60px" }} transition={{ duration: 0.5 }} style={{ marginBottom: "56px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "20px", paddingBottom: "14px", borderBottom: `1px solid ${cfg.color}20` }}>
-                        <div style={{ width: "6px", height: "32px", background: cfg.color, borderRadius: "3px", boxShadow: cfg.glow }} />
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", color: cfg.color }}>
-                          {cfg.icon}
-                          <h2 style={{ fontFamily: font, fontSize: "30px", fontWeight: 900, color: cfg.color, textTransform: "uppercase", letterSpacing: "-0.01em", fontStyle: "italic", lineHeight: 1 }}>{cfg.label}</h2>
-                        </div>
-                        <div style={{ flex: 1, height: "1px", background: `linear-gradient(90deg, ${cfg.color}30, transparent)` }} />
-                        <span style={{ ...typography.meta }}>{items.length} titre{items.length > 1 ? "s" : ""}</span>
-                      </div>
-
-                      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(auto-fill,minmax(220px,1fr))", gap: isMobile ? "10px" : "16px" }}>
-                        <AnimatePresence>
-                          {items.map((entry, i) => (
-                            <EntryCard key={entry.id} entry={entry} index={i} onSelect={() => setSelectedEntry(entry)} isFavorite={isFavorite(entry.id)} onToggleFavorite={() => toggle(entry.id)} />
-                          ))}
-                        </AnimatePresence>
-                      </div>
-                    </motion.div>
-                  );
-                })
+                <a className="gk-btn gk-btn--red" href={item.trailer} target="_blank" rel="noopener noreferrer">Voir la bande-annonce</a>
               )}
-            </motion.div>
-          </AnimatePresence>
-        </section>
+            </section>
+          )}
+          {reco.length > 0 && (
+            <section id="bb-reco" className="bb-block">
+              <h3>Dans le même rayon</h3>
+              <div className="bb-reco">
+                {reco.map((e) => (
+                  <article key={e.id} className="bb-card" style={{ "--tier": tierConfig[e.tier].color, "--cat": categoryColor[e.category] ?? "#f3eee2" } as React.CSSProperties}>
+                    <button type="button" className="bb-card-open" onClick={() => onOpen(toReading(e))} aria-label={`Ouvrir la fiche de ${e.title}`}>
+                      <div className="bb-card-cover">
+                        {e.cover_image ? <OptimizedImage src={e.cover_image} alt="" /> : null}
+                        {numericNote(e.note) !== undefined && <span className="bb-note">{numericNote(e.note)}<small>/10</small></span>}
+                      </div>
+                      <div className="bb-card-body">
+                        <strong>{e.title}</strong>
+                        <small>{e.tier === "A définir" ? "En attente" : e.tier}</small>
+                      </div>
+                    </button>
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {(prev || next) && (
+            <nav className="bb-pager" aria-label="Lecture précédente et suivante">
+              {prev ? (
+                <button type="button" onClick={() => onOpen(prev)}>
+                  <small><ChevronLeft size={13} aria-hidden="true" style={{ verticalAlign: "-2px" }} /> Précédent</small>
+                  <strong>{prev.title}</strong>
+                </button>
+              ) : <span />}
+              {next ? (
+                <button type="button" onClick={() => onOpen(next)}>
+                  <small>Suivant <ChevronRight size={13} aria-hidden="true" style={{ verticalAlign: "-2px" }} /></small>
+                  <strong>{next.title}</strong>
+                </button>
+              ) : <span />}
+            </nav>
+          )}
+
+          {item.kind === "fiche" && (
+            <p style={{ marginTop: 28, textAlign: "right" }}>
+              <Link href="/admin-biblio" style={{ font: "600 0.85rem var(--gk-font-ui)", color: "var(--gk-faint)" }}>Éditer la fiche (admin)</Link>
+            </p>
+          )}
+        </article>
       </div>
-
-      {/* ── MODAL ── */}
-      <AnimatePresence>
-        {selectedEntry && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onClick={() => setSelectedEntry(null)}
-            style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
-              style={{ background: "#0d0d14", border: `1px solid ${tierConfig[selectedEntry.tier as Tier]?.color ?? colors.gold}40`, borderRadius: "24px", padding: isMobile ? "28px 24px" : "40px", maxWidth: "600px", width: "100%", maxHeight: "90vh", overflowY: "auto", boxShadow: tierConfig[selectedEntry.tier as Tier]?.glow, position: "relative" }}
-            >
-              <button onClick={() => setSelectedEntry(null)} style={{ position: "absolute", top: "16px", right: "16px", background: colors.bgHover, border: "none", borderRadius: "50%", width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: colors.textPrimary, minHeight: "unset", minWidth: "unset" }}>
-                <X size={16} />
-              </button>
-
-              <div style={{ position: "absolute", top: 0, left: "20px", right: "20px", height: "3px", background: `linear-gradient(90deg, transparent, ${tierConfig[selectedEntry.tier as Tier]?.color ?? colors.gold}, transparent)`, borderRadius: "0 0 4px 4px" }} />
-
-              {/* Cover */}
-              <div style={{ marginBottom: "16px", display: "flex", justifyContent: "center" }}>
-                <div style={{ width: "180px", height: "250px", borderRadius: "12px", overflow: "hidden", border: `1px solid ${tierConfig[selectedEntry.tier as Tier]?.color ?? colors.gold}40` }}>
-                  <OptimizedImage src={selectedEntry.cover_image} alt={selectedEntry.title} />
-                </div>
-              </div>
-
-              {/* Tier + catégorie */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginBottom: "12px", flexWrap: "wrap" }}>
-                <span style={{ fontFamily: font, fontSize: "11px", fontWeight: 800, color: tierConfig[selectedEntry.tier as Tier]?.color ?? colors.gold, background: tierConfig[selectedEntry.tier as Tier]?.bg, border: `1px solid ${tierConfig[selectedEntry.tier as Tier]?.color ?? colors.gold}30`, padding: "3px 10px", borderRadius: "100px", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-                  {selectedEntry.tier}
-                </span>
-                <span style={{ ...typography.meta }}>
-                  {selectedEntry.category}{selectedEntry.year ? ` · ${selectedEntry.year}` : ""}
-                </span>
-              </div>
-
-              <h2 style={{ fontFamily: font, fontSize: isMobile ? "28px" : "36px", fontWeight: 900, color: colors.textPrimary, textTransform: "uppercase", fontStyle: "italic", lineHeight: 1, marginBottom: "8px", textAlign: "center" }}>
-                {selectedEntry.title}
-              </h2>
-
-              <p style={{ ...typography.meta, marginBottom: "20px", textAlign: "center" }}>
-                Statut : {selectedEntry.status}
-              </p>
-
-              {/* Note */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginBottom: "24px" }}>
-                <Star size={18} fill={tierConfig[selectedEntry.tier as Tier]?.color ?? colors.gold} color={tierConfig[selectedEntry.tier as Tier]?.color ?? colors.gold} />
-                <span style={{ fontFamily: font, fontSize: "40px", fontWeight: 900, color: tierConfig[selectedEntry.tier as Tier]?.color ?? colors.gold, lineHeight: 1 }}>
-                  {selectedEntry.note}
-                </span>
-                <span style={{ ...typography.meta, fontSize: "16px" }}>/10</span>
-              </div>
-
-              {/* Avis guilde */}
-              {selectedEntry.avis_guilde && (
-                <div style={{ marginBottom: "24px", padding: "20px", background: colors.goldLight, borderLeft: `4px solid ${colors.gold}`, borderRadius: "0 12px 12px 0" }}>
-                  <p style={{ fontFamily: font, fontSize: "14px", color: colors.gold, fontWeight: 800, letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: "12px" }}>L'Avis de la Guilde</p>
-                  <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: isMobile ? "16px" : "18px", fontWeight: 500, lineHeight: 1.7, color: "rgba(255,255,255,0.9)", fontStyle: "italic" }}>"{selectedEntry.avis_guilde}"</p>
-                </div>
-              )}
-
-              {/* Synopsis */}
-              <div style={{ marginBottom: "28px", padding: "20px", background: colors.bgCard, borderRadius: "12px", border: `1px solid ${colors.border}` }}>
-                <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: isMobile ? "15px" : "16px", fontWeight: 400, lineHeight: 1.6, color: "rgba(255,255,255,0.8)" }}>
-                  {selectedEntry.synopsis || "Aucun synopsis disponible pour cette œuvre."}
-                </p>
-              </div>
-
-              {/* Trailer */}
-              {selectedEntry.trailer_url && (
-                <a href={selectedEntry.trailer_url} target="_blank" rel="noopener noreferrer"
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", width: "100%", padding: "14px", background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.3)", borderRadius: "12px", fontFamily: font, fontSize: "16px", fontWeight: 900, color: colors.youtube, textTransform: "uppercase", letterSpacing: "0.1em", cursor: "pointer", textDecoration: "none", marginBottom: "12px" }}>
-                  <Youtube size={18} /> Voir le Trailer
-                </a>
-              )}
-
-              {/* Éditer */}
-              <Link href="/admin-biblio"
-                style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", width: "100%", padding: "14px", background: colors.goldLight, border: `1px solid ${colors.goldBorder}`, borderRadius: "12px", fontFamily: font, fontSize: "16px", fontWeight: 900, color: colors.gold, textTransform: "uppercase", letterSpacing: "0.1em", cursor: "pointer", textDecoration: "none", marginBottom: "12px" }}>
-                <Pencil size={18} /> Éditer la Fiche
-              </Link>
-
-              {/* Fermer */}
-              <button onClick={() => setSelectedEntry(null)}
-                style={{ width: "100%", padding: "14px", background: tierConfig[selectedEntry.tier as Tier]?.color ?? colors.gold, border: "none", borderRadius: "12px", fontFamily: font, fontSize: "16px", fontWeight: 900, color: "#000", textTransform: "uppercase", letterSpacing: "0.1em", cursor: "pointer" }}>
-                FERMER
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+    </div>,
+    document.body
   );
 }

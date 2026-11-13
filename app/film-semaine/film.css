@@ -1,0 +1,81 @@
+/* ═══ FILM DE LA SEMAINE · PROGRAMME DE FESTIVAL ══════════════════════════ */
+.fs-page { --gk-accent: #f0a030; --gk-bg: #0a0806; --gk-surface: #15110c; --gk-surface-2: #201a12; background: #0a0806; }
+
+.fs-backdrop { position: relative; height: clamp(220px, 46vw, 560px); overflow: hidden; clip-path: polygon(0 0, 100% 0, 100% 86%, 0 100%); background: #15110c; }
+.fs-backdrop img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 20%; animation: fs-settle 1.4s var(--gk-ease) both; }
+.fs-backdrop::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10,8,6,0.25) 0%, rgba(10,8,6,0.1) 40%, rgba(10,8,6,0.85) 100%); }
+@keyframes fs-settle { from { transform: scale(1.06); opacity: 0.4; } }
+
+.fs-lead { position: relative; display: grid; gap: clamp(18px, 3.4vw, 44px); grid-template-columns: minmax(0, 1fr); margin-top: clamp(-150px, -16vw, -70px); padding-bottom: clamp(28px, 5vw, 56px); }
+@media (min-width: 760px) { .fs-lead { grid-template-columns: clamp(200px, 24vw, 300px) minmax(0, 1fr); align-items: end; } }
+.fs-poster { position: relative; width: clamp(150px, 42vw, 300px); aspect-ratio: 2 / 3; background: var(--gk-surface-2); border: var(--gk-stroke) solid var(--gk-border); box-shadow: 7px 7px 0 var(--gk-accent); overflow: hidden; transform: rotate(-2deg); }
+@media (min-width: 760px) { .fs-poster { width: 100%; } }
+.fs-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.fs-poster-empty { position: absolute; inset: 0; display: grid; place-items: center; font: 400 3rem var(--gk-font-display); color: var(--gk-faint); }
+.fs-title { font-size: clamp(2.1rem, 7.6vw, 5.4rem); line-height: 0.95; overflow-wrap: anywhere; margin-top: 14px; }
+.fs-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; margin-top: 16px; font: 700 1.02rem var(--gk-font-ui); color: var(--gk-dim); }
+.fs-meta span { display: inline-flex; align-items: center; gap: 6px; }
+.fs-meta .fs-note { color: #fbbf24; font-weight: 900; }
+.fs-genres { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+.fs-synopsis { margin-top: 18px; color: var(--gk-text); opacity: 0.86; }
+.fs-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; align-items: center; }
+.fs-seen { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; font: 400 0.9rem var(--gk-font-display); color: #4ade80; border: 2.5px double #4ade80; transform: rotate(-3deg); }
+
+/* Ticket : la séance en un coup d'œil */
+.fs-ticket { display: inline-grid; grid-template-columns: auto auto; align-items: stretch; border: var(--gk-stroke) solid var(--gk-border); background: var(--gk-accent); color: #111; font-family: var(--gk-font-ui); }
+.fs-ticket > span { padding: 7px 12px; font-weight: 900; font-size: 0.88rem; letter-spacing: 0.08em; text-transform: uppercase; display: flex; align-items: center; gap: 6px; }
+.fs-ticket > span + span { border-left: 2px dashed #111; background: var(--gk-bg); color: var(--gk-accent); }
+
+.fs-section { padding-block: clamp(28px, 5vw, 60px); }
+.fs-section-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 10px 20px; margin-bottom: clamp(16px, 2.6vw, 28px); }
+
+.fs-grid { display: grid; gap: clamp(10px, 1.8vw, 20px); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 620px)  { .fs-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 900px)  { .fs-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (min-width: 1180px) { .fs-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+
+.fs-card { position: relative; display: flex; flex-direction: column; width: 100%; padding: 0; text-align: left; color: var(--gk-text); background: var(--gk-surface); border: var(--gk-stroke) solid var(--gk-border); cursor: pointer; overflow: hidden; transition: transform var(--gk-fast) var(--gk-ease), box-shadow var(--gk-fast) var(--gk-ease); }
+.fs-card-media { position: relative; aspect-ratio: 2 / 3; background: var(--gk-surface-2); overflow: hidden; }
+.fs-card-media img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 500ms var(--gk-ease); }
+.fs-card-body { padding: 9px 10px 10px; border-top: var(--gk-stroke) solid var(--gk-border); display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.fs-card-body strong { font: 900 italic 1.08rem/1 var(--gk-font-ui); text-transform: uppercase; overflow-wrap: anywhere; }
+.fs-card-body small { font: 700 0.78rem var(--gk-font-ui); color: var(--gk-dim); letter-spacing: 0.03em; }
+.fs-card-flags { position: absolute; top: 8px; left: 0; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+.fs-card-flags span { padding: 3px 8px; font: 900 0.68rem var(--gk-font-ui); letter-spacing: 0.08em; text-transform: uppercase; background: var(--gk-accent); color: #111; border: 2px solid #111; border-left: 0; }
+.fs-card-flags .is-seen { background: #4ade80; }
+.fs-card-note { position: absolute; right: 6px; bottom: 6px; padding: 2px 6px; font: 900 0.8rem var(--gk-font-ui); color: #fbbf24; background: rgba(10,8,6,0.85); border: 1.5px solid #fbbf24; display: inline-flex; align-items: center; gap: 3px; }
+@media (hover: hover) {
+  .fs-card:hover { transform: translate(-3px, -3px); box-shadow: 7px 7px 0 var(--gk-accent); }
+  .fs-card:hover .fs-card-media img { transform: scale(1.05); }
+}
+.fs-card:active { transform: translate(3px, 3px); box-shadow: none; }
+
+/* Archives : une ligne par séance */
+.fs-week { border-top: 1px solid var(--gk-rule); }
+.fs-week:first-of-type { border-top: var(--gk-stroke) solid var(--gk-border); }
+.fs-week > summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 46px 52px minmax(0, 1fr) auto; align-items: center; gap: 0 14px; padding: 10px 4px; min-height: 84px; }
+.fs-week > summary::-webkit-details-marker { display: none; }
+.fs-week-no { font: 400 1.5rem/1 var(--gk-font-display); color: var(--gk-faint); text-align: center; }
+.fs-week-thumb { width: 52px; aspect-ratio: 2 / 3; object-fit: cover; border: 2px solid var(--gk-border); background: var(--gk-surface-2); display: block; }
+.fs-week-main strong { display: block; font: 900 italic clamp(1.15rem, 3.6vw, 1.6rem)/1 var(--gk-font-ui); text-transform: uppercase; overflow-wrap: anywhere; }
+.fs-week-main small { display: block; margin-top: 5px; font: 700 0.8rem var(--gk-font-ui); letter-spacing: 0.06em; text-transform: uppercase; color: var(--gk-dim); }
+.fs-week-chev { transition: transform var(--gk-med) var(--gk-ease); color: var(--gk-dim); }
+.fs-week[open] .fs-week-chev { transform: rotate(180deg); }
+.fs-week[open] > summary { background: var(--gk-surface); }
+.fs-week-body { padding: 16px 4px 26px; animation: gk-rise 300ms var(--gk-ease) both; }
+@media (hover: hover) { .fs-week > summary:hover .fs-week-main strong { color: var(--gk-accent); } }
+@media (max-width: 480px) { .fs-week > summary { grid-template-columns: 30px 44px minmax(0, 1fr) auto; gap: 0 10px; } .fs-week-thumb { width: 44px; } .fs-week-no { font-size: 1.1rem; } }
+
+/* Fiche détaillée + bande-annonce */
+.fs-overlay { position: fixed; inset: 0; z-index: var(--z-modal, 9000); background: rgba(5,4,3,0.9); display: grid; place-items: center; padding: clamp(0px, 3vw, 28px); overflow-y: auto; animation: gk-fade 160ms both; }
+.fs-sheet { position: relative; width: min(720px, 100%); max-height: 100dvh; overflow-y: auto; background: var(--gk-bg); color: var(--gk-text); border: var(--gk-stroke) solid var(--gk-border); box-shadow: 8px 8px 0 var(--gk-accent); animation: gk-rise 240ms var(--gk-ease) both; }
+@media (max-width: 640px) { .fs-sheet { min-height: 100dvh; border: 0; box-shadow: none; } }
+.fs-sheet-banner { position: relative; height: clamp(120px, 26vw, 200px); background: var(--gk-surface-2); border-bottom: var(--gk-stroke) solid var(--gk-border); overflow: hidden; }
+.fs-sheet-banner img { width: 100%; height: 100%; object-fit: cover; }
+.fs-sheet-body { padding: clamp(16px, 3vw, 28px); display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 560px) { .fs-sheet-body { grid-template-columns: 150px minmax(0, 1fr); } }
+.fs-sheet-close { position: absolute; top: 8px; right: 8px; z-index: 2; background: var(--gk-bg); }
+.fs-trailer { width: min(1000px, 100%); aspect-ratio: 16 / 9; border: var(--gk-stroke) solid var(--gk-border); box-shadow: 8px 8px 0 var(--gk-hanko); background: #000; }
+.fs-trailer iframe { width: 100%; height: 100%; border: 0; display: block; }
+
+@media (prefers-reduced-motion: reduce) { .fs-backdrop img, .fs-week-body, .fs-sheet { animation: none; } }

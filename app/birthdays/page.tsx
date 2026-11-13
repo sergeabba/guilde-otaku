@@ -1,371 +1,392 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { createPortal } from "react-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { CalendarDays, ChevronLeft, ChevronRight, List, PartyPopper, Share2, Sword, User } from "lucide-react";
 import { Member, Rank } from "../../data/members";
-import { supabase } from "../../lib/supabase";
 import MemberModal from "../components/MemberModal";
-import { Gift, Crown } from "lucide-react";
-import { rankAccents } from "../config/ranks";
-import { useIsMobile } from "../hooks/useIsMobile";
 import GuildeHeader from "../components/GuildeHeader";
+import { rankAccents } from "../config/ranks";
 import { parseBirthday } from "../types";
+import { fetchMembers } from "../utils/dataAdapter";
+import { countdownTo, daysUntil, nextOccurrence, occurrenceIn } from "../utils/birthdays";
+import { useShare } from "../hooks/useShare";
+import "./birthdays.css";
 
-// On définit le type localement pour éviter les erreurs d'importation croisées
 type ViewMode = "real" | "anime";
+type Layout = "liste" | "calendrier";
 
-const monthNames = [
-  "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
-  "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
-];
+const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+const MONTHS_SHORT = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"];
+const DOW = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 
-const monthShort = [
-  "Jan", "Fév", "Mar", "Avr", "Mai", "Jun",
-  "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"
-];
-
-const monthThemes: Record<number, { accent: string; bg: string; dark: boolean }> = {
-  1:  { accent: "#60a5fa", bg: "linear-gradient(135deg, #0a0f1e 0%, #0f172a 100%)", dark: true },
-  2:  { accent: "#f472b6", bg: "linear-gradient(135deg, #1a0a14 0%, #2d0f22 100%)", dark: true },
-  3:  { accent: "#4ade80", bg: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)", dark: false },
-  4:  { accent: "#fb923c", bg: "linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)", dark: false },
-  5:  { accent: "#f59e0b", bg: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)", dark: false },
-  6:  { accent: "#c9a84c", bg: "linear-gradient(135deg, #0a0800 0%, #1a1200 100%)", dark: true },
-  7:  { accent: "#f87171", bg: "linear-gradient(135deg, #1a0505 0%, #2d0a0a 100%)", dark: true },
-  8:  { accent: "#fbbf24", bg: "linear-gradient(135deg, #1a1000 0%, #2d1c00 100%)", dark: true },
-  9:  { accent: "#a78bfa", bg: "linear-gradient(135deg, #0d0a1a 0%, #1a1230 100%)", dark: true },
-  10: { accent: "#f97316", bg: "linear-gradient(135deg, #1a0800 0%, #2d1200 100%)", dark: true },
-  11: { accent: "#94a3b8", bg: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)", dark: false },
-  12: { accent: "#34d399", bg: "linear-gradient(135deg, #f0fdf9 0%, #ccfbf1 100%)", dark: false },
+// Chaque mois garde sa couleur et son ambiance (claire ou sombre).
+const monthThemes: Record<number, { accent: string; dark: boolean }> = {
+  1: { accent: "#60a5fa", dark: true },  2: { accent: "#f472b6", dark: true },
+  3: { accent: "#4ade80", dark: false }, 4: { accent: "#fb923c", dark: false },
+  5: { accent: "#f59e0b", dark: false }, 6: { accent: "#c9a84c", dark: true },
+  7: { accent: "#f87171", dark: true },  8: { accent: "#fbbf24", dark: true },
+  9: { accent: "#a78bfa", dark: true },  10: { accent: "#f97316", dark: true },
+  11: { accent: "#94a3b8", dark: false }, 12: { accent: "#34d399", dark: false },
 };
 
+type Dated = Member & { day: number; month: number; daysUntil: number };
 
-function getDaysUntil(day: number, month: number): number {
-  const now = new Date();
-  const thisYear = now.getFullYear();
-  let next = new Date(thisYear, month - 1, day);
-  if (next.getDate() === now.getDate() && next.getMonth() === now.getMonth()) return 0;
-  if (next < now) next = new Date(thisYear + 1, month - 1, day);
-  return Math.ceil((next.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+const CONFETTI_KEY = "guilde-confettis";
+
+/** Compte à rebours isolé : lui seul se redessine chaque seconde. */
+function Countdown({ target }: { target: Date }) {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const c = countdownTo(target, now);
+  const cells: [number, string][] = [[c.days, c.days > 1 ? "jours" : "jour"], [c.hours, "heures"], [c.minutes, "min"], [c.seconds, "sec"]];
+  return (
+    <div className="bd-count" role="timer" aria-label={`Dans ${c.days} jours, ${c.hours} heures et ${c.minutes} minutes`}>
+      {cells.map(([v, label]) => (
+        <div key={label} aria-hidden="true">
+          <b>{String(v).padStart(2, "0")}</b>
+          <span>{label}</span>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export default function BirthdaysPage() {
-  const [now, setNow] = useState(new Date());
+  const [members, setMembers] = useState<Member[] | null>(null);
+  const [today, setToday] = useState(() => new Date());
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [activeMonth, setActiveMonth] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("anime");
-  const [members, setMembers] = useState<Member[]>([]);
-  const [mounted, setMounted] = useState(false);
-  const isMobile = useIsMobile();
-  useEffect(() => { setMounted(true); }, []);
+  const [layout, setLayout] = useState<Layout>("liste");
+  const [calMonth, setCalMonth] = useState(() => new Date().getMonth() + 1);
+  const [confettiOn, setConfettiOn] = useState(true);
+  const { share, Toast } = useShare();
 
   useEffect(() => {
-    const fetchMembers = async () => {
-      const { data } = await supabase.from("fighters").select("*").eq("hidden", false).order("id", { ascending: true });
-      if (data) {
-        setMembers(data.map(m => ({
-          ...m,
-          animeChar: m.animechar,
-          rankJP: m.rankjp
-        })));
-      }
-    };
-    fetchMembers();
+    let cancelled = false;
+    fetchMembers().then((list) => { if (!cancelled) setMembers(list); });
+    try { if (localStorage.getItem(CONFETTI_KEY) === "off") setConfettiOn(false); } catch {}
+    return () => { cancelled = true; };
   }, []);
 
+  // Le jour change à minuit : on revérifie chaque minute
   useEffect(() => {
-    const interval = setInterval(() => setNow(new Date()), 60_000);
-    return () => clearInterval(interval);
+    const t = setInterval(() => {
+      const n = new Date();
+      setToday((prev) => (prev.toDateString() === n.toDateString() ? prev : n));
+    }, 60_000);
+    return () => clearInterval(t);
   }, []);
 
-  const membersWithDates = members
-    .map((m) => {
-      const parsed = parseBirthday(m.birthday);
-      if (!parsed) return null;
-      return { ...m, day: parsed.day, month: parsed.month, daysUntil: getDaysUntil(parsed.day, parsed.month) };
-    })
-    .filter(Boolean) as (typeof members[0] & { day: number; month: number; daysUntil: number })[];
+  const dated = useMemo<Dated[]>(() => (members ?? []).flatMap((m) => {
+    const p = parseBirthday(m.birthday);
+    return p ? [{ ...m, day: p.day, month: p.month, daysUntil: daysUntil(p.day, p.month, today) }] : [];
+  }), [members, today]);
 
-  const next = [...membersWithDates].sort((a, b) => a.daysUntil - b.daysUntil)[0];
-  const sameDay = membersWithDates.filter(m => m.daysUntil === next?.daysUntil);
-  const isToday = next?.daysUntil === 0;
+  const byMonth = useMemo(() => {
+    const map: Record<number, Dated[]> = {};
+    for (let i = 1; i <= 12; i++) map[i] = [];
+    dated.forEach((m) => map[m.month].push(m));
+    Object.values(map).forEach((arr) => arr.sort((a, b) => a.day - b.day));
+    return map;
+  }, [dated]);
 
-  const byMonth: Record<number, typeof membersWithDates> = {};
-  for (let i = 1; i <= 12; i++) byMonth[i] = [];
-  membersWithDates.forEach((m) => byMonth[m.month].push(m));
-  Object.values(byMonth).forEach((arr) => arr.sort((a, b) => a.day - b.day));
+  const soonest = useMemo(() => {
+    if (!dated.length) return [];
+    const min = Math.min(...dated.map((m) => m.daysUntil));
+    return dated.filter((m) => m.daysUntil === min);
+  }, [dated]);
+  const isToday = soonest[0]?.daysUntil === 0;
+  const upcoming = useMemo(
+    () => [...dated].filter((m) => m.daysUntil > (isToday ? 0 : soonest[0]?.daysUntil ?? 0)).sort((a, b) => a.daysUntil - b.daysUntil).slice(0, 4),
+    [dated, isToday, soonest]
+  );
 
-  const currentMonth = now.getMonth() + 1;
+  const currentMonth = today.getMonth() + 1;
   const orderedMonths = Array.from({ length: 12 }, (_, i) => ((currentMonth - 1 + i) % 12) + 1);
+  const themeMonth = layout === "calendrier" ? calMonth : activeMonth ?? currentMonth;
+  const theme = monthThemes[themeMonth];
+
+  const celebrate = useCallback(async () => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const confetti = (await import("canvas-confetti")).default;
+    const colors = [theme.accent, "#c9a84c", "#f3eee2", "#d7332b"];
+    confetti({ particleCount: 90, spread: 75, origin: { x: 0.2, y: 0.75 }, angle: 60, colors, disableForReducedMotion: true });
+    confetti({ particleCount: 90, spread: 75, origin: { x: 0.8, y: 0.75 }, angle: 120, colors, disableForReducedMotion: true });
+  }, [theme.accent]);
+
+  // Une seule salve automatique le jour J, si les confettis sont activés
+  useEffect(() => {
+    if (!isToday || !confettiOn) return;
+    const t = setTimeout(celebrate, 700);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isToday]);
+
+  const toggleConfetti = () => {
+    setConfettiOn((on) => {
+      try { localStorage.setItem(CONFETTI_KEY, on ? "off" : "on"); } catch {}
+      return !on;
+    });
+  };
+
+  const portrait = (m: Member) => (viewMode === "anime" ? m.animeChar || m.photo : m.photo || m.animeChar);
+  const whenLabel = (d: number) => (d === 0 ? "Aujourd'hui" : d === 1 ? "Demain" : `J-${d}`);
+  const shareBirthday = (list: Dated[]) => share({
+    title: `Anniversaire de ${list.map((m) => m.name).join(" & ")}`,
+    text: list[0].daysUntil === 0
+      ? `Aujourd'hui, la Guilde fête ${list.map((m) => m.name).join(" & ")} !`
+      : `${list.map((m) => m.name).join(" & ")} : anniversaire le ${list[0].day} ${MONTHS[list[0].month - 1].toLowerCase()}.`,
+    url: `/membres/${list[0].id}`,
+  });
+
+  // Grille du calendrier : mois affiché dans le cycle des 12 prochains mois
+  const calYear = calMonth >= currentMonth ? today.getFullYear() : today.getFullYear() + 1;
+  const calCells = useMemo(() => {
+    const first = new Date(calYear, calMonth - 1, 1);
+    const lead = (first.getDay() + 6) % 7; // lundi en premier
+    const count = new Date(calYear, calMonth, 0).getDate();
+    const people: Record<number, Dated[]> = {};
+    byMonth[calMonth].forEach((m) => {
+      const d = occurrenceIn(calYear, m.day, m.month).getDate();
+      (people[d] ??= []).push(m);
+    });
+    const cells: { day: number | null; people: Dated[] }[] = [];
+    for (let i = 0; i < lead; i++) cells.push({ day: null, people: [] });
+    for (let d = 1; d <= count; d++) cells.push({ day: d, people: people[d] ?? [] });
+    while (cells.length % 7) cells.push({ day: null, people: [] });
+    return cells;
+  }, [calYear, calMonth, byMonth]);
+
+  const loading = members === null;
   const visibleMonths = activeMonth ? [activeMonth] : orderedMonths;
-
-  const activeTheme = monthThemes[activeMonth ?? currentMonth];
-  const isDark = activeTheme.dark;
-  const themeAccent = activeTheme.accent;
-
+  const hasLeapling = dated.some((m) => m.month === 2 && m.day === 29);
 
   return (
-    <motion.main animate={{ background: activeTheme.bg }} transition={{ duration: 0.6 }} style={{ minHeight: "100vh", background: activeTheme.bg }}>
-      
-      <style>{`
-        @keyframes gradientMove {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-        @keyframes pulseGlow {
-          0% { box-shadow: 0 0 20px ${themeAccent}40; transform: scale(1); }
-          50% { box-shadow: 0 0 50px ${themeAccent}90; transform: scale(1.02); }
-          100% { box-shadow: 0 0 20px ${themeAccent}40; transform: scale(1); }
-        }
-        @keyframes float {
-          0% { transform: translateY(0px); }
-          50% { transform: translateY(-10px); }
-          100% { transform: translateY(0px); }
-        }
-      `}</style>
+    <div
+      className={`gk-page tone-${theme.dark ? "dark" : "light"}`}
+      style={{ "--gk-accent": theme.accent, transition: "background 400ms, color 400ms" } as React.CSSProperties}
+    >
+      <GuildeHeader activePage="birthdays" accentColor={theme.accent} tone={theme.dark ? "dark" : "light"} />
 
-      {/* keyframes dans globals.css — pas besoin de les redéfinir inline */}
-      <GuildeHeader 
-        activePage="birthdays" 
-        accentColor={themeAccent}
-        bgColor={isDark ? "rgba(5,5,8,0.7)" : "rgba(255,255,255,0.4)"}
-        textColor={isDark ? "#fff" : "#111"}
-      />
-      
-      <div style={{ maxWidth: "1100px", margin: "0 auto", padding: isMobile ? "0 15px" : "0 40px" }}>
-
-        <motion.div style={{ paddingTop: isMobile ? "40px" : "56px", paddingBottom: "40px" }} initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }}>
-          <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "13px", fontWeight: 700, letterSpacing: "0.35em", textTransform: "uppercase", color: themeAccent, marginBottom: "12px" }}>
-            Guilde Otaku 2025 / 26
+      <main className="gk-wrap" style={{ maxWidth: 1120, paddingBottom: "clamp(56px, 9vw, 110px)" }}>
+        <div className="gk-hero gk-reveal">
+          <div className="gk-hero-kicker">
+            <p className="gk-chapter"><b>02</b><span>LE CALENDRIER DE LA GUILDE</span></p>
+            <span className="gk-jp" aria-hidden="true">誕生日</span>
+          </div>
+          <h1 className="gk-display gk-h1" style={{ fontSize: "clamp(2.3rem, 10.4vw, 6.4rem)" }}>Anniversaires</h1>
+          <p className="gk-body gk-hero-lede">
+            Nous sommes le {today.getDate()} {MONTHS[today.getMonth()].toLowerCase()}. Voici qui souffle ses bougies, et quand.
           </p>
-          <motion.h1 animate={{ color: isDark ? "#fff" : "#111" }} transition={{ duration: 0.4 }} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: isMobile ? "50px" : "clamp(52px, 8vw, 88px)", fontWeight: 900, lineHeight: 0.9, letterSpacing: "-0.03em", textTransform: "uppercase", fontStyle: "italic" }}>
-            ANNIVER<span style={{ color: themeAccent }}>SAIRES</span>
-          </motion.h1>
-        </motion.div>
+        </div>
 
-        {next && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            onClick={() => setSelectedMember(next)}
-            style={{
-              backgroundImage: isToday ? `linear-gradient(270deg, ${isDark ? '#1a1a1a' : '#fff'} 0%, ${themeAccent}25 50%, ${isDark ? '#1a1a1a' : '#fff'} 100%)` : "none",
-              backgroundColor: isToday ? "transparent" : (isDark ? "rgba(255,255,255,0.05)" : "#111"),
-              backgroundSize: isToday ? "200% 200%" : "auto",
-              animation: isToday ? "gradientMove 3s ease infinite" : "none",
-              border: isToday ? `2px solid ${themeAccent}` : `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "transparent"}`,
-              boxShadow: isToday ? `0 0 30px ${themeAccent}40` : "none",
-              backdropFilter: "blur(12px)",
-              borderRadius: "16px",
-              padding: isMobile ? "24px 20px" : "36px 44px",
-              marginBottom: "48px",
-              display: "flex", flexDirection: isMobile ? "column" : "row",
-              alignItems: isMobile ? "flex-start" : "center",
-              justifyContent: "space-between",
-              gap: "24px", flexWrap: "wrap",
-              cursor: "pointer", position: "relative", overflow: "hidden",
-            }}
-          >
-            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: isToday ? "4px" : "3px", background: `linear-gradient(90deg, transparent, ${themeAccent}, transparent)` }} />
-
-            <div style={{ display: "flex", gap: "20px", width: isMobile ? "100%" : "auto", zIndex: 10 }}>
-              <div style={{
-                width: isToday ? "85px" : "72px", height: isToday ? "85px" : "72px", 
-                borderRadius: "50%", overflow: "hidden", flexShrink: 0,
-                border: `3px solid ${themeAccent}`,
-                animation: isToday ? "pulseGlow 2s infinite" : "none",
-                position: "relative", transition: "all 0.3s"
-              }}>
-                <AnimatePresence mode="wait">
-                  <motion.img
-                    key={viewMode} src={viewMode === "anime" ? next.animeChar : next.photo} alt={next.name}
-                    initial={{ opacity: 0, scale: 1.1, filter: "blur(4px)" }} animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }} exit={{ opacity: 0, scale: 0.9, filter: "blur(4px)" }}
-                    transition={{ duration: 0.35 }}
-                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "top" }}
-                    onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0"; }}
-                  />
-                </AnimatePresence>
+        {loading ? (
+          <div role="status" aria-label="Chargement des anniversaires">
+            <div className="gk-skel" style={{ height: 300 }} />
+            {Array.from({ length: 5 }, (_, i) => <div key={i} className="gk-skel" style={{ height: 76, marginTop: 10 }} />)}
+          </div>
+        ) : dated.length === 0 ? (
+          <div className="gk-empty">
+            <div className="gk-empty-glyph" aria-hidden="true">暦</div>
+            <h3>Le calendrier est vide</h3>
+            <p>Aucune date d&apos;anniversaire n&apos;a pu être chargée. Recharge la page dans un instant.</p>
+          </div>
+        ) : (
+          <>
+            {/* ── À L'HONNEUR ─────────────────────────────────────────── */}
+            <section className={`gk-panel bd-spot${isToday ? " is-today" : ""}`} aria-label={isToday ? "Anniversaire du jour" : "Prochain anniversaire"}>
+              <div className="bd-spot-media">
+                {soonest.map((m) => (
+                  <button key={m.id} type="button" onClick={() => setSelectedMember(m)} aria-label={`Ouvrir la fiche de ${m.name}`}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    {portrait(m) && <img key={viewMode} className="gk-wipe-in" src={portrait(m)} alt="" />}
+                  </button>
+                ))}
+              </div>
+              <div className="bd-spot-body">
+                <p className="gk-chapter" style={{ width: "fit-content" }}>
+                  <b>{isToday ? "祝" : "次"}</b>
+                  <span>{isToday ? "C'EST AUJOURD'HUI" : "PROCHAIN ANNIVERSAIRE"}</span>
+                </p>
+                <h2>{soonest.map((m) => m.name).join(" & ")}</h2>
+                <p className="bd-spot-date">
+                  {soonest[0].day} {MONTHS[soonest[0].month - 1].toLowerCase()}, {[...new Set(soonest.map((m) => m.rank))].join(" et ")}
+                </p>
+                {isToday ? (
+                  <p className="bd-shout">Joyeux anniversaire !</p>
+                ) : (
+                  <Countdown target={nextOccurrence(soonest[0].day, soonest[0].month, today)} />
+                )}
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 6 }}>
+                  {isToday && (
+                    <button type="button" className="gk-btn gk-btn--ink" onClick={celebrate}>
+                      <PartyPopper size={17} aria-hidden="true" /> Lancer les confettis
+                    </button>
+                  )}
+                  <button type="button" className={`gk-btn ${isToday ? "gk-btn--ghost" : ""}`} onClick={() => setSelectedMember(soonest[0])}>
+                    Voir la fiche
+                  </button>
+                  <button type="button" className="gk-btn gk-btn--ghost" onClick={() => shareBirthday(soonest)}>
+                    <Share2 size={16} aria-hidden="true" /> Partager
+                  </button>
+                </div>
                 {isToday && (
-                  <div style={{ position: "absolute", top: "-15px", left: "50%", transform: "translateX(-50%)", animation: "float 3s ease-in-out infinite", filter: "drop-shadow(0 2px 5px rgba(0,0,0,0.5))" }}>
-                    <Crown size={24} color="#FFD700" fill="#FFD700" />
-                  </div>
+                  <label style={{ display: "inline-flex", alignItems: "center", gap: 8, font: "700 0.9rem var(--gk-font-ui)", cursor: "pointer", width: "fit-content" }}>
+                    <input type="checkbox" checked={confettiOn} onChange={toggleConfetti} style={{ width: 18, height: 18, accentColor: "#111" }} />
+                    Confettis automatiques à l&apos;ouverture
+                  </label>
                 )}
               </div>
+            </section>
 
-              <div style={{ flex: 1 }}>
-                <p style={{
-                  fontFamily: "'Barlow Condensed', sans-serif", fontSize: "11px", fontWeight: 900, letterSpacing: "0.3em", textTransform: "uppercase",
-                  color: isToday ? themeAccent : (isDark ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.4)"), marginBottom: "10px",
-                  display: "flex", alignItems: "center", gap: "6px"
-                }}>
-                  {isToday ? <><Gift size={14}/> C'EST SON ANNIVERSAIRE </> : "PROCHAIN ANNIVERSAIRE"}
-                </p>
-                <div style={{ display: "flex", alignItems: "baseline", gap: "10px", flexWrap: "wrap" }}>
-                  {sameDay.map((m, i) => (
-                    <h2 key={m.id} style={{
-                      fontFamily: "'Barlow Condensed', sans-serif", fontSize: isMobile ? "32px" : "clamp(24px, 4vw, 40px)",
-                      fontWeight: 900, color: isToday && !isDark ? "#111" : "#fff", letterSpacing: "-0.02em", textTransform: "uppercase", fontStyle: "italic", lineHeight: 1,
-                      textShadow: isToday ? `0 2px 10px ${themeAccent}80` : "none"
-                    }}>
-                      {m.name}{i < sameDay.length - 1 ? " &" : ""}
-                    </h2>
-                  ))}
-                </div>
-                <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "14px", fontWeight: 500, color: isToday && !isDark ? "#444" : "rgba(255,255,255,0.6)", marginTop: "8px" }}>
-                  {next.day} {monthNames[next.month - 1]} — {next.rank}
-                </p>
+            {upcoming.length > 0 && (
+              <section aria-labelledby="bd-next-title" style={{ marginTop: "clamp(28px, 5vw, 48px)" }}>
+                <h2 id="bd-next-title" className="gk-display gk-h4">Ensuite</h2>
+                <ul className="bd-rows" style={{ marginTop: 10, borderTop: "var(--gk-stroke) solid var(--gk-border)" }}>
+                  {upcoming.map((m) => <Row key={m.id} m={m} src={portrait(m)} label={whenLabel(m.daysUntil)} onOpen={() => setSelectedMember(m)} showMonth />)}
+                </ul>
+              </section>
+            )}
+
+            {/* ── OUTILS ──────────────────────────────────────────────── */}
+            <div className="bd-tools">
+              <div className="gk-switch" role="group" aria-label="Affichage">
+                <button type="button" aria-pressed={layout === "liste"} onClick={() => setLayout("liste")}>
+                  <List size={16} aria-hidden="true" /> Liste
+                </button>
+                <button type="button" aria-pressed={layout === "calendrier"} onClick={() => setLayout("calendrier")}>
+                  <CalendarDays size={16} aria-hidden="true" /> Calendrier
+                </button>
+              </div>
+              <div className="gk-switch" role="group" aria-label="Type de portrait">
+                <button type="button" aria-pressed={viewMode === "real"} onClick={() => setViewMode("real")}>
+                  <User size={16} aria-hidden="true" /> Réel
+                </button>
+                <button type="button" aria-pressed={viewMode === "anime"} onClick={() => setViewMode("anime")}>
+                  <Sword size={16} aria-hidden="true" /> Anime
+                </button>
               </div>
             </div>
 
-            <div style={{ textAlign: isMobile ? "left" : "right", flexShrink: 0, width: isMobile ? "100%" : "auto", borderTop: isMobile ? `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}` : "none", paddingTop: isMobile ? "15px" : "0", zIndex: 10 }}>
-              {isToday ? (
-                <div style={{ animation: "pulseGlow 2s infinite", background: themeAccent, padding: "10px 20px", borderRadius: "8px", transform: "rotate(-2deg)" }}>
-                  <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "22px", fontWeight: 900, color: "#fff", letterSpacing: "0.1em", margin: 0, textShadow: "0 2px 4px rgba(0,0,0,0.3)" }}>
-                    JOYEUX ANNIVERSAIRE ! 
-                  </p>
+            {layout === "liste" ? (
+              <>
+                <div className="gk-chips gk-chips--wrap" role="group" aria-label="Filtrer par mois" style={{ marginTop: 18 }}>
+                  <button type="button" className="gk-chip" aria-pressed={activeMonth === null} onClick={() => setActiveMonth(null)}>
+                    <span>Toute l&apos;année</span>
+                  </button>
+                  {orderedMonths.map((mo) => byMonth[mo].length > 0 && (
+                    <button
+                      key={mo}
+                      type="button"
+                      className="gk-chip"
+                      aria-pressed={activeMonth === mo}
+                      onClick={() => setActiveMonth(activeMonth === mo ? null : mo)}
+                      aria-label={`${MONTHS[mo - 1]}, ${byMonth[mo].length} anniversaires`}
+                    >
+                      <span>{MONTHS_SHORT[mo - 1]} <small>{byMonth[mo].length}</small></span>
+                    </button>
+                  ))}
                 </div>
-              ) : (
-                <div>
-                  <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "clamp(44px, 7vw, 72px)", fontWeight: 900, color: themeAccent, lineHeight: 1, letterSpacing: "-0.04em", fontStyle: "italic" }}>J-{next.daysUntil}</p>
-                  <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "11px", fontWeight: 700, color: isDark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.4)", letterSpacing: "0.2em", textTransform: "uppercase", marginTop: "4px" }}>
-                    {next.daysUntil === 1 ? "DEMAIN" : "JOURS RESTANTS"}
-                  </p>
+
+                <div key={activeMonth ?? "all"} className="gk-stagger">
+                  {visibleMonths.map((mo, i) => byMonth[mo].length > 0 && (
+                    <section key={mo} className="bd-month" style={{ "--i": i } as React.CSSProperties} aria-labelledby={`bd-m-${mo}`}>
+                      <div className="bd-month-head">
+                        <h2 id={`bd-m-${mo}`} style={{ color: mo === currentMonth ? "var(--gk-accent-text)" : undefined }}>{MONTHS[mo - 1]}</h2>
+                        {mo === currentMonth && <span className="gk-tag gk-tag--solid">Ce mois-ci</span>}
+                        <span className="bd-n">{byMonth[mo].length} {byMonth[mo].length > 1 ? "membres" : "membre"}</span>
+                      </div>
+                      <ul className="bd-rows">
+                        {byMonth[mo].map((m) => <Row key={m.id} m={m} src={portrait(m)} label={whenLabel(m.daysUntil)} onOpen={() => setSelectedMember(m)} />)}
+                      </ul>
+                    </section>
+                  ))}
                 </div>
-              )}
-            </div>
-          </motion.div>
+              </>
+            ) : (
+              <section aria-label={`Calendrier de ${MONTHS[calMonth - 1]} ${calYear}`}>
+                <div className="bd-cal-head">
+                  <button type="button" className="gk-icon-btn" onClick={() => setCalMonth((m) => (m === 1 ? 12 : m - 1))} aria-label="Mois précédent">
+                    <ChevronLeft size={20} aria-hidden="true" />
+                  </button>
+                  <h2 aria-live="polite">{MONTHS[calMonth - 1]} <span style={{ color: "var(--gk-faint)" }}>{calYear}</span></h2>
+                  <button type="button" className="gk-icon-btn" onClick={() => setCalMonth((m) => (m === 12 ? 1 : m + 1))} aria-label="Mois suivant">
+                    <ChevronRight size={20} aria-hidden="true" />
+                  </button>
+                </div>
+                <div className="bd-cal" key={calMonth}>
+                  {DOW.map((d) => <div key={d} className="bd-cal-dow" aria-hidden="true">{d}</div>)}
+                  {calCells.map((c, i) => {
+                    const isNow = c.day === today.getDate() && calMonth === currentMonth && calYear === today.getFullYear();
+                    return (
+                      <div key={i} className={`bd-cell${c.day ? "" : " is-out"}${c.people.length ? " has" : ""}${isNow ? " is-now" : ""}`}>
+                        {c.day && <span className="bd-cell-n">{c.day}</span>}
+                        {c.people.length > 0 && (
+                          <div className="bd-cell-people">
+                            {c.people.map((m) => (
+                              <button key={m.id} type="button" className="no-min" onClick={() => setSelectedMember(m)} aria-label={`${m.name}, le ${c.day} ${MONTHS[calMonth - 1].toLowerCase()}`} title={m.name}>
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                {portrait(m) && <img src={portrait(m)} alt="" loading="lazy" />}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                {byMonth[calMonth].length === 0 ? (
+                  <p className="gk-body" style={{ marginTop: 18 }}>Personne ne fête son anniversaire en {MONTHS[calMonth - 1].toLowerCase()}.</p>
+                ) : (
+                  <div className="bd-cal-names">
+                    {byMonth[calMonth].map((m) => (
+                      <button key={m.id} type="button" className="gk-chip" onClick={() => setSelectedMember(m)}>
+                        <span><small>{m.day}</small> {m.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
+
+            {hasLeapling && (
+              <p className="bd-leap">Les anniversaires du 29 février se fêtent le 28 les années non bissextiles.</p>
+            )}
+          </>
         )}
-
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "40px" }}>
-          <button onClick={() => setActiveMonth(null)} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "13px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", padding: "8px 18px", borderRadius: "100px", border: activeMonth === null ? `2px solid ${themeAccent}` : `2px solid ${isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.12)"}`, background: activeMonth === null ? themeAccent : "transparent", color: activeMonth === null ? "#fff" : (isDark ? "rgba(255,255,255,0.5)" : "#666"), cursor: "pointer", transition: "all 0.2s" }}>
-            Tous
-          </button>
-          {orderedMonths.map((monthNum) => {
-            if (byMonth[monthNum].length === 0) return null;
-            const isActive = activeMonth === monthNum;
-            const isCurrent = monthNum === currentMonth;
-            const mTheme = monthThemes[monthNum];
-            return (
-              <button key={monthNum} onClick={() => setActiveMonth(isActive ? null : monthNum)} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "13px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", padding: "8px 16px", borderRadius: "100px", border: isActive ? `2px solid ${mTheme.accent}` : isCurrent ? `2px solid ${mTheme.accent}60` : `2px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}`, background: isActive ? mTheme.accent : isCurrent ? `${mTheme.accent}18` : "transparent", color: isActive ? "#fff" : isCurrent ? mTheme.accent : (isDark ? "rgba(255,255,255,0.45)" : "#555"), cursor: "pointer", transition: "all 0.2s" }}>
-                {monthShort[monthNum - 1]} <span style={{ marginLeft: "5px", fontSize: "11px", opacity: 0.6 }}>{byMonth[monthNum].length}</span>
-              </button>
-            );
-          })}
-        </motion.div>
-
-        <AnimatePresence mode="wait">
-          <motion.div key={activeMonth ?? "tous"} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3 }}>
-            {visibleMonths.map((monthNum, idx) => {
-              const monthMembers = byMonth[monthNum];
-              if (monthMembers.length === 0) return null;
-              const isCurrentMonth = monthNum === currentMonth;
-              const mTheme = monthThemes[monthNum];
-
-              return (
-                <motion.section key={monthNum} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.03 }} style={{ marginBottom: "48px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "12px", paddingBottom: "12px", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)"}` }}>
-                    <div style={{ width: "5px", height: "28px", background: mTheme.accent, borderRadius: "3px", flexShrink: 0 }} />
-                    <h2 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "28px", fontWeight: 900, color: isCurrentMonth ? mTheme.accent : (isDark ? "rgba(255,255,255,0.4)" : "#aaa"), textTransform: "uppercase", letterSpacing: "-0.01em", fontStyle: "italic" }}>{monthNames[monthNum - 1]}</h2>
-                    {isCurrentMonth && <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "10px", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", color: "#fff", background: mTheme.accent, padding: "3px 10px", borderRadius: "100px" }}>CE MOIS-CI</span>}
-                    <div style={{ flex: 1, height: "1px", background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)" }} />
-                    <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "13px", color: isDark ? "rgba(255,255,255,0.25)" : "#bbb", fontWeight: 600 }}>{monthMembers.length} membre{monthMembers.length > 1 ? "s" : ""}</span>
-                  </div>
-
-                  <div style={{ display: "flex", flexDirection: "column", gap: "2px", borderRadius: "14px", overflow: "hidden", boxShadow: isDark ? `0 4px 24px rgba(0,0,0,0.3)` : "0 2px 16px rgba(0,0,0,0.06)" }}>
-                    {monthMembers.map((m, i) => {
-                      const accent = rankAccents[m.rank as Rank] ?? "#111";
-                      const isTodayRow = m.daysUntil === 0;
-                      const isSoon = m.daysUntil <= 7 && m.daysUntil > 0;
-                      const rowBg = isTodayRow ? (isDark ? "#1a1a1a" : "#fff5f5") : isDark ? "rgba(255,255,255,0.04)" : "#fff";
-
-                      return (
-                        <motion.div key={m.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.03 * i }} onClick={() => setSelectedMember(m)} onMouseEnter={(e) => { e.currentTarget.style.background = isTodayRow ? (isDark ? "#222" : "#ffebeb") : isDark ? "rgba(255,255,255,0.08)" : "#f5f3ee"; }} onMouseLeave={(e) => { e.currentTarget.style.background = rowBg; }} style={{ background: rowBg, display: "flex", alignItems: "stretch", cursor: "pointer", overflow: "hidden", minHeight: "80px", transition: "background 0.2s" }}>
-                          <div style={{ width: "4px", flexShrink: 0, background: accent, opacity: isTodayRow ? 1 : 0.6 }} />
-                          <div style={{ width: "80px", height: "80px", flexShrink: 0, overflow: "hidden", background: isDark ? "rgba(255,255,255,0.04)" : "#f0f0ee", position: "relative" }}>
-                            <AnimatePresence mode="wait">
-                              <motion.img key={viewMode} src={viewMode === "anime" ? m.animeChar : m.photo} alt="" initial={{ opacity: 0, scale: 1.1, filter: "blur(4px)" }} animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }} exit={{ opacity: 0, scale: 0.9, filter: "blur(4px)" }} transition={{ duration: 0.35 }} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "top", display: "block" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                            </AnimatePresence>
-                          </div>
-                          <div style={{ flex: 1, padding: isMobile ? "10px 15px" : "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-                              <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: isMobile ? "28px" : "36px", fontWeight: 900, color: isTodayRow ? mTheme.accent : accent, lineHeight: 1, minWidth: isMobile ? "35px" : "52px", fontStyle: "italic" }}>{String(m.day).padStart(2, "0")}</span>
-                              <div>
-                                <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: isMobile ? "16px" : "18px", fontWeight: 800, color: isTodayRow ? (isDark ? "#fff" : "#f03e3e") : (isDark ? "rgba(255,255,255,0.9)" : "#111"), textTransform: "uppercase", letterSpacing: "0.01em", lineHeight: 1 }}>{m.name} {isTodayRow && <Gift size={14} style={{ display: "inline", marginLeft: "4px" }}/>}</div>
-                                <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "12px", fontWeight: 600, color: isTodayRow ? "rgba(240,62,62,0.6)" : (isDark ? "rgba(255,255,255,0.3)" : "#bbb"), letterSpacing: "0.14em", textTransform: "uppercase", marginTop: "3px" }}>{m.rank}</div>
-                              </div>
-                            </div>
-                            <div style={{ flexShrink: 0 }}>
-                              {isTodayRow ? (
-                                <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "13px", fontWeight: 800, color: isDark ? mTheme.accent : "#f03e3e", letterSpacing: "0.1em", textTransform: "uppercase" }}>{isMobile ? "Auj." : "AUJOURD'HUI"}</span>
-                              ) : isSoon ? (
-                                <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "13px", fontWeight: 800, color: mTheme.accent, background: `${mTheme.accent}18`, padding: "5px 14px", borderRadius: "100px", border: `1.5px solid ${mTheme.accent}40`, letterSpacing: "0.06em" }}>J-{m.daysUntil}</span>
-                              ) : (
-                                <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "14px", fontWeight: 600, color: isDark ? "rgba(255,255,255,0.2)" : "#ccc", letterSpacing: "0.04em" }}>J-{m.daysUntil}</span>
-                              )}
-                            </div>
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                </motion.section>
-              );
-            })}
-          </motion.div>
-        </AnimatePresence>
-
-        <footer style={{ borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)"}`, padding: "32px 0", marginTop: "20px", textAlign: "center" }}>
-          <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "12px", color: isDark ? "rgba(255,255,255,0.2)" : "#bbb", letterSpacing: "0.25em", textTransform: "uppercase" }}>Guilde Otaku Depuis 2020</p>
-        </footer>
-      </div>
+      </main>
 
       <MemberModal member={selectedMember} onClose={() => setSelectedMember(null)} viewMode={viewMode} />
+      <Toast />
+    </div>
+  );
+}
 
-      {mounted && !selectedMember && createPortal(
-        <div style={{
-          position: "fixed",
-          bottom: isMobile ? "20px" : "40px",
-          left: "50%",
-          transform: "translateX(-50%)",
-          zIndex: 10002,
-          display: "flex",
-          background: isDark ? "rgba(10,10,10,0.88)" : "rgba(255,255,255,0.88)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-          padding: "6px",
-          borderRadius: "100px",
-          boxShadow: isDark ? "0 10px 40px rgba(0,0,0,0.8)" : "0 10px 40px rgba(0,0,0,0.15)",
-          border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)"}`,
-        }}>
-          {(["real", "anime"] as const).map((mode) => (
-            <motion.button
-              key={mode}
-              onClick={() => setViewMode(mode)}
-              whileTap={{ scale: 0.93 }}
-              transition={{ type: "spring", stiffness: 500, damping: 25 }}
-              style={{
-                padding: isMobile ? "10px 20px" : "12px 28px",
-                borderRadius: "100px",
-                border: "none", cursor: "pointer",
-                display: "flex", alignItems: "center", gap: "8px",
-                fontFamily: "'Barlow Condensed', sans-serif",
-                fontSize: isMobile ? "14px" : "16px",
-                fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em",
-                background: viewMode === mode ? themeAccent : "transparent",
-                color: viewMode === mode ? "#fff" : "#888",
-                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                boxShadow: viewMode === mode ? `0 4px 15px ${themeAccent}60` : "none",
-              }}
-            >
-              {mode === "real" ? "Réel" : "Anime"}
-            </motion.button>
-          ))}
-        </div>,
-        document.body
-      )}
-    </motion.main>
+function Row({ m, src, label, onOpen, showMonth = false }: { m: Dated; src: string; label: string; onOpen: () => void; showMonth?: boolean }) {
+  const rk = rankAccents[m.rank as Rank] ?? "#c9a84c";
+  return (
+    <li>
+      <button
+        type="button"
+        className={`bd-row${m.daysUntil === 0 ? " is-today" : ""}`}
+        onClick={onOpen}
+        aria-label={`${m.name}, ${m.rank}, le ${m.day} ${MONTHS[m.month - 1].toLowerCase()}. ${label}. Ouvrir la fiche.`}
+      >
+        <span className="bd-day" aria-hidden="true">{String(m.day).padStart(2, "0")}</span>
+        <span className="bd-avatar" style={{ borderColor: rk }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {src && <img src={src} alt="" loading="lazy" />}
+        </span>
+        <span className="bd-who">
+          <strong>{m.name}</strong>
+          <small>{showMonth ? `${MONTHS[m.month - 1]}, ${m.rank}` : m.rank}</small>
+        </span>
+        <span className={`bd-when${m.daysUntil > 0 && m.daysUntil <= 7 ? " is-soon" : ""}`}>{label}</span>
+      </button>
+    </li>
   );
 }

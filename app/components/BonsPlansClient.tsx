@@ -1,270 +1,220 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Tv, BookOpen, Globe, ExternalLink, Search, Film, Image as ImageIcon } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { BookOpen, ExternalLink, Film, Globe, Heart, Search, Share2, Tv, X } from "lucide-react";
 import GuildeHeader from "./GuildeHeader";
 import type { SupabaseBonPlanRow } from "../types";
+import { useFavorites } from "../hooks/useFavorites";
+import { useShare } from "../hooks/useShare";
+import { normalize } from "../utils/text";
+import { onColor } from "../utils/color";
+import "../bons-plans/bons-plans.css";
 
-// --- LES CATÉGORIES ---
-const categories = ["Tout", "Animes", "Scans", "Films/Séries", "Utiles"];
+// Ordre d'affichage des catégories connues ; les autres suivent, telles que saisies.
+const KNOWN_ORDER = ["Animes", "Scans", "Films/Séries", "Utiles"];
+const CATEGORY_ICON: Record<string, typeof Globe> = { "Animes": Tv, "Scans": BookOpen, "Films/Séries": Film };
 
-// ─── COMPOSANT DE CARTE DE BON PLAN ──────────────────────────────────────────
-const LinkCard = ({ link, index }: { link: SupabaseBonPlanRow; index: number }) => {
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [loadingPreview, setLoadingPreview] = useState(true);
+function hostOf(url: string): string {
+  try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return url; }
+}
+const safeColor = (c: string | null | undefined) => (c && /^#[0-9a-f]{6}$/i.test(c) ? c : "#c9a84c");
 
-  // Fallback map pour les icônes (si on le souhaite, sinon on utilise Globe partout)
-  const getFallbackIcon = () => {
-    switch(link.category) {
-      case "Animes": return Tv;
-      case "Films/Séries": return Film;
-      case "Scans": return BookOpen;
-      default: return Globe;
-    }
-  };
-  const Icon = getFallbackIcon();
-
-  // Déduire l'URL du logo Google S2
-  let domain = "";
-  try {
-    domain = new URL(link.url).hostname;
-  } catch (e) {
-    domain = link.url; // fallback simple si 'url' n'est pas parsable en URL
-  }
-  const logoUrl = link.logo || `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
-
-  useEffect(() => {
-    // Fetcher l'open graph du site cible
-    fetch(`/api/link-preview?url=${encodeURIComponent(link.url)}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.image) {
-          setPreviewImage(data.image);
-        } else {
-          // Fallback ultime : on prend un vrai screenshot de l'accueil du site via Thum.io
-          setPreviewImage(`https://image.thum.io/get/width/1200/crop/630/noanimate/${link.url}`);
-        }
-        setLoadingPreview(false);
-      })
-      .catch(() => {
-        // En cas d'erreur de notre API, on essaie quand même le screenshot
-        setPreviewImage(`https://image.thum.io/get/width/1200/crop/630/noanimate/${link.url}`);
-        setLoadingPreview(false);
-      });
-  }, [link.url]);
-
+function Logo({ link }: { link: SupabaseBonPlanRow }) {
+  const [failed, setFailed] = useState(false);
+  const Icon = CATEGORY_ICON[link.category] ?? Globe;
+  const src = link.logo || `https://www.google.com/s2/favicons?domain=${hostOf(link.url)}&sz=128`;
   return (
-    <motion.a
-      href={link.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      layout
-      initial={{ opacity: 0, y: 24, scale: 0.96 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ duration: 0.5, delay: index * 0.06, ease: [0.16, 1, 0.3, 1] }}
-      whileHover={{ y: -6 }}
-      whileTap={{ scale: 0.98 }}
-      style={{
-        background: "rgba(15, 15, 20, 0.4)",
-        border: "1px solid rgba(255,255,255,0.08)",
-        borderRadius: "20px",
-        overflow: "hidden",
-        textDecoration: "none",
-        color: "inherit",
-        display: "flex",
-        flexDirection: "column",
-        position: "relative",
-        cursor: "pointer",
-        minHeight: "360px"
-      }}
-    >
-      {/* Ligne Accent en Haut */}
-      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "4px", background: link.color, opacity: 0.8, zIndex: 10 }} />
-
-      {/* Image de Couverture/Preview (OG:Image ou Screenshot) */}
-      <div style={{ height: "180px", position: "relative", backgroundColor: "rgba(0,0,0,0.5)", overflow: "hidden" }}>
-        <AnimatePresence mode="wait">
-          {loadingPreview ? (
-            <motion.div 
-              key="loading"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
-            >
-              <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }}>
-                <ImageIcon size={32} color="rgba(255,255,255,0.2)" />
-              </motion.div>
-            </motion.div>
-          ) : previewImage ? (
-            <motion.img 
-              key="preview"
-              src={previewImage} 
-              alt="Website preview"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8 }}
-              onError={(e) => {
-                // Si la capture d'écran échoue aussi, on efface l'image
-                setPreviewImage(null);
-              }}
-              style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", filter: "brightness(0.7) saturate(1.2)" }} 
-            />
-          ) : (
-            <motion.div key="fallback" style={{ width: "100%", height: "100%", background: `linear-gradient(135deg, ${link.color}20 0%, #000 100%)` }} />
-          )}
-        </AnimatePresence>
-
-        {/* Logo overlayed sur la cover */}
-        <div 
-          style={{
-            position: "absolute",
-            bottom: "-20px",
-            left: "20px",
-            width: "56px",
-            height: "56px",
-            borderRadius: "14px",
-            background: "#111",
-            border: `2px solid ${link.color}`,
-            boxShadow: `0 4px 12px ${link.color}40`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 10
-          }}
-        >
-           <img 
-            src={logoUrl} 
-            alt="logo"
-            referrerPolicy="no-referrer"
-            onError={(e) => { e.currentTarget.style.display = 'none'; }}
-            style={{ width: "60%", height: "60%", objectFit: "contain" }} 
-          />
-        </div>
-      </div>
-      
-      {/* Contenu */}
-      <div style={{ padding: "30px 24px 24px", display: "flex", flexDirection: "column", flex: 1, zIndex: 10, background: "linear-gradient(to top, rgba(10,10,15,1) 0%, rgba(10,10,15,0.6) 100%)" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
-          <h3 style={{ fontSize: "24px", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", color: "#fff", margin: 0, lineHeight: 1.1 }}>
-            {link.title}
-          </h3>
-          <ExternalLink size={18} color="rgba(255,255,255,0.3)" style={{ marginTop: "4px" }} />
-        </div>
-        
-        <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "15px", lineHeight: 1.5, flex: 1, margin: "8px 0 20px" }}>
-          {link.desc}
-        </p>
-
-        <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(255,255,255,0.05)", padding: "4px 12px", borderRadius: "100px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.1em", color: link.color, textTransform: "uppercase", alignSelf: "flex-start", border: `1px solid ${link.color}30` }}>
-          <Icon size={12} />
-          {link.category}
-        </div>
-      </div>
-    </motion.a>
+    <span className="bp-logo" aria-hidden="true">
+      {failed ? <Icon size={24} /> : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={src} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(true)} />
+      )}
+    </span>
   );
-};
+}
 
 export default function BonsPlansClient({ initialLinks }: { initialLinks: SupabaseBonPlanRow[] }) {
   const [activeCategory, setActiveCategory] = useState("Tout");
   const [searchTerm, setSearchTerm] = useState("");
+  const [favOnly, setFavOnly] = useState(false);
+  const [leadShot, setLeadShot] = useState<string | null>(null);
+  const { toggle, isFavorite, count: favCount } = useFavorites("bons-plans");
+  const { share, Toast } = useShare();
 
-  const filteredLinks = initialLinks.filter((link) => {
-    const matchesCategory = activeCategory === "Tout" || link.category === activeCategory;
-    const titleMatch = (link.title || "").toLowerCase().includes(searchTerm.toLowerCase());
-    const descMatch = (link.desc || "").toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesCategory && (titleMatch || descMatch);
-  });
+  const categories = useMemo(() => {
+    const present = [...new Set(initialLinks.map((l) => l.category).filter(Boolean))];
+    return [...KNOWN_ORDER.filter((c) => present.includes(c)), ...present.filter((c) => !KNOWN_ORDER.includes(c)).sort()];
+  }, [initialLinks]);
+
+  // Mise en avant : le dernier ajout daté. Rien n'est mis en avant sans date.
+  const lead = useMemo(() => {
+    const dated = initialLinks.filter((l) => l.created_at && !Number.isNaN(Date.parse(l.created_at)));
+    if (!dated.length) return null;
+    return dated.reduce((a, b) => (Date.parse(b.created_at) > Date.parse(a.created_at) ? b : a));
+  }, [initialLinks]);
+
+  // Aperçu du site pour la mise en avant uniquement (une seule requête)
+  useEffect(() => {
+    if (!lead) return;
+    let cancelled = false;
+    fetch(`/api/link-preview?url=${encodeURIComponent(lead.url)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!cancelled && d?.image) setLeadShot(d.image); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [lead]);
+
+  const filtered = useMemo(() => {
+    const q = normalize(searchTerm.trim());
+    return initialLinks.filter((l) =>
+      (activeCategory === "Tout" || l.category === activeCategory) &&
+      (!favOnly || isFavorite(l.id)) &&
+      (!q || normalize(`${l.title} ${l.desc} ${hostOf(l.url)}`).includes(q))
+    );
+  }, [initialLinks, activeCategory, favOnly, isFavorite, searchTerm]);
+
+  const hasFilters = activeCategory !== "Tout" || !!searchTerm || favOnly;
+  const reset = () => { setActiveCategory("Tout"); setSearchTerm(""); setFavOnly(false); };
+  const shareLink = (l: SupabaseBonPlanRow) => share({ title: `${l.title} | Bons plans de la Guilde`, text: l.desc, url: l.url });
+  const showLead = lead && !hasFilters;
 
   return (
-    <div style={{
-      minHeight: "100vh", background: "#050505", color: "#fff",
-      fontFamily: "'Barlow Condensed', sans-serif",
-      position: "relative", overflow: "hidden", display: "flex", flexDirection: "column",
-    }}>
-      <div style={{ position: "absolute", inset: 0, opacity: 0.1, backgroundImage: "radial-gradient(circle at 50% 0%, #c9a84c 0%, transparent 60%)", zIndex: 0, pointerEvents: "none" }} />
-      <div style={{ position: "absolute", inset: 0, opacity: 0.05, backgroundImage: "repeating-linear-gradient(0deg, #1a1a1a 0, #1a1a1a 1px, transparent 1px, transparent 20px)", zIndex: 0, pointerEvents: "none" }} />
+    <div className="gk-page tone-dark bp-page">
+      <GuildeHeader activePage="bons-plans" tone="dark" />
 
-      <GuildeHeader activePage="bons-plans" />
-
-      <main style={{ flex: 1, padding: "40px 5%", position: "relative", zIndex: 10, maxWidth: "1400px", margin: "0 auto", width: "100%" }}>
-
-        <div style={{ textAlign: "center", marginBottom: "50px" }}>
-          <motion.h1
-            initial={{ opacity: 0, y: 28, filter: "blur(8px)" }}
-            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            style={{ fontSize: "clamp(40px, 8vw, 80px)", fontWeight: 900, color: "#fff", textTransform: "uppercase", letterSpacing: "0.02em", lineHeight: 1 }}
-          >
-            LES BONS PLANS <span style={{ color: "#c9a84c", fontStyle: "italic" }}>OTAKU</span>
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            style={{ color: "rgba(255,255,255,0.5)", fontSize: "18px", letterSpacing: "0.1em", marginTop: "16px", marginBottom: "40px" }}
-          >
-            LES ARCHIVES SECRÈTES DE LA GUILDE : STREAMS, SCANS ET EXCLUSIVITÉS.
-          </motion.p>
-
-          <div style={{ display: "flex", justifyContent: "center" }}>
-            <div style={{ display: "flex", alignItems: "center", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "100px", padding: "12px 24px", width: "min(400px, 100%)", transition: "all 0.3s" }}>
-              <Search size={20} color="rgba(255,255,255,0.4)" style={{ marginRight: "12px" }} />
-              <input 
-                type="text" placeholder="Rechercher un trésor..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-                style={{ background: "transparent", border: "none", color: "#fff", fontFamily: "'Barlow Condensed', sans-serif", fontSize: "18px", outline: "none", width: "100%", letterSpacing: "0.05em" }}
-              />
-            </div>
+      <main className="gk-wrap" style={{ paddingBottom: "clamp(56px, 9vw, 110px)" }}>
+        <div className="gk-hero gk-reveal">
+          <div className="gk-hero-kicker">
+            <p className="gk-chapter"><b>07</b><span>LES PETITES ANNONCES</span></p>
+            <span className="gk-jp" aria-hidden="true">お得情報</span>
           </div>
+          <h1 className="gk-display gk-h1" style={{ fontSize: "clamp(2.4rem, 10.4vw, 6.6rem)" }}>
+            Les Bons Plans <span className="gk-inked">Otaku</span>
+          </h1>
+          <p className="gk-body gk-hero-lede">
+            Les archives secrètes de la Guilde : streams, scans et exclusivités. {initialLinks.length} adresses que les membres se refilent.
+          </p>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "12px", marginBottom: "50px" }}
-        >
+        <div className="bp-tools">
+          <div className="gk-field">
+            <Search size={18} aria-hidden="true" />
+            <input type="search" className="gk-input" placeholder="Chercher une adresse" aria-label="Chercher un bon plan" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            {searchTerm && (
+              <button type="button" className="gk-clear no-min" onClick={() => setSearchTerm("")} aria-label="Effacer la recherche">
+                <X size={17} aria-hidden="true" />
+              </button>
+            )}
+          </div>
+          <span />
+          <button type="button" className="gk-chip" aria-pressed={favOnly} onClick={() => setFavOnly((v) => !v)}>
+            <Heart size={15} aria-hidden="true" fill={favOnly ? "currentColor" : "none"} />
+            <span>Mes favoris <small>{favCount}</small></span>
+          </button>
+        </div>
+
+        <div className="gk-chips" role="group" aria-label="Filtrer par catégorie" style={{ marginTop: 12 }}>
+          <button type="button" className="gk-chip" aria-pressed={activeCategory === "Tout"} onClick={() => setActiveCategory("Tout")}>
+            <span>Tout <small>{initialLinks.length}</small></span>
+          </button>
           {categories.map((cat) => (
-            <motion.button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              whileHover={{ scale: 1.06, y: -2 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 400, damping: 20 }}
-              style={{
-                background: activeCategory === cat ? "#c9a84c" : "rgba(255,255,255,0.02)",
-                color: activeCategory === cat ? "#000" : "rgba(255,255,255,0.6)",
-                border: "1px solid",
-                borderColor: activeCategory === cat ? "#c9a84c" : "rgba(255,255,255,0.1)",
-                padding: "10px 24px", borderRadius: "100px", cursor: "pointer",
-                fontFamily: "'Barlow Condensed', sans-serif", fontSize: "16px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em",
-                boxShadow: activeCategory === cat ? "0 4px 15px rgba(201, 168, 76, 0.3)" : "none",
-              }}
-            >
-              {cat}
-            </motion.button>
+            <button key={cat} type="button" className="gk-chip" aria-pressed={activeCategory === cat} onClick={() => setActiveCategory(cat)}>
+              <span>{cat} <small>{initialLinks.filter((l) => l.category === cat).length}</small></span>
+            </button>
           ))}
-        </motion.div>
+        </div>
 
-        <motion.div layout style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "24px" }}>
-          <AnimatePresence mode="popLayout">
-            {filteredLinks.map((link, i) => (
-              <LinkCard key={link.id} link={link} index={i} />
-            ))}
-          </AnimatePresence>
-        </motion.div>
+        {showLead && (
+          <section className="gk-panel bp-lead" aria-label="Dernier ajout" style={{ "--bp": safeColor(lead.color) } as React.CSSProperties}>
+            <div className="bp-lead-media">
+              {leadShot ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img className="bp-shot" src={leadShot} alt="" referrerPolicy="no-referrer" onError={() => setLeadShot(null)} />
+              ) : (
+                <Logo link={lead} />
+              )}
+            </div>
+            <div className="bp-lead-body">
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                <span className="gk-tag gk-tag--solid">Dernier ajout</span>
+                <span className="gk-tag">{lead.category}</span>
+              </div>
+              <h2>{lead.title}</h2>
+              <p className="gk-body">{lead.desc}</p>
+              <p className="bp-domain">{hostOf(lead.url)}</p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 4 }}>
+                <a className="gk-btn" href={lead.url} target="_blank" rel="noopener noreferrer">
+                  Ouvrir le site <ExternalLink size={16} aria-hidden="true" /><span className="gk-sr"> (nouvel onglet)</span>
+                </a>
+                <button type="button" className="gk-btn gk-btn--ghost" onClick={() => shareLink(lead)}>
+                  <Share2 size={16} aria-hidden="true" /> Partager
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
 
-        {filteredLinks.length === 0 && (
-          <div style={{ textAlign: "center", padding: "80px 20px", color: "rgba(255,255,255,0.3)" }}>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-               <Globe size={48} opacity={0.5} style={{ marginBottom: "20px" }} />
-               <p style={{ fontSize: "24px", fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase" }}>Aucun Trésor Trouvé</p>
-               <p style={{ fontSize: "16px" }}>Essayez une autre recherche.</p>
-            </motion.div>
+        <p role="status" aria-live="polite" style={{ margin: "22px 0 0", font: "700 0.95rem var(--gk-font-ui)", color: "var(--gk-dim)" }}>
+          {filtered.length} {filtered.length > 1 ? "adresses" : "adresse"}
+        </p>
+
+        {filtered.length === 0 ? (
+          <div className="gk-empty" style={{ marginTop: 20 }}>
+            <div className="gk-empty-glyph" aria-hidden="true">完売</div>
+            <h3>{favOnly && favCount === 0 ? "Aucun favori pour l'instant" : initialLinks.length === 0 ? "Le tableau est vide" : "Rien à cette adresse"}</h3>
+            <p>
+              {favOnly && favCount === 0
+                ? "Touche le cœur d'un bon plan pour le garder sous la main. Tes favoris restent sur cet appareil."
+                : initialLinks.length === 0
+                  ? "Aucun bon plan n'est publié pour le moment."
+                  : "Aucun bon plan ne correspond à cette recherche."}
+            </p>
+            {hasFilters && <button type="button" className="gk-btn" onClick={reset}>Tout réafficher</button>}
+          </div>
+        ) : (
+          <div className="bp-grid gk-stagger" key={`${activeCategory}-${favOnly}`}>
+            {filtered.map((l, i) => {
+              const color = safeColor(l.color);
+              const fav = isFavorite(l.id);
+              return (
+                <article key={l.id} className="bp-coupon" style={{ "--bp": color, "--bp-on": onColor(color), "--i": i } as React.CSSProperties}>
+                  <div className="bp-stub">
+                    <Logo link={l} />
+                    <span className="bp-stub-cat">{l.category}</span>
+                  </div>
+                  <div className="bp-body">
+                    <h3>{l.title}</h3>
+                    <p className="bp-domain">{hostOf(l.url)}</p>
+                    <p className="bp-desc">{l.desc}</p>
+                    <div className="bp-actions">
+                      <a className="gk-btn gk-btn--sm" href={l.url} target="_blank" rel="noopener noreferrer">
+                        Ouvrir le site <ExternalLink size={14} aria-hidden="true" /><span className="gk-sr"> {l.title} (nouvel onglet)</span>
+                      </a>
+                      <button type="button" className="bp-mini no-min" onClick={() => shareLink(l)} aria-label={`Partager ${l.title}`}>
+                        <Share2 size={16} aria-hidden="true" />
+                      </button>
+                      <button
+                        type="button"
+                        className="bp-mini no-min"
+                        aria-pressed={fav}
+                        onClick={() => toggle(l.id)}
+                        aria-label={fav ? `Retirer ${l.title} des favoris` : `Ajouter ${l.title} aux favoris`}
+                      >
+                        <Heart size={16} fill={fav ? "currentColor" : "none"} aria-hidden="true" />
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         )}
 
+        <p className="bp-legal">
+          Ces liens mènent vers des sites externes que la Guilde ne gère pas. Leur disponibilité peut changer sans prévenir.
+        </p>
       </main>
+      <Toast />
     </div>
   );
 }

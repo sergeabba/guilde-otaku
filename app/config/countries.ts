@@ -63,7 +63,7 @@ export const COUNTRIES: Country[] = [
 ];
 
 export function flagUrl(code: string): string {
-  return `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
+  return `/flags/${code.toLowerCase()}.svg`;
 }
 
 export const countryAccents: Record<string, string> = {

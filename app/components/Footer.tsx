@@ -1,63 +1,39 @@
-"use client";
-
 import Link from "next/link";
-import { useTheme } from "../context/ThemeContext";
-
-const links = [
-  { href: "/", label: "Membres" },
-  { href: "/fighters", label: "Fighters" },
-  { href: "/bibliotheque", label: "Bibliothèque" },
-  { href: "/bons-plans", label: "Bons Plans" },
-  { href: "/atelier", label: "Atelier" },
-];
+import { NAV, chapterNo } from "../config/nav";
 
 export default function Footer() {
-  const { isDark } = useTheme();
-
   return (
-    <footer style={{
-      background: isDark ? "rgba(5,5,8,0.9)" : "rgba(245,243,240,0.95)",
-      backdropFilter: "blur(20px)",
-      borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)"}`,
-      padding: "40px 20px",
-      fontFamily: "'Barlow Condensed', sans-serif",
-      transition: "background 0.5s, border-color 0.5s",
-    }}>
-      <div style={{
-        maxWidth: "1400px",
-        margin: "0 auto",
-        textAlign: "center",
-      }}>
-        <p style={{
-          color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)",
-          fontSize: "14px",
-          margin: "0 0 16px",
-          transition: "color 0.5s",
-        }}>
-          &copy; 2025 Guilde Otaku &mdash; Tous droits r&eacute;serv&eacute;s
-        </p>
-        <nav style={{
-          display: "flex",
-          flexWrap: "wrap",
-          justifyContent: "center",
-          gap: "16px 24px",
-        }}>
-          {links.map(({ href, label }) => (
-            <Link
-              key={label}
-              href={href}
-              className="footer-link"
-              style={{
-                color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)",
-                textDecoration: "none",
-                fontSize: "15px",
-                transition: "color 0.3s",
-              }}
+    <footer className="gk-footer">
+      <div
+        className="gk-speed"
+        aria-hidden="true"
+        style={{ position: "absolute", inset: "-40% -10%", opacity: 0.5, pointerEvents: "none" }}
+      />
+      <div className="gk-wrap">
+        <div className="gk-footer-grid">
+          <p className="gk-footer-title">
+            À suivre<span>...</span>
+            <span
+              className="gk-jp"
+              aria-hidden="true"
+              style={{ display: "block", fontSize: "0.9rem", marginTop: 10, color: "rgba(243,238,226,0.5)" }}
             >
-              {label}
-            </Link>
-          ))}
-        </nav>
+              つづく
+            </span>
+          </p>
+          <nav aria-label="Toutes les rubriques">
+            {NAV.map((l, i) => (
+              <Link key={l.id} href={l.href}>
+                <b aria-hidden="true">{chapterNo(i)}</b>
+                {l.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+        <div className="gk-footer-base">
+          <span>&copy; 2020-{new Date().getFullYear()} Guilde Otaku. Fait par la Guilde, pour la Guilde.</span>
+          <span>Les œuvres citées appartiennent à leurs ayants droit.</span>
+        </div>
       </div>
     </footer>
   );
