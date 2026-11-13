@@ -3,6 +3,7 @@ import type { Member } from "../../data/members";
 import { supabase } from "../../lib/supabase";
 import type { SupabaseMemberRow, FighterStats, SpecialAttack } from "../types";
 import { COUNTRIES } from "../config/countries";
+import { parseMemberExtras } from "../../lib/member-extras";
 
 const countryLabelToCode = new Map(COUNTRIES.map(c => [c.label.toLowerCase(), c.code]));
 
@@ -54,6 +55,7 @@ function mapRowToMember(row: SupabaseMemberRow): Member {
     photoVideo: row.photovideo ?? undefined,
     animeVideo: row.animevideo ?? undefined,
     country:    normalizeCountryCode(row.country),
+    extras:     parseMemberExtras(row.extras),
   };
 }
 

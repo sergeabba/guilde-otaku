@@ -40,6 +40,7 @@ export interface SupabaseMemberRow {
   hidden?:      boolean | null;
   country?:     string | null;
   position?:    number | null;
+  extras?:      unknown;
 }
 
 // ─── BIBLIOTHÈQUE ENTRY ───────────────────────────────────────────────────────

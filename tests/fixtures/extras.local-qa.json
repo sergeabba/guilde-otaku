@@ -1,0 +1,105 @@
+{
+  "4": {
+    "favoriteAnime": [
+      {
+        "source": "anilist",
+        "sourceId": 5114,
+        "kind": "ANIME",
+        "titleNative": "鋼の錬金術師 FULLMETAL ALCHEMIST",
+        "titleRomaji": "Hagane no Renkinjutsushi: FULLMETAL ALCHEMIST",
+        "titleLocalized": "Fullmetal Alchemist: Brotherhood",
+        "coverUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx5114-nSWCgQlmOMtj.jpg",
+        "sourceUrl": "https://anilist.co/anime/5114",
+        "rank": 1,
+        "personalNote": "Note de recette : texte de démonstration, jamais publié."
+      },
+      {
+        "source": "anilist",
+        "sourceId": 154587,
+        "kind": "ANIME",
+        "titleNative": "葬送のフリーレン",
+        "titleRomaji": "Sousou no Frieren",
+        "titleLocalized": "Frieren: Beyond Journey’s End",
+        "coverUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx154587-qQTzQnEJJ3oB.jpg",
+        "sourceUrl": "https://anilist.co/anime/154587",
+        "rank": 2
+      },
+      {
+        "source": "anilist",
+        "sourceId": 11061,
+        "kind": "ANIME",
+        "titleNative": "HUNTER×HUNTER (2011)",
+        "titleRomaji": "HUNTER×HUNTER (2011)",
+        "titleLocalized": "Hunter x Hunter (2011)",
+        "coverUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx11061-y5gsT1hoHuHw.png",
+        "sourceUrl": "https://anilist.co/anime/11061",
+        "rank": 3
+      }
+    ],
+    "favoriteManga": [
+      {
+        "source": "anilist",
+        "sourceId": 30642,
+        "kind": "MANGA",
+        "titleNative": "ヴィンランド・サガ",
+        "titleRomaji": "Vinland Saga",
+        "titleLocalized": "Vinland Saga",
+        "coverUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx30642-0mjRDkf4THpo.jpg",
+        "sourceUrl": "https://anilist.co/manga/30642",
+        "rank": 1
+      },
+      {
+        "source": "anilist",
+        "sourceId": 30013,
+        "kind": "MANGA",
+        "titleNative": "ONE PIECE",
+        "titleRomaji": "ONE PIECE",
+        "titleLocalized": "One Piece",
+        "coverUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx30013-BeslEMqiPhlk.jpg",
+        "sourceUrl": "https://anilist.co/manga/30013",
+        "rank": 2,
+        "featured": false
+      },
+      {
+        "source": "anilist",
+        "sourceId": 30656,
+        "kind": "MANGA",
+        "titleNative": "バガボンド",
+        "titleRomaji": "Vagabond",
+        "titleLocalized": "Vagabond",
+        "coverUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx30656-9mW113O7rDnA.png",
+        "sourceUrl": "https://anilist.co/manga/30656",
+        "rank": 3
+      },
+      {
+        "source": "anilist",
+        "sourceId": 30001,
+        "kind": "MANGA",
+        "titleNative": "MONSTER",
+        "titleRomaji": "MONSTER",
+        "titleLocalized": "Monster",
+        "coverUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx30001-Knby7l1jevE7.jpg",
+        "sourceUrl": "https://anilist.co/manga/30001",
+        "rank": 4
+      },
+      {
+        "source": "manual",
+        "kind": "MANGA",
+        "titleLocalized": "Saisie manuelle sans jaquette (recette)",
+        "rank": 99
+      }
+    ],
+    "music": [
+      {
+        "provider": "youtube",
+        "id": "1ac3_YdSSy0",
+        "title": "Bande-annonce de Fullmetal Alchemist: Brotherhood (recette)"
+      }
+    ],
+    "photoFocus": {
+      "x": 50,
+      "y": 22
+    }
+  },
+  "_note": "Fixture de recette locale uniquement. Charge via GUILDE_EXTRAS_FIXTURE en dev, ignore en production. Ne represente pas les gouts reels du membre."
+}

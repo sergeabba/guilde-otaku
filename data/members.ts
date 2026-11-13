@@ -1,3 +1,5 @@
+import type { MemberExtras } from "../lib/member-extras";
+
 export type Rank =
   | "Fondateur"
   | "Monarque"
@@ -49,6 +51,8 @@ export interface Member {
   photoVideo?: string;
   animeVideo?: string;
   country?: string;
+  /** Profil enrichi facultatif (favoris, cadrage, musique) : colonne `extras`. */
+  extras?: MemberExtras;
 }
 
 export const members: Member[] = [
