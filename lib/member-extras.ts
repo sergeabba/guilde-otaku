@@ -62,6 +62,9 @@ const COVER_HOSTS = ["s4.anilist.co", "img.anili.st"];
 const SUPABASE_HOST = /\.supabase\.(co|in)$/;
 
 const MAX_WORKS = 30;
+/** Rubriques de `extras` gérées par l'admin (toute autre clé est conservée telle quelle). */
+export const EXTRAS_KEYS = ["displayNameRomaji", "favoriteAnime", "favoriteManga", "music", "awards", "photoFocus", "animeFocus"] as const;
+
 const MAX_TRACKS = 10;
 const MAX_AWARDS = 20;
 

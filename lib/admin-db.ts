@@ -2,7 +2,7 @@
 // Les écrans admin n'écrivent plus directement dans Supabase avec la clé publique :
 // ils passent par /api/admin/db, protégé par la session admin, qui n'accepte
 // que les tables et colonnes listées ici.
-import { parseMemberExtras } from "./member-extras";
+import { EXTRAS_KEYS, parseMemberExtras } from "./member-extras";
 import { RANK_FILTER_ORDER } from "../data/members";
 
 export const ADMIN_TABLES = {
@@ -25,6 +25,7 @@ export type AdminOp = "insert" | "update" | "delete";
 export type RowId = number | string;
 
 export const MAX_INSERT_ROWS = 50;
+
 
 export type AdminDbRequest =
   | { table: AdminTable; op: "insert"; rows: Record<string, unknown>[] }
@@ -51,7 +52,14 @@ function parseValues(table: AdminTable, v: unknown): Record<string, unknown> | s
     const issue = fighterIssue(clean);
     if (issue) return issue;
     // Profil enrichi : toujours repassé par le validateur (URLs, YouTube, écriture japonaise).
-    if ("extras" in clean) clean.extras = parseMemberExtras(clean.extras) ?? {};
+    if ("extras" in clean) {
+      // Un envoi ne contient que les rubriques modifiées ; `null` signifie « retirer cette rubrique ».
+      const raw = clean.extras && typeof clean.extras === "object" && !Array.isArray(clean.extras) ? (clean.extras as Record<string, unknown>) : {};
+      const kept = Object.fromEntries(Object.entries(raw).filter(([, v]) => v !== null));
+      const sanitized: Record<string, unknown> = { ...(parseMemberExtras(kept) ?? {}) };
+      for (const [k, v] of Object.entries(raw)) if (v === null && (EXTRAS_KEYS as readonly string[]).includes(k)) sanitized[k] = null;
+      clean.extras = sanitized;
+    }
   }
   return clean;
 }
@@ -107,4 +115,22 @@ export function parseAdminDbRequest(body: unknown): AdminDbRequest | { error: st
   }
 
   return { error: "opération non autorisée" };
+}
+
+
+/**
+ * Fusion de la colonne `extras` lors d'un enregistrement depuis l'admin.
+ * L'éditeur n'envoie que les rubriques qu'il a modifiées :
+ * - valeur (déjà validée) : remplace la rubrique ;
+ * - `null` : retire la rubrique ;
+ * - absente : la valeur stockée est conservée telle quelle.
+ * Les clés que l'admin ne connaît pas ne sont jamais touchées.
+ */
+export function mergeExtras(stored: unknown, patch: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = stored && typeof stored === "object" && !Array.isArray(stored) ? { ...(stored as Record<string, unknown>) } : {};
+  for (const k of EXTRAS_KEYS) {
+    if (patch[k] === null) delete out[k];
+    else if (patch[k] !== undefined) out[k] = patch[k];
+  }
+  return out;
 }

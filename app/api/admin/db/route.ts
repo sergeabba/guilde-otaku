@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "../../../../lib/auth";
-import { parseAdminDbRequest } from "../../../../lib/admin-db";
+import { mergeExtras, parseAdminDbRequest } from "../../../../lib/admin-db";
 import { getServiceClient, SERVICE_KEY_MISSING } from "../../../../lib/supabase-admin";
 
 const NO_STORE = { "Cache-Control": "no-store" };
@@ -18,6 +18,17 @@ export async function POST(req: NextRequest) {
   if ("error" in parsed) return NextResponse.json({ error: parsed.error }, { status: 400, headers: NO_STORE });
 
   const db = client.from(parsed.table);
+  if (parsed.op === "insert" && parsed.table === "fighters") {
+    for (const row of parsed.rows) if ("extras" in row) row.extras = mergeExtras({}, row.extras as Record<string, unknown>);
+  }
+
+  // `extras` : on part de la valeur stockée pour ne jamais perdre une donnée que l'admin ne gère pas.
+  if (parsed.op === "update" && parsed.table === "fighters" && "extras" in parsed.values) {
+    const { data: current, error: readError } = await client.from("fighters").select("extras").eq("id", parsed.id).maybeSingle();
+    if (readError) return NextResponse.json({ error: `Lecture préalable impossible : ${readError.message}` }, { status: 500, headers: NO_STORE });
+    if (!current) return NextResponse.json({ error: "Ligne introuvable" }, { status: 404, headers: NO_STORE });
+    parsed.values.extras = mergeExtras(current.extras, parsed.values.extras as Record<string, unknown>);
+  }
   const { data, error } =
     parsed.op === "insert" ? await db.insert(parsed.rows).select("id")
     : parsed.op === "update" ? await db.update(parsed.values).eq("id", parsed.id).select("id")

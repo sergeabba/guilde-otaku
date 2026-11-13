@@ -65,3 +65,33 @@ describe("parseAdminDbRequest", () => {
       .toEqual({ table: "bibliotheque", op: "insert", rows: [{ title: "A", avis_guilde: null }] });
   });
 });
+
+import { mergeExtras } from "../lib/admin-db";
+
+describe("mergeExtras", () => {
+  const stored = {
+    ancienChamp: { libre: true },
+    music: "format ancien illisible",
+    favoriteAnime: [{ source: "manual", kind: "ANIME", titleRomaji: "Ancien" }],
+    awards: [{ title: "A retirer" }],
+  };
+
+  it("ne touche qu'aux rubriques envoyées et conserve tout le reste", () => {
+    expect(mergeExtras(stored, { favoriteAnime: [{ titleRomaji: "Nouveau" }], awards: null })).toEqual({
+      ancienChamp: { libre: true },
+      music: "format ancien illisible",
+      favoriteAnime: [{ titleRomaji: "Nouveau" }],
+    });
+    expect(mergeExtras(stored, {})).toEqual(stored);
+  });
+
+  it("part d'un objet vide si la valeur stockée n'est pas un objet", () => {
+    expect(mergeExtras(null, { awards: [{ title: "MVP" }], music: null })).toEqual({ awards: [{ title: "MVP" }] });
+    expect(mergeExtras([1, 2], {})).toEqual({});
+  });
+
+  it("la validation garde les retraits (null) et nettoie le reste", () => {
+    const r = parseAdminDbRequest({ table: "fighters", op: "update", id: 4, values: { extras: { awards: null, music: [{ provider: "youtube", id: "dQw4w9WgXcQ" }], pirate: 1 } } });
+    expect(r).toEqual({ table: "fighters", op: "update", id: 4, values: { extras: { music: [{ provider: "youtube", id: "dQw4w9WgXcQ" }], awards: null } } });
+  });
+});

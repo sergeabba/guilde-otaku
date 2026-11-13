@@ -6,7 +6,7 @@ import { ExternalLink, Eye, EyeOff, Trash2, X } from "lucide-react";
 import { RANK_FILTER_ORDER, type Rank } from "../../data/members";
 import { COUNTRIES } from "../config/countries";
 import { adminDb } from "../../lib/admin-db-client";
-import { hasJapanese, memberAwards, parseMemberExtras, type FocusPoint, type MemberExtras } from "../../lib/member-extras";
+import { EXTRAS_KEYS, hasJapanese, memberAwards, parseMemberExtras, type FocusPoint, type MemberExtras } from "../../lib/member-extras";
 import type { SupabaseMemberRow } from "../types";
 import PortraitPanel from "./PortraitPanel";
 import UniverseEditor from "./UniverseEditor";
@@ -49,6 +49,8 @@ export default function MemberEditor({ member, extrasSupported, onClose, onSaved
     return x;
   };
   const [extras, setExtras] = useState<MemberExtras>(initialExtras);
+  // État de référence : seules les rubriques qui en diffèrent sont envoyées au serveur.
+  const [baseExtras, setBaseExtras] = useState<MemberExtras>(initialExtras);
   const [savedSnapshot, setSavedSnapshot] = useState(() => JSON.stringify([toIdentity(member), initialExtras()]));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,6 +58,15 @@ export default function MemberEditor({ member, extrasSupported, onClose, onSaved
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [touched, setTouched] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
+
+  // Rubriques présentes en base mais dans un format que l'éditeur ne sait pas lire.
+  const unreadable = (() => {
+    const raw = member?.extras;
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return [] as string[];
+    const parsed = (parseMemberExtras(raw) ?? {}) as Record<string, unknown>;
+    return EXTRAS_KEYS.filter((k) => (raw as Record<string, unknown>)[k] !== undefined && parsed[k] === undefined);
+  })();
+  const UNREADABLE_LABEL: Record<string, string> = { displayNameRomaji: "surnom", favoriteAnime: "anime préférés", favoriteManga: "mangas préférés", music: "musique", awards: "palmarès", photoFocus: "cadrage réel", animeFocus: "cadrage anime" };
 
   const errors = identityErrors(form);
   const dirty = JSON.stringify([form, extras]) !== savedSnapshot;
@@ -92,11 +103,18 @@ export default function MemberEditor({ member, extrasSupported, onClose, onSaved
       name: form.name.trim(), rank: form.rank, badge: form.badge.trim() || null, birthday: form.birthday.trim(),
       country: form.country || null, color: form.color, bio: form.bio.trim(),
     };
+    const awards = (extras.awards ?? []).map((a) => ({ ...a, title: a.title.trim(), description: a.description?.trim() || undefined }));
+    const normalized: MemberExtras = { ...extras, awards: awards.length ? awards : undefined };
     if (extrasSupported) {
-      const awards = (extras.awards ?? []).map((a) => ({ ...a, title: a.title.trim(), description: a.description?.trim() || undefined }));
-      values.extras = { ...extras, awards: awards.length ? awards : undefined };
+      // N'envoyer que les rubriques modifiées (null = rubrique retirée) : une donnée
+      // non touchée, ou que l'admin ne sait pas lire, n'est jamais réécrite.
+      const patch: Record<string, unknown> = {};
+      for (const k of EXTRAS_KEYS) {
+        if (JSON.stringify(normalized[k]) !== JSON.stringify(baseExtras[k])) patch[k] = normalized[k] ?? null;
+      }
+      if (Object.keys(patch).length) values.extras = patch;
       // L'ancienne colonne `badge` suit la distinction principale (annuaire, Wanted, recherche).
-      values.badge = awards[0]?.title ?? null;
+      if ("awards" in patch) values.badge = awards[0]?.title ?? null;
     }
 
     if (row) {
@@ -104,8 +122,9 @@ export default function MemberEditor({ member, extrasSupported, onClose, onSaved
       setSaving(false);
       if (err) { setError(`Enregistrement refusé : ${err.message}`); return; }
       // `extras` n'est ajouté à la ligne locale que si la colonne existe (sinon la page la croirait migrée).
-      const next = { ...row, ...values } as SupabaseMemberRow;
+      const next = { ...row, ...values, ...(extrasSupported ? { extras: normalized } : {}) } as SupabaseMemberRow;
       setRow(next);
+      setBaseExtras(normalized);
       setSavedSnapshot(JSON.stringify([form, extras]));
       setNotice("Modifications enregistrées. Elles sont visibles sur le site au prochain chargement.");
       onSaved(next, `${next.name} mis à jour`);
@@ -114,8 +133,9 @@ export default function MemberEditor({ member, extrasSupported, onClose, onSaved
       const { data, error: err } = await adminDb.insert("fighters", [created]);
       setSaving(false);
       if (err || !data?.[0]) { setError(`Création refusée : ${err?.message ?? "aucun identifiant renvoyé"}`); return; }
-      const next = { ...created, id: Number(data[0].id), hidden: false } as unknown as SupabaseMemberRow;
+      const next = { ...created, id: Number(data[0].id), hidden: false, ...(extrasSupported ? { extras: normalized } : {}) } as unknown as SupabaseMemberRow;
       setRow(next);
+      setBaseExtras(normalized);
       setSavedSnapshot(JSON.stringify([form, extras]));
       setTab("portraits");
       setNotice("Membre créé. Ajoute maintenant ses portraits.");
@@ -172,6 +192,9 @@ export default function MemberEditor({ member, extrasSupported, onClose, onSaved
 
         <div className="am-body">
           {error && <p className="am-alert am-alert--error" role="alert">{error}</p>}
+          {unreadable.length > 0 && (
+            <p className="am-alert am-alert--info">Données existantes dans un format non pris en charge : <b>{unreadable.map((k) => UNREADABLE_LABEL[k]).join(", ")}</b>. Elles sont conservées tant que tu ne modifies pas ces rubriques ; y ajouter un élément les remplacera.</p>
+          )}
           {notice && <p className="am-alert am-alert--ok" role="status">{notice}</p>}
 
           {tab === "identite" && (
