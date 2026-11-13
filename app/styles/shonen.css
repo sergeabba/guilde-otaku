@@ -559,7 +559,7 @@ html[data-theme="light"] .tone-dark {
   .gk-mast.has-slot .gk-brand-name { font-size: 0.82rem; white-space: normal; line-height: 1.05; max-width: 5.2em; }
 }
 .gk-brand > div { min-width: 0; }
-@media (max-width: 359px) { .gk-brand-sub { display: none; } .gk-brand-name { font-size: 0.9rem; } }
+@media (max-width: 359px) { .gk-brand-sub { display: none; } .gk-brand-name { font-size: 0.74rem; } .gk-brand { gap: 8px; } }
 
 /* ═══ SOMMAIRE MOBILE ═════════════════════════════════════════════════════ */
 .gk-menu {

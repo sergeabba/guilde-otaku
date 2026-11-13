@@ -178,7 +178,7 @@ export default function BirthdaysPage() {
             <p className="gk-chapter"><b>02</b><span>LE CALENDRIER DE LA GUILDE</span></p>
             <span className="gk-jp" aria-hidden="true">誕生日</span>
           </div>
-          <h1 className="gk-display gk-h1" style={{ fontSize: "clamp(2.3rem, 10.4vw, 6.4rem)" }}>Anniversaires</h1>
+          <h1 className="gk-display gk-h1" style={{ fontSize: "clamp(1.6rem, 8.6vw, 6.4rem)" }}>Anniversaires</h1>
           <p className="gk-body gk-hero-lede">
             Nous sommes le {today.getDate()} {MONTHS[today.getMonth()].toLowerCase()}. Voici qui souffle ses bougies, et quand.
           </p>

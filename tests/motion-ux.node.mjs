@@ -50,7 +50,8 @@ test('the mobile dock is keyboard accessible and the arene is not obstructed', (
 
 test('artwork opens via button, dialog supports close and touch swipes', () => {
   const atelier = read('app/atelier/page.tsx');
-  assert.match(atelier, /<motion\.button\s+type="button"/);
+  // Les planches s'ouvrent avec un vrai <button> (clavier), plus un motion.button.
+  assert.match(atelier, /<button\s+type="button"\s+className="at-plate-open"/);
   assert.match(atelier, /aria-modal="true"/);
   assert.match(atelier, /onTouchEnd=/);
   assert.match(atelier, /aria-label="Fermer la visionneuse"/);

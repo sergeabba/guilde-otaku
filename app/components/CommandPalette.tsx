@@ -70,11 +70,11 @@ async function loadIndex(): Promise<Item[]> {
     for (const a of atelier.value.images as { id: number | string; title?: string; category?: string; universe?: string; filename: string }[]) {
       if (!a.title) continue;
       items.push({
-        key: `a-${a.id}`,
+        key: `a-${a.filename}`,
         group: "Atelier",
         title: a.title,
         sub: [a.category, a.universe].filter(Boolean).join(", "),
-        href: `/atelier?oeuvre=${encodeURIComponent(String(a.id))}`,
+        href: `/atelier?oeuvre=${encodeURIComponent(a.filename)}`,
         hay: normalize(`${a.title} ${a.category ?? ""} ${a.universe ?? ""}`),
       });
     }
@@ -167,8 +167,6 @@ export default function CommandPalette() {
     return out;
   }, [query, index]);
 
-  useEffect(() => { setActive(0); }, [query]);
-
   useEffect(() => {
     listRef.current?.querySelector(".is-active")?.scrollIntoView({ block: "nearest" });
   }, [active]);
@@ -198,7 +196,6 @@ export default function CommandPalette() {
     }
   };
 
-  let lastGroup = "";
   return (
     <div className="gk-cmd-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) close(); }}>
       <div ref={dialogRef} className="gk-cmd tone-dark" role="dialog" aria-modal="true" aria-label="Recherche dans la Guilde" onKeyDown={onKeyDown}>
@@ -207,7 +204,7 @@ export default function CommandPalette() {
           <input
             ref={inputRef}
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => { setQuery(e.target.value); setActive(0); }}
             placeholder="Un membre, une œuvre, une rubrique..."
             aria-label="Rechercher"
             role="combobox"
@@ -231,8 +228,7 @@ export default function CommandPalette() {
             </div>
           )}
           {results.map((it, i) => {
-            const header = it.group !== lastGroup ? it.group : null;
-            lastGroup = it.group;
+            const header = i === 0 || results[i - 1].group !== it.group ? it.group : null;
             const Icon = GROUP_ICON[it.group as keyof typeof GROUP_ICON];
             return (
               <div key={it.key}>
