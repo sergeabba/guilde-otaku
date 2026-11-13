@@ -91,15 +91,54 @@
     ],
     "music": [
       {
+        "provider": "spotify",
+        "id": "track/4uLU6hMCjMI75M1A2tKUQC",
+        "title": "Morceau de recette au titre assez long pour tester",
+        "artist": "Artiste de recette"
+      },
+      {
         "provider": "youtube",
-        "id": "1ac3_YdSSy0",
-        "title": "Bande-annonce de Fullmetal Alchemist: Brotherhood (recette)"
+        "id": "dQw4w9WgXcQ",
+        "title": "Second morceau (recette)"
       }
     ],
     "photoFocus": {
       "x": 50,
       "y": 22
-    }
+    },
+    "awards": [
+      {
+        "title": "Homme de l'année",
+        "year": 2024,
+        "description": "Recette : texte de démonstration."
+      },
+      {
+        "title": "MVP des Otaku Awards",
+        "year": 2025
+      },
+      {
+        "title": "Prix spécial du jury pour l'ensemble de son œuvre méta",
+        "year": 2023
+      },
+      {
+        "title": "Vétéran"
+      }
+    ]
   },
-  "_note": "Fixture de recette locale uniquement. Charge via GUILDE_EXTRAS_FIXTURE en dev, ignore en production. Ne represente pas les gouts reels du membre."
+  "_note": "Fixture de recette locale uniquement. Charge via GUILDE_EXTRAS_FIXTURE en dev, ignore en production. Ne represente pas les gouts reels du membre.",
+  "56": {
+    "awards": [
+      {
+        "title": "Recette : distinction unique"
+      }
+    ],
+    "music": [
+      {
+        "provider": "apple",
+        "id": "fr/album/recette/1477817375?i=1477817376",
+        "title": "Titre recette",
+        "artist": "Artiste recette"
+      }
+    ]
+  }
 }

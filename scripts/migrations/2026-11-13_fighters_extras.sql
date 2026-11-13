@@ -3,7 +3,7 @@
 -- À exécuter manuellement dans l'éditeur SQL Supabase, après relecture.
 --
 -- Contenu attendu de `extras` (validé côté application par lib/member-extras.ts) :
---   displayNameRomaji, favoriteAnime[], favoriteManga[], music[], photoFocus{x,y}, animeFocus{x,y}
+--   displayNameRomaji, favoriteAnime[], favoriteManga[], music[], awards[], photoFocus{x,y}, animeFocus{x,y}
 -- Les favoris sont des choix éditoriaux du membre : aucun script ne doit les écraser.
 
 -- ── UP ─────────────────────────────────────────────────────────────────────
@@ -17,7 +17,7 @@ alter table public.fighters
   add constraint fighters_extras_is_object check (jsonb_typeof(extras) = 'object');
 
 comment on column public.fighters.extras is
-  'Profil enrichi facultatif (favoris anime/manga, musique, points focaux). Validé par lib/member-extras.ts.';
+  'Profil enrichi facultatif (favoris anime/manga, musique, palmarès, points focaux). Validé par lib/member-extras.ts.';
 
 -- Vérification :
 --   select id, name, extras from public.fighters order by id limit 5;

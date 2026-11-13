@@ -10,8 +10,9 @@
 .qv-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 16px 16px 24px; display: grid; gap: 22px; grid-template-columns: minmax(0, 1fr); align-content: start; }
 @media (min-width: 760px) {
   .qv-body { grid-template-columns: minmax(0, 0.95fr) minmax(0, 1fr); column-gap: 26px; padding: 22px 24px 28px; }
-  .qv-body > .qv-diptych { grid-row: span 2; align-self: start; }
-  .qv-body > .qv-block { grid-column: 2; }
+  /* Les portraits restent visibles pendant que la colonne d'informations défile. */
+  .qv-body > .qv-diptych { grid-column: 1; grid-row: 1 / span 6; align-self: start; position: sticky; top: 0; }
+  .qv-body > .qv-id, .qv-body > .qv-block { grid-column: 2; }
 }
 .qv-diptych { box-shadow: 6px 6px 0 var(--gk-accent); }
 .qv-diptych .pf-panel { aspect-ratio: 3 / 4; }

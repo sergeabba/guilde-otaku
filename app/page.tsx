@@ -1,4 +1,4 @@
-import { fetchMembers } from "./utils/dataAdapter";
+import { getPublicMembers } from "../lib/members-server";
 import HomePageClient, { type FeaturedFilm } from "./components/HomePageClient";
 import { supabase } from "../lib/supabase";
 
@@ -27,6 +27,6 @@ async function fetchFeaturedFilm(): Promise<FeaturedFilm | null> {
 }
 
 export default async function HomePage() {
-  const [members, featuredFilm] = await Promise.all([fetchMembers(), fetchFeaturedFilm()]);
+  const [members, featuredFilm] = await Promise.all([getPublicMembers(), fetchFeaturedFilm()]);
   return <HomePageClient initialMembers={members} featuredFilm={featuredFilm} />;
 }

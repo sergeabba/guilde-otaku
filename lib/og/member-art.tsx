@@ -8,7 +8,8 @@ import { join } from "node:path";
 import type { Member } from "../../data/members";
 import { rankAccents, rankRomaji, type Rank } from "../../app/config/ranks";
 import { COUNTRIES } from "../../app/config/countries";
-import { objectPosition } from "../member-extras";
+import { featuredWorks, memberAwards, objectPosition, workTitle } from "../member-extras";
+import { PROVIDER_LABEL } from "../music";
 import { absoluteAsset } from "../members-server";
 
 export const OG_SIZE = { width: 1200, height: 630 } as const;
@@ -100,12 +101,37 @@ function rankInfo(m: Member) {
 }
 
 function nameSize(name: string, base: number) {
-  if (name.length > 22) return Math.round(base * 0.62);
-  if (name.length > 15) return Math.round(base * 0.78);
+  if (name.length > 26) return Math.round(base * 0.55);
+  if (name.length > 18) return Math.round(base * 0.68);
+  if (name.length > 12) return Math.round(base * 0.82);
   return base;
 }
 
-/** Aperçu social 1200×630 : deux visages à gauche, identité à droite. */
+/** Coupe un texte trop long (les images ne savent pas faire défiler). */
+function cut(s: string, max: number): string {
+  return s.length > max ? `${s.slice(0, max - 1).trimEnd()}…` : s;
+}
+
+const ONE_LINE = { display: "flex", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } as const;
+
+/** Contenu enrichi présent dans la fiche (rien n'est inventé). */
+function richContent(m: Member) {
+  const awards = memberAwards(m);
+  const anime = featuredWorks(m.extras?.favoriteAnime, 3);
+  const manga = featuredWorks(m.extras?.favoriteManga, 3);
+  const track = m.extras?.music?.[0];
+  // Titre et artiste coupés séparément : l'artiste reste visible même avec un long titre.
+  const trackLine = track && (track.title || track.artist)
+    ? [track.title && cut(track.title, track.artist ? 30 : 50), track.artist && cut(track.artist, 22)].filter(Boolean).join(" · ")
+    : null;
+  return { awards, anime, manga, track, trackLine };
+}
+
+function awardText(a: { title: string; year?: number }) {
+  return a.year && !a.title.includes(String(a.year)) ? `${a.title} ${a.year}` : a.title;
+}
+
+/** Aperçu social 1200×630 : lu en petit dans WhatsApp/Discord, donc peu d'éléments, en grand. */
 export async function renderMemberOg(m: Member, origin: string): Promise<ImageResponse> {
   const [fonts, real, anime] = await Promise.all([
     loadFonts(),
@@ -113,8 +139,11 @@ export async function renderMemberOg(m: Member, origin: string): Promise<ImageRe
     portraitData(m.animeChar, origin, 640),
   ]);
   const { accent, romaji } = rankInfo(m);
+  const { awards, anime: favA, manga: favM, trackLine } = richContent(m);
   const both = real && anime;
   const panelW = both ? 300 : 600;
+  const favs = [...favA.slice(0, 2), ...favM.slice(0, 2)].slice(0, 3).map((w) => cut(workTitle(w), 24));
+  const dense = favs.length > 0 || !!trackLine;
 
   return new ImageResponse(
     (
@@ -124,28 +153,45 @@ export async function renderMemberOg(m: Member, origin: string): Promise<ImageRe
           {both && <div style={{ display: "flex", width: 6, height: 630, background: INK }} />}
           {anime && <Portrait src={anime} position={objectPosition(m.extras?.animeFocus, "50% 15%")} label="Anime" width={both ? panelW - 6 : panelW} height={630} accent={accent} />}
         </div>
-        <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", flex: 1, padding: "46px 48px 40px" }}>
+        <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", flex: 1, minWidth: 0, padding: "40px 44px 34px" }}>
           <div style={{ display: "flex", alignItems: "stretch", border: `3px solid ${PAPER}`, alignSelf: "flex-start", fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 22, letterSpacing: 2 }}>
             <div style={{ display: "flex", padding: "5px 10px", background: PAPER, color: INK }}>{String(m.id).padStart(3, "0")}</div>
             <div style={{ display: "flex", padding: "5px 12px" }}>GUILDE OTAKU</div>
           </div>
+
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={{ display: "flex", fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: nameSize(m.name, 96), lineHeight: 0.92, textTransform: "uppercase", letterSpacing: -1 }}>
-              {m.name}
+            <div style={{ display: "flex", fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: nameSize(m.name, dense ? 84 : 96), lineHeight: 0.92, textTransform: "uppercase", letterSpacing: -1 }}>
+              {cut(m.name, 64)}
             </div>
-            <div style={{ display: "flex", alignItems: "center", marginTop: 22 }}>
-              <div style={{ display: "flex", padding: "6px 14px", background: accent, color: onAccent(accent), fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 34, textTransform: "uppercase" }}>
+            <div style={{ display: "flex", alignItems: "center", marginTop: 18 }}>
+              <div style={{ display: "flex", padding: "6px 14px", background: accent, color: onAccent(accent), fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 32, textTransform: "uppercase" }}>
                 {m.rank}
               </div>
-              {romaji && <div style={{ display: "flex", marginLeft: 16, fontFamily: "Barlow Condensed", fontWeight: 700, fontSize: 30, color: "rgba(244,239,228,0.6)" }}>{romaji}</div>}
+              {romaji && <div style={{ display: "flex", marginLeft: 16, fontFamily: "Barlow Condensed", fontWeight: 700, fontSize: 28, color: "rgba(244,239,228,0.6)" }}>{romaji}</div>}
             </div>
-            {m.badge && (
-              <div style={{ display: "flex", alignSelf: "flex-start", marginTop: 18, padding: "6px 12px", border: `3px solid ${GOLD}`, color: GOLD, fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 24, textTransform: "uppercase" }}>
-                {m.badge}
+            {awards.length > 0 && (
+              <div style={{ display: "flex", alignItems: "center", marginTop: 16, maxWidth: 520 }}>
+                <div style={{ ...ONE_LINE, padding: "6px 12px", border: `3px solid ${GOLD}`, color: GOLD, fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 24, textTransform: "uppercase", maxWidth: awards.length > 1 ? 440 : 520 }}>
+                  {cut(awardText(awards[0]), 36)}
+                </div>
+                {awards.length > 1 && <div style={{ display: "flex", marginLeft: 10, fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 24, color: GOLD }}>+{awards.length - 1}</div>}
+              </div>
+            )}
+            {favs.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", marginTop: 18, maxWidth: 520 }}>
+                <div style={{ display: "flex", fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 18, letterSpacing: 2, color: accent }}>SUKI NA ANIME · MANGA</div>
+                <div style={{ ...ONE_LINE, fontFamily: "Barlow Condensed", fontWeight: 700, fontSize: 25, marginTop: 2 }}>{cut(favs.join(" / "), 60)}</div>
+              </div>
+            )}
+            {trackLine && (
+              <div style={{ display: "flex", flexDirection: "column", marginTop: 12, maxWidth: 520 }}>
+                <div style={{ display: "flex", fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 18, letterSpacing: 2, color: accent }}>ONGAKU</div>
+                <div style={{ ...ONE_LINE, fontFamily: "Barlow Condensed", fontWeight: 700, fontSize: 25, marginTop: 2 }}>{trackLine}</div>
               </div>
             )}
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", fontFamily: "Barlow Condensed", fontWeight: 700, fontSize: 24, color: "rgba(244,239,228,0.6)" }}>
+
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", fontFamily: "Barlow Condensed", fontWeight: 700, fontSize: 22, color: "rgba(244,239,228,0.6)" }}>
             <div style={{ display: "flex" }}>Nakama de la Girudo</div>
             <div style={{ display: "flex", color: GOLD }}>guilde-otaku.vercel.app</div>
           </div>
@@ -156,23 +202,46 @@ export async function renderMemberOg(m: Member, origin: string): Promise<ImageRe
   );
 }
 
-/** Carte Otaku 1080×1350 : diptyque réel / anime, identité, grade, distinction. */
+/** Couverture d'une œuvre préférée (jaquette officielle) ou repli neutre. */
+function Cover({ src, kind, width, height }: { src: string | null; kind: string; width: number; height: number }) {
+  return (
+    <div style={{ display: "flex", width, height, flexShrink: 0, border: `3px solid ${INK}`, background: "#d8d0bf", overflow: "hidden", alignItems: "center", justifyContent: "center" }}>
+      {src
+        // eslint-disable-next-line @next/next/no-img-element
+        ? <img src={src} width={width} height={height} alt="" style={{ width, height, objectFit: "cover" }} />
+        : <div style={{ display: "flex", fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 18, color: "rgba(13,12,16,0.45)" }}>{kind}</div>}
+    </div>
+  );
+}
+
+/** Carte Otaku 1080×1350 : diptyque, identité, palmarès, favoris et musique (si renseignés). */
 export async function renderMemberCard(m: Member, origin: string): Promise<ImageResponse> {
-  const [fonts, real, anime] = await Promise.all([
+  const { awards, anime: favA, manga: favM, track, trackLine } = richContent(m);
+  const favs = [...favA, ...favM];
+  const [fonts, real, anime, ...covers] = await Promise.all([
     loadFonts(),
     portraitData(m.photo, origin, 1080),
     portraitData(m.animeChar, origin, 1080),
+    ...favs.map((w) => portraitData(w.coverUrl, origin, 256)),
   ]);
   const { accent, romaji, country } = rankInfo(m);
   const both = real && anime;
   const W = 1080 - 2 * 44 - 2 * 6;
-  const panelH = 860;
+  const extra = (awards.length ? 1 : 0) + (favs.length ? 2 : 0) + (trackLine ? 1 : 0);
+  // Plus il y a de contenu, plus le diptyque se resserre (jamais sous 560 px).
+  const panelH = Math.max(560, 860 - extra * 75);
   const panelW = both ? Math.floor((W - 8) / 2) : W;
+  const coverOf = new Map(favs.map((w, i) => [w, covers[i] ?? null]));
+  const columns = [
+    { label: "SUKI NA ANIME", works: favA },
+    { label: "SUKI NA MANGA", works: favM },
+  ].filter((c) => c.works.length);
+  const colW = columns.length > 1 ? Math.floor((W - 24) / 2) : W;
 
   return new ImageResponse(
     (
       <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100%", background: PAPER, padding: 44, fontFamily: "Barlow", color: INK }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22, fontFamily: "Barlow Condensed" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, fontFamily: "Barlow Condensed" }}>
           <div style={{ display: "flex", alignItems: "stretch", border: `4px solid ${INK}`, fontWeight: 900, fontSize: 28, letterSpacing: 2 }}>
             <div style={{ display: "flex", padding: "6px 12px", background: INK, color: PAPER }}>{String(m.id).padStart(3, "0")}</div>
             <div style={{ display: "flex", padding: "6px 14px" }}>CARTE OTAKU</div>
@@ -186,23 +255,58 @@ export async function renderMemberCard(m: Member, origin: string): Promise<Image
           {anime && <Portrait src={anime} position={objectPosition(m.extras?.animeFocus, "50% 15%")} label="Version anime" width={panelW} height={panelH} accent={accent} />}
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", flex: 1, justifyContent: "flex-end", marginTop: 30 }}>
-          <div style={{ display: "flex", fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: nameSize(m.name, 110), lineHeight: 0.9, textTransform: "uppercase", letterSpacing: -1 }}>
-            {m.name}
+        <div style={{ display: "flex", flexDirection: "column", flex: 1, justifyContent: "flex-end", marginTop: 26 }}>
+          <div style={{ display: "flex", fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: nameSize(m.name, extra > 2 ? 96 : 110), lineHeight: 0.9, textTransform: "uppercase", letterSpacing: -1 }}>
+            {cut(m.name, 44)}
           </div>
-          <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", marginTop: 18 }}>
-            <div style={{ display: "flex", padding: "6px 16px", background: accent, color: onAccent(accent), border: `4px solid ${INK}`, fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 38, textTransform: "uppercase" }}>
+          <div style={{ display: "flex", alignItems: "center", marginTop: 14 }}>
+            <div style={{ display: "flex", padding: "6px 16px", background: accent, color: onAccent(accent), border: `4px solid ${INK}`, fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 36, textTransform: "uppercase" }}>
               {m.rank}
             </div>
-            {romaji && <div style={{ display: "flex", marginLeft: 18, fontFamily: "Barlow Condensed", fontWeight: 700, fontSize: 34, color: "rgba(13,12,16,0.6)" }}>{romaji}</div>}
-            {m.badge && (
-              <div style={{ display: "flex", marginLeft: 18, padding: "6px 14px", background: GOLD, border: `4px solid ${INK}`, fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 28, textTransform: "uppercase" }}>
-                {m.badge}
-              </div>
-            )}
+            {romaji && <div style={{ display: "flex", marginLeft: 18, fontFamily: "Barlow Condensed", fontWeight: 700, fontSize: 32, color: "rgba(13,12,16,0.6)" }}>{romaji}</div>}
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 22, paddingTop: 14, borderTop: `4px solid ${INK}`, fontFamily: "Barlow Condensed", fontWeight: 700, fontSize: 28 }}>
-            <div style={{ display: "flex" }}>
+
+          {awards.length > 0 && (
+            <div style={{ display: "flex", alignItems: "center", marginTop: 14, maxWidth: W }}>
+              {awards.slice(0, 2).map((a, i) => (
+                <div key={i} style={{ ...ONE_LINE, marginRight: 10, padding: "5px 12px", background: i === 0 ? GOLD : PAPER, border: `4px solid ${INK}`, fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 26, textTransform: "uppercase", maxWidth: awards.length > 1 ? 430 : W }}>
+                  {cut(awardText(a), 30)}
+                </div>
+              ))}
+              {awards.length > 2 && <div style={{ display: "flex", fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 26 }}>+{awards.length - 2}</div>}
+            </div>
+          )}
+
+          {columns.length > 0 && (
+            <div style={{ display: "flex", marginTop: 18 }}>
+              {columns.map((c, ci) => (
+                <div key={c.label} style={{ display: "flex", flexDirection: "column", width: colW, marginLeft: ci ? 24 : 0 }}>
+                  <div style={{ display: "flex", fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 24, letterSpacing: 2 }}>{c.label}</div>
+                  <div style={{ display: "flex", marginTop: 6 }}>
+                    {c.works.slice(0, columns.length > 1 ? 3 : 5).map((w, i) => (
+                      <div key={i} style={{ display: "flex", marginRight: 8 }}>
+                        <Cover src={coverOf.get(w) ?? null} kind={w.kind === "ANIME" ? "ANIME" : "MANGA"} width={columns.length > 1 ? 72 : 80} height={columns.length > 1 ? 102 : 114} />
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ ...ONE_LINE, marginTop: 6, fontFamily: "Barlow Condensed", fontWeight: 700, fontSize: 24, maxWidth: colW }}>
+                    {cut(c.works.slice(0, 3).map((w) => cut(workTitle(w), 22)).join(" / "), columns.length > 1 ? 40 : 80)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {trackLine && track && (
+            <div style={{ display: "flex", alignItems: "center", marginTop: 16, maxWidth: W }}>
+              <div style={{ display: "flex", padding: "4px 10px", background: INK, color: PAPER, fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 24, letterSpacing: 2 }}>ONGAKU</div>
+              <div style={{ ...ONE_LINE, marginLeft: 12, fontFamily: "Barlow Condensed", fontWeight: 700, fontSize: 30, maxWidth: W - 280 }}>{trackLine}</div>
+              <div style={{ display: "flex", marginLeft: 12, fontFamily: "Barlow Condensed", fontWeight: 700, fontSize: 22, color: "rgba(13,12,16,0.55)" }}>{PROVIDER_LABEL[track.provider]}</div>
+            </div>
+          )}
+
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 18, paddingTop: 12, borderTop: `4px solid ${INK}`, fontFamily: "Barlow Condensed", fontWeight: 700, fontSize: 26 }}>
+            <div style={{ ...ONE_LINE, maxWidth: 520 }}>
               {[country?.label, m.birthday ? `Anniversaire : ${m.birthday}` : null].filter(Boolean).join("   /   ")}
             </div>
             <div style={{ display: "flex" }}>guilde-otaku.vercel.app/membres/{m.id}</div>
