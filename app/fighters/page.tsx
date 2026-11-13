@@ -101,7 +101,9 @@ export default function FightersPage() {
     return () => window.removeEventListener("keydown", onKey);
   }, [phase, selected]);
 
-  if (loading) return <KofLoadingScreen />;
+  // Réserve la hauteur de l'écran pendant le chargement : sans cela le pied de page
+  // remonte en haut puis saute vers le bas quand l'arène apparaît (décalage de mise en page).
+  if (loading) return <div style={{ minHeight: "100dvh" }}><KofLoadingScreen /></div>;
 
   return (
     <>

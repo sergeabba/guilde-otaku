@@ -155,6 +155,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
   .gk-reading-progress { display: none !important; }
   .gk-motion-ticker-track { animation: none !important; }
   [data-gk-motion] { opacity: 1 !important; transform: none !important; }

@@ -665,10 +665,10 @@ html[data-theme="light"] .tone-dark {
   font-size: 1.05rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
   color: rgba(243,238,226,0.78); text-decoration: none;
   border-bottom: 1px solid rgba(243,238,226,0.14);
-  transition: color var(--gk-fast), padding-left var(--gk-fast);
+  transition: color var(--gk-fast), transform var(--gk-fast);
 }
 .gk-footer nav a b { font-size: 0.7rem; color: var(--gk-gold); font-weight: 700; }
-@media (hover: hover) { .gk-footer nav a:hover { color: var(--gk-gold); padding-left: 6px; } }
+@media (hover: hover) { .gk-footer nav a:hover { color: var(--gk-gold); transform: translateX(6px); } }
 .gk-footer-base {
   display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px;
   margin-top: 32px; padding-top: 16px; border-top: 1px solid rgba(243,238,226,0.14);
