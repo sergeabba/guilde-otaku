@@ -108,6 +108,7 @@ export default function CommandPalette() {
   const [index, setIndex] = useState<Item[] | null>(null);
   const [active, setActive] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const restoreRef = useRef<HTMLElement | null>(null);
 
@@ -182,16 +183,25 @@ export default function CommandPalette() {
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Escape") { e.preventDefault(); close(); }
-    else if (e.key === "ArrowDown") { e.preventDefault(); setActive((a) => Math.min(a + 1, results.length - 1)); }
+    else if (e.key === "ArrowDown") { e.preventDefault(); setActive((a) => Math.max(0, Math.min(a + 1, results.length - 1))); }
     else if (e.key === "ArrowUp") { e.preventDefault(); setActive((a) => Math.max(a - 1, 0)); }
-    else if (e.key === "Enter" && results[active]) { e.preventDefault(); go(results[active]); }
-    else if (e.key === "Tab") { e.preventDefault(); }
+    else if (e.key === "Enter" && e.target === inputRef.current && results[active]) { e.preventDefault(); go(results[active]); }
+    else if (e.key === "Tab") {
+      const focusables = dialogRef.current?.querySelectorAll<HTMLElement>(
+        'input:not(:disabled), button:not(:disabled):not([tabindex="-1"])',
+      );
+      if (!focusables?.length) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
   };
 
   let lastGroup = "";
   return (
     <div className="gk-cmd-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) close(); }}>
-      <div className="gk-cmd tone-dark" role="dialog" aria-modal="true" aria-label="Recherche dans la Guilde" onKeyDown={onKeyDown}>
+      <div ref={dialogRef} className="gk-cmd tone-dark" role="dialog" aria-modal="true" aria-label="Recherche dans la Guilde" onKeyDown={onKeyDown}>
         <div className="gk-cmd-top">
           <Search size={20} aria-hidden="true" style={{ color: "var(--gk-gold)" }} />
           <input

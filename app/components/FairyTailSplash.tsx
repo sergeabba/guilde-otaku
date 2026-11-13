@@ -15,7 +15,7 @@ type Phase = "black" | "opening" | "playing" | "ignition" | "outro";
 export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) {
   const [phase,    setPhase]    = useState<Phase>("black");
   const [progress, setProgress] = useState(0);
-  const [needsTap, setNeedsTap] = useState(false);
+  const [, setNeedsTap] = useState(false);
   const [soundOn,  setSoundOn]  = useState(false);
   const videoRef   = useRef<HTMLVideoElement>(null);
   const timerRef   = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -43,35 +43,11 @@ export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-
-    // 1) Autoplay garanti en muted
+    // Never turn sound on without an explicit choice from the visitor.
     video.muted = true;
     video.play().catch(() => {});
+  }, []);
 
-    // 2) Essai d'unmute immédiat (marche sur la plupart des desktops)
-    const t = setTimeout(() => { tryPlayWithSound(); }, 80);
-
-    // 3) Fallback : 1ʳᵉ interaction utilisateur → active le son
-    const onFirstInteract = () => {
-      if (!video.muted) return;
-      video.muted = false;
-      video.volume = 0.75;
-      video.play().then(() => {
-        setSoundOn(true);
-        setNeedsTap(false);
-      }).catch(() => {});
-    };
-    window.addEventListener("pointerdown", onFirstInteract, { once: true });
-    window.addEventListener("touchstart",  onFirstInteract, { once: true });
-    window.addEventListener("keydown",     onFirstInteract, { once: true });
-
-    return () => {
-      clearTimeout(t);
-      window.removeEventListener("pointerdown", onFirstInteract);
-      window.removeEventListener("touchstart",  onFirstInteract);
-      window.removeEventListener("keydown",     onFirstInteract);
-    };
-  }, [tryPlayWithSound]);
 
   /* ── 1. Phase timeline ──────────────────────────────────────────────────── */
   useEffect(() => {
@@ -80,7 +56,7 @@ export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) 
     const t2 = setTimeout(() => setPhase("playing"), 1100);
     const safety = setTimeout(() => {
       if (!doneRef.current) { doneRef.current = true; setPhase("ignition"); }
-    }, 4800);
+    }, 4000);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(safety); };
   }, [phase]);
 
@@ -213,6 +189,14 @@ export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) 
       exit={{ opacity: 0 }}
       transition={{ duration: 0.85, ease: [0.65, 0, 0.35, 1] }}
     >
+      <button
+        type="button"
+        className="ft-skip-intro"
+        onClick={onFinish}
+        aria-label="Passer l'introduction et accéder à la Guilde"
+      >
+        PASSER L'INTRO <span aria-hidden="true">↗</span>
+      </button>
 
       {/* ── Vidéo HD en fond ────────────────────────────────────────────── */}
       <div
@@ -419,7 +403,7 @@ export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) 
 
       {/* ── Bouton "Activer le son" (fallback iOS) ──────────────────────── */}
       <AnimatePresence>
-        {needsTap && !soundOn && phase === "playing" && (
+        {!soundOn && phase === "playing" && (
           <motion.button
             key="sound-tap"
             type="button"

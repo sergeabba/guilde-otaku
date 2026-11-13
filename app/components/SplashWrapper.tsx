@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useSyncExternalStore } from "react";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, useReducedMotion } from "framer-motion";
 import FairyTailSplash from "./FairyTailSplash";
 
 /* useSyncExternalStore avec subscribe stable = flag client-only fiable,
@@ -34,11 +34,14 @@ export default function SplashWrapper({
   hasSeenSplash?: boolean;
 }) {
   const mounted = useMounted();
+  const reducedMotion = useReducedMotion();
+  const bypassSplash = hasSeenSplash || reducedMotion === true;
   const [showSplash, setShowSplash] = useState(!hasSeenSplash);
   const [reveal, setReveal] = useState<RevealState>(
     hasSeenSplash ? "done" : "hidden"
   );
   const checkedRef = useRef(false);
+  const finishedRef = useRef(false);
 
   useEffect(() => {
     if (checkedRef.current) return;
@@ -49,6 +52,8 @@ export default function SplashWrapper({
   }, []);
 
   const handleFinish = useCallback(() => {
+    if (finishedRef.current) return;
+    finishedRef.current = true;
     try {
       document.cookie = "guilde-splash-seen=1; path=/; max-age=86400; SameSite=Lax";
     } catch {}
@@ -58,8 +63,9 @@ export default function SplashWrapper({
     return () => clearTimeout(t);
   }, []);
 
-  const showingSplash = mounted && showSplash;
-  const hidden = reveal === "hidden" || showingSplash || !mounted;
+  const showingSplash = mounted && showSplash && !bypassSplash;
+  // Returning/mobile visitors see the SSR page immediately; reduced-motion users bypass the cinematic intro.
+  const hidden = !bypassSplash && (reveal === "hidden" || showingSplash || !mounted);
 
   return (
     <>
@@ -83,7 +89,7 @@ export default function SplashWrapper({
         {children}
       </div>
 
-      {!mounted && !hasSeenSplash && (
+      {!mounted && !bypassSplash && (
         <div
           style={{
             position: "fixed",

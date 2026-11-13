@@ -42,10 +42,10 @@ const CSS = `
 
   .atelier-page {
     min-height: 100vh;
-    background: #020205; /* Deep, almost absolute black */
+    background: #101014; /* Deep, almost absolute black */
     color: #fff;
     font-family: 'Barlow', sans-serif;
-    overflow-x: hidden;
+    overflow-x: clip;
     position: relative;
   }
   
@@ -281,6 +281,43 @@ const CSS = `
   .stat-num { font-family: 'Bebas Neue', sans-serif; font-size: 56px; line-height: 1; color: #fff; margin-bottom: 8px; }
   .stat-label { font-size: 12px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255,255,255,0.4); }
 
+  /* Editorial artbook treatment: ink, paper, and a clean image-first gallery. */
+  .mesh-bg { display: none; }
+  .atelier-page .hero-kicker {
+    border-radius: 0; color: #dfb75b; border-color: #b99b56;
+    background: #211d16; backdrop-filter: none; font-weight: 900;
+  }
+  .atelier-page .hero-title { font-family: var(--font-barlow-condensed), Impact, sans-serif; font-weight: 900; font-style: italic; letter-spacing: -.04em; }
+  .atelier-page .hero-title .gradient-text { background: none; -webkit-text-fill-color: #dfb75b; color: #dfb75b; }
+  .atelier-page .hero-title .outline { -webkit-text-stroke: 1px #c8bdac; }
+  .atelier-page .stats-bar { border-radius: 0; backdrop-filter: none; box-shadow: 6px 6px 0 #383026; border: 2px solid #74684e; background: #18171b; }
+  .atelier-page .stat-num { font-family: var(--font-barlow-condensed), Impact, sans-serif; font-weight: 900; color: #dfb75b; }
+  .atelier-page .filter-btn { border-radius: 0; backdrop-filter: none; border: 2px solid #615747; background: #18171b; color: #e7ddce; font-family: var(--font-barlow-condensed), Impact, sans-serif; font-size: 1rem; text-transform: uppercase; font-weight: 900; }
+  .atelier-page .filter-btn.active { background: #dfb75b; color: #141114; border-color: #dfb75b; box-shadow: 3px 3px 0 #e7ddce; }
+  .atelier-page .bento-card { display: block; width: 100%; text-align: left; padding: 0; font: inherit; color: inherit; border-radius: 0; border: 2px solid #766a54; }
+  .atelier-page .bento-card:hover { border-color: #dfb75b; transform: translateY(-4px); box-shadow: 6px 6px 0 #dfb75b; }
+  .atelier-page .bento-card:focus-visible { outline: 3px solid #dfb75b; outline-offset: 4px; }
+  .atelier-page .bento-card:focus-visible .card-overlay { opacity: 1; }
+  .atelier-page .bento-card:focus-visible .card-zoom { opacity: 1; transform: none; }
+  .atelier-page .bento-card:hover::before { opacity: 0; }
+  .atelier-page .card-cat { border-radius: 0; backdrop-filter: none; }
+  .atelier-page .card-title { font-family: var(--font-barlow-condensed), Impact, sans-serif; font-weight: 900; font-style: italic; }
+  .atelier-page .modal-inner { border-radius: 0; background: #141316; border: 2px solid #8e7852; }
+  .atelier-page .modal-backdrop { backdrop-filter: blur(6px); }
+  .atelier-page .modal-info { backdrop-filter: none; background: #19181b; }
+  .atelier-page .modal-close { top: 10px; right: 10px; border-radius: 0; width: 44px; height: 44px; background: #272127; }
+  .atelier-page .prompt-box, .atelier-page .meta-item { border-radius: 0; }
+  @media (hover: none) { .atelier-page .card-overlay { opacity: 1; } .atelier-page .card-zoom { opacity: 1; transform: none; } }
+  @media (max-width: 767px) {
+    .atelier-page .filters-wrap { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; padding-bottom: 8px; }
+    .atelier-page .filter-btn { white-space: nowrap; flex: none; scroll-snap-align: start; }
+    .atelier-page .stats-bar { gap: 20px 10px; padding: 20px 12px; margin-bottom: 32px; }
+    .atelier-page .stat-item { flex: 1 1 36%; }
+    .atelier-page .stat-num { font-size: clamp(2rem, 10vw, 3.5rem); }
+    .atelier-page .modal-img-wrap { height: 40svh; }
+    .atelier-page .modal-info { padding: 20px; }
+  }
+  @media (max-width: 380px) { .atelier-page .meta-grid { grid-template-columns: 1fr; } }
   @media(prefers-reduced-motion: reduce){ 
     .mesh-blob { animation: none; }
     .bento-card, .bento-card img, .modal-backdrop, .modal-inner { transition: none; transform: none; } 
@@ -291,7 +328,8 @@ const CSS = `
 function BentoCard({ work, index, onClick }: { work: AtelierImage; index: number; onClick: () => void }) {
   const bentoClass = `cell-${work.size === "small" ? "normal" : work.size}`;
   return (
-    <motion.div
+    <motion.button
+      type="button"
       className={`bento-card ${bentoClass}`}
       onClick={onClick}
       initial={{ opacity: 0, y: 30 }}
@@ -299,7 +337,7 @@ function BentoCard({ work, index, onClick }: { work: AtelierImage; index: number
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.6, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
     >
-      <div className="card-top-bar" style={{ background: `linear-gradient(90deg, ${work.accent}, transparent)` }} />
+      <div className="card-top-bar" style={{ background: work.accent }} />
       <span className="card-num">#{index + 1}</span>
       
       <img src={work.url} alt={work.title} loading="lazy" />
@@ -311,8 +349,8 @@ function BentoCard({ work, index, onClick }: { work: AtelierImage; index: number
         <div className="card-title">{work.title}</div>
         <div className="card-universe">{work.universe}</div>
       </div>
-      <div className="card-zoom"><ZoomIn size={18} /></div>
-    </motion.div>
+      <div className="card-zoom" aria-hidden="true"><ZoomIn size={18} /></div>
+    </motion.button>
   );
 }
 
@@ -324,10 +362,36 @@ function Modal({ works, currentIdx, onClose, onPrev, onNext }: {
   onNext: () => void;
 }) {
   const work = works[currentIdx];
+  const touchStart = useRef<number | null>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const oldOverflow = document.body.style.overflow;
+    document.body.classList.add("modal-open");
+    document.body.style.overflow = "hidden";
+    closeRef.current?.focus();
+    return () => {
+      document.body.classList.remove("modal-open");
+      document.body.style.overflow = oldOverflow;
+      previousFocus?.focus();
+    };
+  }, []);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
+      if (e.key === "Tab" && modalRef.current) {
+        const items = Array.from(modalRef.current.querySelectorAll<HTMLElement>("button:not([disabled]), a[href]"))
+          .filter((element) => getComputedStyle(element).display !== "none");
+        if (items.length) {
+          const first = items[0];
+          const last = items[items.length - 1];
+          if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+          else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
+      }
       if (e.key === "ArrowLeft") onPrev();
       if (e.key === "ArrowRight") onNext();
     };
@@ -338,6 +402,9 @@ function Modal({ works, currentIdx, onClose, onPrev, onNext }: {
   return (
     <motion.div
       className="modal-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Œuvre ${work.title}, ${currentIdx + 1} sur ${works.length}`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -345,6 +412,7 @@ function Modal({ works, currentIdx, onClose, onPrev, onNext }: {
       onClick={onClose}
     >
       <motion.div
+        ref={modalRef}
         className="modal-inner"
         initial={{ opacity: 0, scale: 0.95, rotateX: 10 }}
         animate={{ opacity: 1, scale: 1, rotateX: 0 }}
@@ -353,7 +421,17 @@ function Modal({ works, currentIdx, onClose, onPrev, onNext }: {
         onClick={(e) => e.stopPropagation()}
         style={{ boxShadow: `0 40px 100px -20px ${work.accent}40` }}
       >
-        <div className="modal-img-wrap">
+        <div
+          className="modal-img-wrap"
+          onTouchStart={(event) => { touchStart.current = event.touches[0]?.clientX ?? null; }}
+          onTouchEnd={(event) => {
+            if (touchStart.current === null) return;
+            const distance = event.changedTouches[0].clientX - touchStart.current;
+            touchStart.current = null;
+            if (Math.abs(distance) < 55) return;
+            if (distance > 0) onPrev(); else onNext();
+          }}
+        >
           <AnimatePresence mode="wait">
             <motion.img
               key={work.filename}
@@ -365,12 +443,12 @@ function Modal({ works, currentIdx, onClose, onPrev, onNext }: {
               transition={{ duration: 0.4 }}
             />
           </AnimatePresence>
-          <button className="modal-nav modal-nav-prev" onClick={onPrev}><ChevronLeft size={24} /></button>
-          <button className="modal-nav modal-nav-next" onClick={onNext}><ChevronRight size={24} /></button>
+          <button type="button" className="modal-nav modal-nav-prev" onClick={onPrev} aria-label="Œuvre précédente"><ChevronLeft size={24} /></button>
+          <button type="button" className="modal-nav modal-nav-next" onClick={onNext} aria-label="Œuvre suivante"><ChevronRight size={24} /></button>
         </div>
 
         <div className="modal-info">
-          <button className="modal-close" onClick={onClose}><X size={20} /></button>
+          <button ref={closeRef} type="button" className="modal-close" onClick={onClose} aria-label="Fermer la visionneuse"><X size={20} /></button>
           
           <div style={{ paddingRight: '40px' }}>
             <span className="card-cat" style={{ color: work.accent, background: `${work.accent}1A`, borderColor: `${work.accent}4D` }}>
@@ -399,10 +477,9 @@ function Modal({ works, currentIdx, onClose, onPrev, onNext }: {
 
           <div className="meta-grid">
             {[
-              { label: "Créateur", value: "IA Otaku" },
               { label: "Fichier", value: work.filename },
               { label: "Catégorie", value: work.category },
-              { label: "Année", value: "2025" },
+              { label: "Univers", value: work.universe },
             ].map(({ label, value }) => (
               <div key={label} className="meta-item">
                 <div className="meta-label">{label}</div>
@@ -449,17 +526,11 @@ export default function AtelierPage() {
     <div className="atelier-page">
       <style>{CSS}</style>
       
-      {/* Dynamic Background */}
-      <div className="mesh-bg">
-        <div className="mesh-blob blob-1" />
-        <div className="mesh-blob blob-2" />
-        <div className="mesh-blob blob-3" />
-      </div>
-      <div className="atelier-noise" />
+      <div className="atelier-noise" aria-hidden="true" />
 
-      <GuildeHeader activePage="atelier" bgColor="rgba(2,2,5,0.7)" />
+      <GuildeHeader activePage="atelier" accentColor="#dfb75b" bgColor="#101014" tone="dark" />
 
-      <div style={{ position: "relative", zIndex: 10 }}>
+      <main style={{ position: "relative", zIndex: 10 }}>
 
         {/* ── HERO ── */}
         <motion.section ref={heroRef} style={{ y: heroY, opacity: heroOpacity }}>
@@ -481,13 +552,13 @@ export default function AtelierPage() {
         </motion.section>
 
         {/* ── STATS BAR ── */}
-        <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 clamp(20px, 5vw, 64px)" }}>
+        <div data-gk-motion="reveal" style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 clamp(20px, 5vw, 64px)" }}>
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.6 }} className="stats-bar">
             {[
               { num: loading ? "-" : images.length, label: "Œuvres uniques" },
-              { num: "Midjourney", label: "Moteur IA" },
-              { num: "4K+", label: "Résolution" },
-              { num: "2025", label: "Collection" },
+              { num: loading ? "-" : new Set(images.map((image) => image.universe).filter(Boolean)).size, label: "Univers" },
+              { num: loading ? "-" : new Set(images.map((image) => image.category).filter(Boolean)).size, label: "Catégories" },
+              { num: "Guilde", label: "Collection" },
             ].map(({ num, label }) => (
               <div className="stat-item" key={label}>
                 <div className="stat-num">{num}</div>
@@ -501,7 +572,7 @@ export default function AtelierPage() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} style={{ padding: "0 clamp(20px, 5vw, 64px) 40px", maxWidth: "1400px", margin: "0 auto" }}>
           <div className="filters-wrap">
             {CATEGORIES.map(cat => (
-              <button key={cat} className={`filter-btn ${activeFilter === cat ? "active" : ""}`} onClick={() => setActiveFilter(cat)}>
+              <button type="button" key={cat} aria-pressed={activeFilter === cat} className={`filter-btn ${activeFilter === cat ? "active" : ""}`} onClick={() => setActiveFilter(cat)}>
                 {cat}
               </button>
             ))}
@@ -509,7 +580,7 @@ export default function AtelierPage() {
         </motion.div>
 
         {/* ── GRILLE ── */}
-        <div style={{ padding: "0 clamp(20px, 5vw, 64px) 120px", maxWidth: "1400px", margin: "0 auto" }}>
+        <div data-gk-motion="reveal" style={{ padding: "0 clamp(20px, 5vw, 64px) 120px", maxWidth: "1400px", margin: "0 auto" }}>
           {loading ? (
             <div style={{ textAlign: "center", padding: "100px 0", color: "rgba(255,255,255,0.4)" }}>
               <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }} style={{ display: "inline-block", marginBottom: "16px" }}>
@@ -541,7 +612,7 @@ export default function AtelierPage() {
             <Cpu size={16} color="#8b5cf6" /> Synthèse Artificielle
           </div>
         </div>
-      </div>
+      </main>
 
       {/* ── MODAL ── */}
       <AnimatePresence>

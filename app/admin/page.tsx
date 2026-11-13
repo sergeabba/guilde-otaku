@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Lock, BookOpen, User, Flame, ArrowUpRight,
-  Palette, Film, Globe, ShieldCheck, Eye, EyeOff,
+  Palette, Film, Globe, ShieldCheck, Eye, EyeOff, LogOut,
 } from "lucide-react";
 import { useAdminAuth } from "../hooks/useAdminAuth";
 
@@ -67,7 +67,7 @@ const MODULES = [
 ];
 
 export default function AdminHubPage() {
-  const { authed, checking, password, setPassword, error: pwError, login } = useAdminAuth();
+  const { authed, checking, password, setPassword, error: pwError, errorMessage, login, logout } = useAdminAuth();
   const [showPw, setShowPw] = useState(false);
 
   if (checking) return null;
@@ -89,7 +89,7 @@ export default function AdminHubPage() {
             background: "rgba(255,255,255,0.02)",
             border: `1px solid ${pwError ? "rgba(248,113,113,0.4)" : "rgba(255,255,255,0.07)"}`,
             borderRadius: "24px",
-            padding: "48px 40px",
+            padding: "clamp(24px, 5vw, 48px) clamp(18px, 4vw, 40px)",
             textAlign: "center",
             boxShadow: pwError ? "0 0 40px rgba(248,113,113,0.12)" : "0 40px 80px rgba(0,0,0,0.5)",
             transition: "border-color 0.3s, box-shadow 0.3s",
@@ -150,7 +150,7 @@ export default function AdminHubPage() {
                 initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                 style={{ color: "#f87171", fontSize: 13, fontWeight: 700, marginBottom: 12 }}
               >
-                Mot de passe incorrect
+                {errorMessage}
               </motion.p>
             )}
           </AnimatePresence>
@@ -189,7 +189,7 @@ export default function AdminHubPage() {
 
       {/* ── HEADER ── */}
       <div style={{
-        padding: "40px 48px 0",
+        padding: "40px clamp(16px, 4vw, 48px) 0",
         maxWidth: 1100, margin: "0 auto",
       }}>
         <motion.div
@@ -213,6 +213,13 @@ export default function AdminHubPage() {
           <p style={{ fontSize: 17, color: "rgba(255,255,255,0.4)", maxWidth: 520, lineHeight: 1.5, marginBottom: 0 }}>
             Centre de contrôle. Toute modification ici est appliquée en direct sur la plateforme.
           </p>
+          <button
+            type="button"
+            onClick={() => { void logout(); }}
+            style={{ display: "inline-flex", alignItems: "center", gap: 8, marginTop: 24, padding: "9px 12px", color: "#c9a84c", background: "transparent", border: "1px solid rgba(201,168,76,.5)", borderRadius: 4, font: "700 0.95rem var(--gk-font-ui)", cursor: "pointer" }}
+          >
+            <LogOut size={16} aria-hidden="true" /> Se déconnecter
+          </button>
         </motion.div>
 
         {/* Divider */}
@@ -220,10 +227,10 @@ export default function AdminHubPage() {
       </div>
 
       {/* ── GRID ── */}
-      <main style={{ maxWidth: 1100, margin: "0 auto", padding: "0 48px 80px" }}>
+      <main style={{ maxWidth: 1100, margin: "0 auto", padding: "0 clamp(16px, 4vw, 48px) 80px" }}>
         <div style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))",
           gap: 20,
         }}>
           {MODULES.map((mod, i) => {

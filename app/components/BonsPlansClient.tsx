@@ -125,7 +125,7 @@ export default function BonsPlansClient({ initialLinks }: { initialLinks: Supaba
         </div>
 
         {showLead && (
-          <section className="gk-panel bp-lead" aria-label="Dernier ajout" style={{ "--bp": safeColor(lead.color) } as React.CSSProperties}>
+          <section data-gk-motion="reveal" className="gk-panel bp-lead" aria-label="Dernier ajout" style={{ "--bp": safeColor(lead.color) } as React.CSSProperties}>
             <div className="bp-lead-media">
               {leadShot ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -172,7 +172,7 @@ export default function BonsPlansClient({ initialLinks }: { initialLinks: Supaba
             {hasFilters && <button type="button" className="gk-btn" onClick={reset}>Tout réafficher</button>}
           </div>
         ) : (
-          <div className="bp-grid gk-stagger" key={`${activeCategory}-${favOnly}`}>
+          <div data-gk-motion="reveal" className="bp-grid gk-stagger" key={`${activeCategory}-${favOnly}`}>
             {filtered.map((l, i) => {
               const color = safeColor(l.color);
               const fav = isFavorite(l.id);

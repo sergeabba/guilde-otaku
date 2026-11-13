@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Menu, Moon, Search, Sun, X } from "lucide-react";
+import { BookOpen, Menu, Moon, ScrollText, Search, Sun, Swords, UsersRound, X } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { NAV, chapterNo, type PageId } from "../config/nav";
 
@@ -18,6 +18,13 @@ interface GuildeHeaderProps {
   tone?: "dark" | "light";
   rightSlot?: React.ReactNode;
 }
+
+const QUICK_LINKS = [
+  { id: "membres", label: "La Guilde", href: "/", Icon: UsersRound },
+  { id: "wanted", label: "Wanted", href: "/wanted", Icon: ScrollText },
+  { id: "fighters", label: "Fighters", href: "/fighters", Icon: Swords },
+  { id: "bibliotheque", label: "Biblio", href: "/bibliotheque", Icon: BookOpen },
+] as const;
 
 export function openSearch() {
   window.dispatchEvent(new Event("guilde:search"));
@@ -123,9 +130,29 @@ export default function GuildeHeader({
         ))}
       </nav>
 
+      {activePage !== "fighters" && <nav className="gk-mobile-dock" aria-label="Navigation rapide">
+        {QUICK_LINKS.map(({ id, label, href, Icon }) => (
+          <Link key={id} href={href} aria-current={activePage === id ? "page" : undefined}>
+            <Icon aria-hidden="true" />
+            <span>{label}</span>
+          </Link>
+        ))}
+        <button
+          type="button"
+          onClick={() => setMenuOpen(true)}
+          aria-expanded={menuOpen}
+          aria-controls="gk-chapter-menu"
+          aria-label="Ouvrir les autres chapitres"
+        >
+          <Menu aria-hidden="true" />
+          <span>Sommaire</span>
+        </button>
+      </nav>}
+
       {menuOpen && typeof document !== "undefined" && createPortal(
         <div
           ref={menuRef}
+          id="gk-chapter-menu"
           className={`gk-menu tone-${resolvedTone}`}
           role="dialog"
           aria-modal="true"

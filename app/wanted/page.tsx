@@ -387,7 +387,7 @@ export default function WantedPage() {
         </div>
 
         {!loading && list.length > 0 && (
-          <section aria-labelledby="wt-wall-title" style={{ marginTop: "clamp(48px, 8vw, 96px)" }}>
+          <section data-gk-motion="reveal" aria-labelledby="wt-wall-title" style={{ marginTop: "clamp(48px, 8vw, 96px)" }}>
             <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
               <h2 id="wt-wall-title" className="gk-display gk-h3">Le mur des primes</h2>
               <span className="gk-tag">{list.length} {list.length > 1 ? "avis placardés" : "avis placardé"}</span>

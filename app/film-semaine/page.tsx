@@ -201,7 +201,7 @@ export default function FilmSemainePage() {
           <>
             {/* ── À L'AFFICHE ─────────────────────────────────────────── */}
             {chosen ? (
-              <section aria-labelledby="fs-title">
+              <section aria-labelledby="fs-title" data-gk-motion="reveal">
                 <div className="fs-backdrop" aria-hidden="true">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   {backdrop && <img src={backdrop} alt="" fetchPriority="high" />}
@@ -261,7 +261,7 @@ export default function FilmSemainePage() {
             )}
 
             {candidates.length > 0 && (
-              <section className="gk-wrap fs-section" aria-labelledby="fs-cand">
+              <section className="gk-wrap fs-section" data-gk-motion="reveal" aria-labelledby="fs-cand">
                 <div className="fs-section-head">
                   <h2 id="fs-cand" className="gk-display gk-h3">{chosen ? "Les autres candidats" : "Les candidats"}</h2>
                   <span className="gk-tag">{candidates.length} {candidates.length > 1 ? "films" : "film"}</span>
@@ -278,7 +278,7 @@ export default function FilmSemainePage() {
 
             {/* ── ARCHIVES ────────────────────────────────────────────── */}
             {weeks.length > 1 && (
-              <section className="gk-wrap fs-section" aria-labelledby="fs-arch" style={{ paddingBottom: "clamp(56px, 9vw, 110px)" }}>
+              <section className="gk-wrap fs-section" data-gk-motion="reveal" aria-labelledby="fs-arch" style={{ paddingBottom: "clamp(56px, 9vw, 110px)" }}>
                 <hr className="gk-rule" style={{ marginBottom: "clamp(24px, 4vw, 44px)" }} />
                 <div className="fs-section-head">
                   <div>

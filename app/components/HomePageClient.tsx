@@ -9,6 +9,7 @@ import { Rank, Member, RANK_FILTER_ORDER } from "../../data/members";
 import MemberCard from "./MemberCard";
 import MemberModal from "./MemberModal";
 import GuildeHeader from "./GuildeHeader";
+import ChapterStory from "./ChapterStory";
 import { rankAccents, rankLogos, darkRanks, rankJapanese } from "../config/ranks";
 import { COUNTRIES, flagUrl } from "../config/countries";
 import { NAV, chapterNo } from "../config/nav";
@@ -200,10 +201,19 @@ export default function HomePageClient({ initialMembers, featuredFilm }: {
             )}
           </section>
 
+          <div className="gk-motion-ticker" aria-hidden="true">
+            <div className="gk-motion-ticker-track">
+              <span>LA GUILDE ✦ LA LÉGENDE ✦ LES CHAPITRES ✦ LA GUILDE ✦ LA LÉGENDE ✦ LES CHAPITRES ✦</span>
+              <span>LA GUILDE ✦ LA LÉGENDE ✦ LES CHAPITRES ✦ LA GUILDE ✦ LA LÉGENDE ✦ LES CHAPITRES ✦</span>
+            </div>
+          </div>
+
+          <ChapterStory />
+
           <hr className="gk-rule" />
 
           {/* ── SOMMAIRE + À LA UNE ────────────────────────────────────── */}
-          <section className="gk-wrap hm-section" aria-labelledby="hm-toc-title">
+          <section className="gk-wrap hm-section" aria-labelledby="hm-toc-title" data-gk-motion="reveal">
             <div className="hm-split">
               <div>
                 <div className="hm-section-head">
@@ -306,7 +316,7 @@ export default function HomePageClient({ initialMembers, featuredFilm }: {
           <hr className="gk-rule" />
 
           {/* ── ANNUAIRE ───────────────────────────────────────────────── */}
-          <section className="gk-wrap hm-section" ref={directoryRef} aria-labelledby="hm-dir-title" style={{ scrollMarginTop: 110 }}>
+          <section id="annuaire" data-gk-motion="reveal" className="gk-wrap hm-section" ref={directoryRef} aria-labelledby="hm-dir-title" style={{ scrollMarginTop: 110 }}>
             <div className="hm-section-head">
               <div>
                 <span className="gk-hand">du Fondateur aux Revenants</span>
@@ -430,7 +440,7 @@ export default function HomePageClient({ initialMembers, featuredFilm }: {
                   return (
                     <section
                       key={rank}
-                      className="hm-rank-block"
+                      className="hm-rank-block" data-gk-motion="reveal"
                       aria-label={`Grade ${rank}`}
                       style={{
                         "--rk": rk,

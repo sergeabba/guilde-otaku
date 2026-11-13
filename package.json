@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "jest"
+    "test": "jest",
+    "test:security": "node --experimental-strip-types --test tests/admin-session.node.mjs",
+    "test:motion": "node --test tests/motion-ux.node.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

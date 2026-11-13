@@ -276,7 +276,7 @@ export default function BibliothequePage() {
 
         {/* ── LA CHRONIQUE DU BASH ───────────────────────────────────── */}
         {une && (
-          <section className="bb-section" aria-labelledby="bb-bash">
+          <section className="bb-section" data-gk-motion="reveal" aria-labelledby="bb-bash">
             <div className="bb-head">
               <div>
                 <span className="gk-hand">le dossier du printemps 2026</span>
@@ -351,7 +351,7 @@ export default function BibliothequePage() {
         <hr className="gk-rule" />
 
         {/* ── LES VERDICTS ───────────────────────────────────────────── */}
-        <section className="bb-section" aria-labelledby="bb-tiers">
+        <section className="bb-section" data-gk-motion="reveal" aria-labelledby="bb-tiers">
           <div className="bb-head">
             <div>
               <span className="gk-hand">du chef-d&apos;œuvre au surcoté</span>
@@ -449,7 +449,7 @@ export default function BibliothequePage() {
           ) : (
             <div key={`${activeCategory}-${activeTier}-${sortBy}-${showFavoritesOnly}`}>
               {byTier.map(({ tier, items }) => (
-                <section key={tier} className="bb-tier" style={{ "--tier": tierConfig[tier].color } as React.CSSProperties} aria-label={tierConfig[tier].label}>
+                <section key={tier} data-gk-motion="reveal" className="bb-tier" style={{ "--tier": tierConfig[tier].color } as React.CSSProperties} aria-label={tierConfig[tier].label}>
                   <div className="bb-tier-head">
                     <h3>{tierConfig[tier].label}</h3>
                     <span>{items.length} {items.length > 1 ? "titres" : "titre"}</span>

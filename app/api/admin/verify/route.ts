@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "1111";
+import { isAdmin } from "../../../../lib/auth";
 
 export async function GET(req: NextRequest) {
-  const auth = req.headers.get("authorization");
-  if (auth === `Bearer ${ADMIN_PASSWORD}`) {
-    return NextResponse.json({ valid: true });
-  }
-  return NextResponse.json({ valid: false }, { status: 401 });
+  const valid = isAdmin(req);
+  return NextResponse.json({ valid }, {
+    status: valid ? 200 : 401,
+    headers: { "Cache-Control": "no-store" },
+  });
 }

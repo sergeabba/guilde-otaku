@@ -198,7 +198,7 @@ export default function BirthdaysPage() {
         ) : (
           <>
             {/* ── À L'HONNEUR ─────────────────────────────────────────── */}
-            <section className={`gk-panel bd-spot${isToday ? " is-today" : ""}`} aria-label={isToday ? "Anniversaire du jour" : "Prochain anniversaire"}>
+            <section data-gk-motion="reveal" className={`gk-panel bd-spot${isToday ? " is-today" : ""}`} aria-label={isToday ? "Anniversaire du jour" : "Prochain anniversaire"}>
               <div className="bd-spot-media">
                 {soonest.map((m) => (
                   <button key={m.id} type="button" onClick={() => setSelectedMember(m)} aria-label={`Ouvrir la fiche de ${m.name}`}>
@@ -244,7 +244,7 @@ export default function BirthdaysPage() {
             </section>
 
             {upcoming.length > 0 && (
-              <section aria-labelledby="bd-next-title" style={{ marginTop: "clamp(28px, 5vw, 48px)" }}>
+              <section data-gk-motion="reveal" aria-labelledby="bd-next-title" style={{ marginTop: "clamp(28px, 5vw, 48px)" }}>
                 <h2 id="bd-next-title" className="gk-display gk-h4">Ensuite</h2>
                 <ul className="bd-rows" style={{ marginTop: 10, borderTop: "var(--gk-stroke) solid var(--gk-border)" }}>
                   {upcoming.map((m) => <Row key={m.id} m={m} src={portrait(m)} label={whenLabel(m.daysUntil)} onOpen={() => setSelectedMember(m)} showMonth />)}
@@ -294,7 +294,7 @@ export default function BirthdaysPage() {
 
                 <div key={activeMonth ?? "all"} className="gk-stagger">
                   {visibleMonths.map((mo, i) => byMonth[mo].length > 0 && (
-                    <section key={mo} className="bd-month" style={{ "--i": i } as React.CSSProperties} aria-labelledby={`bd-m-${mo}`}>
+                    <section data-gk-motion="reveal" key={mo} className="bd-month" style={{ "--i": i } as React.CSSProperties} aria-labelledby={`bd-m-${mo}`}>
                       <div className="bd-month-head">
                         <h2 id={`bd-m-${mo}`} style={{ color: mo === currentMonth ? "var(--gk-accent-text)" : undefined }}>{MONTHS[mo - 1]}</h2>
                         {mo === currentMonth && <span className="gk-tag gk-tag--solid">Ce mois-ci</span>}
@@ -308,7 +308,7 @@ export default function BirthdaysPage() {
                 </div>
               </>
             ) : (
-              <section aria-label={`Calendrier de ${MONTHS[calMonth - 1]} ${calYear}`}>
+              <section data-gk-motion="reveal" aria-label={`Calendrier de ${MONTHS[calMonth - 1]} ${calYear}`}>
                 <div className="bd-cal-head">
                   <button type="button" className="gk-icon-btn" onClick={() => setCalMonth((m) => (m === 1 ? 12 : m - 1))} aria-label="Mois précédent">
                     <ChevronLeft size={20} aria-hidden="true" />

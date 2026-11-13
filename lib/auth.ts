@@ -1,10 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "1111";
+import { ADMIN_COOKIE, verifyAdminSession } from "./admin-session";
 
 export function isAdmin(req: NextRequest): boolean {
-  const auth = req.headers.get("authorization");
-  return auth === `Bearer ${ADMIN_PASSWORD}`;
+  // Cookie-authenticated writes should only originate from this site.
+  if (!["GET", "HEAD", "OPTIONS"].includes(req.method)) {
+    const origin = req.headers.get("origin");
+    if (origin) {
+      try {
+        if (new URL(origin).origin !== req.nextUrl.origin) return false;
+      } catch {
+        return false;
+      }
+    }
+    if (req.headers.get("sec-fetch-site") === "cross-site") return false;
+  }
+  return verifyAdminSession(req.cookies.get(ADMIN_COOKIE)?.value);
 }
 
 export function requireAdmin(req: NextRequest): NextResponse | null {

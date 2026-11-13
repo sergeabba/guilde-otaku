@@ -1,16 +1,10 @@
+// Admin requests use an HttpOnly same-origin session cookie instead of
+// exposing a password or bearer token to JavaScript.
 export function getAdminHeaders(): Record<string, string> {
-  if (typeof window === "undefined") return {};
-  const token = sessionStorage.getItem("guilde_admin_auth") || "";
-  return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-  };
+  return { "Content-Type": "application/json" };
 }
 
 export function getAdminFormDataHeaders(): Record<string, string> {
-  if (typeof window === "undefined") return {};
-  const token = sessionStorage.getItem("guilde_admin_auth") || "";
-  return {
-    Authorization: `Bearer ${token}`,
-  };
+  // The browser sets multipart/form-data boundary automatically.
+  return {};
 }

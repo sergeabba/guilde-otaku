@@ -102,6 +102,7 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  if (!isAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const sb = getAdminClient();
     const id = req.nextUrl.searchParams.get("id");

@@ -13,10 +13,13 @@ import {
 } from "next/font/google";
 import "./globals.css";
 import "./styles/shonen.css";
+import "./styles/motion.css";
 
 import BirthdayBanner from "./components/BirthdayBanner";
 import Footer from "./components/Footer";
 import BackToTop from "./components/BackToTop";
+import MotionDirector from "./components/MotionDirector";
+import MotionSettings from "./components/MotionSettings";
 import CommandPalette from "./components/CommandPalette";
 import SplashWrapper from "./components/SplashWrapper";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -72,6 +75,7 @@ const bricolageGrotesque = Bricolage_Grotesque({
   subsets: ["latin"],
   weight: ["400", "600", "700", "800"],
   display: "swap",
+  preload: false,
   variable: "--font-bricolage",
 });
 
@@ -79,6 +83,7 @@ const caveat = Caveat({
   subsets: ["latin"],
   weight: ["500", "700"],
   display: "swap",
+  preload: false,
   variable: "--font-caveat",
 });
 
@@ -87,6 +92,7 @@ const delaGothic = Dela_Gothic_One({
   subsets: ["latin"],
   weight: "400",
   display: "swap",
+  preload: false,
   variable: "--font-dela",
 });
 
@@ -122,21 +128,26 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const headersList = await headers();
   const userAgent = headersList.get("user-agent")?.toLowerCase() || "";
   const isBot = /bot|googlebot|crawler|spider|robot|crawling|thum|headless|lighthouse/i.test(userAgent);
+  const isMobileVisitor = /android|iphone|ipad|ipod|mobile/i.test(userAgent);
 
-  const hasSeenSplash = isBot || cookieStore.get("guilde-splash-seen")?.value === "1";
+  // A blocking intro is expensive on mobile: visitors reach content immediately.
+  const hasSeenSplash = isBot || isMobileVisitor || cookieStore.get("guilde-splash-seen")?.value === "1";
 
   return (
     <html lang="fr" className={`${barlowCondensed.variable} ${barlow.variable} ${bebasNeue.variable} ${orbitron.variable} ${blackOpsOne.variable} ${cinzelDecorative.variable} ${bricolageGrotesque.variable} ${caveat.variable} ${delaGothic.variable}`}>
       <body>
         <a href="#contenu" className="gk-skip">Aller au contenu</a>
         <ThemeProvider>
+          <MotionSettings>
           <BirthdayBanner />
           <SplashWrapper hasSeenSplash={hasSeenSplash}>
-            <div id="contenu">{children}</div>
+            <div id="contenu" tabIndex={-1}>{children}</div>
             <Footer />
           </SplashWrapper>
           <CommandPalette />
           <BackToTop />
+          <MotionDirector />
+          </MotionSettings>
         </ThemeProvider>
       </body>
     </html>
