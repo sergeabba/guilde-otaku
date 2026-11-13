@@ -99,3 +99,27 @@
 @media (hover: hover) { .pf-neighbor:hover { border-color: var(--gk-accent); } }
 @media (max-width: 479px) { .pf-neighbor-img { display: none; } }
 @media (prefers-reduced-motion: reduce) { .pf-panel, .pf-bar-track > span { animation: none; } }
+
+/* ─── PALMARÈS ──────────────────────────────────────────────────────────── */
+.pf-awards { list-style: none; display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); }
+.pf-award { position: relative; display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 12px; align-items: start; padding: 14px 16px; background: var(--gk-surface); border: var(--gk-stroke) solid var(--gk-border); box-shadow: 5px 5px 0 var(--gk-rule); }
+.pf-award.is-main { background: var(--gk-gold); color: #111; border-color: #111; box-shadow: 6px 6px 0 #111; transform: rotate(-0.6deg); }
+.pf-award-icon { width: 44px; height: 44px; display: grid; place-items: center; border: 2px solid currentColor; border-radius: 50%; }
+.pf-award-title { font: 900 italic clamp(1.05rem, 3.6vw, 1.3rem)/1.05 var(--gk-font-ui); text-transform: uppercase; letter-spacing: 0.02em; overflow-wrap: anywhere; }
+.pf-award-year { margin-top: 4px; font: 800 0.85rem var(--gk-font-ui); letter-spacing: 0.12em; opacity: 0.75; }
+.pf-award-desc { margin-top: 6px; font: 500 0.95rem/1.45 var(--gk-font-body); opacity: 0.85; overflow-wrap: anywhere; }
+.pf-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.pf-badges .pf-badge { margin-top: 0; }
+.pf-badge-more { display: inline-flex; align-items: center; padding: 5px 10px; font: 800 0.85rem var(--gk-font-ui); border: 2px solid var(--gk-rule); color: var(--gk-dim); }
+
+/* ─── MUSIQUE ───────────────────────────────────────────────────────────── */
+.pf-music { display: grid; gap: 10px; padding: 12px 14px; background: var(--gk-surface); border: 2px solid var(--gk-rule); }
+.pf-music-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+.pf-music-txt { display: grid; min-width: 0; }
+.pf-music-txt small { font: 800 0.72rem var(--gk-font-ui); letter-spacing: 0.14em; text-transform: uppercase; color: var(--gk-accent); }
+.pf-music-txt strong { font: 800 1.05rem/1.15 var(--gk-font-ui); overflow-wrap: anywhere; }
+.pf-music-txt span { font: 500 0.92rem var(--gk-font-body); color: var(--gk-dim); overflow-wrap: anywhere; }
+.pf-music-src { font: 800 0.72rem var(--gk-font-ui); letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 8px; border: 2px solid var(--gk-rule); color: var(--gk-dim); }
+.pf-music-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.pf-music-note { font: 500 0.82rem/1.4 var(--gk-font-body); color: var(--gk-faint); }
+.pf-track-player iframe[style] { aspect-ratio: auto; border-radius: 12px; }

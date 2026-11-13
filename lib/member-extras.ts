@@ -1,6 +1,7 @@
 // Données de profil enrichies d'un membre (colonne additive `fighters.extras`, JSON).
 // Tout est facultatif : un membre sans extras garde exactement son affichage actuel.
 // Le contenu vient de la base : il est validé et borné ici avant tout affichage.
+import { isValidMusicId, type MusicProvider } from "./music";
 
 export interface FocusPoint {
   /** 0 à 100, position horizontale du point focal en pourcentage */
@@ -25,10 +26,18 @@ export interface FavoriteWork {
 }
 
 export interface MemberTrack {
-  provider: "youtube";
-  /** Identifiant vidéo YouTube (11 caractères) */
+  provider: MusicProvider;
+  /** Identifiant propre au service (voir lib/music.ts) */
   id: string;
   title?: string;
+  artist?: string;
+}
+
+/** Une distinction du palmarès (distincte du grade). */
+export interface MemberAward {
+  title: string;
+  year?: number;
+  description?: string;
 }
 
 export interface MemberExtras {
@@ -36,6 +45,7 @@ export interface MemberExtras {
   favoriteAnime?: FavoriteWork[];
   favoriteManga?: FavoriteWork[];
   music?: MemberTrack[];
+  awards?: MemberAward[];
   photoFocus?: FocusPoint;
   animeFocus?: FocusPoint;
 }
@@ -53,6 +63,7 @@ const SUPABASE_HOST = /\.supabase\.(co|in)$/;
 
 const MAX_WORKS = 30;
 const MAX_TRACKS = 10;
+const MAX_AWARDS = 20;
 
 function str(v: unknown, max: number): string | undefined {
   if (typeof v !== "string") return undefined;
@@ -137,12 +148,38 @@ function works(v: unknown, kind: "ANIME" | "MANGA"): FavoriteWork[] | undefined 
 function tracks(v: unknown): MemberTrack[] | undefined {
   if (!Array.isArray(v)) return undefined;
   const out: MemberTrack[] = [];
+  const seen = new Set<string>();
   for (const item of v.slice(0, MAX_TRACKS)) {
     if (!item || typeof item !== "object") continue;
     const o = item as Record<string, unknown>;
-    const id = str(o.id, 11);
-    if (o.provider !== "youtube" || !id || !/^[\w-]{11}$/.test(id)) continue;
-    out.push({ provider: "youtube", id, title: latinText(o.title, 160) });
+    const id = str(o.id, 200);
+    if (!id || !isValidMusicId(o.provider, id)) continue;
+    const key = `${o.provider}:${id}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const t: MemberTrack = { provider: o.provider as MusicProvider, id };
+    const title = latinText(o.title, 160), artist = latinText(o.artist, 120);
+    if (title) t.title = title;
+    if (artist) t.artist = artist;
+    out.push(t);
+  }
+  return out.length ? out : undefined;
+}
+
+function awards(v: unknown): MemberAward[] | undefined {
+  if (!Array.isArray(v)) return undefined;
+  const out: MemberAward[] = [];
+  for (const item of v.slice(0, MAX_AWARDS)) {
+    if (!item || typeof item !== "object") continue;
+    const o = item as Record<string, unknown>;
+    const title = latinText(o.title, 80);
+    if (!title) continue;
+    const a: MemberAward = { title };
+    const year = typeof o.year === "number" ? o.year : typeof o.year === "string" && /^\d{4}$/.test(o.year) ? Number(o.year) : NaN;
+    if (Number.isInteger(year) && year >= 1990 && year <= 2100) a.year = year;
+    const description = latinText(o.description, 240);
+    if (description) a.description = description;
+    out.push(a);
   }
   return out.length ? out : undefined;
 }
@@ -160,6 +197,7 @@ export function parseMemberExtras(raw: unknown): MemberExtras | undefined {
     favoriteAnime: works(o.favoriteAnime, "ANIME"),
     favoriteManga: works(o.favoriteManga, "MANGA"),
     music: tracks(o.music),
+    awards: awards(o.awards),
     photoFocus: focus(o.photoFocus),
     animeFocus: focus(o.animeFocus),
   };
@@ -187,4 +225,14 @@ export function workSubtitle(w: FavoriteWork): string | undefined {
 /** `object-position` CSS à partir d'un point focal, avec un repli adapté aux portraits. */
 export function objectPosition(f: FocusPoint | undefined, fallback = "50% 18%"): string {
   return f ? `${f.x}% ${f.y}%` : fallback;
+}
+
+/**
+ * Palmarès affichable : les distinctions saisies dans l'admin, sinon l'ancienne
+ * distinction unique (colonne `badge`). Rien n'est inventé.
+ */
+export function memberAwards(m: { badge?: string | null; extras?: MemberExtras | null }): MemberAward[] {
+  if (m.extras?.awards?.length) return m.extras.awards;
+  const legacy = m.badge?.trim();
+  return legacy && !hasJapanese(legacy) ? [{ title: legacy }] : [];
 }

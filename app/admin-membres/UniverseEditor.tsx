@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ArrowDown, ArrowUp, Plus, Search, Star, Trash2 } from "lucide-react";
 import { hasJapanese, workKey, workTitle, type FavoriteWork, type MemberTrack } from "../../lib/member-extras";
-import { youtubeId } from "../../lib/youtube";
+import { parseMusicLink, openUrl, PROVIDER_LABEL } from "../../lib/music";
 
 type Kind = "ANIME" | "MANGA";
 type Candidate = FavoriteWork & { year?: number; format?: string };
@@ -126,44 +126,53 @@ function FavoriteList({ kind, label, works, onChange }: { kind: Kind; label: str
 function MusicList({ tracks, onChange }: { tracks: MemberTrack[]; onChange: (t: MemberTrack[]) => void }) {
   const [url, setUrl] = useState("");
   const [title, setTitle] = useState("");
+  const [artist, setArtist] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   function add(e: React.FormEvent) {
     e.preventDefault();
-    const id = youtubeId(url);
-    if (!id) { setError("Lien YouTube non reconnu. Colle l'adresse de la vidéo (youtube.com/watch?v=… ou youtu.be/…)."); return; }
-    if (tracks.some((t) => t.id === id)) { setError("Ce morceau est déjà dans la liste."); return; }
-    if (hasJapanese(title)) { setError("Écris le titre en alphabet latin."); return; }
+    const ref = parseMusicLink(url);
+    if (!ref) { setError("Lien non reconnu. Colle le lien de partage d'un morceau Spotify (open.spotify.com/track/…), Apple Music (music.apple.com/…) ou YouTube."); return; }
+    if (tracks.some((t) => t.provider === ref.provider && t.id === ref.id)) { setError("Ce morceau est déjà dans la liste."); return; }
+    if (hasJapanese(title) || hasJapanese(artist)) { setError("Titre et artiste en alphabet latin (rōmaji si besoin)."); return; }
     if (tracks.length >= 10) { setError("10 morceaux maximum."); return; }
-    onChange([...tracks, { provider: "youtube", id, title: title.trim() || undefined }]);
-    setUrl(""); setTitle(""); setError(null);
+    onChange([...tracks, { ...ref, title: title.trim() || undefined, artist: artist.trim() || undefined }]);
+    setUrl(""); setTitle(""); setArtist(""); setError(null);
   }
+  const patch = (i: number, p: Partial<MemberTrack>) => onChange(tracks.map((t, k) => (k === i ? { ...t, ...p } : t)));
 
   return (
     <div className="am-section">
       <h3>Musique (Ongaku)</h3>
-      <p>À choisir avec l&apos;accord du membre. Sur la fiche, rien ne se lance tout seul : le visiteur appuie sur « Écouter ».</p>
+      <p>Choisie par le membre. Le premier morceau est sa <b>musique favorite</b> : il apparaît sur la carte et l&apos;aperçu de partage. Sur la fiche, rien ne démarre tout seul.</p>
       {tracks.length === 0 ? <p className="am-empty">Aucun morceau.</p> : (
         <ol className="am-list">
           {tracks.map((t, i) => (
-            <li key={t.id} className="am-item" style={{ gridTemplateColumns: "minmax(0,1fr) auto" }}>
+            <li key={`${t.provider}:${t.id}`} className="am-item" style={{ gridTemplateColumns: "minmax(0,1fr) auto" }}>
               <div style={{ minWidth: 0 }}>
-                <strong>{t.title || "Sans titre"}</strong>
-                <small>youtube.com/watch?v={t.id}</small>
+                <small>{i === 0 ? "Favorite · " : ""}{PROVIDER_LABEL[t.provider]}</small>
+                <input className="am-input" value={t.title ?? ""} maxLength={160} placeholder="Titre du morceau" aria-label="Titre du morceau"
+                  aria-invalid={hasJapanese(t.title ?? "")} onChange={(e) => patch(i, { title: e.target.value || undefined })} />
+                <input className="am-input" value={t.artist ?? ""} maxLength={120} placeholder="Artiste" aria-label="Artiste"
+                  aria-invalid={hasJapanese(t.artist ?? "")} onChange={(e) => patch(i, { artist: e.target.value || undefined })} />
+                <a href={openUrl(t)} target="_blank" rel="noopener noreferrer" style={{ font: "500 0.8rem var(--am-body)", color: "var(--am-gold)" }}>Vérifier le lien ↗</a>
               </div>
               <div className="am-item-actions">
                 <button type="button" className="am-icon" aria-label="Monter" disabled={i === 0} onClick={() => { const l = [...tracks]; [l[i - 1], l[i]] = [l[i], l[i - 1]]; onChange(l); }}><ArrowUp size={16} aria-hidden="true" /></button>
-                <button type="button" className="am-icon" aria-label={`Retirer ${t.title || t.id}`} onClick={() => onChange(tracks.filter((_, k) => k !== i))}><Trash2 size={16} aria-hidden="true" /></button>
+                <button type="button" className="am-icon" aria-label={`Retirer ${t.title || "ce morceau"}`} onClick={() => onChange(tracks.filter((_, k) => k !== i))}><Trash2 size={16} aria-hidden="true" /></button>
               </div>
             </li>
           ))}
         </ol>
       )}
       <form className="am-grid2" onSubmit={add}>
-        <label className="am-field"><span>Lien YouTube</span><input className="am-input" inputMode="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://youtu.be/…" /></label>
-        <label className="am-field"><span>Titre affiché (facultatif)</span><input className="am-input" value={title} maxLength={160} onChange={(e) => setTitle(e.target.value)} /></label>
+        <label className="am-field" style={{ gridColumn: "1 / -1" }}><span>Lien Spotify, Apple Music ou YouTube</span>
+          <input className="am-input" inputMode="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://open.spotify.com/track/…" /></label>
+        <label className="am-field"><span>Titre</span><input className="am-input" value={title} maxLength={160} onChange={(e) => setTitle(e.target.value)} /></label>
+        <label className="am-field"><span>Artiste</span><input className="am-input" value={artist} maxLength={120} onChange={(e) => setArtist(e.target.value)} /></label>
         <button className="am-btn am-btn--sm" style={{ justifySelf: "start" }}><Plus size={14} aria-hidden="true" /> Ajouter le morceau</button>
       </form>
+      <small style={{ font: "500 0.82rem/1.4 var(--am-body)", color: "var(--am-faint)" }}>Titre et artiste ne sont pas devinés : recopie-les depuis l&apos;application. Spotify et Apple Music jouent un extrait aux visiteurs non connectés ou non abonnés.</small>
       {error && <p className="am-alert am-alert--error" role="alert">{error}</p>}
     </div>
   );

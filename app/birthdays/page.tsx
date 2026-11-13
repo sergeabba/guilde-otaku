@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight, List, PartyPopper, Share2, Sword, User } from "lucide-react";
 import { Member, Rank } from "../../data/members";
-import MemberModal from "../components/MemberModal";
+import MemberQuickView from "../components/MemberQuickView";
 import GuildeHeader from "../components/GuildeHeader";
 import { rankAccents } from "../config/ranks";
 import { parseBirthday } from "../types";
@@ -58,6 +58,7 @@ export default function BirthdaysPage() {
   const [members, setMembers] = useState<Member[] | null>(null);
   const [today, setToday] = useState(() => new Date());
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const closeMember = useCallback(() => setSelectedMember(null), []);
   const [activeMonth, setActiveMonth] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("anime");
   const [layout, setLayout] = useState<Layout>("liste");
@@ -360,7 +361,7 @@ export default function BirthdaysPage() {
         )}
       </main>
 
-      <MemberModal member={selectedMember} onClose={() => setSelectedMember(null)} viewMode={viewMode} />
+      <MemberQuickView member={selectedMember} onClose={closeMember} viewMode={viewMode} />
       <Toast />
     </div>
   );

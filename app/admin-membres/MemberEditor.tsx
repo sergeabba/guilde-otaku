@@ -6,10 +6,11 @@ import { ExternalLink, Eye, EyeOff, Trash2, X } from "lucide-react";
 import { RANK_FILTER_ORDER, type Rank } from "../../data/members";
 import { COUNTRIES } from "../config/countries";
 import { adminDb } from "../../lib/admin-db-client";
-import { hasJapanese, parseMemberExtras, type FocusPoint, type MemberExtras } from "../../lib/member-extras";
+import { hasJapanese, memberAwards, parseMemberExtras, type FocusPoint, type MemberExtras } from "../../lib/member-extras";
 import type { SupabaseMemberRow } from "../types";
 import PortraitPanel from "./PortraitPanel";
 import UniverseEditor from "./UniverseEditor";
+import AwardsEditor, { awardsIssue } from "./AwardsEditor";
 
 type Tab = "identite" | "portraits" | "univers";
 
@@ -41,8 +42,14 @@ export default function MemberEditor({ member, extrasSupported, onClose, onSaved
   const [row, setRow] = useState<SupabaseMemberRow | null>(member);
   const [tab, setTab] = useState<Tab>("identite");
   const [form, setForm] = useState<Identity>(() => toIdentity(member));
-  const [extras, setExtras] = useState<MemberExtras>(() => parseMemberExtras(member?.extras) ?? {});
-  const [savedSnapshot, setSavedSnapshot] = useState(() => JSON.stringify([toIdentity(member), parseMemberExtras(member?.extras) ?? {}]));
+  // Palmarès : si aucun n'est encore saisi, on part de l'ancienne distinction unique (colonne badge).
+  const initialExtras = (): MemberExtras => {
+    const x = parseMemberExtras(member?.extras) ?? {};
+    if (extrasSupported && !x.awards?.length) { const a = memberAwards({ badge: member?.badge }); if (a.length) x.awards = a; }
+    return x;
+  };
+  const [extras, setExtras] = useState<MemberExtras>(initialExtras);
+  const [savedSnapshot, setSavedSnapshot] = useState(() => JSON.stringify([toIdentity(member), initialExtras()]));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -78,12 +85,19 @@ export default function MemberEditor({ member, extrasSupported, onClose, onSaved
   async function save() {
     setTouched(true); setError(null); setNotice(null);
     if (Object.keys(errors).length) { setTab("identite"); setError("Corrige les champs signalés avant d'enregistrer."); return; }
+    const awardErr = extrasSupported ? awardsIssue(extras.awards ?? []) : null;
+    if (awardErr) { setTab("identite"); setError(awardErr); return; }
     setSaving(true);
     const values: Record<string, unknown> = {
       name: form.name.trim(), rank: form.rank, badge: form.badge.trim() || null, birthday: form.birthday.trim(),
       country: form.country || null, color: form.color, bio: form.bio.trim(),
     };
-    if (extrasSupported && row) values.extras = extras;
+    if (extrasSupported) {
+      const awards = (extras.awards ?? []).map((a) => ({ ...a, title: a.title.trim(), description: a.description?.trim() || undefined }));
+      values.extras = { ...extras, awards: awards.length ? awards : undefined };
+      // L'ancienne colonne `badge` suit la distinction principale (annuaire, Wanted, recherche).
+      values.badge = awards[0]?.title ?? null;
+    }
 
     if (row) {
       const { error: err } = await adminDb.update("fighters", row.id, values);
@@ -174,11 +188,13 @@ export default function MemberEditor({ member, extrasSupported, onClose, onSaved
                     {RANK_FILTER_ORDER.map((r) => <option key={r} value={r}>{r}</option>)}
                   </select>
                 </label>
+                {!extrasSupported && (
                 <label className="am-field">
-                  <span>Distinction (badge)</span>
+                  <span>Distinction</span>
                   <input className="am-input" value={form.badge} maxLength={80} placeholder="ex. RECRUE DE L'ANNÉE 2025" aria-invalid={!!fieldErr("badge")} onChange={(e) => set("badge", e.target.value)} />
                   {fieldErr("badge") && <small style={{ color: "var(--am-red)" }}>{errors.badge}</small>}
                 </label>
+                )}
                 <label className="am-field">
                   <span>Anniversaire</span>
                   <input className="am-input" value={form.birthday} maxLength={40} placeholder="ex. 12 mars" aria-invalid={!!fieldErr("birthday")} onChange={(e) => set("birthday", e.target.value)} />
@@ -205,6 +221,12 @@ export default function MemberEditor({ member, extrasSupported, onClose, onSaved
                 <textarea className="am-input" value={form.bio} maxLength={1200} aria-invalid={!!fieldErr("bio")} onChange={(e) => set("bio", e.target.value)} />
                 <small>{fieldErr("bio") || `${form.bio.length} / 1200`}</small>
               </label>
+
+              {extrasSupported ? (
+                <AwardsEditor awards={extras.awards ?? []} onChange={(awards) => patchExtras({ awards })} />
+              ) : (
+                <p className="am-alert am-alert--info">Le <b>palmarès à plusieurs distinctions</b> s&apos;active après la migration « extras ». En attendant, la distinction unique ci-dessus reste utilisée.</p>
+              )}
 
               {row && (
                 <div className="am-section">

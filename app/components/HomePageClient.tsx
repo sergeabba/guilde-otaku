@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowDown, Search, Sword, User, X } from "lucide-react";
 import { Rank, Member, RANK_FILTER_ORDER } from "../../data/members";
 import MemberCard from "./MemberCard";
-import MemberModal from "./MemberModal";
+import MemberQuickView from "./MemberQuickView";
 import GuildeHeader from "./GuildeHeader";
 import ChapterStory from "./ChapterStory";
 import { rankAccents, rankLogos, darkRanks, rankRomaji } from "../config/ranks";
@@ -35,6 +35,7 @@ export default function HomePageClient({ initialMembers, featuredFilm }: {
   const [activeCountry, setActiveCountry] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const closeMember = useCallback(() => setSelectedMember(null), []);
   const [viewMode, setViewMode] = useState<ViewMode>("anime");
   const [mounted, setMounted] = useState(false);
   const [showFloat, setShowFloat] = useState(false);
@@ -474,7 +475,7 @@ export default function HomePageClient({ initialMembers, featuredFilm }: {
           </section>
         </main>
 
-        <MemberModal member={selectedMember} onClose={() => setSelectedMember(null)} viewMode={viewMode} />
+        <MemberQuickView member={selectedMember} onClose={closeMember} viewMode={viewMode} />
       </div>
 
       {mounted && showFloat && !selectedMember && createPortal(

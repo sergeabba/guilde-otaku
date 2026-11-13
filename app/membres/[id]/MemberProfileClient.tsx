@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Cake, ChevronLeft, ChevronRight, Download, ExternalLink, Music, Play, Share2, Trophy, X, Zap } from "lucide-react";
+import { ArrowLeft, Cake, ChevronLeft, ChevronRight, Download, ExternalLink, Play, Share2, Trophy, X, Zap } from "lucide-react";
 import type { Member } from "../../../data/members";
 import GuildeHeader from "../../components/GuildeHeader";
 import RomajiLabel from "../../components/RomajiLabel";
@@ -15,7 +15,9 @@ import { COUNTRIES, flagUrl } from "../../config/countries";
 import { getDaysUntil } from "../../types";
 import { onColor } from "../../utils/color";
 import { useShare } from "../../hooks/useShare";
-import { featuredWorks, objectPosition, workKey, workSubtitle, workTitle, type FavoriteWork, type MemberTrack } from "../../../lib/member-extras";
+import { featuredWorks, memberAwards, objectPosition, workKey, workSubtitle, workTitle, type FavoriteWork } from "../../../lib/member-extras";
+import MemberAwards from "../../components/MemberAwards";
+import MemberMusic from "../../components/MemberMusic";
 import "./profile.css";
 
 export interface ProfileNeighbor {
@@ -52,6 +54,7 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
   const anime = extras.favoriteAnime ?? [];
   const manga = extras.favoriteManga ?? [];
   const music = extras.music ?? [];
+  const awards = memberAwards(member);
   const stats = member.stats && STAT_LABELS.some(([k]) => (member.stats[k] ?? 0) > 0) ? member.stats : null;
   const special = member.special && member.special.name && !["—", "Inconnu"].includes(member.special.name) ? member.special : null;
   const hasVideo = !!(member.photoVideo || member.animeVideo);
@@ -154,8 +157,11 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
               {romaji && <RomajiLabel romaji={romaji} className="pf-rank-romaji" />}
             </div>
 
-            {member.badge && (
-              <p className="pf-badge"><Trophy size={15} aria-hidden="true" /> {member.badge}</p>
+            {awards.length > 0 && (
+              <div className="pf-badges">
+                <a className="pf-badge" href="#pf-palmares"><Trophy size={15} aria-hidden="true" /> {awards[0].title}</a>
+                {awards.length > 1 && <a className="pf-badge-more" href="#pf-palmares">+{awards.length - 1} distinction{awards.length > 2 ? "s" : ""}</a>}
+              </div>
             )}
 
             <dl className="pf-facts">
@@ -189,6 +195,13 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
             </div>
           </div>
         </section>
+
+        {awards.length > 0 && (
+          <section id="pf-palmares" className="pf-section" aria-labelledby="pf-palmares-title" data-gk-motion="">
+            <h2 id="pf-palmares-title" className="pf-h2">Palmarès</h2>
+            <MemberAwards awards={awards} />
+          </section>
+        )}
 
         {(stats || special) && (
           <section className="pf-section pf-power" aria-labelledby="pf-power-title" data-gk-motion="">
@@ -226,7 +239,12 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
           </div>
           <Favorites title="Suki na anime" fr="Anime préférés" works={anime} onOpen={setOpenWork} />
           <Favorites title="Suki na manga" fr="Mangas préférés" works={manga} onOpen={setOpenWork} />
-          {music.length > 0 && <Tracks tracks={music} />}
+          {music.length > 0 && (
+            <div className="pf-fav">
+              <h3 className="pf-h3"><RomajiLabel romaji="Ongaku" fr="Sa musique" inline /></h3>
+              <MemberMusic tracks={music} />
+            </div>
+          )}
         </section>
 
         {(prev || next) && (
@@ -355,38 +373,6 @@ function WorkSheet({ work, chronique, onClose }: { work: FavoriteWork; chronique
   );
 }
 
-function Tracks({ tracks }: { tracks: MemberTrack[] }) {
-  const [playing, setPlaying] = useState<string | null>(null);
-  return (
-    <div className="pf-fav">
-      <h3 className="pf-h3"><RomajiLabel romaji="Ongaku" fr="Ses morceaux" inline /></h3>
-      <ul className="pf-tracks">
-        {tracks.map((t) => (
-          <li key={t.id}>
-            {playing === t.id ? (
-              <div className="pf-track-player">
-                <iframe
-                  src={`https://www.youtube-nocookie.com/embed/${t.id}?autoplay=1&rel=0`}
-                  title={t.title ? `Lecture : ${t.title}` : "Lecture du morceau"}
-                  allow="autoplay; encrypted-media"
-                  allowFullScreen
-                />
-                <button type="button" className="gk-btn gk-btn--ghost gk-btn--sm" onClick={() => setPlaying(null)}>Arrêter</button>
-              </div>
-            ) : (
-              <button type="button" className="pf-track" onClick={() => setPlaying(t.id)}>
-                <Music size={16} aria-hidden="true" />
-                <span>{t.title || "Morceau sans titre"}</span>
-                <span className="pf-track-play">Écouter</span>
-              </button>
-            )}
-          </li>
-        ))}
-      </ul>
-      <p className="pf-empty" style={{ marginTop: 8 }}>La lecture ne démarre que lorsque tu appuies sur « Écouter ».</p>
-    </div>
-  );
-}
 
 function NeighborLink({ n, dir }: { n: ProfileNeighbor; dir: "prev" | "next" }) {
   return (
