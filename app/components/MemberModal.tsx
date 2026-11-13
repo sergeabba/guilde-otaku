@@ -288,6 +288,26 @@ function ModalContent({ member, onClose, viewMode }: {
           </div>
         </div>
 
+        {/* Lien vers la page profil (sur ordinateur, il est dans la barre du haut) */}
+        {isMobile && (
+          <div style={{ padding: "0 20px 36px" }}>
+            <Link
+              href={`/membres/${member.id}`}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "center",
+                minHeight: 46, padding: "10px 18px", borderRadius: 100,
+                background: btnBg, border: `1px solid ${btnBorder}`,
+                color: textPrimary, textDecoration: "none",
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontSize: 15, fontWeight: 700, textTransform: "uppercase",
+                letterSpacing: "0.06em",
+              }}
+            >
+              Voir la fiche complète
+            </Link>
+          </div>
+        )}
+
         {/* ALTER EGO */}
         <div style={{ padding: isMobile ? "0 20px 48px" : "0" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>

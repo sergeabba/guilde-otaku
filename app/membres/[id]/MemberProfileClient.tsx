@@ -237,7 +237,7 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
         )}
       </main>
 
-      {openWork && <WorkSheet work={openWork} chronique={chroniques[workKey(openWork)]} onClose={() => setOpenWork(null)} />}
+      {openWork && <WorkSheet key={workKey(openWork)} work={openWork} chronique={chroniques[workKey(openWork)]} onClose={() => setOpenWork(null)} />}
       <ShareSheet member={member} open={shareOpen} onClose={() => setShareOpen(false)} />
       <Toast />
     </div>
@@ -280,18 +280,28 @@ function Favorites({ title, fr, works, onOpen }: { title: string; fr: string; wo
   );
 }
 
+/** Jaquette officielle telle quelle ; repli neutre si l'URL est absente ou ne charge pas. */
+function WorkCover({ work }: { work: FavoriteWork }) {
+  const [failed, setFailed] = useState(false);
+  // L'image rendue côté serveur peut échouer avant l'hydratation : l'événement
+  // `error` est alors perdu. On vérifie donc son état quand React la rattache.
+  const checkBroken = (el: HTMLImageElement | null) => {
+    if (el && el.complete && el.naturalWidth === 0) setFailed(true);
+  };
+  if (!work.coverUrl || failed) {
+    return <span className="pf-work-nocover" aria-hidden="true">{work.kind === "ANIME" ? "Anime" : "Manga"}</span>;
+  }
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img ref={checkBroken} src={work.coverUrl} alt="" loading="lazy" decoding="async" onError={() => setFailed(true)} />;
+}
+
 function WorkCard({ work, onOpen, big = false }: { work: FavoriteWork; onOpen: (w: FavoriteWork) => void; big?: boolean }) {
   const title = workTitle(work);
   const sub = workSubtitle(work);
   return (
     <button type="button" className={`pf-work${big ? " is-big" : ""}`} onClick={() => onOpen(work)} aria-label={`${title}${sub ? `, ${sub}` : ""}. Ouvrir la mini-fiche.`}>
       <span className="pf-work-cover">
-        {work.coverUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={work.coverUrl} alt="" loading="lazy" decoding="async" />
-        ) : (
-          <span className="pf-work-nocover" aria-hidden="true">{work.kind === "ANIME" ? "Anime" : "Manga"}</span>
-        )}
+        <WorkCover work={work} />
       </span>
       <span className="pf-work-body">
         <strong>{title}</strong>
@@ -304,6 +314,7 @@ function WorkCard({ work, onOpen, big = false }: { work: FavoriteWork; onOpen: (
 
 function WorkSheet({ work, chronique, onClose }: { work: FavoriteWork; chronique?: string; onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
+  const [coverFailed, setCoverFailed] = useState(false);
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
     ref.current?.querySelector<HTMLElement>("button")?.focus();
@@ -320,9 +331,9 @@ function WorkSheet({ work, chronique, onClose }: { work: FavoriteWork; chronique
           <button type="button" className="gk-icon-btn" onClick={onClose} aria-label="Fermer la mini-fiche"><X size={20} aria-hidden="true" /></button>
         </div>
         <div className="pf-ws-body">
-          {work.coverUrl && (
+          {work.coverUrl && !coverFailed && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={work.coverUrl} alt={`Couverture de ${workTitle(work)}`} />
+            <img src={work.coverUrl} alt={`Couverture de ${workTitle(work)}`} onError={() => setCoverFailed(true)} />
           )}
           <div>
             <h2 id="pf-ws-title">{workTitle(work)}</h2>
