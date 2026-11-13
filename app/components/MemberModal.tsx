@@ -11,6 +11,7 @@ import { COUNTRIES, flagUrl } from "../config/countries";
 import { Trophy, ArrowLeft, Share2 } from "lucide-react";
 import VideoPlayer from "./VideoPlayer";
 import ShareSheet from "./ShareSheet";
+import { objectPosition } from "../../lib/member-extras";
 import Link from "next/link";
 
 const PLACEHOLDER = "/placeholder.svg";
@@ -106,6 +107,10 @@ function ModalContent({ member, onClose, viewMode }: {
   const isAnime       = localMode === "anime";
   const heroVideoSrc  = isAnime ? member.animeVideo : member.photoVideo;
   const card2VideoSrc = isAnime ? member.photoVideo : member.animeVideo;
+  // Cadrage choisi dans l'admin (repli : haut du visage)
+  const realPos  = objectPosition(member.extras?.photoFocus, "center 15%");
+  const animePos = objectPosition(member.extras?.animeFocus, "center 15%");
+  const heroPos  = isAnime ? animePos : realPos;
   const heroSrc  = heroImgError  ? PLACEHOLDER : (isAnime ? member.animeChar : member.photo)     ?? PLACEHOLDER;
   const card1Src = card1ImgError ? PLACEHOLDER : (isAnime ? member.animeChar : member.photo)     ?? PLACEHOLDER;
   const card2Src = card2ImgError ? PLACEHOLDER : (isAnime ? member.photo     : member.animeChar) ?? PLACEHOLDER;
@@ -131,7 +136,7 @@ function ModalContent({ member, onClose, viewMode }: {
             fill
             sizes="(max-width: 767px) 100vw, 44vw"
             className="object-cover"
-            style={{ objectPosition: "center 15%" }}
+            style={{ objectPosition: heroPos }}
             onError={() => setHeroImgError(true)}
           />
         )}
@@ -325,9 +330,9 @@ function ModalContent({ member, onClose, viewMode }: {
           </div>
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16 }}>
             {[
-              { video: heroVideoSrc,  img: card1Src, label: card1Label, onErr: () => setCard1ImgError(true), tape: "rose", rot: "-1.5deg" },
-              { video: card2VideoSrc, img: card2Src, label: card2Label, onErr: () => setCard2ImgError(true), tape: "bleu", rot: "1.5deg" },
-            ].map(({ video, img, label, onErr, tape, rot }) => (
+              { video: heroVideoSrc,  img: card1Src, label: card1Label, onErr: () => setCard1ImgError(true), tape: "rose", rot: "-1.5deg", pos: heroPos },
+              { video: card2VideoSrc, img: card2Src, label: card2Label, onErr: () => setCard2ImgError(true), tape: "bleu", rot: "1.5deg", pos: isAnime ? realPos : animePos },
+            ].map(({ video, img, label, onErr, tape, rot, pos }) => (
               <div key={label} style={{
                 position: "relative",
                 padding: "8px 8px 12px 8px",
@@ -368,7 +373,7 @@ function ModalContent({ member, onClose, viewMode }: {
                       fill
                       sizes="(max-width: 767px) 100vw, 280px"
                       className="object-cover"
-                      style={{ objectPosition: "center 15%" }}
+                      style={{ objectPosition: pos }}
                       onError={onErr}
                     />
                   )}

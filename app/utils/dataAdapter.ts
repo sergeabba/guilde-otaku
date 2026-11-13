@@ -25,8 +25,11 @@ const CACHE_TTL_MS = 15 * 1000;
 let membersCache: Member[] | null = null;
 let membersCacheTime = 0;
 
+// Cache réservé au navigateur. Côté serveur (pages profils, images de partage),
+// chaque requête relit la base : une modification faite dans l'admin est visible
+// au rechargement suivant, sans attendre 5 minutes par instance serveur.
 function isCacheValid(): boolean {
-  return membersCache !== null && Date.now() - membersCacheTime < CACHE_TTL_MS;
+  return typeof window !== "undefined" && membersCache !== null && Date.now() - membersCacheTime < CACHE_TTL_MS;
 }
 
 export function invalidateMembersCache(): void {

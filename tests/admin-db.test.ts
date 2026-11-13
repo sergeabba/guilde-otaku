@@ -11,9 +11,33 @@ describe("parseAdminDbRequest", () => {
     expect(parseAdminDbRequest({ table: "__proto__", op: "delete", id: 1 })).toEqual({ error: "table non autorisée" });
   });
 
-  it("refuse une colonne non listée (ex. extras avant la migration, id)", () => {
-    expect(parseAdminDbRequest({ table: "fighters", op: "update", id: 4, values: { extras: {} } }))
-      .toEqual({ error: "colonne non autorisée : extras" });
+  it("nettoie extras avec le validateur du profil", () => {
+    const r = parseAdminDbRequest({ table: "fighters", op: "update", id: 4, values: { extras: {
+      music: [{ provider: "youtube", id: "dQw4w9WgXcQ", title: "OK" }, { provider: "youtube", id: "bad" }],
+      favoriteAnime: [{ source: "manual", kind: "ANIME", titleRomaji: "進撃の巨人" }],
+      photoFocus: { x: 140, y: -5 },
+      hack: "x",
+    } } });
+    expect(r).toEqual({ table: "fighters", op: "update", id: 4, values: { extras: {
+      music: [{ provider: "youtube", id: "dQw4w9WgXcQ", title: "OK" }],
+      photoFocus: { x: 100, y: 0 },
+    } } });
+    expect(parseAdminDbRequest({ table: "fighters", op: "update", id: 4, values: { extras: "n'importe quoi" } }))
+      .toEqual({ table: "fighters", op: "update", id: 4, values: { extras: {} } });
+  });
+
+  it("contrôle les champs d'un membre", () => {
+    const up = (values: Record<string, unknown>) => parseAdminDbRequest({ table: "fighters", op: "update", id: 4, values });
+    expect(up({ name: "  " })).toEqual({ error: "nom obligatoire (80 caractères max)" });
+    expect(up({ rank: "Empereur" })).toEqual({ error: "grade inconnu" });
+    expect(up({ color: "red" })).toEqual({ error: "couleur invalide (format #RRGGBB)" });
+    expect(up({ photo: "javascript:alert(1)" })).toHaveProperty("error");
+    expect(up({ photo: "http://exemple.fr/a.jpg" })).toHaveProperty("error");
+    expect(up({ photo: "https://x.supabase.co/storage/v1/object/public/a.jpg", animechar: "/anime/a.jpg", rank: "Monarque", color: "#FFD700" }))
+      .not.toHaveProperty("error");
+  });
+
+  it("refuse une colonne non listée (ex. id)", () => {
     expect(parseAdminDbRequest({ table: "bons_plans", op: "insert", rows: [{ id: 9, title: "x" }] }))
       .toEqual({ error: "colonne non autorisée : id" });
   });

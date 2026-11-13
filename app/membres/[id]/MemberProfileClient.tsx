@@ -191,7 +191,7 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
         </section>
 
         {(stats || special) && (
-          <section className="pf-section pf-power" aria-labelledby="pf-power-title">
+          <section className="pf-section pf-power" aria-labelledby="pf-power-title" data-gk-motion="">
             <h2 id="pf-power-title" className="pf-h2"><RomajiLabel romaji="Tatakai" fr="Fiche de combat" /></h2>
             <div className="pf-power-grid">
               {stats && (
@@ -219,7 +219,7 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
         )}
 
         {/* ── SON UNIVERS ─────────────────────────────────────────────── */}
-        <section className="pf-section" aria-labelledby="pf-universe">
+        <section className="pf-section" aria-labelledby="pf-universe" data-gk-motion="">
           <div className="pf-section-head">
             <h2 id="pf-universe" className="gk-display gk-h3">Son univers</h2>
             <span className="gk-hand">ce qui fait vibrer {member.name.split(" ")[0]}</span>
