@@ -131,6 +131,8 @@ export default function FightScreen({ teams, mode, versus, level, labels, reduce
     const toProfile = (m: RosterMember) => ({ id: m.id, name: m.name, stats: m.stats ?? { force: 50, vitesse: 50, technique: 50 }, specialName: m.special?.name ?? "Onde de la Guilde" });
     const s = createMatch(mode, teams[0].map(toProfile), teams[1].map(toProfile));
     stateRef.current = s;
+    // Accès de test en développement uniquement (vérifications automatisées).
+    if (process.env.NODE_ENV === "development") (window as unknown as { __fxState?: MatchState }).__fxState = s;
     const canvas = canvasRef.current!;
     const ctx = canvas.getContext("2d")!;
     const renderer = new ArenaRenderer(ctx, () => looks.current, reduced);
