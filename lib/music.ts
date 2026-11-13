@@ -1,6 +1,9 @@
-// Liens musicaux des membres : Spotify, Apple Music et YouTube.
-// Seuls les lecteurs intégrés officiels sont utilisés, et uniquement après un appui
-// du visiteur (aucune lecture automatique au chargement).
+// Liens musicaux des membres.
+// Lecture : YouTube (morceau complet pour tout le monde, sans compte) en priorité,
+// Spotify accepté (extrait de 30 s sans compte). Apple Music n'est plus proposé :
+// les anciens liens restent lisibles en base mais ne sont plus joués sur le site
+// (lien de recherche YouTube à la place). Seuls les lecteurs officiels sont
+// utilisés, et uniquement après un appui du visiteur.
 
 export type MusicProvider = "youtube" | "spotify" | "apple";
 
@@ -80,13 +83,23 @@ export function openUrl(t: MusicRef): string {
   return `https://music.apple.com/${t.id}`;
 }
 
+/** Plateformes jouées dans le lecteur flottant du site. */
+export const PLAYABLE: MusicProvider[] = ["youtube", "spotify"];
+export const isPlayable = (t: MusicRef) => PLAYABLE.includes(t.provider);
+
+/** Recherche YouTube du même titre (aucun lien de morceau inventé). */
+export function youtubeSearchUrl(t: { title?: string; artist?: string }): string | null {
+  const q = [t.artist, t.title].filter(Boolean).join(" ").trim();
+  return q ? `https://www.youtube.com/results?search_query=${encodeURIComponent(q.slice(0, 120))}` : null;
+}
+
 export const PROVIDER_LABEL: Record<MusicProvider, string> = { youtube: "YouTube", spotify: "Spotify", apple: "Apple Music" };
 
 /** Ce que le visiteur entendra, selon la plateforme (à afficher près du lecteur). */
 export const PROVIDER_LIMIT: Record<MusicProvider, string> = {
   youtube: "Lecture complète, avec publicités possibles.",
   spotify: "Extrait de 30 secondes, ou morceau complet si tu es connecté à Spotify dans ce navigateur.",
-  apple: "Extrait, ou morceau complet si tu es abonné à Apple Music et connecté.",
+  apple: "Apple Music n'est plus lu sur le site : écoute ce titre sur YouTube.",
 };
 
 /** Hauteur du lecteur intégré officiel. */

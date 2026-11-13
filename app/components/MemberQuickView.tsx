@@ -157,7 +157,7 @@ export default function MemberQuickView({ member, onClose, viewMode }: { member:
           {music.length > 0 && (
             <section className="qv-block" aria-label="Musique">
               <p className="qv-h"><RomajiLabel romaji="Ongaku" fr="Sa musique favorite" inline /></p>
-              <MemberMusic tracks={music} compact />
+              <MemberMusic tracks={music} owner={member.name} compact />
             </section>
           )}
         </div>

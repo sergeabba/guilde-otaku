@@ -1,0 +1,106 @@
+/* ═══ MUSIQUE : playlist des membres et lecteur flottant ════════════════════ */
+
+/* ─── Playlist ─── */
+.mpl { display: grid; gap: 12px; }
+.mpl-all { justify-self: start; }
+.mpl-list { list-style: none; display: grid; gap: 0; border: var(--gk-stroke) solid var(--gk-border); background: var(--gk-surface); }
+.mpl-item { position: relative; display: grid; grid-template-columns: 26px 56px minmax(0, 1fr) auto auto; align-items: center; gap: 12px; padding: 10px 14px; transition: background var(--gk-fast); }
+.mpl-item + .mpl-item { border-top: 1px solid var(--gk-rule); }
+.mpl-item.is-on { background: color-mix(in srgb, var(--gk-accent) 14%, var(--gk-surface)); }
+.mpl-item.is-on::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--gk-accent); }
+.mpl-n { font: 400 1rem var(--gk-font-display); color: var(--gk-faint); text-align: right; }
+.mpl-item.is-on .mpl-n { color: var(--gk-accent); }
+.mpl-cover { width: 56px; height: 56px; object-fit: cover; border: 2px solid var(--gk-border); display: block; background: var(--gk-surface-2); }
+.mpl-cover.is-empty { display: grid; place-items: center; color: var(--gk-faint); }
+.mpl-txt { display: grid; min-width: 0; line-height: 1.2; }
+.mpl-txt small { font: 800 0.68rem var(--gk-font-ui); letter-spacing: 0.16em; text-transform: uppercase; color: var(--gk-accent-text); }
+.mpl-txt strong { font: 900 italic 1.08rem/1.1 var(--gk-font-ui); text-transform: uppercase; overflow-wrap: anywhere; }
+.mpl-txt span { font: 500 0.92rem var(--gk-font-body); color: var(--gk-dim); overflow-wrap: anywhere; }
+.mpl-txt .mpl-legacy { font-size: 0.8rem; color: var(--gk-faint); }
+.mpl-src { font: 800 0.68rem var(--gk-font-ui); letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 7px; border: 1.5px solid var(--gk-rule); color: var(--gk-dim); white-space: nowrap; }
+.mpl-src--youtube { border-color: #ff4e45; color: #ff7b74; }
+.mpl-src--spotify { border-color: #1ed760; color: #4ee283; }
+.mpl-actions { display: flex; align-items: center; gap: 6px; }
+.mpl-play { position: relative; width: 46px; height: 46px; display: grid; place-items: center; border-radius: 50%; border: var(--gk-stroke) solid #111; background: var(--gk-accent); color: var(--pf-on, #111); box-shadow: 3px 3px 0 #111; cursor: pointer; transition: transform var(--gk-fast); }
+.mpl-play:active { transform: translate(2px, 2px); box-shadow: none; }
+.mpl-play.is-playing svg { opacity: 0; }
+.mpl-eq { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 3px; }
+.mpl-eq i { width: 4px; height: 14px; background: currentColor; transform-origin: bottom; }
+@media (prefers-reduced-motion: no-preference) {
+  .mpl-eq i { animation: mpl-eq 0.9s ease-in-out infinite; }
+  .mpl-eq i:nth-child(2) { animation-delay: -0.3s; } .mpl-eq i:nth-child(3) { animation-delay: -0.6s; }
+}
+@keyframes mpl-eq { 0%, 100% { transform: scaleY(0.35); } 50% { transform: scaleY(1); } }
+@media (hover: hover) { .mpl-play.is-playing:hover svg { opacity: 1; } .mpl-play.is-playing:hover .mpl-eq { opacity: 0; } .mpl-item:not(.is-on):hover { background: var(--gk-surface-2); } }
+.mpl-ext { width: 38px; height: 38px; display: grid; place-items: center; color: var(--gk-dim); border: 1.5px solid var(--gk-rule); }
+.mpl-ext:hover { color: var(--gk-text); border-color: var(--gk-text); }
+.mpl-note { font: 500 0.84rem/1.4 var(--gk-font-body); color: var(--gk-faint); }
+@media (max-width: 599px) {
+  .mpl-item { grid-template-columns: 48px minmax(0, 1fr) auto; gap: 10px; padding: 10px; }
+  .mpl-n, .mpl-ext { display: none; }
+  .mpl-cover { width: 48px; height: 48px; }
+  .mpl-src { grid-column: 2; grid-row: 2; justify-self: start; margin-top: -4px; }
+  .mpl-actions { grid-column: 3; grid-row: 1 / span 2; }
+}
+.mpl.is-compact .mpl-list { border-width: 2px; }
+.mpl.is-compact .mpl-item { grid-template-columns: 48px minmax(0, 1fr) auto; padding: 8px 10px; }
+.mpl.is-compact .mpl-n, .mpl.is-compact .mpl-src { display: none; }
+.mpl.is-compact .mpl-cover { width: 48px; height: 48px; }
+
+/* ─── Lecteur flottant ─── */
+.mdock { position: fixed; z-index: 260; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); color: #f3eee2; font-family: var(--gk-font-body); }
+.mdock-card { width: 360px; max-width: calc(100vw - 24px); background: #121016; border: 2.5px solid #f3eee2; box-shadow: 6px 6px 0 var(--gk-gold, #e8b931); display: grid; }
+.mdock-head { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto auto; align-items: center; gap: 8px; padding: 8px 8px 8px 10px; }
+.mdock-cover { width: 44px; height: 44px; object-fit: cover; border: 2px solid #f3eee2; display: block; }
+.mdock-cover.is-empty { display: grid; place-items: center; background: #1d1922; color: rgba(243,238,226,0.5); }
+.mdock-txt { display: grid; min-width: 0; line-height: 1.15; }
+.mdock-txt small { font: 800 0.64rem var(--gk-font-ui); letter-spacing: 0.14em; text-transform: uppercase; color: var(--gk-gold, #e8b931); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mdock-txt strong { font: 900 italic 1rem var(--gk-font-ui); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mdock-txt span { font: 500 0.82rem var(--gk-font-body); color: rgba(243,238,226,0.7); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mdock-icon { width: 38px; height: 38px; display: grid; place-items: center; background: none; border: 0; color: inherit; cursor: pointer; }
+.mdock-icon:disabled { opacity: 0.35; cursor: default; }
+.mdock-icon:hover:not(:disabled) { color: var(--gk-gold, #e8b931); }
+/* YouTube : au moins 200 px de haut, toujours visible pendant la lecture. */
+.mdock-video { width: 100%; aspect-ratio: 16 / 9; min-height: 200px; background: #000; border-block: 2px solid #f3eee2; }
+.mdock-video iframe { width: 100%; height: 100%; display: block; border: 0; }
+.mdock-spotify { width: 100%; height: 152px; border: 0; display: block; background: #121016; }
+.mdock-bar { display: flex; align-items: center; gap: 4px; padding: 6px 8px; }
+.mdock-play { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; background: var(--gk-gold, #e8b931); color: #111; border: 2px solid #111; cursor: pointer; }
+.mdock-link { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; min-height: 38px; padding: 0 8px; font: 800 0.78rem var(--gk-font-ui); letter-spacing: 0.08em; text-transform: uppercase; color: rgba(243,238,226,0.8); text-decoration: none; }
+.mdock-link:hover { color: var(--gk-gold, #e8b931); }
+.mdock-error, .mdock-note { padding: 0 10px 8px; font: 500 0.8rem/1.35 var(--gk-font-body); color: rgba(243,238,226,0.65); }
+.mdock-error { color: #ff9b8f; }
+.mdock-pill { display: flex; align-items: center; gap: 10px; max-width: min(320px, calc(100vw - 24px)); padding: 6px 14px 6px 6px; background: #121016; color: inherit; border: 2.5px solid #f3eee2; box-shadow: 4px 4px 0 var(--gk-gold, #e8b931); cursor: pointer; text-align: left; }
+.mdock-pill .mdock-cover { width: 38px; height: 38px; }
+.mdock-pill-txt { display: grid; min-width: 0; line-height: 1.15; }
+.mdock-pill-txt strong { font: 900 italic 0.95rem var(--gk-font-ui); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mdock-pill-txt small { font: 600 0.75rem var(--gk-font-body); color: rgba(243,238,226,0.65); }
+@media (prefers-reduced-motion: no-preference) { .mdock { animation: gk-rise 240ms var(--gk-ease, ease) both; } }
+/* Téléphone : pleine largeur, en bas, format compact. La vidéo YouTube garde le
+   minimum de 200 × 200 px ; titre et commandes à sa droite. */
+@media (max-width: 599px) {
+  .mdock { left: 8px; right: 8px; bottom: calc(8px + env(safe-area-inset-bottom)); }
+  .mdock-card { width: 100%; max-width: none; box-shadow: 4px 4px 0 var(--gk-gold, #e8b931); }
+  .mdock.is-min { left: auto; }
+  .mdock-card--youtube { grid-template-columns: 200px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; grid-template-areas: "video head" "video msg" "video bar"; }
+  .mdock-card--youtube .mdock-video { grid-area: video; width: 200px; height: 200px; min-height: 0; aspect-ratio: auto; border-block: 0; border-right: 2px solid #f3eee2; }
+  .mdock-card--youtube .mdock-head { grid-area: head; grid-template-columns: minmax(0, 1fr) auto auto; padding: 6px 4px 0 10px; gap: 2px; }
+  .mdock-card--youtube .mdock-head .mdock-cover { display: none; }
+  .mdock-card--youtube .mdock-txt strong { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: 0.92rem; line-height: 1.05; }
+  .mdock-card--youtube .mdock-icon { width: 34px; height: 34px; }
+  .mdock-card--youtube .mdock-error { grid-area: msg; padding: 4px 10px; font-size: 0.74rem; }
+  .mdock-card--youtube .mdock-bar { grid-area: bar; padding: 4px 6px 8px; gap: 0; justify-content: space-between; }
+  .mdock-card--youtube .mdock-link { margin-left: 0; padding: 0 4px; font-size: 0; gap: 0; }
+  .mdock-card--youtube .mdock-link svg { width: 16px; height: 16px; }
+}
+/* Au-dessus de la barre de navigation mobile, quand elle est affichée. */
+@media (max-width: 899px) { body:has(.gk-mobile-dock) .mdock { bottom: calc(76px + env(safe-area-inset-bottom)); } }
+
+/* Place réservée en bas de page : le contenu peut toujours défiler au-dessus du lecteur. */
+body[data-music-dock] { padding-bottom: calc(var(--mdock-h, 0px) + 24px); }
+
+/* Le bouton « retour en haut » se pousse au-dessus du lecteur. */
+body[data-music-dock] .gk-top { bottom: calc(24px + env(safe-area-inset-bottom) + var(--mdock-h, 64px)); }
+@media (max-width: 599px) { body[data-music-dock="open"] .gk-top { display: none; } }
+/* Pendant un combat Fighters (plein écran), le lecteur est en pause et masqué ; il revient en sortant du jeu. */
+body.fx-ingame .mdock { display: none; }

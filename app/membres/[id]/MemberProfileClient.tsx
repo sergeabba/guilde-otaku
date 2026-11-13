@@ -59,6 +59,17 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
   const special = member.special && member.special.name && !["—", "Inconnu"].includes(member.special.name) ? member.special : null;
   const hasVideo = !!(member.photoVideo || member.animeVideo);
 
+  // Hauteur de l'en-tête collant, pour placer le sommaire de la fiche juste dessous.
+  useEffect(() => {
+    const head = document.querySelector<HTMLElement>(".gk-header");
+    if (!head) return;
+    const set = () => document.documentElement.style.setProperty("--pf-head", `${head.offsetHeight}px`);
+    set();
+    const ro = new ResizeObserver(set);
+    ro.observe(head);
+    return () => ro.disconnect();
+  }, []);
+
   // Jours avant l'anniversaire : calculés dans le fuseau du visiteur, après montage.
   useEffect(() => {
     const d = getDaysUntil(member.birthday);
@@ -91,11 +102,26 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
   ].filter((p) => p.src);
   const shown = view === "duo" || panels.length < 2 ? panels : panels.filter((p) => p.key === view);
 
+  // Sommaire : seulement les rubriques présentes, numérotées dans l'ordre.
+  const sections = [
+    awards.length > 0 && { id: "pf-palmares", label: "Palmarès" },
+    (stats || special) && { id: "pf-combat", label: "Combat" },
+    { id: "pf-univers", label: "Univers" },
+    music.length > 0 && { id: "pf-musique", label: "Musique" },
+  ].filter(Boolean).map((t, i) => ({ ...(t as { id: string; label: string }), n: String(i + 1).padStart(2, "0") }));
+  const num = (id: string) => sections.find((t) => t.id === id)?.n ?? "";
+
   return (
     <div className="gk-page tone-dark pf-page" style={{ "--gk-accent": accent, "--pf-on": onColor(accent) } as React.CSSProperties}>
       <GuildeHeader activePage="membres" accentColor={accent} tone="dark" />
 
-      <main className="gk-wrap" style={{ paddingBottom: "clamp(56px, 9vw, 110px)" }}>
+      {/* Fond de la fiche : portrait anime flouté, lueur à la couleur du rang, trame. */}
+      <div className="pf-backdrop" aria-hidden="true">
+        {(member.animeChar || member.photo) && <span className="pf-backdrop-img" style={{ backgroundImage: `url(${JSON.stringify(member.animeChar || member.photo)})` }} />}
+        <span className="pf-backdrop-num">{String(member.id).padStart(3, "0")}</span>
+      </div>
+
+      <main className="gk-wrap pf-main" style={{ paddingBottom: "clamp(56px, 9vw, 110px)" }}>
         <nav className="pf-bar" aria-label="Navigation de la fiche">
           <Link href="/#annuaire" className="gk-btn gk-btn--ghost gk-btn--sm">
             <ArrowLeft size={16} aria-hidden="true" /> L&apos;annuaire
@@ -196,16 +222,20 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
           </div>
         </section>
 
+        <nav className="pf-tabs" aria-label="Sommaire de la fiche">
+          {sections.map((t) => <a key={t.id} href={`#${t.id}`}><b>{t.n}</b>{t.label}</a>)}
+        </nav>
+
         {awards.length > 0 && (
           <section id="pf-palmares" className="pf-section" aria-labelledby="pf-palmares-title" data-gk-motion="">
-            <h2 id="pf-palmares-title" className="pf-h2">Palmarès</h2>
+            <SectionHead n={num("pf-palmares")} id="pf-palmares-title" romaji="Kunshō" fr="Palmarès" />
             <MemberAwards awards={awards} />
           </section>
         )}
 
         {(stats || special) && (
-          <section className="pf-section pf-power" aria-labelledby="pf-power-title" data-gk-motion="">
-            <h2 id="pf-power-title" className="pf-h2"><RomajiLabel romaji="Tatakai" fr="Fiche de combat" /></h2>
+          <section id="pf-combat" className="pf-section pf-power" aria-labelledby="pf-power-title" data-gk-motion="">
+            <SectionHead n={num("pf-combat")} id="pf-power-title" romaji="Tatakai" fr="Fiche de combat" />
             <div className="pf-power-grid">
               {stats && (
                 <dl className="pf-stats">
@@ -213,8 +243,11 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
                     <div key={k}>
                       <dt>{label}</dt>
                       <dd>
-                        <span className="pf-bar-track" aria-hidden="true"><span style={{ width: `${Math.min(100, member.stats[k] ?? 0)}%` }} /></span>
+                        <span className="pf-seg" aria-hidden="true">
+                          {Array.from({ length: 20 }, (_, i) => <i key={i} className={i < Math.round(Math.min(100, member.stats[k] ?? 0) / 5) ? "is-on" : ""} />)}
+                        </span>
                         <b>{member.stats[k] ?? 0}</b>
+                        <span className="pf-grade">{grade(member.stats[k] ?? 0)}</span>
                       </dd>
                     </div>
                   ))}
@@ -224,6 +257,7 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
                 <div className="gk-panel pf-special">
                   <p className="pf-kicker"><Zap size={14} aria-hidden="true" /> Attaque spéciale</p>
                   <p className="pf-special-name">{special.name}</p>
+                  <span className="pf-special-bolt" aria-hidden="true"><Zap size={88} /></span>
                   {special.effect && special.effect !== "—" && <p className="gk-body">{special.effect}</p>}
                 </div>
               )}
@@ -232,20 +266,18 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
         )}
 
         {/* ── SON UNIVERS ─────────────────────────────────────────────── */}
-        <section className="pf-section" aria-labelledby="pf-universe" data-gk-motion="">
-          <div className="pf-section-head">
-            <h2 id="pf-universe" className="gk-display gk-h3">Son univers</h2>
-            <span className="gk-hand">ce qui fait vibrer {member.name.split(" ")[0]}</span>
-          </div>
+        <section id="pf-univers" className="pf-section" aria-labelledby="pf-universe" data-gk-motion="">
+          <SectionHead n={num("pf-univers")} id="pf-universe" romaji="Sekai" fr="Son univers" hand={`ce qui fait vibrer ${member.name.split(" ")[0]}`} />
           <Favorites title="Suki na anime" fr="Anime préférés" works={anime} onOpen={setOpenWork} />
           <Favorites title="Suki na manga" fr="Mangas préférés" works={manga} onOpen={setOpenWork} />
-          {music.length > 0 && (
-            <div className="pf-fav">
-              <h3 className="pf-h3"><RomajiLabel romaji="Ongaku" fr="Sa musique" inline /></h3>
-              <MemberMusic tracks={music} />
-            </div>
-          )}
         </section>
+
+        {music.length > 0 && (
+          <section id="pf-musique" className="pf-section pf-music-sec" aria-labelledby="pf-music-title" data-gk-motion="">
+            <SectionHead n={num("pf-musique")} id="pf-music-title" romaji="Ongaku" fr="Sa playlist" />
+            <MemberMusic tracks={music} owner={member.name.split(" ")[0]} />
+          </section>
+        )}
 
         {(prev || next) && (
           <nav className="pf-pager" aria-label="Autres membres">
@@ -259,6 +291,19 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
       <ShareSheet member={member} open={shareOpen} onClose={() => setShareOpen(false)} />
       <Toast />
     </div>
+  );
+}
+
+/** Note dérivée de la valeur affichée (aucune donnée ajoutée). */
+const grade = (v: number) => (v >= 90 ? "S" : v >= 75 ? "A" : v >= 60 ? "B" : v >= 40 ? "C" : "D");
+
+function SectionHead({ n, id, romaji, fr, hand }: { n: string; id: string; romaji: string; fr: string; hand?: string }) {
+  return (
+    <header className="pf-sec-head">
+      <span className="pf-sec-n" aria-hidden="true">{n}</span>
+      <h2 id={id} className="pf-sec-title"><RomajiLabel romaji={romaji} fr={fr} /></h2>
+      {hand && <span className="gk-hand pf-sec-hand">{hand}</span>}
+    </header>
   );
 }
 
@@ -307,7 +352,12 @@ function WorkCover({ work }: { work: FavoriteWork }) {
     if (el && el.complete && el.naturalWidth === 0) setFailed(true);
   };
   if (!work.coverUrl || failed) {
-    return <span className="pf-work-nocover" aria-hidden="true">{work.kind === "ANIME" ? "Anime" : "Manga"}</span>;
+    return (
+      <span className="pf-work-nocover" aria-hidden="true">
+        <b>{workTitle(work).slice(0, 1).toUpperCase()}</b>
+        <small>{work.kind === "ANIME" ? "Anime" : "Manga"}</small>
+      </span>
+    );
   }
   // eslint-disable-next-line @next/next/no-img-element
   return <img ref={checkBroken} src={work.coverUrl} alt="" loading="lazy" decoding="async" onError={() => setFailed(true)} />;

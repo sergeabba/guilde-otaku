@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { ArrowDown, ArrowUp, Plus, Search, Star, Trash2 } from "lucide-react";
 import { hasJapanese, workKey, workTitle, type FavoriteWork, type MemberTrack } from "../../lib/member-extras";
-import { parseMusicLink, openUrl, PROVIDER_LABEL } from "../../lib/music";
+import { parseMusicLink, openUrl, PROVIDER_LABEL, youtubeSearchUrl } from "../../lib/music";
 
 type Kind = "ANIME" | "MANGA";
 type Candidate = FavoriteWork & { year?: number; format?: string; descriptionEn?: string };
@@ -206,17 +206,22 @@ function MusicList({ tracks, onChange }: { tracks: MemberTrack[]; onChange: (t: 
   }
 
   function choose(c: TrackCandidate) {
-    setDraft({ url: openUrl(c), title: c.title ?? "", artist: c.artist ?? "", album: c.album, cover: c.cover });
-    setError(null);
+    // Résultat Apple (catalogue iTunes) : on reprend titre, artiste et pochette ;
+    // le lien à coller est celui du morceau sur YouTube (lecture complète pour tous).
+    const keepLink = c.provider !== "apple";
+    setDraft({ url: keepLink ? openUrl(c) : "", title: c.title ?? "", artist: c.artist ?? "", album: c.album, cover: c.cover });
+    setError(keepLink ? null : "Infos reprises. Ouvre « Chercher sur YouTube », copie le lien de la vidéo, puis colle-le dans « Lien du morceau ».");
   }
 
   function add(e: React.FormEvent) {
     e.preventDefault();
     const ref = parseMusicLink(draft.url);
-    if (!ref) { setError("Lien non reconnu. Choisis un résultat ou colle le lien d'un morceau Spotify, Apple Music ou YouTube."); return; }
+    if (!ref) { setError("Lien non reconnu. Colle le lien YouTube du morceau (ou Spotify)."); return; }
+    if (ref.provider === "apple") { setError("Apple Music n'est plus lu sur le site : colle le lien YouTube du même morceau."); return; }
     if (tracks.some((t) => t.provider === ref.provider && t.id === ref.id)) { setError("Ce morceau est déjà dans la liste."); return; }
     if (hasJapanese(draft.title) || hasJapanese(draft.artist)) { setError("Titre et artiste en alphabet latin (rōmaji si besoin)."); return; }
     if (tracks.length >= 10) { setError("10 morceaux maximum."); return; }
+    // Pochette Apple reprise d'une recherche : gardée ; sinon miniature YouTube par défaut côté site.
     onChange([...tracks, { ...ref, title: draft.title.trim() || undefined, artist: draft.artist.trim() || undefined, album: draft.album, cover: draft.cover }]);
     setDraft({ url: "", title: "", artist: "" }); setResults([]); setQ(""); setError(null);
   }
@@ -241,6 +246,7 @@ function MusicList({ tracks, onChange }: { tracks: MemberTrack[]; onChange: (t: 
                 <input className="am-input" value={t.artist ?? ""} maxLength={120} placeholder="Artiste" aria-label="Artiste"
                   aria-invalid={hasJapanese(t.artist ?? "")} onChange={(e) => patch(i, { artist: e.target.value || undefined })} />
                 <a href={openUrl(t)} target="_blank" rel="noopener noreferrer" style={{ font: "500 0.8rem var(--am-body)", color: "var(--am-gold)" }}>Vérifier le lien ↗</a>
+                {t.provider === "apple" && <p className="am-alert am-alert--error" style={{ marginTop: 6 }}>Apple Music n&apos;est plus lu sur le site : ajoute le lien YouTube de ce morceau puis retire celui-ci.</p>}
               </div>
               <div className="am-item-actions">
                 <button type="button" className="am-icon" aria-label="Monter" disabled={i === 0} onClick={() => { const l = [...tracks]; [l[i - 1], l[i]] = [l[i], l[i - 1]]; onChange(l); }}><ArrowUp size={16} aria-hidden="true" /></button>
@@ -252,7 +258,7 @@ function MusicList({ tracks, onChange }: { tracks: MemberTrack[]; onChange: (t: 
       )}
 
       <form className="am-search" onSubmit={search} role="search">
-        <input className="am-input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Titre, artiste… ou lien Spotify / Apple Music / YouTube" aria-label="Rechercher un morceau" />
+        <input className="am-input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Titre, artiste… ou lien YouTube / Spotify" aria-label="Rechercher un morceau" />
         <button className="am-btn" disabled={searching} aria-label="Lancer la recherche musicale"><Search size={16} aria-hidden="true" />{searching ? "…" : ""}</button>
       </form>
       {error && <p className="am-alert am-alert--error" role="alert">{error}</p>}
@@ -269,7 +275,12 @@ function MusicList({ tracks, onChange }: { tracks: MemberTrack[]; onChange: (t: 
                 <small>{[c.artist, c.album, PROVIDER_LABEL[c.provider]].filter(Boolean).join(" · ")}</small>
                 {c.previewUrl && <audio controls preload="none" src={c.previewUrl} style={{ width: "100%", height: 32, marginTop: 4 }} aria-label={`Extrait de ${c.title ?? "ce morceau"}`} />}
               </div>
-              <button type="button" className="am-btn am-btn--sm" onClick={() => choose(c)}>Choisir</button>
+              <div style={{ display: "grid", gap: 6 }}>
+                <button type="button" className="am-btn am-btn--sm" onClick={() => choose(c)}>{c.provider === "apple" ? "Reprendre les infos" : "Choisir"}</button>
+                {c.provider === "apple" && youtubeSearchUrl(c) && (
+                  <a className="am-btn am-btn--sm" href={youtubeSearchUrl(c)!} target="_blank" rel="noopener noreferrer">Chercher sur YouTube ↗</a>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -285,7 +296,7 @@ function MusicList({ tracks, onChange }: { tracks: MemberTrack[]; onChange: (t: 
 
       <form className="am-grid2" onSubmit={add}>
         <label className="am-field" style={{ gridColumn: "1 / -1" }}><span>Lien du morceau</span>
-          <input className="am-input" inputMode="url" value={draft.url} onChange={(e) => setDraft((d) => ({ ...d, url: e.target.value, cover: undefined, album: undefined }))} placeholder="https://open.spotify.com/track/…" /></label>
+          <input className="am-input" inputMode="url" value={draft.url} onChange={(e) => setDraft((d) => ({ ...d, url: e.target.value, cover: undefined, album: undefined }))} placeholder="https://www.youtube.com/watch?v=…" /></label>
         <label className="am-field"><span>Titre</span><input className="am-input" value={draft.title} maxLength={160} onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))} /></label>
         <label className="am-field"><span>Artiste</span><input className="am-input" value={draft.artist} maxLength={120} onChange={(e) => setDraft((d) => ({ ...d, artist: e.target.value }))} /></label>
         <div className="am-row" style={{ gridColumn: "1 / -1" }}>
@@ -296,7 +307,7 @@ function MusicList({ tracks, onChange }: { tracks: MemberTrack[]; onChange: (t: 
           <button className="am-btn am-btn--sm"><Plus size={14} aria-hidden="true" /> Ajouter le morceau</button>
         </div>
       </form>
-      <small style={{ font: "500 0.82rem/1.4 var(--am-body)", color: "var(--am-faint)" }}>La recherche couvre le catalogue Apple Music ; un lien Spotify ou YouTube collé est complété automatiquement (titre, pochette). Vérifie titre et artiste avant d&apos;enregistrer. Spotify et Apple Music jouent un extrait aux visiteurs non connectés ou non abonnés.</small>
+      <small style={{ font: "500 0.82rem/1.4 var(--am-body)", color: "var(--am-faint)" }}>Sur la fiche, la musique se lit dans le lecteur flottant du site. <b>YouTube</b> joue le morceau complet pour tout le monde, sans compte : c&apos;est le format conseillé. Spotify ne joue qu&apos;un extrait de 30 s aux visiteurs non connectés. Apple Music n&apos;est plus lu. La recherche par titre sert à reprendre titre, artiste et pochette ; un lien YouTube ou Spotify collé est complété automatiquement.</small>
     </div>
   );
 }

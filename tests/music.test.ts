@@ -1,4 +1,4 @@
-import { parseMusicLink, isValidMusicId, embedUrl, openUrl } from "../lib/music";
+import { parseMusicLink, isValidMusicId, embedUrl, openUrl, isPlayable, youtubeSearchUrl } from "../lib/music";
 import { parseMemberExtras, memberAwards } from "../lib/member-extras";
 
 describe("parseMusicLink", () => {
@@ -57,5 +57,17 @@ describe("extras : palmarès et musique", () => {
     expect(memberAwards({ badge: "BALLON D'OR 2026" })).toEqual([{ title: "BALLON D'OR 2026" }]);
     expect(memberAwards({ badge: null })).toEqual([]);
     expect(memberAwards({ badge: "X", extras: { awards: [{ title: "MVP" }] } })).toEqual([{ title: "MVP" }]);
+  });
+});
+
+describe("lecteur flottant : plateformes lues", () => {
+  it("YouTube et Spotify sont lus, plus Apple Music", () => {
+    expect(isPlayable({ provider: "youtube", id: "dQw4w9WgXcQ" })).toBe(true);
+    expect(isPlayable({ provider: "spotify", id: "track/4uLU6hMCjMI75M1A2tKUQC" })).toBe(true);
+    expect(isPlayable({ provider: "apple", id: "fr/album/gurenge/1477817375?i=1477817376" })).toBe(false);
+  });
+  it("propose une recherche YouTube du même titre, sans inventer de lien", () => {
+    expect(youtubeSearchUrl({ title: "Gurenge", artist: "LiSA" })).toBe("https://www.youtube.com/results?search_query=LiSA%20Gurenge");
+    expect(youtubeSearchUrl({})).toBeNull();
   });
 });

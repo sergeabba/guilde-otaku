@@ -8,6 +8,7 @@ import { RANK_FILTER_ORDER, type Rank } from "../../data/members";
 import { rankAccents, rankRomaji } from "../config/ranks";
 import type { AiLevel } from "../../lib/fighters/ai";
 import { CUSTOM_IDS } from "../../lib/fighters/characters";
+import { useMusicDock } from "../components/MusicDock";
 
 const FightScreen = dynamic(() => import("./FightScreen"), { ssr: false });
 
@@ -480,6 +481,11 @@ export default function FightersApp({ roster }: { roster: RosterMember[] }) {
 
   useEffect(() => { window.scrollTo({ top: 0 }); }, [screen]);
   const ingame = screen === "select" || screen === "vs" || screen === "fight";
+  // Le lecteur de musique flottant se réduit (en pause) pendant les écrans plein jeu.
+  const dock = useMusicDock();
+  const dockMinimize = dock?.minimize;
+  const dockActive = !!dock?.current;
+  useEffect(() => { if (ingame && dockActive) dockMinimize?.(); }, [ingame, dockActive, dockMinimize]);
   useEffect(() => {
     document.body.classList.toggle("fx-ingame", ingame);
     return () => document.body.classList.remove("fx-ingame");

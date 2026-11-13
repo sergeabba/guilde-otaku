@@ -5,6 +5,7 @@ import "./styles/fonts.css";
 import "./globals.css";
 import "./styles/shonen.css";
 import "./styles/motion.css";
+import "./styles/music.css";
 
 import BirthdayBanner from "./components/BirthdayBanner";
 import Footer from "./components/Footer";
@@ -14,6 +15,7 @@ import MotionSettings from "./components/MotionSettings";
 import CommandPalette from "./components/CommandPalette";
 import SplashWrapper from "./components/SplashWrapper";
 import { ThemeProvider } from "./context/ThemeContext";
+import { MusicDockProvider } from "./components/MusicDock";
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://guilde-otaku.vercel.app'), 
@@ -63,6 +65,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <a href="#contenu" className="gk-skip">Aller au contenu</a>
         <ThemeProvider>
           <MotionSettings>
+          <MusicDockProvider>
           <BirthdayBanner />
           <SplashWrapper hasSeenSplash={hasSeenSplash}>
             <div id="contenu" tabIndex={-1}>{children}</div>
@@ -71,6 +74,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <CommandPalette />
           <BackToTop />
           <MotionDirector />
+          </MusicDockProvider>
           </MotionSettings>
         </ThemeProvider>
       </body>
