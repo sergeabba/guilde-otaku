@@ -1,0 +1,161 @@
+[
+ {
+  "id": 1,
+  "name": "Craig Ryan",
+  "rank": "Fondateur",
+  "birthday": "21 juin",
+  "bio": "Bio de test.",
+  "photo": "/photos/craig.jpg",
+  "animechar": "/anime/craig_anime.jpg",
+  "color": "#FFD700",
+  "badge": null,
+  "hidden": false,
+  "position": 1,
+  "country": "CM",
+  "stats": {
+   "force": 82,
+   "vitesse": 74,
+   "technique": 95
+  },
+  "special": {
+   "name": "Quiz Omniscient",
+   "effect": "Stun l'adversaire avec une question impossible."
+  },
+  "photovideo": null,
+  "animevideo": null,
+  "extras": {
+   "displayNameRomaji": "Kureigu",
+   "awards": [
+    {
+     "title": "Champion des quiz",
+     "year": 2025,
+     "description": "Invaincu sur 40 soirées quiz."
+    },
+    {
+     "title": "Fondateur de la Guilde",
+     "year": 2021
+    }
+   ],
+   "favoriteAnime": [
+    {
+     "source": "manual",
+     "kind": "ANIME",
+     "titleRomaji": "Gintama",
+     "rank": 1,
+     "featured": true,
+     "personalNote": "Le meilleur mélange de rire et de larmes.",
+     "synopsis": "Synopsis de test."
+    },
+    {
+     "source": "manual",
+     "kind": "ANIME",
+     "titleRomaji": "Hunter x Hunter",
+     "rank": 2,
+     "featured": true
+    },
+    {
+     "source": "manual",
+     "kind": "ANIME",
+     "titleRomaji": "Monster",
+     "rank": 3,
+     "featured": true
+    },
+    {
+     "source": "manual",
+     "kind": "ANIME",
+     "titleRomaji": "Steins;Gate",
+     "rank": 4
+    }
+   ],
+   "favoriteManga": [
+    {
+     "source": "manual",
+     "kind": "MANGA",
+     "titleRomaji": "Vagabond",
+     "rank": 1,
+     "featured": true,
+     "personalNote": "Chaque case est un tableau."
+    },
+    {
+     "source": "manual",
+     "kind": "MANGA",
+     "titleRomaji": "One Piece",
+     "rank": 2,
+     "featured": true
+    }
+   ],
+   "music": [
+    {
+     "provider": "youtube",
+     "id": "dQw4w9WgXcQ",
+     "title": "Never Gonna Give You Up",
+     "artist": "Rick Astley"
+    },
+    {
+     "provider": "spotify",
+     "id": "track/4cOdK2wGLETKBW3PvgPWqT",
+     "title": "Blinding Lights",
+     "artist": "The Weeknd"
+    },
+    {
+     "provider": "apple",
+     "id": "fr/album/unravel/1440861010?i=1440861271",
+     "title": "unravel",
+     "artist": "TK from Ling tosite sigure"
+    }
+   ]
+  }
+ },
+ {
+  "id": 56,
+  "name": "Emmanuel Melrick",
+  "rank": "Revenant",
+  "birthday": "21 juin",
+  "bio": "Bio de test.",
+  "photo": "/photos/melrick.jpg",
+  "animechar": "/anime/melrick_anime.jpg",
+  "color": "#FFD700",
+  "badge": null,
+  "hidden": false,
+  "position": 56,
+  "country": "CM",
+  "stats": {
+   "force": 82,
+   "vitesse": 74,
+   "technique": 95
+  },
+  "special": {
+   "name": "Régénération de Cell",
+   "effect": "Revient d'un K.O. avec 20% de sa santé si tué."
+  },
+  "photovideo": null,
+  "animevideo": null,
+  "extras": {}
+ },
+ {
+  "id": 2,
+  "name": "Merveille",
+  "rank": "New 6 Dorée",
+  "birthday": "21 juin",
+  "bio": "",
+  "photo": "/photos/merveille.jpg",
+  "animechar": "/anime/merveille_anime.jpg",
+  "color": "#FFD700",
+  "badge": null,
+  "hidden": false,
+  "position": 2,
+  "country": "CM",
+  "stats": {
+   "force": 0,
+   "vitesse": 0,
+   "technique": 0
+  },
+  "special": {
+   "name": "—",
+   "effect": "—"
+  },
+  "photovideo": null,
+  "animevideo": null,
+  "extras": {}
+ }
+]

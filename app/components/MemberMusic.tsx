@@ -82,5 +82,5 @@ function TrackCover({ t }: { t: MemberTrack }) {
   const check = (el: HTMLImageElement | null) => { if (el && el.complete && el.naturalWidth === 0) setFailed(true); };
   if (!src || failed) return <span className="mpl-cover is-empty" aria-hidden="true"><Music size={18} /></span>;
   // eslint-disable-next-line @next/next/no-img-element
-  return <img ref={check} className="mpl-cover" src={src} alt="" loading="lazy" decoding="async" onError={() => setFailed(true)} />;
+  return <img ref={check} className="mpl-cover" src={src} alt="" width={56} height={56} loading="lazy" decoding="async" onError={() => setFailed(true)} />;
 }
