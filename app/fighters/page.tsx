@@ -1,146 +1,31 @@
-"use client";
+import { getPublicMembers } from "../../lib/members-server";
+import { memberAwards, objectPosition } from "../../lib/member-extras";
+import FightersApp, { type RosterMember } from "./FightersApp";
+import "./fighters-v2.css";
 
-import React, { useState, useEffect, useCallback } from "react";
-import { AnimatePresence } from "framer-motion";
-import { Trophy } from "lucide-react";
-import { supabase } from "../../lib/supabase";
-import { Rank, type Member } from "../../data/members";
-import "./fighters.css";
-import { KofLoadingScreen, KofCharacterSelect, KofFightIntro, type ViewMode } from "./kof-ui";
-import Arena from "./Arena";
-import Leaderboard from "./Leaderboard";
-import GuildeHeader from "../components/GuildeHeader";
+// Les données des membres sont lues à chaque visite (comme les fiches profils).
+export const dynamic = "force-dynamic";
 
-type Phase = "select" | "intro" | "fight";
-
-/* ═══════════════════════════════
-   PAGE PRINCIPALE
-═══════════════════════════════ */
-export default function FightersPage() {
-  const [members, setMembers]   = useState<Member[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [mode, setMode]         = useState<ViewMode>("anime");
-  const [selected, setSelected] = useState<Member | null>(null);
-  const [phase, setPhase]       = useState<Phase>("select");
-  const [fightData, setFightData] = useState<{ p1: Member; p2: Member } | null>(null);
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const { data, error } = await supabase.from("fighters").select("*").eq("hidden", false).order("id", { ascending: true });
-        if (error) throw new Error(error.message);
-        if (data && !cancelled) {
-          setMembers(data.map((m: Record<string, unknown>) => ({
-            id: m.id as number,
-            name: m.name as string,
-            rank: m.rank as Rank,
-            birthday: (m.birthday as string) ?? "",
-            bio: (m.bio as string) ?? "",
-            photo: (m.photo as string) ?? "",
-            animeChar: (m.animechar as string) ?? "",
-            color: (m.color as string) ?? "#c9a84c",
-            badge: m.badge as string | undefined,
-            rankJP: m.rankjp as string | undefined,
-            stats: (m.stats as { force: number; vitesse: number; technique: number }) ?? { force: 80, vitesse: 80, technique: 80 },
-            special: (m.special as { name: string; effect: string }) ?? { name: "Inconnu", effect: "" },
-            photoVideo: (m.photovideo as string) ?? "",
-            animeVideo: (m.animevideo as string) ?? "",
-          })));
-        }
-      } catch {
-        try {
-          const { members: lm } = await import("../../data/members");
-          if (!cancelled) setMembers(lm);
-        } catch { /* */ }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
-
-  const startFight = useCallback((p1: Member, p2: Member) => {
-    setFightData({ p1, p2 });
-    setPhase("intro");
-  }, []);
-
-  const handleSelect = useCallback((m: Member) => {
-    if (selected?.id === m.id) {
-      setSelected(null);
-    } else if (!selected) {
-      setSelected(m);
-    } else {
-      const p1 = selected;
-      setSelected(null);
-      startFight(p1, m);
-    }
-  }, [selected, startFight]);
-
-  const handleFight = useCallback((fighter: Member) => {
-    const others = members.filter(m => m.id !== fighter.id);
-    if (others.length) {
-      const random = others[Math.floor(Math.random() * others.length)];
-      setSelected(null);
-      startFight(fighter, random);
-    }
-  }, [members, startFight]);
-
-  const handleExit = useCallback(() => {
-    setFightData(null);
-    setSelected(null);
-    setPhase("select");
-  }, []);
-
-  // Échap annule la sélection du premier combattant
-  useEffect(() => {
-    if (phase !== "select" || !selected) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setSelected(null); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [phase, selected]);
-
-  // Réserve la hauteur de l'écran pendant le chargement : sans cela le pied de page
-  // remonte en haut puis saute vers le bas quand l'arène apparaît (décalage de mise en page).
-  if (loading) return <div style={{ minHeight: "100dvh" }}><KofLoadingScreen /></div>;
-
-  return (
-    <>
-      {phase === "select" && (
-        <div style={{ height: "100dvh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-          <GuildeHeader
-            activePage="fighters"
-            accentColor="#ffd700"
-            bgColor="#050008"
-            tone="dark"
-            rightSlot={
-              <button type="button" className="gk-btn gk-btn--sm" onClick={() => setShowLeaderboard(true)} aria-haspopup="dialog">
-                <Trophy size={15} aria-hidden="true" /> <span className="kof-ranking-label">Classement</span>
-              </button>
-            }
-          />
-          <KofCharacterSelect
-            members={members}
-            mode={mode}
-            setMode={setMode}
-            selected={selected}
-            onSelect={handleSelect}
-            onFight={handleFight}
-          />
-          <AnimatePresence>
-            {showLeaderboard && (
-              <Leaderboard members={members} onClose={() => setShowLeaderboard(false)} />
-            )}
-          </AnimatePresence>
-        </div>
-      )}
-      {phase === "intro" && fightData && (
-        <KofFightIntro p1={fightData.p1} p2={fightData.p2} mode={mode} onFinish={() => setPhase("fight")} />
-      )}
-      {phase === "fight" && fightData && (
-        <Arena p1={fightData.p1} p2={fightData.p2} mode={mode} onExit={handleExit} />
-      )}
-    </>
-  );
+export default async function FightersPage() {
+  const members = await getPublicMembers();
+  const roster: RosterMember[] = members.map((m) => {
+    const s = m.stats;
+    const hasStats = !!s && [s.force, s.vitesse, s.technique].some((v) => Number(v) > 0);
+    const special = m.special?.name && !["—", "Inconnu", ""].includes(m.special.name.trim()) ? m.special : null;
+    return {
+      id: m.id,
+      name: m.name,
+      rank: m.rank,
+      color: m.color,
+      photo: m.photo || null,
+      anime: m.animeChar || null,
+      photoPos: objectPosition(m.extras?.photoFocus, "50% 20%"),
+      animePos: objectPosition(m.extras?.animeFocus, "50% 15%"),
+      bio: m.bio ? (m.bio.length > 180 ? `${m.bio.slice(0, 177).trimEnd()}…` : m.bio) : "",
+      stats: hasStats ? { force: s.force, vitesse: s.vitesse, technique: s.technique } : null,
+      special: special ? { name: special.name, effect: special.effect && special.effect !== "—" ? special.effect : "" } : null,
+      awards: memberAwards(m).slice(0, 3).map((a) => (a.year ? `${a.title} ${a.year}` : a.title)),
+    };
+  });
+  return <FightersApp roster={roster} />;
 }
