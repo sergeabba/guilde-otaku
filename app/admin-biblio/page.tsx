@@ -12,6 +12,7 @@ import {
 import { useIsMobile } from "../hooks/useIsMobile";
 import { useAdminAuth } from "../hooks/useAdminAuth";
 import { getAdminHeaders } from "../../lib/admin-fetch";
+import { adminDb } from "../../lib/admin-db-client";
 
 // ─── TOKENS (inline pour éviter l'import fragile depuis outputs/styles) ──────────
 const font = "'Barlow Condensed', sans-serif";
@@ -272,8 +273,9 @@ export default function AdminBiblio() {
     if (!deleteTarget) return;
     setDeleting(true);
     const title = deleteTarget.title;
-    await supabase.from("bibliotheque").delete().eq("id", deleteTarget.id);
+    const { error } = await adminDb.remove("bibliotheque", deleteTarget.id);
     setDeleting(false);
+    if (error) { showToast(`Erreur : ${error.message}`); return; }
     setDeleteTarget(null);
     fetchLibrary();
     showToast(`${title} supprimé`);
@@ -466,7 +468,7 @@ export default function AdminBiblio() {
 
       const dossierMeta = findDossierBashEntry(title);
 
-      const { error } = await supabase.from("bibliotheque").insert({
+      const { error } = await adminDb.insert("bibliotheque", {
         title,
         type:         mediaType,
         cover_image:  resolved.coverUrl,

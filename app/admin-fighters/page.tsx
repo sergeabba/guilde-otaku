@@ -10,6 +10,7 @@ import { useAdminAuth } from "../hooks/useAdminAuth";
 import { getAdminFormDataHeaders } from "../../lib/admin-fetch";
 import { invalidateMembersCache } from "../utils/dataAdapter";
 import type { SupabaseMemberRow } from "../types";
+import { adminDb } from "../../lib/admin-db-client";
 
 const RANK_COLORS: Record<string, string> = {
   "Fondateur":      "#FFD700",
@@ -182,8 +183,8 @@ export default function AdminFightersPage() {
       special: { name: formSpecialName, effect: formSpecialEffect },
     };
     const { error } = editingId
-      ? await supabase.from("fighters").update(payload).eq("id", editingId)
-      : await supabase.from("fighters").insert([payload]);
+      ? await adminDb.update("fighters", editingId, payload)
+      : await adminDb.insert("fighters", [payload]);
     if (error) {
       setSaveError(error.message);
       setSaving(false);
@@ -201,7 +202,7 @@ export default function AdminFightersPage() {
   const confirmDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
-    const { error } = await supabase.from("fighters").delete().eq("id", deleteTarget.id);
+    const { error } = await adminDb.remove("fighters", deleteTarget.id);
     if (!error) {
       invalidateMembersCache();
       const name = deleteTarget.name;

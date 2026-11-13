@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "../../../lib/supabase";
 import { findDossierBashEntry } from "../../../lib/dossier-bash";
 import { Search, Check, X, Loader2, AlertCircle, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { getAdminHeaders } from "../../../lib/admin-fetch";
+import { adminDb } from "../../../lib/admin-db-client";
 
 type Tier = "Chef-d'œuvre" | "Pépite" | "Bof" | "Surcoté" | "A définir";
 
@@ -92,7 +92,7 @@ export default function BulkImportPage() {
 
         const dossierMeta = findDossierBashEntry(item.media.title);
 
-        const { error } = await supabase.from("bibliotheque").insert({
+        const { error } = await adminDb.insert("bibliotheque", {
           title: item.media.title,
           type: item.media.type,
           cover_image: resolved.coverUrl,

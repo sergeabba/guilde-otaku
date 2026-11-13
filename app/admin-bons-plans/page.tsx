@@ -9,6 +9,7 @@ import { Trash, Pencil, Plus, X, Globe, Lock, ChevronLeft, AlertTriangle, Check 
 import { useAdminAuth } from "../hooks/useAdminAuth";
 import { useIsMobile } from "../hooks/useIsMobile";
 import type { SupabaseBonPlanRow } from "../types";
+import { adminDb } from "../../lib/admin-db-client";
 
 export default function AdminBonsPlansPage() {
   const { authed: auth, checking, password, setPassword, login: checkAuth } = useAdminAuth();
@@ -69,8 +70,9 @@ export default function AdminBonsPlansPage() {
   const confirmDeleteLink = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
-    await supabase.from("bons_plans").delete().eq("id", deleteTarget.id);
+    const { error } = await adminDb.remove("bons_plans", deleteTarget.id);
     setDeleting(false);
+    if (error) { showToast("Erreur : " + error.message); return; }
     setDeleteTarget(null);
     fetchLinks();
     showToast(`${deleteTarget.title} supprimé`);
@@ -89,12 +91,9 @@ export default function AdminBonsPlansPage() {
 
     let error;
     if (editingId) {
-      ({ error } = await supabase
-        .from("bons_plans")
-        .update(payload)
-        .eq("id", editingId));
+      ({ error } = await adminDb.update("bons_plans", editingId, payload));
     } else {
-      ({ error } = await supabase.from("bons_plans").insert([payload]));
+      ({ error } = await adminDb.insert("bons_plans", [payload]));
     }
 
     if (error) {
@@ -123,7 +122,7 @@ export default function AdminBonsPlansPage() {
       { title: "Crunchyroll", desc: "Le géant du streaming. Indispensable pour les simulcasts officiels.", url: "https://www.crunchyroll.com", category: "Animes", fallback_icon: "Tv", color: "#f97316", logo: "https://cdn.simpleicons.org/crunchyroll/f97316" },
     ];
 
-    const { error } = await supabase.from("bons_plans").insert(oldLinks);
+    const { error } = await adminDb.insert("bons_plans", oldLinks);
     if (error) {
       alert("Erreur lors de la migration : " + error.message);
     } else {

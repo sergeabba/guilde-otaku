@@ -23,6 +23,7 @@ import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } 
 import { CSS } from "@dnd-kit/utilities";
 
 import { COUNTRIES, flagUrl } from "../config/countries";
+import { adminDb } from "../../lib/admin-db-client";
 
 type PhotoType = "photo" | "anime";
 type MediaKind = "image" | "video";
@@ -214,18 +215,20 @@ export default function AdminMembresPage() {
     setSaving(true);
     const payload = { name: formName.trim(), rank: formRank, birthday: formBirthday.trim(), bio: formBio.trim(), color: formColor, country: formCountry.trim() || null };
     if (editingId) {
-      await supabase.from("fighters").update(payload).eq("id", editingId);
+      const { error } = await adminDb.update("fighters", editingId, payload);
+      if (error) { setSaving(false); setSaveToast(`Erreur : ${error.message}`); setTimeout(() => setSaveToast(null), 5000); return; }
       const updated = { ...editingMember!, ...payload };
       setEditingMember(updated);
       setFighters(prev => prev.map(f => f.id === editingId ? updated : f));
       invalidateMembersCache();
       setSaving(false);
     } else {
-      await supabase.from("fighters").insert([{
+      const { error } = await adminDb.insert("fighters", [{
         ...payload, photo: "", animechar: "",
         stats: { force: 50, vitesse: 50, technique: 50 },
         special: { name: "—", effect: "—" },
       }]);
+      if (error) { setSaving(false); setSaveToast(`Erreur : ${error.message}`); setTimeout(() => setSaveToast(null), 5000); return; }
       invalidateMembersCache();
       setSaving(false);
       setPanelOpen(false);
@@ -240,7 +243,8 @@ export default function AdminMembresPage() {
     if (!deleteTarget) return;
     setDeleting(true);
     const name = deleteTarget.name;
-    await supabase.from("fighters").delete().eq("id", deleteTarget.id);
+    const { error } = await adminDb.remove("fighters", deleteTarget.id);
+    if (error) { setDeleting(false); setSaveToast(`Erreur : ${error.message}`); setTimeout(() => setSaveToast(null), 5000); return; }
     invalidateMembersCache();
     setDeleting(false);
     setDeleteTarget(null);
@@ -252,11 +256,7 @@ export default function AdminMembresPage() {
 
   async function toggleHidden(member: SupabaseMemberRow) {
     const newHidden = !(member.hidden === true);
-    const { data, error } = await supabase
-      .from("fighters")
-      .update({ hidden: newHidden })
-      .eq("id", member.id)
-      .select("id, hidden");
+    const { data, error } = await adminDb.update("fighters", member.id, { hidden: newHidden });
     if (error) {
       setSaveToast(`Erreur masquage: ${error.message}`);
       setTimeout(() => setSaveToast(null), 5000);
@@ -276,7 +276,8 @@ export default function AdminMembresPage() {
   // ── QUICK COUNTRY ASSIGN ───────────────────────────────────────────────────
   async function quickAssignCountry(member: SupabaseMemberRow) {
     if (!quickCountry) return;
-    await supabase.from("fighters").update({ country: quickCountry }).eq("id", member.id);
+    const { error } = await adminDb.update("fighters", member.id, { country: quickCountry });
+    if (error) { setSaveToast(`Erreur : ${error.message}`); setTimeout(() => setSaveToast(null), 5000); return; }
     invalidateMembersCache();
     setFighters(prev => prev.map(f => f.id === member.id ? { ...f, country: quickCountry } : f));
     const c = COUNTRIES.find(x => x.code === quickCountry);
@@ -303,7 +304,8 @@ export default function AdminMembresPage() {
     });
     const updates = reordered.map((f, i) => ({ id: f.id, position: i }));
     for (const u of updates) {
-      await supabase.from("fighters").update({ position: u.position }).eq("id", u.id);
+      const { error } = await adminDb.update("fighters", u.id, { position: u.position });
+      if (error) { setSaveToast(`Erreur : ${error.message}`); setTimeout(() => setSaveToast(null), 5000); return; }
     }
     invalidateMembersCache();
     setSaveToast("Ordre mis à jour");
