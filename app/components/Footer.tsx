@@ -18,7 +18,7 @@ export default function Footer() {
               aria-hidden="true"
               style={{ display: "block", fontSize: "0.9rem", marginTop: 10, color: "rgba(243,238,226,0.5)" }}
             >
-              つづく
+              Tsuzuku
             </span>
           </p>
           <nav aria-label="Toutes les rubriques">

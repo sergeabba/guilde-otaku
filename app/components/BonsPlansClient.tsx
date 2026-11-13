@@ -86,7 +86,7 @@ export default function BonsPlansClient({ initialLinks }: { initialLinks: Supaba
         <div className="gk-hero gk-reveal">
           <div className="gk-hero-kicker">
             <p className="gk-chapter"><b>07</b><span>LES PETITES ANNONCES</span></p>
-            <span className="gk-jp" aria-hidden="true">お得情報</span>
+            <span className="gk-jp" aria-hidden="true">Otoku jōhō</span>
           </div>
           <h1 className="gk-display gk-h1" style={{ fontSize: "clamp(2.4rem, 10.4vw, 6.6rem)" }}>
             Les Bons Plans <span className="gk-inked">Otaku</span>
@@ -160,7 +160,7 @@ export default function BonsPlansClient({ initialLinks }: { initialLinks: Supaba
 
         {filtered.length === 0 ? (
           <div className="gk-empty" style={{ marginTop: 20 }}>
-            <div className="gk-empty-glyph" aria-hidden="true">完売</div>
+            <div className="gk-empty-glyph" aria-hidden="true">Kanbai</div>
             <h3>{favOnly && favCount === 0 ? "Aucun favori pour l'instant" : initialLinks.length === 0 ? "Le tableau est vide" : "Rien à cette adresse"}</h3>
             <p>
               {favOnly && favCount === 0

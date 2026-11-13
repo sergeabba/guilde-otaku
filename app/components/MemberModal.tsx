@@ -10,7 +10,8 @@ import { rankAccents, rankBg, darkRanks } from "../config/ranks";
 import { COUNTRIES, flagUrl } from "../config/countries";
 import { Trophy, ArrowLeft, Share2 } from "lucide-react";
 import VideoPlayer from "./VideoPlayer";
-import MangaShareModal from "./MangaShareModal";
+import ShareSheet from "./ShareSheet";
+import Link from "next/link";
 
 const PLACEHOLDER = "/placeholder.svg";
 
@@ -681,6 +682,20 @@ function ModalContent({ member, onClose, viewMode }: {
                   <Share2 size={14} />
                   Partager
                 </button>
+                <Link
+                  href={`/membres/${member.id}`}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 7,
+                    padding: "8px 18px", borderRadius: 100,
+                    background: btnBg, border: `1px solid ${btnBorder}`,
+                    color: textPrimary, textDecoration: "none",
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontSize: 14, fontWeight: 700, textTransform: "uppercase",
+                    letterSpacing: "0.06em", flexShrink: 0,
+                  }}
+                >
+                  Fiche complète
+                </Link>
                 </div>
                 <div style={{ textAlign: "center", flex: 1, padding: "0 8px", minWidth: 0 }}>
                   <p style={{
@@ -846,12 +861,7 @@ function ModalContent({ member, onClose, viewMode }: {
       )}
 
       {/* ── MANGA GUILD LICENSE SHARE MODAL ── */}
-      <MangaShareModal
-        member={member}
-        viewMode={localMode}
-        isOpen={showMangaShare}
-        onClose={() => setShowMangaShare(false)}
-      />
+      <ShareSheet member={member} open={showMangaShare} onClose={() => setShowMangaShare(false)} />
 
     </>
   );

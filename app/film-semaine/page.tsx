@@ -6,6 +6,7 @@ import { Calendar, ChevronDown, Clock, Eye, Play, Search, Share2, Star, Trophy, 
 import GuildeHeader from "../components/GuildeHeader";
 import { useShare } from "../hooks/useShare";
 import { normalize } from "../utils/text";
+import { hasJapanese } from "../../lib/member-extras";
 import "./film.css";
 
 interface FilmEntry {
@@ -48,7 +49,9 @@ function Meta({ film }: { film: FilmEntry }) {
           <span className="gk-sr"> sur 10, note TMDB</span>
         </span>
       ) : null}
-      {film.director && <span>de {film.director}</span>}
+      {/* Le site n'affiche aucune écriture japonaise et ne romanise pas les noms de personnes :
+          un nom de réalisateur fourni en kanji par TMDB est simplement omis. */}
+      {film.director && !hasJapanese(film.director) && <span>de {film.director}</span>}
     </div>
   );
 }
@@ -62,7 +65,7 @@ function FilmCard({ film, onClick }: { film: FilmEntry; onClick: () => void }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={poster} alt="" loading="lazy" decoding="async" />
         ) : (
-          <div className="fs-poster-empty" aria-hidden="true">映</div>
+          <div className="fs-poster-empty" aria-hidden="true">Eiga</div>
         )}
         <div className="fs-card-flags">
           {film.chosen && <span>Élu</span>}
@@ -179,7 +182,7 @@ export default function FilmSemainePage() {
         ) : error ? (
           <div className="gk-wrap" style={{ paddingBlock: "clamp(40px, 8vw, 96px)" }}>
             <div className="gk-empty">
-              <div className="gk-empty-glyph" aria-hidden="true">幕</div>
+              <div className="gk-empty-glyph" aria-hidden="true">Maku</div>
               <h3>Le rideau reste fermé</h3>
               <p>
                 {error === "SETUP"
@@ -192,7 +195,7 @@ export default function FilmSemainePage() {
         ) : weeks.length === 0 ? (
           <div className="gk-wrap" style={{ paddingBlock: "clamp(40px, 8vw, 96px)" }}>
             <div className="gk-empty">
-              <div className="gk-empty-glyph" aria-hidden="true">休</div>
+              <div className="gk-empty-glyph" aria-hidden="true">Kyūen</div>
               <h3>Relâche cette semaine</h3>
               <p>Aucun film n&apos;est programmé pour le moment. La prochaine sélection apparaîtra ici.</p>
             </div>
@@ -212,7 +215,7 @@ export default function FilmSemainePage() {
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={poster} alt={`Affiche de ${chosen.title}`} />
                     ) : (
-                      <div className="fs-poster-empty" aria-hidden="true">映</div>
+                      <div className="fs-poster-empty" aria-hidden="true">Eiga</div>
                     )}
                   </div>
                   <div className="gk-reveal" style={{ minWidth: 0 }}>
@@ -311,7 +314,7 @@ export default function FilmSemainePage() {
 
                 {archives.length === 0 ? (
                   <div className="gk-empty">
-                    <div className="gk-empty-glyph" aria-hidden="true">無</div>
+                    <div className="gk-empty-glyph" aria-hidden="true">Mu</div>
                     <h3>Aucune séance trouvée</h3>
                     <p>Rien ne correspond à cette recherche dans les archives.</p>
                     <button type="button" className="gk-btn" onClick={() => { setQuery(""); setElectedOnly(false); }}>Revoir toutes les séances</button>

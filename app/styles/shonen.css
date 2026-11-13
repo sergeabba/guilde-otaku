@@ -22,7 +22,8 @@
   --gk-font-ui:      var(--font-barlow-condensed), "Barlow Condensed", sans-serif;
   --gk-font-body:    var(--font-barlow), "Barlow", system-ui, sans-serif;
   --gk-font-hand:    var(--font-caveat), "Caveat", cursive;
-  --gk-font-jp:      "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", "Noto Sans JP", sans-serif;
+  /* Libellés rōmaji : police latine avec voyelles longues (ō, ū) via latin-ext */
+  --gk-font-jp:      var(--font-barlow-condensed), "Barlow Condensed", sans-serif;
 
   /* Échelle typographique fluide (ratio ~1.33) */
   --gk-step--1: clamp(0.78rem, 0.76rem + 0.1vw, 0.84rem);
@@ -189,7 +190,6 @@ html[data-theme="light"] .tone-dark {
 }
 .gk-chapter > span { padding: 6px 10px; }
 .gk-jp {
-  /* Petit corps : gothique système, la police de couverture s'empâte sous 20px */
   font-family: var(--gk-font-jp);
   font-weight: 700;
   font-size: 0.8em;
@@ -198,7 +198,7 @@ html[data-theme="light"] .tone-dark {
 }
 .gk-vertical {
   writing-mode: vertical-rl;
-  text-orientation: upright;
+  text-orientation: mixed;
   font-family: var(--gk-font-display);
   letter-spacing: 0.18em;
   color: var(--gk-faint);
@@ -695,3 +695,26 @@ body.modal-open .gk-top { display: none; }
 }
 .gk-hero-kicker { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-bottom: 16px; }
 .gk-hero-lede { margin-top: 16px; }
+
+/* ─── RŌMAJI ──────────────────────────────────────────────────────────────── */
+.gk-jp { font-style: italic; }
+.gk-romaji { display: inline-flex; flex-direction: column; gap: 2px; line-height: 1.05; }
+.gk-romaji.is-inline { flex-direction: row; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.gk-romaji-ja { font-family: var(--gk-font-jp); font-weight: 800; font-style: italic; letter-spacing: 0.04em; }
+.gk-romaji-fr { font: 600 0.78em/1.2 var(--gk-font-body); color: var(--gk-dim); letter-spacing: 0; }
+
+/* ═══ FEUILLE DE PARTAGE ══════════════════════════════════════════════════ */
+.sh-back { position: fixed; inset: 0; z-index: 12500; background: rgba(8,7,10,0.8); display: flex; align-items: flex-end; justify-content: center; animation: gk-fade 160ms both; }
+@media (min-width: 700px) { .sh-back { align-items: center; padding: 24px; } }
+.sh-sheet { width: min(560px, 100%); max-height: 100dvh; overflow-y: auto; background: var(--gk-bg); color: var(--gk-text); border: var(--gk-stroke) solid var(--gk-border); box-shadow: 8px 8px 0 var(--gk-gold); padding: 16px 16px calc(18px + env(safe-area-inset-bottom)); display: grid; gap: 14px; animation: gk-rise 240ms var(--gk-ease) both; font-family: var(--gk-font-ui); }
+@media (max-width: 699px) { .sh-sheet { box-shadow: none; border-inline: 0; border-bottom: 0; } }
+.sh-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.sh-head h2 { font: 900 italic clamp(1.25rem, 5vw, 1.6rem)/1 var(--gk-font-ui); text-transform: uppercase; }
+.sh-preview { display: grid; place-items: center; background: var(--gk-surface-2); border: 2px solid var(--gk-rule); padding: 10px; min-height: 120px; }
+.sh-preview img { width: auto; height: auto; max-width: 100%; max-height: min(46dvh, 420px); display: block; }
+.sh-link input { width: 100%; min-height: 44px; padding: 8px 12px; font: 600 0.95rem var(--gk-font-body); color: var(--gk-text); background: var(--gk-surface); border: 2px solid var(--gk-rule); border-radius: 0; }
+.sh-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.sh-actions .gk-btn { width: 100%; }
+@media (max-width: 359px) { .sh-actions { grid-template-columns: 1fr; } }
+.sh-note { font: 500 0.85rem/1.4 var(--gk-font-body); color: var(--gk-faint); }
+@media (prefers-reduced-motion: reduce) { .sh-back, .sh-sheet { animation: none; } }

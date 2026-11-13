@@ -222,7 +222,7 @@ export default function CommandPalette() {
         <div className="gk-cmd-list" id="gk-cmd-list" role="listbox" ref={listRef}>
           {results.length === 0 && (
             <div className="gk-empty" style={{ border: 0, padding: "40px 20px" }}>
-              <div className="gk-empty-glyph" aria-hidden="true">無</div>
+              <div className="gk-empty-glyph" aria-hidden="true">Mu</div>
               <h3>Rien pour « {query} »</h3>
               <p>{index ? "Essaie un prénom, un titre d'anime ou le nom d'une rubrique." : "L'index se charge, encore une seconde."}</p>
             </div>

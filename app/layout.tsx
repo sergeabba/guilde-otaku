@@ -25,7 +25,7 @@ import SplashWrapper from "./components/SplashWrapper";
 import { ThemeProvider } from "./context/ThemeContext";
 
 const barlowCondensed = Barlow_Condensed({
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
   weight: ["400", "600", "700", "900"],
   style: ["normal", "italic"],
   display: "swap",
@@ -33,7 +33,7 @@ const barlowCondensed = Barlow_Condensed({
 });
 
 const barlow = Barlow({
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
   weight: ["300", "400", "500", "600"],
   display: "swap",
   variable: "--font-barlow",
@@ -89,7 +89,7 @@ const caveat = Caveat({
 
 // Police de couverture : gothique japonaise lourde, latin + kana/kanji.
 const delaGothic = Dela_Gothic_One({
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
   weight: "400",
   display: "swap",
   preload: false,

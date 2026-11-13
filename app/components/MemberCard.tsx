@@ -50,7 +50,7 @@ export default function MemberCard({ member, index, viewMode, onClick }: {
             onError={() => setErrors((e) => ({ ...e, [isAnime ? "anime" : "real"]: true }))}
           />
         ) : (
-          <div className="mc-fallback" aria-hidden="true">{isAnime ? "影" : "顔"}</div>
+          <div className="mc-fallback" aria-hidden="true">{isAnime ? "Kage" : "Kao"}</div>
         )}
       </div>
       <div className="mc-tone" aria-hidden="true" />

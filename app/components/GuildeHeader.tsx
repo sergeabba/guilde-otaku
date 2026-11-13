@@ -87,7 +87,7 @@ export default function GuildeHeader({
           <div>
             <div className="gk-brand-name">GUILDE OTAKU</div>
             <div className="gk-brand-sub">
-              DEPUIS 2020 <i aria-hidden="true">オタクギルド</i>
+              DEPUIS 2020 <i aria-hidden="true">Otaku Girudo</i>
             </div>
           </div>
         </Link>
@@ -160,7 +160,7 @@ export default function GuildeHeader({
           style={{ "--gk-accent": accentColor } as React.CSSProperties}
         >
           <div className="gk-menu-head">
-            <strong>SOMMAIRE <span className="gk-jp" aria-hidden="true">目次</span></strong>
+            <strong>SOMMAIRE <span className="gk-jp" aria-hidden="true">Mokuji</span></strong>
             <button type="button" className="gk-icon-btn" onClick={closeMenu} aria-label="Fermer le sommaire">
               <X size={20} aria-hidden="true" />
             </button>

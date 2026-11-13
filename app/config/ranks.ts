@@ -51,18 +51,20 @@ export const rankLogos: Record<Rank, string> = {
   "Revenant":       "/ranks/revenant.png",
 };
 
-// ─── RANGS EN JAPONAIS (AESTHETIC MANGA / ANIME) ───────────────────────────
-export const rankJapanese: Record<Rank | "Tous", string> = {
-  "Fondateur":      "創設者",
-  "Monarque":       "君主",
-  "Ex Monarque":    "先代君主",
-  "Ordre Céleste":  "天の騎士",
-  "New G dorée":    "新世代",
-  "Futurs Espoirs": "若き希望",
-  "Vieux Briscard": "歴戦の勇士",
-  "Fantôme":        "亡霊",
-  "Revenant":       "再生者",
-  "Tous":           "全メンバー",
+// ─── GRADES EN RŌMAJI (romanisation Hepburn) ─────────────────────────────────
+// Le site n'affiche aucune écriture japonaise : seulement ces lectures en
+// alphabet latin, accompagnées du libellé français du grade.
+export const rankRomaji: Record<Rank | "Tous", string> = {
+  "Fondateur":      "Sōsetsusha",
+  "Monarque":       "Kunshu",
+  "Ex Monarque":    "Sendai kunshu",
+  "Ordre Céleste":  "Ten no kishi",
+  "New G dorée":    "Shin sedai",
+  "Futurs Espoirs": "Wakaki kibō",
+  "Vieux Briscard": "Rekisen no yūshi",
+  "Fantôme":        "Bōrei",
+  "Revenant":       "Saiseisha",
+  "Tous":           "Zen'in",
 };
 
 // ─── HELPER : couleur d'un rang ───────────────────────────────────────────────

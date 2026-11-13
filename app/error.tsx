@@ -11,7 +11,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
   return (
     <main className="gk-page tone-dark" style={{ display: "grid", placeItems: "center", padding: "48px 0" }}>
       <div className="gk-wrap" style={{ maxWidth: 720 }}>
-        <p className="gk-stamp" style={{ fontSize: "1rem" }}>故障 PANNE</p>
+        <p className="gk-stamp" style={{ fontSize: "1rem" }}>Koshō, panne</p>
         <h1 className="gk-display gk-h2" style={{ marginTop: 20 }}>La planche n&apos;a pas pu se charger.</h1>
         <p className="gk-body" style={{ marginTop: 14 }}>
           Une erreur est survenue pendant l&apos;affichage de cette page. Recharge-la ; si ça recommence,

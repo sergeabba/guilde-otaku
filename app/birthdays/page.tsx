@@ -176,7 +176,7 @@ export default function BirthdaysPage() {
         <div className="gk-hero gk-reveal">
           <div className="gk-hero-kicker">
             <p className="gk-chapter"><b>02</b><span>LE CALENDRIER DE LA GUILDE</span></p>
-            <span className="gk-jp" aria-hidden="true">誕生日</span>
+            <span className="gk-jp" aria-hidden="true">Tanjōbi</span>
           </div>
           <h1 className="gk-display gk-h1" style={{ fontSize: "clamp(1.6rem, 8.6vw, 6.4rem)" }}>Anniversaires</h1>
           <p className="gk-body gk-hero-lede">
@@ -191,7 +191,7 @@ export default function BirthdaysPage() {
           </div>
         ) : dated.length === 0 ? (
           <div className="gk-empty">
-            <div className="gk-empty-glyph" aria-hidden="true">暦</div>
+            <div className="gk-empty-glyph" aria-hidden="true">Koyomi</div>
             <h3>Le calendrier est vide</h3>
             <p>Aucune date d&apos;anniversaire n&apos;a pu être chargée. Recharge la page dans un instant.</p>
           </div>
@@ -209,7 +209,7 @@ export default function BirthdaysPage() {
               </div>
               <div className="bd-spot-body">
                 <p className="gk-chapter" style={{ width: "fit-content" }}>
-                  <b>{isToday ? "祝" : "次"}</b>
+                  <b>{isToday ? "Iwai" : "Tsugi"}</b>
                   <span>{isToday ? "C'EST AUJOURD'HUI" : "PROCHAIN ANNIVERSAIRE"}</span>
                 </p>
                 <h2>{soonest.map((m) => m.name).join(" & ")}</h2>

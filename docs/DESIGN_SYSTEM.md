@@ -40,8 +40,8 @@ Typographie :
 - `--gk-font-ui` : Barlow Condensed, navigation, boutons, intertitres.
 - `--gk-font-body` : Barlow, texte courant.
 - `--gk-font-hand` : Caveat, annotations manuscrites ponctuelles.
-- `--gk-font-jp` : gothique système pour les petits corps japonais (la police
-  de couverture s'empâte sous 20 px).
+- `--gk-font-jp` : Barlow Condensed (sous-ensemble `latin-ext`), pour les libellés
+  en rōmaji avec voyelles longues (ō, ū).
 
 Échelle fluide `--gk-step--1` à `--gk-step-5`, espacements `--gk-s1` à
 `--gk-s9`, gouttière `--gk-gutter`, largeur maximale `--gk-max`.
@@ -98,8 +98,15 @@ Coque partagée : `GuildeHeader` (en-tête, sommaire mobile, dock),
 - Aucun chiffre inventé : tous les compteurs sont calculés depuis les données.
 - Une fonction qui demande un backend absent n'est pas simulée.
 - Favoris et préférences sont locaux (`localStorage`), et c'est écrit à l'écran.
-- Les mentions japonaises sont décoratives, courtes et masquées aux lecteurs
-  d'écran (`aria-hidden`).
+- **Rōmaji uniquement** (cahier des charges V4.2, section 0B) : aucun kanji,
+  hiragana ou katakana affiché, nulle part (interface, cartes, images de partage,
+  admin). Les termes japonais passent par `RomajiLabel` (rōmaji + français) et la
+  romanisation Hepburn. On ne romanise jamais un nom de personne ou d'œuvre
+  soi-même : une donnée externe en écriture japonaise est omise
+  (ex. réalisateur TMDB). Contrôle : `npm run romaji:lint` (sources) et
+  `node scripts/romaji-lint.mjs --db` (base, lecture seule).
+- Les jaquettes officielles peuvent contenir du japonais imprimé dans l'image :
+  point ouvert, à arbitrer.
 
 ## Ajouter une rubrique
 

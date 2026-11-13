@@ -319,7 +319,7 @@ export default function WantedPage() {
             </div>
           ) : !member ? (
             <div className="gk-empty" style={{ marginTop: 32 }}>
-              <div className="gk-empty-glyph" aria-hidden="true">逃亡</div>
+              <div className="gk-empty-glyph" aria-hidden="true">Tōbō</div>
               <h3>Ce pirate court toujours</h3>
               <p>
                 {members.length === 0

@@ -139,7 +139,7 @@ export default function GuildeStats({ memberCount, countryCounts, isDark = false
               REGISTRE OFFICIEL DE LA GUILDE
             </span>
             <span className="kanji-stamp gold" style={{ fontSize: "9px", padding: "1px 6px" }}>
-              『旅券証』
+              Ryokenshō
             </span>
             <span
               style={{

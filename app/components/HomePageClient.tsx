@@ -10,7 +10,7 @@ import MemberCard from "./MemberCard";
 import MemberModal from "./MemberModal";
 import GuildeHeader from "./GuildeHeader";
 import ChapterStory from "./ChapterStory";
-import { rankAccents, rankLogos, darkRanks, rankJapanese } from "../config/ranks";
+import { rankAccents, rankLogos, darkRanks, rankRomaji } from "../config/ranks";
 import { COUNTRIES, flagUrl } from "../config/countries";
 import { NAV, chapterNo } from "../config/nav";
 import { useTheme } from "../context/ThemeContext";
@@ -174,7 +174,7 @@ export default function HomePageClient({ initialMembers, featuredFilm }: {
 
             {coverMembers.length === 3 && (
               <div className="hm-board">
-                <span className="gk-vertical hm-board-jp" aria-hidden="true">伝説の仲間たち</span>
+                <span className="gk-vertical hm-board-jp" aria-hidden="true">Densetsu no nakama</span>
                 {coverMembers.map((m, i) => (
                   <button
                     key={m.id}
@@ -218,7 +218,7 @@ export default function HomePageClient({ initialMembers, featuredFilm }: {
               <div>
                 <div className="hm-section-head">
                   <h2 id="hm-toc-title" className="gk-display gk-h3">
-                    Au sommaire <span className="gk-jp" aria-hidden="true">目次</span>
+                    Au sommaire <span className="gk-jp" aria-hidden="true">Mokuji</span>
                   </h2>
                 </div>
                 <ol className="hm-toc">
@@ -324,7 +324,7 @@ export default function HomePageClient({ initialMembers, featuredFilm }: {
                   L&apos;annuaire
                 </h2>
               </div>
-              <span className="gk-stamp" aria-hidden="true">公式名簿</span>
+              <span className="gk-stamp" aria-hidden="true">Kōshiki meibo</span>
             </div>
 
             {/* Hiérarchie : chaque grade est un échelon cliquable */}
@@ -336,9 +336,9 @@ export default function HomePageClient({ initialMembers, featuredFilm }: {
                 onClick={() => setActiveRank("Tous")}
                 style={{ "--rk": rankAccents["Tous"] } as React.CSSProperties}
               >
-                <span className="hm-rank-all" aria-hidden="true">全</span>
+                <span className="hm-rank-all" aria-hidden="true">Zen</span>
                 <strong>Tous</strong>
-                <small aria-hidden="true">{rankJapanese["Tous"]}</small>
+                <small aria-hidden="true">{rankRomaji["Tous"]}</small>
                 <span className="hm-rank-n">{initialMembers.length} membres</span>
               </button>
               {RANK_FILTER_ORDER.map((rank, i) => {
@@ -356,7 +356,7 @@ export default function HomePageClient({ initialMembers, featuredFilm }: {
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={rankLogos[rank]} alt="" loading="lazy" />
                     <strong>{rank}</strong>
-                    <small aria-hidden="true">{ROMAN[i]} {rankJapanese[rank]}</small>
+                    <small aria-hidden="true">{ROMAN[i]} {rankRomaji[rank]}</small>
                     <span className="hm-rank-n">{n} {n > 1 ? "membres" : "membre"}</span>
                   </button>
                 );
@@ -426,7 +426,7 @@ export default function HomePageClient({ initialMembers, featuredFilm }: {
 
             {filteredMembers.length === 0 ? (
               <div className="gk-empty">
-                <div className="gk-empty-glyph" aria-hidden="true">不在</div>
+                <div className="gk-empty-glyph" aria-hidden="true">Fuzai</div>
                 <h3>Personne à cette adresse</h3>
                 <p>Aucun membre ne correspond à ces filtres. Vérifie l&apos;orthographe ou élargis la recherche.</p>
                 <button type="button" className="gk-btn" onClick={resetFilters}>Tout réafficher</button>
@@ -451,7 +451,7 @@ export default function HomePageClient({ initialMembers, featuredFilm }: {
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={rankLogos[rank as Rank]} alt="" loading="lazy" />
                         <h3>{rank}</h3>
-                        <span className="gk-jp" aria-hidden="true">{rankJapanese[rank as Rank]}</span>
+                        <span className="gk-jp" aria-hidden="true">{rankRomaji[rank as Rank]}</span>
                         <span className="gk-tag">{rankMembers.length} {rankMembers.length > 1 ? "membres" : "membre"}</span>
                         <span className="hm-rank-line" aria-hidden="true" />
                       </div>

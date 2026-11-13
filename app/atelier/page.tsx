@@ -120,7 +120,7 @@ export default function AtelierPage() {
         <div className="gk-hero gk-reveal">
           <div className="gk-hero-kicker">
             <p className="gk-chapter"><b>08</b><span>L&apos;ARTBOOK DE LA GUILDE</span></p>
-            <span className="gk-jp" aria-hidden="true">工房</span>
+            <span className="gk-jp" aria-hidden="true">Kōbō</span>
           </div>
           <h1 className="gk-display at-title">L&apos;Atelier <span className="gk-inked">visuel</span></h1>
           <p className="gk-body gk-hero-lede">
@@ -156,14 +156,14 @@ export default function AtelierPage() {
           </div>
         ) : error ? (
           <div className="gk-empty" style={{ marginTop: 24 }}>
-            <div className="gk-empty-glyph" aria-hidden="true">閉</div>
+            <div className="gk-empty-glyph" aria-hidden="true">Heiten</div>
             <h3>L&apos;atelier est fermé</h3>
             <p>La galerie n&apos;a pas pu être chargée. Vérifie ta connexion puis réessaie.</p>
             <button type="button" className="gk-btn" onClick={load}>Réessayer</button>
           </div>
         ) : filtered.length === 0 ? (
           <div className="gk-empty" style={{ marginTop: 24 }}>
-            <div className="gk-empty-glyph" aria-hidden="true">白紙</div>
+            <div className="gk-empty-glyph" aria-hidden="true">Hakushi</div>
             <h3>{total === 0 ? "Page blanche" : favOnly && favCount === 0 ? "Aucun favori pour l'instant" : "Rien dans ce tiroir"}</h3>
             <p>
               {total === 0

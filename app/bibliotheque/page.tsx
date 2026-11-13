@@ -258,7 +258,7 @@ export default function BibliothequePage() {
           <div>
             <div className="gk-hero-kicker">
               <p className="gk-chapter"><b>06</b><span>LE MAGAZINE DE LA GUILDE</span></p>
-              <span className="gk-jp" aria-hidden="true">図書館</span>
+              <span className="gk-jp" aria-hidden="true">Toshokan</span>
             </div>
             <h1 className="gk-display bb-title">La <span className="gk-inked">Bibliothèque</span></h1>
             <p className="gk-body" style={{ marginTop: 16 }}>
@@ -282,7 +282,7 @@ export default function BibliothequePage() {
                 <span className="gk-hand">le dossier du printemps 2026</span>
                 <h2 id="bb-bash" className="gk-display gk-h3">La Chronique du Bash</h2>
               </div>
-              <span className="gk-stamp" aria-hidden="true">特集</span>
+              <span className="gk-stamp" aria-hidden="true">Tokushū</span>
             </div>
 
             <button type="button" className="gk-panel gk-press bb-une" onClick={() => open(une, chroniques)} style={{ "--tag": une.color } as React.CSSProperties}>
@@ -424,20 +424,20 @@ export default function BibliothequePage() {
             </div>
           ) : loadError ? (
             <div className="gk-empty" style={{ marginTop: 24 }}>
-              <div className="gk-empty-glyph" aria-hidden="true">断</div>
+              <div className="gk-empty-glyph" aria-hidden="true">Chūdan</div>
               <h3>Les rayons sont inaccessibles</h3>
               <p>Les fiches n&apos;ont pas pu être chargées. Vérifie ta connexion puis réessaie.</p>
               <button type="button" className="gk-btn" onClick={fetchOeuvres}>Réessayer</button>
             </div>
           ) : entries.length === 0 ? (
             <div className="gk-empty" style={{ marginTop: 8 }}>
-              <div className="gk-empty-glyph" aria-hidden="true">準備中</div>
+              <div className="gk-empty-glyph" aria-hidden="true">Junbichū</div>
               <h3>Les verdicts arrivent</h3>
               <p>Aucune fiche n&apos;est encore publiée dans la tier list. En attendant, la Chronique du Bash est juste au-dessus.</p>
             </div>
           ) : byTier.length === 0 ? (
             <div className="gk-empty" style={{ marginTop: 24 }}>
-              <div className="gk-empty-glyph" aria-hidden="true">空</div>
+              <div className="gk-empty-glyph" aria-hidden="true">Kara</div>
               <h3>{showFavoritesOnly && favoritesCount === 0 ? "Aucun favori pour l'instant" : "Rayon vide"}</h3>
               <p>
                 {showFavoritesOnly && favoritesCount === 0
