@@ -2,6 +2,7 @@
 // Tout est facultatif : un membre sans extras garde exactement son affichage actuel.
 // Le contenu vient de la base : il est validé et borné ici avant tout affichage.
 import { isValidMusicId, type MusicProvider } from "./music";
+import { safeCover } from "./music-search";
 
 export interface FocusPoint {
   /** 0 à 100, position horizontale du point focal en pourcentage */
@@ -23,6 +24,8 @@ export interface FavoriteWork {
   rank?: number;
   featured?: boolean;
   personalNote?: string;
+  /** Court synopsis en français (saisi ou repris de la Bibliothèque, jamais traduit automatiquement). */
+  synopsis?: string;
 }
 
 export interface MemberTrack {
@@ -31,6 +34,9 @@ export interface MemberTrack {
   id: string;
   title?: string;
   artist?: string;
+  album?: string;
+  /** Pochette renvoyée par le service (Apple, Spotify, YouTube). */
+  cover?: string;
 }
 
 /** Une distinction du palmarès (distincte du grade). */
@@ -121,6 +127,7 @@ function work(v: unknown, kind: "ANIME" | "MANGA"): FavoriteWork | null {
     rank: typeof o.rank === "number" && Number.isFinite(o.rank) ? o.rank : undefined,
     featured: o.featured === true,
     personalNote: latinText(o.personalNote, 280),
+    synopsis: latinText(o.synopsis, 700),
   };
 }
 
@@ -161,9 +168,12 @@ function tracks(v: unknown): MemberTrack[] | undefined {
     if (seen.has(key)) continue;
     seen.add(key);
     const t: MemberTrack = { provider: o.provider as MusicProvider, id };
-    const title = latinText(o.title, 160), artist = latinText(o.artist, 120);
+    const title = latinText(o.title, 160), artist = latinText(o.artist, 120), album = latinText(o.album, 160);
     if (title) t.title = title;
     if (artist) t.artist = artist;
+    if (album) t.album = album;
+    const cover = safeCover(o.cover);
+    if (cover) t.cover = cover;
     out.push(t);
   }
   return out.length ? out : undefined;

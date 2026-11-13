@@ -25,11 +25,15 @@ export default function MemberMusic({ tracks, compact = false }: { tracks: Membe
         return (
           <li key={key} className="pf-music">
             <div className="pf-music-head">
-              <Music size={18} aria-hidden="true" />
+              {t.cover
+                // eslint-disable-next-line @next/next/no-img-element
+                ? <img className="pf-music-cover" src={t.cover} alt={`Pochette de ${t.title ?? "ce morceau"}`} width={64} height={64} loading="lazy" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+                : <Music size={18} aria-hidden="true" />}
               <div className="pf-music-txt">
                 {i === 0 && !compact && tracks.length > 1 && <small>Musique favorite</small>}
                 <strong>{t.title || "Morceau sans titre"}</strong>
                 {t.artist && <span>{t.artist}</span>}
+                {t.album && !compact && <span className="pf-music-album">{t.album}</span>}
               </div>
               <span className="pf-music-src">{PROVIDER_LABEL[t.provider]}</span>
             </div>

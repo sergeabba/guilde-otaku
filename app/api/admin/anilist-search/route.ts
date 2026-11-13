@@ -10,6 +10,7 @@ const QUERY = `
         title { romaji english native }
         startDate { year }
         coverImage { large }
+        description(asHtml: false)
       }
     }
   }
@@ -20,6 +21,7 @@ interface AniMedia {
   title: { romaji: string | null; english: string | null; native: string | null };
   startDate: { year: number | null } | null;
   coverImage: { large: string | null } | null;
+  description: string | null;
 }
 
 // Recherche AniList pour choisir explicitement une œuvre (homonymes possibles).
@@ -54,6 +56,8 @@ export async function POST(req: NextRequest) {
       sourceUrl: m.siteUrl ?? undefined,
       year: m.startDate?.year ?? undefined,
       format: m.format ?? undefined,
+      // Référence pour rédiger le synopsis français : jamais enregistrée telle quelle.
+      descriptionEn: m.description ? m.description.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim().slice(0, 900) : undefined,
     })).filter((r) => r.titleRomaji || r.titleLocalized);
     return NextResponse.json({ results }, { headers: { "Cache-Control": "no-store" } });
   } catch {

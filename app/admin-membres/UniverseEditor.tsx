@@ -1,16 +1,61 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "../../lib/supabase";
 import { ArrowDown, ArrowUp, Plus, Search, Star, Trash2 } from "lucide-react";
 import { hasJapanese, workKey, workTitle, type FavoriteWork, type MemberTrack } from "../../lib/member-extras";
 import { parseMusicLink, openUrl, PROVIDER_LABEL } from "../../lib/music";
 
 type Kind = "ANIME" | "MANGA";
-type Candidate = FavoriteWork & { year?: number; format?: string };
+type Candidate = FavoriteWork & { year?: number; format?: string; descriptionEn?: string };
 
 const MAX_FEATURED = 3;
 
-function FavoriteList({ kind, label, works, onChange }: { kind: Kind; label: string; works: FavoriteWork[]; onChange: (w: FavoriteWork[]) => void }) {
+type LibraryIndex = Map<string, string>;
+const norm = (t: string) => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+
+/** Synopsis des fiches de la Bibliothèque du site, indexés par titre (lecture publique). */
+function useLibraryIndex(): LibraryIndex {
+  const [index, setIndex] = useState<LibraryIndex>(new Map());
+  useEffect(() => {
+    let alive = true;
+    supabase.from("bibliotheque").select("title, synopsis").then(({ data }) => {
+      if (!alive || !data) return;
+      setIndex(new Map((data as { title?: string; synopsis?: string }[]).filter((r) => r.title && r.synopsis).map((r) => [norm(r.title!), r.synopsis!])));
+    });
+    return () => { alive = false; };
+  }, []);
+  return index;
+}
+
+function SynopsisField({ work, reference, library, onChange }: { work: FavoriteWork; reference?: string; library: LibraryIndex; onChange: (s: string | undefined) => void }) {
+  const fromLibrary = [work.titleRomaji, work.titleLocalized].map((t) => t && library.get(norm(t))).find(Boolean);
+  const bad = !!work.synopsis && hasJapanese(work.synopsis);
+  return (
+    <details style={{ marginTop: 6 }}>
+      <summary style={{ cursor: "pointer", font: "700 0.85rem var(--am-font)", textTransform: "uppercase", color: work.synopsis ? "var(--am-green)" : "var(--am-faint)" }}>
+        Synopsis {work.synopsis ? "(renseigné)" : "(facultatif)"}
+      </summary>
+      <textarea className="am-input" value={work.synopsis ?? ""} maxLength={700} rows={4} placeholder="Deux ou trois phrases en français, sans dévoiler la fin."
+        aria-label={`Synopsis en français de ${workTitle(work)}`} aria-invalid={bad} onChange={(e) => onChange(e.target.value || undefined)} style={{ marginTop: 6 }} />
+      <div className="am-row" style={{ marginTop: 6 }}>
+        <small style={{ font: "500 0.8rem var(--am-body)", color: bad ? "var(--am-red)" : "var(--am-faint)" }}>{bad ? "Alphabet latin uniquement." : `${(work.synopsis ?? "").length} / 700`}</small>
+        {fromLibrary && fromLibrary !== work.synopsis && (
+          <button type="button" className="am-btn am-btn--sm" onClick={() => onChange(fromLibrary.slice(0, 700))}>Reprendre celui de la Bibliothèque</button>
+        )}
+      </div>
+      {fromLibrary && <small style={{ display: "block", font: "500 0.78rem var(--am-body)", color: "var(--am-faint)" }}>Une fiche Bibliothèque existe pour ce titre : vérifie que son synopsis est bien en français.</small>}
+      {reference && (
+        <details style={{ marginTop: 6 }}>
+          <summary style={{ cursor: "pointer", font: "600 0.8rem var(--am-body)", color: "var(--am-faint)" }}>Description AniList en anglais (référence, non publiée)</summary>
+          <p style={{ font: "500 0.85rem/1.45 var(--am-body)", color: "var(--am-dim)", marginTop: 4 }}>{reference}</p>
+        </details>
+      )}
+    </details>
+  );
+}
+
+function FavoriteList({ kind, label, works, onChange, library }: { kind: Kind; label: string; works: FavoriteWork[]; onChange: (w: FavoriteWork[]) => void; library: LibraryIndex }) {
   const [q, setQ] = useState("");
   const [results, setResults] = useState<Candidate[]>([]);
   const [searching, setSearching] = useState(false);
@@ -37,7 +82,16 @@ function FavoriteList({ kind, label, works, onChange }: { kind: Kind; label: str
   }
 
   const renumber = (list: FavoriteWork[]) => list.map((w, i) => ({ ...w, rank: i + 1 }));
-  const add = (w: FavoriteWork) => { if (!keys.has(workKey(w))) onChange(renumber([...works, { ...w, kind }])); };
+  const [refs, setRefs] = useState<Record<string, string>>({});
+  const add = (w: Candidate) => {
+    if (keys.has(workKey(w))) return;
+    // Champs d'affichage de la recherche, non enregistrés.
+    const { descriptionEn, ...rest } = w;
+    const clean: Record<string, unknown> = { ...rest };
+    delete clean.year; delete clean.format;
+    if (descriptionEn) setRefs((r) => ({ ...r, [workKey(w)]: descriptionEn }));
+    onChange(renumber([...works, { ...(clean as unknown as FavoriteWork), kind }]));
+  };
   const move = (i: number, d: -1 | 1) => { const l = [...works]; const j = i + d; if (j < 0 || j >= l.length) return; [l[i], l[j]] = [l[j], l[i]]; onChange(renumber(l)); };
   const patch = (i: number, p: Partial<FavoriteWork>) => onChange(works.map((w, k) => (k === i ? { ...w, ...p } : w)));
 
@@ -70,6 +124,7 @@ function FavoriteList({ kind, label, works, onChange }: { kind: Kind; label: str
                     aria-label={`Note personnelle pour ${workTitle(w)}`} aria-invalid={noteBad}
                     onChange={(e) => patch(i, { personalNote: e.target.value || undefined })} />
                   {noteBad && <small style={{ color: "var(--am-red)" }}>Pas de caractères japonais : cette note ne serait pas enregistrée.</small>}
+                  <SynopsisField work={w} reference={refs[workKey(w)]} library={library} onChange={(synopsis) => patch(i, { synopsis })} />
                 </div>
                 <div className="am-item-actions">
                   <button type="button" className="am-icon am-star" aria-pressed={!!w.featured} disabled={!w.featured && featuredCount >= MAX_FEATURED}
@@ -123,21 +178,47 @@ function FavoriteList({ kind, label, works, onChange }: { kind: Kind; label: str
   );
 }
 
+type TrackCandidate = MemberTrack & { previewUrl?: string; source?: string };
+
 function MusicList({ tracks, onChange }: { tracks: MemberTrack[]; onChange: (t: MemberTrack[]) => void }) {
-  const [url, setUrl] = useState("");
-  const [title, setTitle] = useState("");
-  const [artist, setArtist] = useState("");
+  const [q, setQ] = useState("");
+  const [results, setResults] = useState<TrackCandidate[]>([]);
+  const [links, setLinks] = useState<{ spotify: string; youtube: string; apple: string } | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [draft, setDraft] = useState<{ url: string; title: string; artist: string; album?: string; cover?: string }>({ url: "", title: "", artist: "" });
   const [error, setError] = useState<string | null>(null);
+
+  async function search(e?: React.FormEvent) {
+    e?.preventDefault();
+    if (q.trim().length < 2) { setError("Tape un titre, un artiste, ou colle un lien."); return; }
+    setSearching(true); setError(null); setResults([]);
+    try {
+      const res = await fetch("/api/admin/music-search", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ q }) });
+      const json = await res.json().catch(() => null);
+      setLinks(json?.links ?? null);
+      if (!res.ok) throw new Error(res.status === 401 ? "Session expirée : reconnecte-toi" : json?.error || `Erreur ${res.status}`);
+      setResults(json.results ?? []);
+      if (json.notice) setError(json.notice);
+      else if (!json.results?.length) setError("Aucun résultat. Essaie « artiste titre », ou colle le lien du morceau.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Recherche impossible");
+    } finally { setSearching(false); }
+  }
+
+  function choose(c: TrackCandidate) {
+    setDraft({ url: openUrl(c), title: c.title ?? "", artist: c.artist ?? "", album: c.album, cover: c.cover });
+    setError(null);
+  }
 
   function add(e: React.FormEvent) {
     e.preventDefault();
-    const ref = parseMusicLink(url);
-    if (!ref) { setError("Lien non reconnu. Colle le lien de partage d'un morceau Spotify (open.spotify.com/track/…), Apple Music (music.apple.com/…) ou YouTube."); return; }
+    const ref = parseMusicLink(draft.url);
+    if (!ref) { setError("Lien non reconnu. Choisis un résultat ou colle le lien d'un morceau Spotify, Apple Music ou YouTube."); return; }
     if (tracks.some((t) => t.provider === ref.provider && t.id === ref.id)) { setError("Ce morceau est déjà dans la liste."); return; }
-    if (hasJapanese(title) || hasJapanese(artist)) { setError("Titre et artiste en alphabet latin (rōmaji si besoin)."); return; }
+    if (hasJapanese(draft.title) || hasJapanese(draft.artist)) { setError("Titre et artiste en alphabet latin (rōmaji si besoin)."); return; }
     if (tracks.length >= 10) { setError("10 morceaux maximum."); return; }
-    onChange([...tracks, { ...ref, title: title.trim() || undefined, artist: artist.trim() || undefined }]);
-    setUrl(""); setTitle(""); setArtist(""); setError(null);
+    onChange([...tracks, { ...ref, title: draft.title.trim() || undefined, artist: draft.artist.trim() || undefined, album: draft.album, cover: draft.cover }]);
+    setDraft({ url: "", title: "", artist: "" }); setResults([]); setQ(""); setError(null);
   }
   const patch = (i: number, p: Partial<MemberTrack>) => onChange(tracks.map((t, k) => (k === i ? { ...t, ...p } : t)));
 
@@ -148,9 +229,13 @@ function MusicList({ tracks, onChange }: { tracks: MemberTrack[]; onChange: (t: 
       {tracks.length === 0 ? <p className="am-empty">Aucun morceau.</p> : (
         <ol className="am-list">
           {tracks.map((t, i) => (
-            <li key={`${t.provider}:${t.id}`} className="am-item" style={{ gridTemplateColumns: "minmax(0,1fr) auto" }}>
+            <li key={`${t.provider}:${t.id}`} className="am-item">
+              {t.cover
+                // eslint-disable-next-line @next/next/no-img-element
+                ? <img src={t.cover} alt="" loading="lazy" style={{ height: 46, objectFit: "cover" }} />
+                : <span className="am-thumb" style={{ height: 46 }} aria-hidden="true" />}
               <div style={{ minWidth: 0 }}>
-                <small>{i === 0 ? "Favorite · " : ""}{PROVIDER_LABEL[t.provider]}</small>
+                <small>{i === 0 ? "Favorite · " : ""}{PROVIDER_LABEL[t.provider]}{t.album ? ` · ${t.album}` : ""}</small>
                 <input className="am-input" value={t.title ?? ""} maxLength={160} placeholder="Titre du morceau" aria-label="Titre du morceau"
                   aria-invalid={hasJapanese(t.title ?? "")} onChange={(e) => patch(i, { title: e.target.value || undefined })} />
                 <input className="am-input" value={t.artist ?? ""} maxLength={120} placeholder="Artiste" aria-label="Artiste"
@@ -165,15 +250,53 @@ function MusicList({ tracks, onChange }: { tracks: MemberTrack[]; onChange: (t: 
           ))}
         </ol>
       )}
-      <form className="am-grid2" onSubmit={add}>
-        <label className="am-field" style={{ gridColumn: "1 / -1" }}><span>Lien Spotify, Apple Music ou YouTube</span>
-          <input className="am-input" inputMode="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://open.spotify.com/track/…" /></label>
-        <label className="am-field"><span>Titre</span><input className="am-input" value={title} maxLength={160} onChange={(e) => setTitle(e.target.value)} /></label>
-        <label className="am-field"><span>Artiste</span><input className="am-input" value={artist} maxLength={120} onChange={(e) => setArtist(e.target.value)} /></label>
-        <button className="am-btn am-btn--sm" style={{ justifySelf: "start" }}><Plus size={14} aria-hidden="true" /> Ajouter le morceau</button>
+
+      <form className="am-search" onSubmit={search} role="search">
+        <input className="am-input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Titre, artiste… ou lien Spotify / Apple Music / YouTube" aria-label="Rechercher un morceau" />
+        <button className="am-btn" disabled={searching} aria-label="Lancer la recherche musicale"><Search size={16} aria-hidden="true" />{searching ? "…" : ""}</button>
       </form>
-      <small style={{ font: "500 0.82rem/1.4 var(--am-body)", color: "var(--am-faint)" }}>Titre et artiste ne sont pas devinés : recopie-les depuis l&apos;application. Spotify et Apple Music jouent un extrait aux visiteurs non connectés ou non abonnés.</small>
       {error && <p className="am-alert am-alert--error" role="alert">{error}</p>}
+      {results.length > 0 && (
+        <div className="am-results" aria-label="Résultats de recherche musicale">
+          {results.map((c) => (
+            <div key={`${c.provider}:${c.id}`} className="am-result">
+              {c.cover
+                // eslint-disable-next-line @next/next/no-img-element
+                ? <img src={c.cover} alt="" loading="lazy" style={{ height: 46, objectFit: "cover" }} />
+                : <span className="am-thumb" style={{ height: 46 }} aria-hidden="true" />}
+              <div style={{ minWidth: 0 }}>
+                <strong>{c.title || "Titre inconnu"}</strong>
+                <small>{[c.artist, c.album, PROVIDER_LABEL[c.provider]].filter(Boolean).join(" · ")}</small>
+                {c.previewUrl && <audio controls preload="none" src={c.previewUrl} style={{ width: "100%", height: 32, marginTop: 4 }} aria-label={`Extrait de ${c.title ?? "ce morceau"}`} />}
+              </div>
+              <button type="button" className="am-btn am-btn--sm" onClick={() => choose(c)}>Choisir</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {links && (
+        <p className="am-empty" style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+          Trouver le même titre :
+          <a href={links.spotify} target="_blank" rel="noopener noreferrer" style={{ color: "var(--am-gold)" }}>sur Spotify ↗</a>
+          <a href={links.youtube} target="_blank" rel="noopener noreferrer" style={{ color: "var(--am-gold)" }}>sur YouTube ↗</a>
+          <span>puis colle son lien ci-dessus.</span>
+        </p>
+      )}
+
+      <form className="am-grid2" onSubmit={add}>
+        <label className="am-field" style={{ gridColumn: "1 / -1" }}><span>Lien du morceau</span>
+          <input className="am-input" inputMode="url" value={draft.url} onChange={(e) => setDraft((d) => ({ ...d, url: e.target.value, cover: undefined, album: undefined }))} placeholder="https://open.spotify.com/track/…" /></label>
+        <label className="am-field"><span>Titre</span><input className="am-input" value={draft.title} maxLength={160} onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))} /></label>
+        <label className="am-field"><span>Artiste</span><input className="am-input" value={draft.artist} maxLength={120} onChange={(e) => setDraft((d) => ({ ...d, artist: e.target.value }))} /></label>
+        <div className="am-row" style={{ gridColumn: "1 / -1" }}>
+          {draft.cover && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={draft.cover} alt="Pochette choisie" width={56} height={56} style={{ borderRadius: 6, objectFit: "cover" }} />
+          )}
+          <button className="am-btn am-btn--sm"><Plus size={14} aria-hidden="true" /> Ajouter le morceau</button>
+        </div>
+      </form>
+      <small style={{ font: "500 0.82rem/1.4 var(--am-body)", color: "var(--am-faint)" }}>La recherche couvre le catalogue Apple Music ; un lien Spotify ou YouTube collé est complété automatiquement (titre, pochette). Vérifie titre et artiste avant d&apos;enregistrer. Spotify et Apple Music jouent un extrait aux visiteurs non connectés ou non abonnés.</small>
     </div>
   );
 }
@@ -182,6 +305,7 @@ export default function UniverseEditor({ anime, manga, music, alias, onChange }:
   anime: FavoriteWork[]; manga: FavoriteWork[]; music: MemberTrack[]; alias: string;
   onChange: (p: { favoriteAnime?: FavoriteWork[]; favoriteManga?: FavoriteWork[]; music?: MemberTrack[]; displayNameRomaji?: string }) => void;
 }) {
+  const library = useLibraryIndex();
   return (
     <>
       <label className="am-field">
@@ -189,8 +313,8 @@ export default function UniverseEditor({ anime, manga, music, alias, onChange }:
         <input className="am-input" value={alias} maxLength={80} aria-invalid={hasJapanese(alias)} onChange={(e) => onChange({ displayNameRomaji: e.target.value })} />
         <small>{hasJapanese(alias) ? "Alphabet latin uniquement." : "Affiché sous le nom sur la fiche. Ne pas inventer : seulement si le membre l'utilise."}</small>
       </label>
-      <FavoriteList kind="ANIME" label="Suki na anime : anime préférés" works={anime} onChange={(w) => onChange({ favoriteAnime: w })} />
-      <FavoriteList kind="MANGA" label="Suki na manga : mangas préférés" works={manga} onChange={(w) => onChange({ favoriteManga: w })} />
+      <FavoriteList kind="ANIME" label="Suki na anime : anime préférés" works={anime} onChange={(w) => onChange({ favoriteAnime: w })} library={library} />
+      <FavoriteList kind="MANGA" label="Suki na manga : mangas préférés" works={manga} onChange={(w) => onChange({ favoriteManga: w })} library={library} />
       <MusicList tracks={music} onChange={(t) => onChange({ music: t })} />
     </>
   );
