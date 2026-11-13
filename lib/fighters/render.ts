@@ -2,7 +2,7 @@
 // sans lissage. Tous les visuels sont originaux et générés ici (aucune image externe) :
 // deux silhouettes « prototypes » articulées, teintées avec la couleur du membre,
 // et un décor de dojo au crépuscule.
-import { FLOOR, MOVES, SPECIAL, STAGE_H, STAGE_W, type Fighter, type MatchEvent, type MatchState } from "./engine";
+import { FLOOR, STAGE_H, STAGE_W, type Fighter, type MatchEvent, type MatchState } from "./engine";
 
 type Vec = [number, number];
 interface Pose { lean: number; armF: Vec; armB: Vec; legF: Vec; legB: Vec; head: number; lift?: number; rot?: number }
@@ -28,6 +28,9 @@ function shade(hex: string, k: number) {
 // ─── Poses (angles en degrés : 0 = vers le bas, 90 = vers l'avant, 180 = vers le haut) ───
 const STANCE: Pose = { lean: 6, armF: [60, 70], armB: [30, 80], legF: [18, -10], legB: [-14, -6], head: 0 };
 
+const CROUCH: Pose = { lean: 14, armF: [70, 80], armB: [40, 90], legF: [70, -120], legB: [-10, -110], head: 0 };
+
+/** Poses des silhouettes provisoires (personnages sans planche de sprites). */
 function poseFor(f: Fighter, frame: number): Pose {
   const t = f.t;
   switch (f.state) {
@@ -42,28 +45,45 @@ function poseFor(f: Fighter, frame: number): Pose {
     }
     case "guard":
       return { lean: -4, armF: [120, 140], armB: [110, 150], legF: [14, -8], legB: [-18, -6], head: -6 };
+    case "crouch": return CROUCH;
+    case "cguard": return { ...CROUCH, lean: 4, armF: [130, 140], armB: [120, 150] };
     case "jump":
       return { lean: 10, armF: [100, 60], armB: [70, 80], legF: [70, -110], legB: [40, -100], head: 0 };
+    case "dodge":
+      return { lean: 60, armF: [80, 90], armB: [60, 100], legF: [80, -130], legB: [20, -120], head: 10 };
     case "attack": {
-      if (f.move === "punch") {
-        const d = MOVES.punch, ext = t > d.startup && t <= d.startup + d.active + 2;
-        return ext ? { lean: 14, armF: [92, 0], armB: [20, 90], legF: [30, -6], legB: [-24, 0], head: 4 } : { ...STANCE, armF: [70, 110] };
+      const m = f.move!;
+      const ext = t > m.startup && t <= m.startup + m.active + 2;
+      const id = m.anim;
+      if (!ext) return id.startsWith("c_") ? CROUCH : id.startsWith("j_") ? { lean: 10, armF: [100, 60], armB: [70, 80], legF: [70, -110], legB: [40, -100], head: 0 } : { ...STANCE, armF: [70, 110] };
+      switch (id) {
+        case "s_lp": return { lean: 12, armF: [92, 0], armB: [20, 90], legF: [26, -6], legB: [-20, 0], head: 4 };
+        case "s_hp": return { lean: 18, armF: [96, 0], armB: [10, 70], legF: [36, -6], legB: [-30, 0], head: 6 };
+        case "s_lk": return { lean: -10, armF: [50, 70], armB: [10, 60], legF: [80, 0], legB: [-6, 0], head: -4 };
+        case "s_hk": return { lean: -18, armF: [40, 60], armB: [-30, 40], legF: [100, -10], legB: [-6, 0], head: -8 };
+        case "c_lp": return { ...CROUCH, armF: [92, 0] };
+        case "c_hp": return { ...CROUCH, lean: 6, armF: [160, 10] };
+        case "c_lk": return { ...CROUCH, legF: [90, 0] };
+        case "c_hk": return { ...CROUCH, lean: 30, legF: [92, 0], legB: [-20, -120] };
+        case "j_lp": case "j_hp": return { lean: 14, armF: [120, -10], armB: [60, 80], legF: [70, -110], legB: [40, -100], head: 4 };
+        case "j_lk": case "j_hk": return { lean: -14, armF: [60, 50], armB: [-20, 40], legF: [120, 0], legB: [40, -90], head: -6 };
+        case "throw": return { lean: 20, armF: [110, 20], armB: [100, 30], legF: [30, -6], legB: [-30, 0], head: 6 };
+        default: return t < m.startup ? { lean: -10, armF: [40, 120], armB: [30, 130], legF: [24, -10], legB: [-26, 0], head: -4 }
+          : { lean: 16, armF: [90, 0], armB: [86, 0], legF: [34, -8], legB: [-30, 0], head: 4 };
       }
-      if (f.move === "kick") {
-        const d = MOVES.kick, ext = t > d.startup && t <= d.startup + d.active + 3;
-        const wind = t <= d.startup;
-        return ext ? { lean: -18, armF: [40, 60], armB: [-30, 40], legF: [96, 0], legB: [-6, 0], head: -8 }
-          : wind ? { lean: -6, armF: [50, 80], armB: [10, 60], legF: [50, -90], legB: [-8, 0], head: -2 } : { ...STANCE };
-      }
-      if (f.move === "airkick") return { lean: -14, armF: [60, 50], armB: [-20, 40], legF: [110, 0], legB: [40, -90], head: -6 };
-      // spéciale : armes tendues, élan
-      return t < SPECIAL.startup ? { lean: -10, armF: [40, 120], armB: [30, 130], legF: [24, -10], legB: [-26, 0], head: -4 }
-        : { lean: 16, armF: [90, 0], armB: [86, 0], legF: [34, -8], legB: [-30, 0], head: 4 };
     }
     case "hit":
+    case "thrown":
+      return { lean: -24, armF: [-20, 30], armB: [-40, 20], legF: [10, -14], legB: [-20, 0], head: -18 };
     case "block":
-      return f.state === "block" ? { lean: -8, armF: [120, 140], armB: [110, 150], legF: [10, -6], legB: [-22, -4], head: -10 }
-        : { lean: -24, armF: [-20, 30], armB: [-40, 20], legF: [10, -14], legB: [-20, 0], head: -18 };
+      return { lean: -8, armF: [120, 140], armB: [110, 150], legF: [10, -6], legB: [-22, -4], head: -10 };
+    case "dizzy": {
+      const w = Math.sin(frame / 6) * 10;
+      return { lean: w, armF: [10, 20], armB: [-10, 20], legF: [14, -6], legB: [-14, -6], head: -w };
+    }
+    case "getup":
+      return CROUCH;
+    case "down":
     case "ko":
       return { lean: -90, armF: [-60, 10], armB: [-80, 0], legF: [-80, 0], legB: [-96, 10], head: -10, rot: f.y < -2 ? -40 : -90 };
     case "win": {
@@ -266,17 +286,37 @@ export class ArenaRenderer {
     // Le combattant qui attaque est dessiné devant.
     const order = [...s.fighters].sort((a, b) => (a.state === "attack" ? 1 : 0) - (b.state === "attack" ? 1 : 0));
     for (const f of order) drawFighter(c, f, looks[f.side], s.frame, s.frame <= this.flashUntil[f.side]);
-    // Projectiles : orbe en pixels.
+    // Projectiles : orbe en pixels, ou bulle-question (Quiz Omniscient).
     for (const p of s.projectiles) {
       const col = looks[p.owner].main;
       const px = Math.round(p.x), py = Math.round(FLOOR + p.y);
+      const tr = Math.floor(s.frame / 3) % 2;
+      if (p.def.sprite === "quiz") {
+        const bob = Math.floor(s.frame / 8) % 2;
+        c.fillStyle = INK; c.fillRect(px - 9, py - 9 + bob, 18, 16); c.fillRect(px - 3, py + 7 + bob, 4, 3);
+        c.fillStyle = "#fff6d8"; c.fillRect(px - 8, py - 8 + bob, 16, 14); c.fillRect(px - 2, py + 6 + bob, 2, 2);
+        c.fillStyle = col;
+        // « ? » en pixels
+        for (const [x, y, w, h] of [[-3, -6, 6, 2], [2, -5, 2, 4], [-1, -2, 3, 2], [-1, 0, 2, 2], [-1, 3, 2, 2]]) c.fillRect(px + x, py + y + bob, w, h);
+        c.fillStyle = "#fff6d8";
+        c.fillRect(px - Math.sign(p.vx) * (13 + tr * 2), py - 2, 2, 2);
+        continue;
+      }
       c.fillStyle = INK; c.fillRect(px - 6, py - 5, 12, 10);
       c.fillStyle = col; c.fillRect(px - 5, py - 4, 10, 8);
       c.fillStyle = "#fff6d8"; c.fillRect(px - 2, py - 2, 5, 4);
       c.fillStyle = col;
-      const tr = Math.floor(s.frame / 3) % 2;
       c.fillRect(px - Math.sign(p.vx) * (9 + tr * 2), py - 1, 3, 2);
       c.fillRect(px - Math.sign(p.vx) * (14 + tr), py, 2, 1);
+    }
+    // Étoiles au-dessus d'un combattant étourdi.
+    for (const f of s.fighters) if (f.state === "dizzy") {
+      const top = Math.round(FLOOR + f.y - f.char.size.h - 8);
+      for (let k = 0; k < 3; k++) {
+        const a = s.frame / 10 + (k * Math.PI * 2) / 3;
+        const x = Math.round(f.x + Math.cos(a) * 10), y = top + Math.round(Math.sin(a) * 3);
+        c.fillStyle = "#ffe36b"; c.fillRect(x - 1, y - 1, 3, 3); c.fillStyle = "#fff"; c.fillRect(x, y, 1, 1);
+      }
     }
     // Étincelles d'impact.
     this.sparks = this.sparks.filter((sp) => sp.t < (sp.heavy ? 14 : 10));

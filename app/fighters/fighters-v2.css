@@ -215,10 +215,21 @@ body.fx-ingame .gk-footer, body.fx-ingame .gk-backtop, body.fx-ingame [class*="b
 .fx-hp span.is-low { background: linear-gradient(#ff8a6b, #e8463a); }
 .fx-hud-sub { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
 .fx-hud-side--1 .fx-hud-sub { flex-direction: row-reverse; }
-.fx-cd { flex: 1; max-width: 120px; height: 5px; background: rgba(243,236,220,0.15); overflow: hidden; }
-.fx-cd span { display: block; height: 100%; background: var(--fx-p2); transform-origin: left; }
-.fx-hud-side--0 .fx-cd span { background: var(--fx-p1); }
-.fx-cd span.is-ready { background: var(--fx-gold); }
+/* Jauge de super (POW) : se remplit en frappant et en encaissant. */
+.fx-power { position: relative; flex: 1; max-width: 150px; height: 10px; background: #1b1530; border: 2px solid var(--fx-paper); overflow: hidden; }
+.fx-power span { position: absolute; inset: 0; background: linear-gradient(90deg, #3b6bff, #7fd0ff); transform-origin: left; }
+.fx-hud-side--1 .fx-power span { transform-origin: right; }
+.fx-power span.is-max { background: linear-gradient(90deg, #ff6b3a, #ffe36b); }
+.fx-power b { position: absolute; inset: 0; display: grid; place-items: center; font: 400 6px var(--fx-pixel); color: #fff; text-shadow: 1px 1px 0 var(--fx-ink); }
+@media (prefers-reduced-motion: no-preference) { .fx-power span.is-max { animation: fx-blink 0.6s steps(2, jump-none) infinite; } }
+/* Compteur de combo. */
+.fx-combo { position: absolute; top: 18%; display: grid; justify-items: center; pointer-events: none; line-height: 1; }
+.fx-combo--0 { left: 4%; } .fx-combo--1 { right: 4%; }
+.fx-combo b { font: 400 clamp(1.2rem, 4vw, 2.2rem) var(--fx-pixel); color: #fff; text-shadow: 3px 3px 0 var(--fx-p1), -1px -1px 0 var(--fx-ink); }
+.fx-combo--1 b { text-shadow: 3px 3px 0 var(--fx-p2), -1px -1px 0 var(--fx-ink); }
+.fx-combo span { font: 900 italic clamp(0.7rem, 2vw, 0.95rem) var(--fx-ui); text-transform: uppercase; color: var(--fx-gold); text-shadow: 2px 2px 0 var(--fx-ink); }
+.fx-combo { animation: fx-fadeout 1.2s steps(1, end) both; }
+@media (prefers-reduced-motion: no-preference) { .fx-combo { animation: fx-banner 1.2s ease-out both; } }
 .fx-stock { display: flex; gap: 4px; }
 .fx-stock i { width: 10px; height: 10px; border: 2px solid var(--fx-paper); transform: rotate(45deg); }
 .fx-stock i.is-on { background: var(--fx-gold); }
@@ -244,43 +255,42 @@ body.fx-ingame .gk-footer, body.fx-ingame .gk-backtop, body.fx-ingame [class*="b
 .fx-keys div { display: grid; grid-template-columns: 56px 1fr; gap: 8px; }
 .fx-keys dt { font: 400 0.6rem var(--fx-pixel); color: var(--fx-gold); padding-top: 3px; }
 
-.fx-controls { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); }
-.fx-dpad { display: grid; grid-template-columns: repeat(3, 58px); grid-template-rows: 58px; gap: 8px; }
-.fx-buttons { display: grid; grid-template-columns: repeat(3, 62px); gap: 8px; }
-.fx-pad { display: grid; place-items: center; width: 100%; height: 58px; border: 2px solid var(--fx-paper); background: rgba(243,236,220,0.08); border-radius: 12px; font: 900 italic 0.95rem var(--fx-ui) !important; text-transform: uppercase; touch-action: none; }
+.fx-controls { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); }
+/* Manette analogique à 8 directions (glisser le pouce). */
+.fx-stick { --s: 124px; position: relative; flex-shrink: 0; width: var(--s); height: var(--s); border-radius: 50%; touch-action: none; display: grid; place-items: center; }
+.fx-stick-ring { position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--fx-paper); background: radial-gradient(circle, rgba(243,236,220,0.04) 40%, rgba(243,236,220,0.12)); }
+.fx-stick-knob { width: 46%; height: 46%; border-radius: 50%; background: var(--fx-p1); border: 3px solid var(--fx-paper); box-shadow: 0 3px 0 rgba(0,0,0,0.5); pointer-events: none; }
+/* Boutons : poings en haut, pieds en bas, raccourcis à droite (logique arcade). */
+.fx-buttons { --b: 52px; display: grid; grid-template-columns: repeat(4, var(--b)); grid-template-rows: repeat(2, var(--b)); gap: 6px;
+  grid-template-areas: "lp hp sp su" "lk hk dg dg"; }
+.fx-pad { display: grid; place-items: center; width: 100%; height: 100%; min-height: 44px; border: 2px solid var(--fx-paper); background: rgba(243,236,220,0.08); border-radius: 50%; font: 900 italic 0.82rem var(--fx-ui) !important; text-transform: uppercase; touch-action: none; }
 .fx-pad:active { background: rgba(232,185,49,0.35); }
-.fx-pad--a { border-color: #ffb15c; } .fx-pad--b { border-color: var(--fx-p1); } .fx-pad--c { border-color: var(--fx-gold); color: var(--fx-gold); }
-.fx-controls-hint { text-align: center; font: 600 0.78rem var(--fx-body); color: var(--fx-dim); }
+.fx-pad--lp { grid-area: lp; border-color: #ffb15c; } .fx-pad--hp { grid-area: hp; border-color: #ff6b3a; color: #ffb15c; }
+.fx-pad--lk { grid-area: lk; border-color: #7fd0ff; } .fx-pad--hk { grid-area: hk; border-color: #3b6bff; color: #7fd0ff; }
+.fx-pad--sp { grid-area: sp; border-radius: 12px; border-color: var(--fx-gold); color: var(--fx-gold); }
+.fx-pad--su { grid-area: su; border-radius: 12px; border-color: #666; color: #888; }
+.fx-pad--su.is-ready { border-color: #ff6b3a; color: #ffe36b; background: rgba(255,107,58,0.2); }
+.fx-pad--dg { grid-area: dg; border-radius: 12px; }
 .fx-keyline { padding: 0 12px 8px; font: 500 0.8rem/1.4 var(--fx-body); color: var(--fx-dim); text-align: center; }
-@media (max-width: 400px) {
-  .fx-dpad { grid-template-columns: repeat(3, 50px); grid-template-rows: 54px; gap: 6px; }
-  .fx-buttons { grid-template-columns: repeat(3, 54px); gap: 6px; }
-}
-@media (max-width: 360px) {
-  .fx-dpad { grid-template-columns: repeat(3, 44px); grid-template-rows: 52px; gap: 4px; }
-  .fx-buttons { grid-template-columns: repeat(3, 46px); gap: 4px; }
-  .fx-pad { height: 52px; font-size: 0.82rem !important; }
-}
-@media (max-width: 400px) {
+@media (max-width: 380px) {
   .fx-controls { gap: 6px; padding-inline: 8px; }
-  .fx-controls-hint { display: none; }
-  .fx-controls { grid-template-columns: auto auto; justify-content: space-between; }
+  .fx-stick { --s: 104px; }
+  .fx-buttons { --b: 46px; gap: 5px; }
+  .fx-pad { font-size: 0.72rem !important; }
 }
+@media (max-width: 340px) { .fx-stick { --s: 94px; } .fx-buttons { --b: 44px; gap: 4px; } }
 /* Les commandes tactiles ne s'affichent que sur les écrans tactiles ; la ligne clavier ailleurs. */
 @media (hover: hover) and (pointer: fine) { .fx-controls { display: none; } }
 @media not ((hover: hover) and (pointer: fine)) { .fx-keyline { display: none; } }
 /* Téléphone à l'horizontale : arène plein écran, commandes de part et d'autre. */
 @media (orientation: landscape) and (max-height: 520px) {
   .fx-fight { grid-template-rows: auto 1fr; }
-  .fx-stage { max-width: min(calc((100dvh - 64px) * 16 / 9), calc(100vw - 260px)); }
   /* Commandes dans les marges latérales, hors de l'aire de jeu. */
   .fx-controls { position: absolute; left: 0; right: 0; bottom: calc(8px + env(safe-area-inset-bottom)); display: flex; justify-content: space-between; align-items: end;
     padding: 0 calc(8px + env(safe-area-inset-right)) 0 calc(8px + env(safe-area-inset-left)); pointer-events: none; }
   .fx-controls > * { pointer-events: auto; }
-  .fx-dpad { grid-template-columns: repeat(2, 54px); grid-template-rows: 54px 54px; gap: 6px; }
-  .fx-dpad .fx-pad--up { grid-column: 1 / -1; grid-row: 1; justify-self: center; width: 54px; }
-  .fx-buttons { grid-template-columns: repeat(2, 54px); gap: 6px; }
-  .fx-buttons .fx-pad--c { grid-column: 1 / -1; justify-self: center; width: 54px; }
-  .fx-pad { height: 54px; font-size: 0.8rem !important; }
-  .fx-controls-hint { display: none; }
+  .fx-stage { max-width: min(calc((100dvh - 64px) * 16 / 9), calc(100vw - 340px)); }
+  .fx-stick { --s: 120px; }
+  .fx-buttons { --b: 46px; grid-template-columns: repeat(3, var(--b)); grid-template-rows: repeat(3, var(--b)); gap: 5px;
+    grid-template-areas: "sp su dg" "lp hp ." "lk hk ."; }
 }

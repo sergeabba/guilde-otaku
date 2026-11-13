@@ -1,21 +1,23 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, ChevronUp, Pause, Play, RotateCcw, Users, Home, Keyboard } from "lucide-react";
-import { createMatch, step, NO_INPUT, MAX_HP, FPS, tuning, STAGE_W, STAGE_H, type Input, type MatchState, type MatchEvent } from "../../lib/fighters/engine";
+import { Pause, Play, RotateCcw, Users, Home, Keyboard } from "lucide-react";
+import { createMatch, step, NO_INPUT, MAX_HP, MAX_METER, FPS, STAGE_W, STAGE_H, type Input, type MatchState, type MatchEvent } from "../../lib/fighters/engine";
 import { aiInput, makeRng, newAiMemory, type AiLevel } from "../../lib/fighters/ai";
 import { ArenaRenderer, lookFor, type Look } from "../../lib/fighters/render";
 import type { Mode, RosterMember, Versus } from "./FightersApp";
 
 // Touches physiques (e.code) : elles restent au même endroit en AZERTY comme en QWERTY.
 const KEYS: [Record<string, keyof Input>, Record<string, keyof Input>] = [
-  { KeyA: "left", KeyD: "right", KeyW: "up", KeyS: "down", KeyJ: "punch", KeyK: "kick", KeyL: "special" },
-  { ArrowLeft: "left", ArrowRight: "right", ArrowUp: "up", ArrowDown: "down", Numpad1: "punch", Numpad2: "kick", Numpad3: "special", Comma: "punch", Period: "kick", Slash: "special" },
+  { KeyA: "left", KeyD: "right", KeyW: "up", KeyS: "down", KeyU: "lp", KeyI: "hp", KeyJ: "lk", KeyK: "hk", KeyO: "special", KeyL: "super", KeyH: "dodge" },
+  { ArrowLeft: "left", ArrowRight: "right", ArrowUp: "up", ArrowDown: "down",
+    Numpad4: "lp", Numpad5: "hp", Numpad1: "lk", Numpad2: "hk", Numpad6: "special", Numpad3: "super", Numpad0: "dodge",
+    Digit7: "lp", Digit8: "hp", Digit9: "lk", Digit0: "hk", Minus: "special", Equal: "super", Period: "dodge" },
 ];
 
 interface Hud {
   hp: [number, number]; names: [string, string]; ids: [number, number]; timer: number; round: number;
-  wins: [number, number]; active: [number, number]; cd: [number, number]; phase: MatchState["phase"]; winner: 0 | 1 | null;
+  wins: [number, number]; active: [number, number]; meter: [number, number]; phase: MatchState["phase"]; winner: 0 | 1 | null;
 }
 
 const snapshot = (s: MatchState): Hud => ({
@@ -23,7 +25,7 @@ const snapshot = (s: MatchState): Hud => ({
   names: [s.fighters[0].profile.name, s.fighters[1].profile.name],
   ids: [s.fighters[0].profile.id, s.fighters[1].profile.id],
   timer: Math.ceil(s.timer / FPS), round: s.round, wins: [...s.wins], active: [...s.active],
-  cd: s.fighters.map((f) => (f.specialCd <= 0 ? 1 : 1 - f.specialCd / tuning(f.profile).specialCooldown)) as [number, number],
+  meter: [s.fighters[0].meter / MAX_METER, s.fighters[1].meter / MAX_METER],
   phase: s.phase, winner: s.winner,
 });
 
@@ -52,6 +54,40 @@ function TouchButton({ label, children, onChange, className = "" }: { label: str
   );
 }
 
+/**
+ * Manette tactile à 8 directions : on glisse le pouce depuis le centre. Permet les
+ * quarts de cercle (bas, bas-avant, avant) comme sur un stick d'arcade.
+ */
+function TouchStick({ onDir }: { onDir: (d: { left: boolean; right: boolean; up: boolean; down: boolean }) => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [knob, setKnob] = useState<[number, number]>([0, 0]);
+  const active = useRef<number | null>(null);
+  const update = (e: React.PointerEvent) => {
+    const r = ref.current!.getBoundingClientRect();
+    const dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+    const len = Math.hypot(dx, dy), max = r.width / 2 - 14;
+    const k = len > max ? max / len : 1;
+    setKnob([dx * k, dy * k]);
+    const dead = r.width * 0.16;
+    if (len < dead) { onDir({ left: false, right: false, up: false, down: false }); return; }
+    const a = Math.atan2(-dy, dx); // 0 = droite, π/2 = haut
+    const sector = Math.round(a / (Math.PI / 4)); // -4..4
+    onDir({ right: [-1, 0, 1].includes(sector), left: [3, 4, -3, -4].includes(sector), up: [1, 2, 3].includes(sector), down: [-1, -2, -3].includes(sector) });
+  };
+  const end = () => { active.current = null; setKnob([0, 0]); onDir({ left: false, right: false, up: false, down: false }); };
+  return (
+    <div
+      ref={ref} className="fx-stick" role="group" aria-label="Manette : glisser pour se déplacer, sauter, s'accroupir"
+      onPointerDown={(e) => { e.preventDefault(); active.current = e.pointerId; try { ref.current!.setPointerCapture(e.pointerId); } catch { /* facultatif */ } update(e); }}
+      onPointerMove={(e) => { if (active.current === e.pointerId) update(e); }}
+      onPointerUp={end} onPointerCancel={end} onLostPointerCapture={end} onContextMenu={(e) => e.preventDefault()}
+    >
+      <span className="fx-stick-ring" aria-hidden="true" />
+      <span className="fx-stick-knob" aria-hidden="true" style={{ transform: `translate(${knob[0]}px, ${knob[1]}px)` }} />
+    </div>
+  );
+}
+
 export default function FightScreen({ teams, mode, versus, level, labels, reduced, onRematch, onRoster, onHome }: {
   teams: [RosterMember[], RosterMember[]]; mode: Mode; versus: Versus; level: AiLevel; labels: [string, string]; reduced: boolean;
   onRematch: () => void; onRoster: () => void; onHome: () => void;
@@ -67,6 +103,7 @@ export default function FightScreen({ teams, mode, versus, level, labels, reduce
   const [showKeys, setShowKeys] = useState(false);
   const [hud, setHud] = useState<Hud | null>(null);
   const [banner, setBanner] = useState<{ text: string; sub?: string; id: number } | null>(null);
+  const [combo, setCombo] = useState<{ side: 0 | 1; n: number; id: number } | null>(null);
   const keyLabel = useKeyLabels();
   const byId = useRef(new Map([...teams[0], ...teams[1]].map((m) => [m.id, m])));
   const looks = useRef<[Look, Look]>([lookFor(teams[0][0].id, teams[0][0].color), lookFor(teams[1][0].id, teams[1][0].color)]);
@@ -80,7 +117,11 @@ export default function FightScreen({ teams, mode, versus, level, labels, reduce
       if (e.type === "fight") setBanner({ text: "Combat !", id });
       if (e.type === "ko") setBanner({ text: "K.-O. !", sub: `${s.fighters[e.side].profile.name} est à terre`, id });
       if (e.type === "timeOver") setBanner({ text: "Temps écoulé", id });
-      if (e.type === "special") setBanner({ text: e.name, sub: "Attaque spéciale", id });
+      if (e.type === "special") setBanner({ text: e.name, sub: e.super ? "Super" : "Attaque spéciale", id });
+      if (e.type === "revive") setBanner({ text: e.name, sub: `${s.fighters[e.side].profile.name} se relève`, id });
+      if (e.type === "dizzy") setBanner({ text: "Étourdi !", sub: s.fighters[e.side].profile.name, id });
+      if (e.type === "throw") setBanner({ text: "Projection", id });
+      if (e.type === "hit" && !e.blocked && e.combo >= 2) setCombo({ side: e.side === 0 ? 1 : 0, n: e.combo, id });
       if (e.type === "matchEnd") setBanner(null);
     }
   }, [mode]);
@@ -153,6 +194,7 @@ export default function FightScreen({ teams, mode, versus, level, labels, reduce
   }, [versus, setPause]);
 
   const press = (k: keyof Input) => (d: boolean) => { touch.current = { ...touch.current, [k]: d }; };
+  const stick = useCallback((d: { left: boolean; right: boolean; up: boolean; down: boolean }) => { touch.current = { ...touch.current, ...d }; }, []);
   const ended = hud?.phase === "matchEnd";
   const winnerLabel = hud && hud.winner !== null ? labels[hud.winner] : null;
 
@@ -175,7 +217,10 @@ export default function FightScreen({ teams, mode, versus, level, labels, reduce
           <span style={{ transform: `scaleX(${pct})` }} className={pct < 0.25 ? "is-low" : ""} />
         </div>
         <div className="fx-hud-sub">
-          <span className="fx-cd" title="Recharge de l'attaque spéciale"><span style={{ transform: `scaleX(${hud.cd[side]})` }} className={hud.cd[side] >= 1 ? "is-ready" : ""} /></span>
+          <span className="fx-power" role="meter" aria-label={`Jauge de super de ${hud.names[side]}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(hud.meter[side] * 100)}>
+            <span style={{ transform: `scaleX(${hud.meter[side]})` }} className={hud.meter[side] >= 1 ? "is-max" : ""} />
+            <b>{hud.meter[side] >= 1 ? "MAX" : "POW"}</b>
+          </span>
           {mode === "team"
             ? <span className="fx-stock" aria-label={`${team.length - hud.active[side]} combattant(s) restant(s)`}>{team.map((t, i) => <i key={t.id} className={i < hud.active[side] ? "is-out" : i === hud.active[side] ? "is-on" : ""} />)}</span>
             : <span className="fx-stock" aria-label={`${hud.wins[side]} manche(s) gagnée(s)`}>{[0, 1].map((i) => <i key={i} className={i < hud.wins[side] ? "is-on" : ""} />)}</span>}
@@ -194,6 +239,7 @@ export default function FightScreen({ teams, mode, versus, level, labels, reduce
 
       <div className="fx-stage" style={{ aspectRatio: `${viewW} / ${STAGE_H}` }}>
         <canvas ref={canvasRef} width={viewW} height={STAGE_H} className="fx-canvas" aria-label="Arène de combat en pixel art" role="img" />
+        {combo && !ended && <div key={`c${combo.id}`} className={`fx-combo fx-combo--${combo.side}`} aria-live="polite"><b>{combo.n}</b><span>coups</span></div>}
         {banner && !ended && <div key={banner.id} className="fx-banner" aria-live="assertive"><b>{banner.text}</b>{banner.sub && <span>{banner.sub}</span>}</div>}
         <button type="button" className="fx-pausebtn" onClick={() => setPause(true)} aria-label="Pause" disabled={ended}><Pause size={18} aria-hidden="true" /></button>
 
@@ -216,8 +262,12 @@ export default function FightScreen({ teams, mode, versus, level, labels, reduce
               </div>
               {showKeys && (
                 <dl className="fx-keys">
-                  <div><dt>J1</dt><dd>{keyLabel("KeyA", "Q (A)")} {keyLabel("KeyD", "D")} déplacer · {keyLabel("KeyW", "Z (W)")} sauter · reculer = garde · {keyLabel("KeyJ", "J")} poing · {keyLabel("KeyK", "K")} pied · {keyLabel("KeyL", "L")} spéciale</dd></div>
-                  {versus === "local" && <div><dt>J2</dt><dd>Flèches · {keyLabel("Comma", ",")} / 1 poing · {keyLabel("Period", ".")} / 2 pied · {keyLabel("Slash", "/")} / 3 spéciale</dd></div>}
+                  <div><dt>J1</dt><dd>{keyLabel("KeyA", "Q")} {keyLabel("KeyD", "D")} déplacer · {keyLabel("KeyW", "Z")} sauter · {keyLabel("KeyS", "S")} s&apos;accroupir · {keyLabel("KeyU", "U")} poing léger · {keyLabel("KeyI", "I")} poing fort · {keyLabel("KeyJ", "J")} pied léger · {keyLabel("KeyK", "K")} pied fort</dd></div>
+                  <div><dt>Garde</dt><dd>reculer = garde haute · reculer accroupi = garde basse</dd></div>
+                  <div><dt>Spéciale</dt><dd>bas, bas-avant, avant + poing (ou {keyLabel("KeyO", "O")})</dd></div>
+                  <div><dt>Super</dt><dd>deux quarts de cercle + poing, jauge pleine (ou {keyLabel("KeyL", "L")})</dd></div>
+                  <div><dt>Autres</dt><dd>avant + poing fort au contact = projection · {keyLabel("KeyH", "H")} ou poing léger + pied léger = esquive · enchaîner poing léger puis coup fort</dd></div>
+                  {versus === "local" && <div><dt>J2</dt><dd>Flèches · pavé 4 5 1 2 (ou 7 8 9 0) coups · 6 (ou -) spéciale · 3 (ou =) super · 0 (ou .) esquive</dd></div>}
                   <div><dt>Pause</dt><dd>Échap ou {keyLabel("KeyP", "P")}</dd></div>
                 </dl>
               )}
@@ -227,21 +277,20 @@ export default function FightScreen({ teams, mode, versus, level, labels, reduce
       </div>
 
       <div className="fx-controls" aria-label="Commandes tactiles">
-        <div className="fx-dpad">
-          <TouchButton label="Gauche" onChange={press("left")}><ChevronLeft size={26} aria-hidden="true" /></TouchButton>
-          <TouchButton label="Sauter" onChange={press("up")} className="fx-pad--up"><ChevronUp size={26} aria-hidden="true" /></TouchButton>
-          <TouchButton label="Droite" onChange={press("right")}><ChevronRight size={26} aria-hidden="true" /></TouchButton>
-        </div>
-        <p className="fx-controls-hint">Reculer = garde</p>
+        <TouchStick onDir={stick} />
         <div className="fx-buttons">
-          <TouchButton label="Poing" onChange={press("punch")} className="fx-pad--a">Poing</TouchButton>
-          <TouchButton label="Pied" onChange={press("kick")} className="fx-pad--b">Pied</TouchButton>
-          <TouchButton label="Spéciale" onChange={press("special")} className="fx-pad--c">Spé.</TouchButton>
+          <TouchButton label="Poing léger" onChange={press("lp")} className="fx-pad--lp">PL</TouchButton>
+          <TouchButton label="Poing fort" onChange={press("hp")} className="fx-pad--hp">PF</TouchButton>
+          <TouchButton label="Pied léger" onChange={press("lk")} className="fx-pad--lk">KL</TouchButton>
+          <TouchButton label="Pied fort" onChange={press("hk")} className="fx-pad--hk">KF</TouchButton>
+          <TouchButton label="Attaque spéciale" onChange={press("special")} className="fx-pad--sp">Spé</TouchButton>
+          <TouchButton label="Super, jauge pleine" onChange={press("super")} className={`fx-pad--su${hud && hud.meter[0] >= 1 ? " is-ready" : ""}`}>Super</TouchButton>
+          <TouchButton label="Esquive" onChange={press("dodge")} className="fx-pad--dg">Esq.</TouchButton>
         </div>
       </div>
       <p className="fx-keyline">
-        Clavier : {keyLabel("KeyA", "Q (A)")}/{keyLabel("KeyD", "D")} déplacer · {keyLabel("KeyW", "Z (W)")} sauter · {keyLabel("KeyJ", "J")} poing · {keyLabel("KeyK", "K")} pied · {keyLabel("KeyL", "L")} spéciale · Échap pause
-        {versus === "ia" ? " · Adversaire : IA (ordinateur)" : " · J2 : flèches et , . /"}
+        Clavier : {keyLabel("KeyA", "Q")} {keyLabel("KeyS", "S")} {keyLabel("KeyD", "D")} {keyLabel("KeyW", "Z")} bouger · {keyLabel("KeyU", "U")} {keyLabel("KeyI", "I")} poings · {keyLabel("KeyJ", "J")} {keyLabel("KeyK", "K")} pieds · ↓↘→ + poing spéciale ({keyLabel("KeyO", "O")}) · {keyLabel("KeyL", "L")} super · {keyLabel("KeyH", "H")} esquive · Échap pause
+        {versus === "ia" ? " · Adversaire : IA (ordinateur)" : " · J2 : flèches et pavé numérique"}
       </p>
     </section>
   );
