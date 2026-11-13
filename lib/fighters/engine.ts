@@ -270,7 +270,7 @@ function damage(s: MatchState, att: Fighter | null, def: Fighter, m: { damage: n
 function tryThrow(s: MatchState, f: Fighter, other: Fighter, i: Input, pressed: (k: keyof Input) => boolean) {
   const towardOrBack = i.left || i.right;
   if (!pressed("hp") || !towardOrBack || !grounded(f) || !grounded(other)) return false;
-  if (Math.abs(other.x - f.x) > 30 || !free(other) || other.invuln > 0) return false;
+  if (Math.abs(other.x - f.x) > 38 || !free(other) || other.invuln > 0) return false;
   const backThrow = (other.x > f.x ? i.left : i.right);
   startMove(s, f, f.char.normals.throw, "throw");
   setState(other, "thrown"); other.stun = 30;
@@ -347,7 +347,7 @@ function update(s: MatchState, f: Fighter, other: Fighter, i: Input) {
           }
         }
         if (m.projectile && f.t === m.startup) {
-          s.projectiles.push({ owner: f.side, x: f.x + f.facing * 20, y: -m.projectile.h, vx: f.facing * m.projectile.speed, def: m.projectile, ttl: m.projectile.ttl });
+          s.projectiles.push({ owner: f.side, x: f.x + f.facing * 26, y: -m.projectile.h, vx: f.facing * m.projectile.speed, def: m.projectile, ttl: m.projectile.ttl });
         }
         if (!m.projectile && m.id !== "throw" && !f.hitDone && f.t > m.startup && f.t <= m.startup + m.active) {
           const x0 = f.x + f.facing * m.hit.x, x1 = f.x + f.facing * (m.hit.x + m.hit.w);
@@ -381,7 +381,7 @@ function update(s: MatchState, f: Fighter, other: Fighter, i: Input) {
         const back = f.facing > 0 ? i.left : i.right;
         if (i.up && grounded(f)) {
           setState(f, "jump"); f.vy = f.char.jumpV;
-          f.vx = fwd ? 2.5 * tune.walk * f.facing : back ? -2.2 * tune.walk * f.facing : 0;
+          f.vx = fwd ? 2.9 * tune.walk * f.facing : back ? -2.5 * tune.walk * f.facing : 0;
         } else if (i.down) {
           f.vx = 0;
           const st = back ? "cguard" : "crouch";
@@ -417,7 +417,7 @@ function separate(a: Fighter, b: Fighter) {
   const dx = b.x - a.x;
   const minDist = (a.char.size.w + b.char.size.w) / 2;
   const overlap = minDist - Math.abs(dx);
-  if (overlap > 0 && Math.abs(a.y - b.y) < 40) {
+  if (overlap > 0 && Math.abs(a.y - b.y) < 52) {
     const push = (overlap / 2) * (dx >= 0 ? 1 : -1);
     a.x = clamp(a.x - push, WALL, STAGE_W - WALL);
     b.x = clamp(b.x + push, WALL, STAGE_W - WALL);

@@ -9,7 +9,7 @@ const st = (s: MatchState, a: Input = NO_INPUT, b: Input = NO_INPUT) => { step(s
 const run = (s: MatchState, n: number, a: Input = NO_INPUT, b: Input = NO_INPUT) => { for (let i = 0; i < n; i++) st(s, a, b); return s; };
 const toFight = (s: MatchState) => { while (s.phase === "intro") st(s); return s; };
 /** Rapproche les combattants au contact. */
-const closeIn = (s: MatchState, gap = 26) => { let i = 0; while (Math.abs(s.fighters[1].x - s.fighters[0].x) > gap && i++ < 400) st(s, I({ right: true })); run(s, 2); return s; };
+const closeIn = (s: MatchState, gap = 30) => { let i = 0; while (Math.abs(s.fighters[1].x - s.fighters[0].x) > gap && i++ < 400) st(s, I({ right: true })); run(s, 2); return s; };
 const tap = (s: MatchState, a: Partial<Input>, b: Partial<Input> = {}, wait = 30) => { st(s, I(a), I(b)); return run(s, wait, NO_INPUT, I(b)); };
 /** Quart de cercle avant (le joueur 1 regarde à droite). */
 const qcf = (s: MatchState, btn: Partial<Input>) => { st(s, I({ down: true })); st(s, I({ down: true, right: true })); st(s, I({ right: true })); st(s, I({ right: true, ...btn })); };

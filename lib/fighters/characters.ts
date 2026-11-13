@@ -63,7 +63,34 @@ export interface CharacterDef {
   passive?: { kind: "revive"; hpPct: number; name: string; source: string };
 }
 
-const N = (m: Omit<MoveDef, "anim"> & { anim?: string }): MoveDef => ({ anim: m.id, ...m });
+import craigSheet from "./sheets/craig.json";
+import melrickSheet from "./sheets/melrick.json";
+
+/** Échelle des personnages (sprites d'environ 76 px de haut dans une arène de 216 px). */
+const K = 1.3;
+const N = (m: Omit<MoveDef, "anim"> & { anim?: string }): MoveDef => {
+  const sc = (b: Box): Box => ({ x: Math.round(b.x * K), y: Math.round(b.y * K), w: Math.round(b.w * K), h: Math.round(b.h * K) });
+  return { anim: m.id, ...m, hit: sc(m.hit), ...(m.projectile ? { projectile: { ...m.projectile, h: Math.round(m.projectile.h * K) } } : {}) };
+};
+
+export interface SheetMeta {
+  key: string; name: string; image: string; cell: [number, number]; anchor: [number, number]; cols: number; count: number;
+  size: { h: number; crouchH: number; w: number }; reach: Record<string, number>;
+  anims: Record<string, { frames: number[]; dur?: number[]; phases?: string[]; loop?: boolean }>;
+}
+export const SHEETS: Record<string, SheetMeta> = { craig: craigSheet as unknown as SheetMeta, melrick: melrickSheet as unknown as SheetMeta };
+
+/** Cale la zone d'attaque de chaque coup sur la portée réelle du dessin (image active). */
+function fitToSheet(normals: Record<NormalId, MoveDef>, sheet: SheetMeta): Record<NormalId, MoveDef> {
+  const out = { ...normals };
+  for (const id of Object.keys(out) as NormalId[]) {
+    const r = sheet.reach[id];
+    if (r === undefined || id === "throw") continue;
+    const m = out[id];
+    out[id] = { ...m, hit: { ...m.hit, w: Math.max(10, r + 2 - m.hit.x) } };
+  }
+  return out;
+}
 
 // ─── Coups communs (portées, timings et effets distincts) ───────────────────
 export const COMMON_NORMALS: Record<NormalId, MoveDef> = {
@@ -96,7 +123,7 @@ const commonSuper = (): SpecialDef => ({
 });
 
 const base = (key: string, memberId: number | null, specialName: string, source?: string): CharacterDef => ({
-  key, memberId, custom: false, walk: 1.8, backWalk: 1.35, jumpV: -7.1, size: { w: 22, h: 56, crouchH: 36 },
+  key, memberId, custom: false, walk: 2.05, backWalk: 1.55, jumpV: -8.1, size: { w: 26, h: 72, crouchH: 48 },
   normals: COMMON_NORMALS, specials: [commonWave(specialName, source)], superMove: commonSuper(),
 });
 
@@ -109,8 +136,9 @@ const base = (key: string, memberId: number | null, specialName: string, source?
 export const CRAIG: CharacterDef = {
   ...base("craig", 1, "Quiz Omniscient"),
   custom: true,
-  walk: 1.75,
-  size: { w: 22, h: 60, crouchH: 38 },
+  walk: 2.0,
+  size: { w: 26, h: craigSheet.size.h - 2, crouchH: 50 },
+  normals: fitToSheet(COMMON_NORMALS, craigSheet as unknown as SheetMeta),
   specials: [{
     id: "quiz", name: "Quiz Omniscient", motion: "qcf", button: "p", provisional: false,
     source: "Stun l'adversaire avec une question impossible.",
@@ -127,8 +155,9 @@ export const CRAIG: CharacterDef = {
 export const MELRICK: CharacterDef = {
   ...base("melrick", 56, "Onde de la Guilde"),
   custom: true,
-  walk: 1.9, backWalk: 1.45,
-  size: { w: 20, h: 62, crouchH: 38 },
+  walk: 2.15, backWalk: 1.65,
+  size: { w: 24, h: melrickSheet.size.h - 4, crouchH: 54 },
+  normals: fitToSheet(COMMON_NORMALS, melrickSheet as unknown as SheetMeta),
   passive: { kind: "revive", hpPct: 0.2, name: "Régénération de Cell", source: "Revient d'un K.O. avec 20% de sa santé si tué." },
 };
 
@@ -140,3 +169,5 @@ export function characterFor(memberId: number, specialName?: string): CharacterD
 }
 
 export const CUSTOM_IDS = Object.keys(CUSTOM).map(Number);
+/** Planche de sprites d'un personnage, ou rien s'il est encore provisoire. */
+export const sheetFor = (c: CharacterDef): SheetMeta | null => (c.custom ? SHEETS[c.key] ?? null : null);

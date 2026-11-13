@@ -2,6 +2,7 @@
 // sans lissage. Tous les visuels sont originaux et générés ici (aucune image externe) :
 // deux silhouettes « prototypes » articulées, teintées avec la couleur du membre,
 // et un décor de dojo au crépuscule.
+import { sheetOf, frameFor, drawSprite } from "./sprites";
 import { FLOOR, STAGE_H, STAGE_W, type Fighter, type MatchEvent, type MatchState } from "./engine";
 
 type Vec = [number, number];
@@ -110,7 +111,7 @@ function limb(ctx: CanvasRenderingContext2D, a: Vec, b: Vec, w: number, color: s
 }
 
 /** Dessine un combattant. Coordonnées locales : x vers l'avant, y vers le bas, origine aux pieds. */
-export function drawFighter(ctx: CanvasRenderingContext2D, f: Fighter, look: Look, frame: number, flash = false) {
+export function drawFighter(ctx: CanvasRenderingContext2D, f: Fighter, look: Look, frame: number, flash = false, shadow = true) {
   const p = poseFor(f, frame);
   const D = DIM[look.archetype];
   const hipLocal = (legA: Vec): Vec => { const k = add([0, 0], dir(legA[0]), D.thigh); return add(k, dir(legA[0] + legA[1]), D.shin); };
@@ -181,7 +182,7 @@ export function drawFighter(ctx: CanvasRenderingContext2D, f: Fighter, look: Loo
   for (const ft of [foot(p.legB), foot(p.legF)]) ctx.fillRect(Math.round(ft[0] - 2), Math.round(ft[1] - 1), 6, 3);
   ctx.restore();
 
-  // Ombre au sol.
+  if (!shadow) return;
   ctx.fillStyle = "rgba(10,6,14,0.35)";
   const sw = Math.max(10, 24 + f.y * 0.2);
   ctx.fillRect(Math.round(f.x - sw / 2), FLOOR + 1, Math.round(sw), 3);
@@ -262,10 +263,34 @@ export class ArenaRenderer {
         if (e.heavy && !this.reducedMotion) this.shake = 6;
       }
       if (e.type === "ko" && !this.reducedMotion) this.shake = 10;
+      if (e.type === "revive") this.reviveUntil[e.side] = s.frame + 80;
     }
   }
 
   private camX = 0;
+  private reviveUntil: [number, number] = [0, 0];
+  private off: HTMLCanvasElement | null = null;
+
+  /** Silhouette provisoire (membres sans planche) : dessinée à 1:1 puis agrandie sans lissage. */
+  private drawProvisional(c: CanvasRenderingContext2D, f: Fighter, look: Look, frame: number, flash: boolean) {
+    const K = 1.3, OW = 100, OH = 110;
+    if (!this.off) { this.off = document.createElement("canvas"); this.off.width = OW; this.off.height = FLOOR + 6; }
+    const o = this.off.getContext("2d")!;
+    o.clearRect(0, 0, OW, this.off.height);
+    drawFighter(o, { ...f, x: OW / 2, y: 0 }, look, frame, flash, false);
+    c.drawImage(this.off, 0, FLOOR + 6 - OH, OW, OH, Math.round(f.x - (OW / 2) * K), Math.round(FLOOR + f.y + 6 * K - OH * K), Math.round(OW * K), Math.round(OH * K));
+  }
+
+  /** Talent « retour du K.-O. » : particules qui montent autour du combattant. */
+  private drawRevive(c: CanvasRenderingContext2D, f: Fighter, frame: number) {
+    const left = this.reviveUntil[f.side] - frame;
+    for (let k = 0; k < 14; k++) {
+      const ph = (k * 37 + frame * 2) % 60;
+      const x = Math.round(f.x + Math.sin(k * 1.7) * 18), y = Math.round(FLOOR + f.y - ph * 1.3);
+      c.fillStyle = k % 3 ? "#7dffb0" : "#e8ffef";
+      if (left > 10 || k % 2) c.fillRect(x, y, 2, 2);
+    }
+  }
 
   /**
    * Dessine l'arène. `viewW` (en pixels logiques) permet un cadrage plus serré sur
@@ -285,7 +310,17 @@ export class ArenaRenderer {
     const looks = this.looks();
     // Le combattant qui attaque est dessiné devant.
     const order = [...s.fighters].sort((a, b) => (a.state === "attack" ? 1 : 0) - (b.state === "attack" ? 1 : 0));
-    for (const f of order) drawFighter(c, f, looks[f.side], s.frame, s.frame <= this.flashUntil[f.side]);
+    for (const f of order) {
+      const flash = s.frame <= this.flashUntil[f.side];
+      // Ombre au sol.
+      c.fillStyle = "rgba(10,6,14,0.35)";
+      const sw = Math.max(12, 30 + f.y * 0.25);
+      c.fillRect(Math.round(f.x - sw / 2), FLOOR, Math.round(sw), 3);
+      const sheet = sheetOf(f);
+      if (sheet?.ready) drawSprite(c, sheet, frameFor(f, sheet.meta, s.frame), f.x, FLOOR + f.y, f.facing, flash);
+      else this.drawProvisional(c, f, looks[f.side], s.frame, flash);
+      if (this.reviveUntil[f.side] > s.frame) this.drawRevive(c, f, s.frame);
+    }
     // Projectiles : orbe en pixels, ou bulle-question (Quiz Omniscient).
     for (const p of s.projectiles) {
       const col = looks[p.owner].main;
