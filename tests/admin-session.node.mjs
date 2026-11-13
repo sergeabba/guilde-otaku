@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { ADMIN_SESSION_MAX_AGE, checkAdminPassword, createAdminSession, isAdminConfigured, verifyAdminSession } from "../lib/admin-session.ts";
+import { ADMIN_SESSION_MAX_AGE, adminConfigIssue, checkAdminPassword, createAdminSession, isAdminConfigured, verifyAdminSession } from "../lib/admin-session.ts";
 
 const oldPassword = process.env.ADMIN_PASSWORD;
 const oldSecret = process.env.ADMIN_SESSION_SECRET;
@@ -37,5 +37,25 @@ test("password check and short-lived signed session", () => {
     assert.equal(verifyAdminSession(token.replace(/.$/, "X"), now), false);
     process.env.ADMIN_SESSION_SECRET = "rotated-session-secret-32-or-more-characters";
     assert.equal(verifyAdminSession(token, now), false);
+  } finally { restore(); }
+});
+
+test("configuration issue names the rule, never the value", () => {
+  try {
+    delete process.env.ADMIN_SESSION_SECRET;
+    delete process.env.ADMIN_PASSWORD;
+    assert.match(adminConfigIssue(), /absente/);
+    process.env.ADMIN_PASSWORD = "1111";
+    assert.match(adminConfigIssue(), /ancienne valeur/);
+    process.env.ADMIN_PASSWORD = "court-secret";
+    assert.equal(adminConfigIssue(), null);
+    process.env.ADMIN_PASSWORD = "trop-court";
+    assert.match(adminConfigIssue(), /12 caract/);
+    assert.ok(!adminConfigIssue().includes("trop-court"));
+    process.env.ADMIN_PASSWORD = "une-phrase-de-passe-assez-longue";
+    process.env.ADMIN_SESSION_SECRET = "secret-court";
+    assert.match(adminConfigIssue(), /ADMIN_SESSION_SECRET/);
+    assert.ok(!adminConfigIssue().includes("secret-court"));
+    assert.equal(isAdminConfigured(), false);
   } finally { restore(); }
 });

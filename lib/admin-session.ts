@@ -5,13 +5,26 @@ export const ADMIN_SESSION_MAX_AGE = 12 * 60 * 60;
 
 // There is deliberately no default admin password. A short or missing value
 // must never grant write access to the public deployment.
-export function isAdminConfigured(): boolean {
+export const ADMIN_PASSWORD_MIN = 12;
+export const ADMIN_SECRET_MIN = 32;
+
+/**
+ * Raison pour laquelle l'administration est désactivée, ou null si elle est
+ * correctement configurée. Ne contient jamais la valeur des variables, seulement
+ * leur nom et la règle non respectée (règles déjà publiques dans le dépôt).
+ */
+export function adminConfigIssue(): string | null {
   const password = process.env.ADMIN_PASSWORD;
   const extraSecret = process.env.ADMIN_SESSION_SECRET;
-  return Boolean(
-    password && password.trim().length >= 12 && password !== "1111" &&
-    (!extraSecret || extraSecret.length >= 32)
-  );
+  if (!password || !password.trim()) return "la variable ADMIN_PASSWORD est absente de cet environnement";
+  if (password === "1111") return "ADMIN_PASSWORD utilise l'ancienne valeur par défaut, qui n'est plus acceptée";
+  if (password.trim().length < ADMIN_PASSWORD_MIN) return `ADMIN_PASSWORD doit compter au moins ${ADMIN_PASSWORD_MIN} caractères`;
+  if (extraSecret && extraSecret.length < ADMIN_SECRET_MIN) return `ADMIN_SESSION_SECRET, si elle est définie, doit compter au moins ${ADMIN_SECRET_MIN} caractères`;
+  return null;
+}
+
+export function isAdminConfigured(): boolean {
+  return adminConfigIssue() === null;
 }
 
 function sessionKey(): Buffer | null {

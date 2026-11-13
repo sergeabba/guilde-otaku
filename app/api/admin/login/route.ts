@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ADMIN_COOKIE, ADMIN_SESSION_MAX_AGE, checkAdminPassword, createAdminSession, isAdminConfigured } from "../../../../lib/admin-session";
+import { ADMIN_COOKIE, ADMIN_SESSION_MAX_AGE, adminConfigIssue, checkAdminPassword, createAdminSession } from "../../../../lib/admin-session";
 
 export async function POST(req: NextRequest) {
-  if (!isAdminConfigured()) {
+  const issue = adminConfigIssue();
+  if (issue) {
     return NextResponse.json(
-      { error: "Administration non configuree : definir un ADMIN_PASSWORD robuste sur le serveur." },
+      { error: `Administration non configurée : ${issue}. À corriger dans les variables d'environnement du serveur, puis redéployer.` },
       { status: 503, headers: { "Cache-Control": "no-store" } },
     );
   }
