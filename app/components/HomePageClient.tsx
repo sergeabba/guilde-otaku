@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { createPortal } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowDown, Search, Sword, User, X } from "lucide-react";
@@ -18,6 +18,7 @@ import { getDaysUntil, type ViewMode } from "../types";
 import { normalize } from "../utils/text";
 import { onColor } from "../utils/color";
 import "../styles/home.css";
+import { viewTransition } from "../../lib/view-transition";
 
 export interface FeaturedFilm {
   title: string;
@@ -35,7 +36,28 @@ export default function HomePageClient({ initialMembers, featuredFilm }: {
   const [activeCountry, setActiveCountry] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
-  const closeMember = useCallback(() => setSelectedMember(null), []);
+  // Ouverture : le portrait touché se transforme en fiche rapide (transition native,
+  // immédiate sans prise en charge ou avec « réduire les animations »).
+  const openMember = useCallback((m: Member, el?: HTMLElement | null) => {
+    viewTransition({
+      kind: "member",
+      from: [[el?.querySelector(".mc-media") ?? el, "member-portrait"]],
+      update: () => flushSync(() => setSelectedMember(m)),
+    });
+  }, []);
+  const closeMember = useCallback(() => {
+    const id = selectedMember?.id;
+    viewTransition({
+      kind: "member",
+      update: () => flushSync(() => setSelectedMember(null)),
+      // Retour vers la carte, seulement si elle est à l'écran.
+      to: () => {
+        const card = id ? document.querySelector<HTMLElement>(`[data-member-id="${id}"] .mc-media`) : null;
+        const r = card?.getBoundingClientRect();
+        return r && r.bottom > 0 && r.top < window.innerHeight ? [[card, "member-portrait"]] : [];
+      },
+    });
+  }, [selectedMember]);
   const [viewMode, setViewMode] = useState<ViewMode>("anime");
   const [mounted, setMounted] = useState(false);
   const [showFloat, setShowFloat] = useState(false);
@@ -181,7 +203,7 @@ export default function HomePageClient({ initialMembers, featuredFilm }: {
                     key={m.id}
                     type="button"
                     className="hm-case"
-                    onClick={() => setSelectedMember(m)}
+                    onClick={(e) => openMember(m, e.currentTarget)}
                     aria-label={`Ouvrir la fiche de ${m.name}, ${m.rank}`}
                     style={{ padding: 0, cursor: "pointer" }}
                   >
@@ -334,7 +356,7 @@ export default function HomePageClient({ initialMembers, featuredFilm }: {
                 type="button"
                 className="hm-rank"
                 aria-pressed={activeRank === "Tous"}
-                onClick={() => setActiveRank("Tous")}
+                onClick={() => viewTransition({ kind: "list", update: () => flushSync(() => setActiveRank("Tous")) })}
                 style={{ "--rk": rankAccents["Tous"] } as React.CSSProperties}
               >
                 <span className="hm-rank-all" aria-hidden="true">Zen</span>
@@ -351,7 +373,7 @@ export default function HomePageClient({ initialMembers, featuredFilm }: {
                     type="button"
                     className={`hm-rank${on === "#fff" ? " is-darktext-off" : ""}`}
                     aria-pressed={activeRank === rank}
-                    onClick={() => setActiveRank(activeRank === rank ? "Tous" : rank)}
+                    onClick={() => viewTransition({ kind: "list", update: () => flushSync(() => setActiveRank(activeRank === rank ? "Tous" : rank)) })}
                     style={{ "--rk": rankAccents[rank] } as React.CSSProperties}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -463,7 +485,7 @@ export default function HomePageClient({ initialMembers, featuredFilm }: {
                             member={member}
                             index={cardIndex++}
                             viewMode={viewMode}
-                            onClick={() => setSelectedMember(member)}
+                            onClick={(el) => openMember(member, el)}
                           />
                         ))}
                       </div>

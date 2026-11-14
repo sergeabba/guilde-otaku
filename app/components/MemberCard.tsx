@@ -14,7 +14,8 @@ export default function MemberCard({ member, index, viewMode, onClick }: {
   member: Member;
   index: number;
   viewMode: ViewMode;
-  onClick: () => void;
+  /** Reçoit l'élément de la carte (point de départ de la transition vers la fiche). */
+  onClick: (el: HTMLElement) => void;
   /** Conservé pour compatibilité : la mise en page est désormais gérée en CSS. */
   isMobile?: boolean;
 }) {
@@ -31,9 +32,10 @@ export default function MemberCard({ member, index, viewMode, onClick }: {
       className="mc"
       role="button"
       tabIndex={0}
-      onClick={onClick}
+      data-member-id={member.id}
+      onClick={(e) => onClick(e.currentTarget)}
       onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); }
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(e.currentTarget); }
       }}
       aria-label={`Ouvrir la fiche de ${member.name}, ${member.rank}`}
       style={{ "--rk": accent, "--rk-on": onColor(accent), "--i": index } as React.CSSProperties}

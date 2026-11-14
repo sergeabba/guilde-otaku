@@ -56,7 +56,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const hasSeenSplash = isBot || isMobileVisitor || cookieStore.get("guilde-splash-seen")?.value === "1";
 
   return (
-    <html lang="fr">
+    <html lang="fr" data-scroll-behavior="smooth">
       <head>
         {/* Police de l'interface et du texte courant, visibles dès le premier écran. */}
         <link rel="preload" href="/fonts/barlow-condensed/barlow-condensed-latin-700-normal.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />

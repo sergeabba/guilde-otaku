@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
+import { useRouter } from "next/navigation";
+import { viewTransition, waitFor } from "../../../lib/view-transition";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Cake, ChevronLeft, ChevronRight, Download, ExternalLink, Play, Share2, Trophy, X, Zap } from "lucide-react";
@@ -47,6 +49,20 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
   const [shareOpen, setShareOpen] = useState(false);
   const [days, setDays] = useState<number | null>(null);
   const [openWork, setOpenWork] = useState<FavoriteWork | null>(null);
+  // Ouverture d'une œuvre : la couverture touchée devient celle de la mini-fiche.
+  const openWorkFrom = (w: FavoriteWork, el?: HTMLElement | null) => viewTransition({
+    kind: "work", from: [[el?.querySelector(".pf-work-cover"), "work-cover"]],
+    update: () => flushSync(() => setOpenWork(w)),
+  });
+  const closeWork = () => {
+    const key = openWork ? workKey(openWork) : "";
+    viewTransition({
+      kind: "work", update: () => flushSync(() => setOpenWork(null)),
+      to: () => [[document.querySelector(`[data-work-key="${CSS.escape(key)}"] .pf-work-cover`), "work-cover"]],
+    });
+  };
+  // Réel / anime : les panneaux se redimensionnent au lieu de sauter.
+  const changeView = (v: View) => viewTransition({ kind: "swap", update: () => flushSync(() => setView(v)) });
   const [downloading, setDownloading] = useState(false);
   const { notify, Toast } = useShare();
 
@@ -115,7 +131,7 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
   const num = (id: string) => sections.find((t) => t.id === id)?.n ?? "";
 
   return (
-    <div className="gk-page tone-dark pf-page" style={{ "--gk-accent": accent, "--pf-on": onColor(accent) } as React.CSSProperties}>
+    <div className="gk-page tone-dark pf-page" data-member-page={member.id} style={{ "--gk-accent": accent, "--pf-on": onColor(accent) } as React.CSSProperties}>
       <GuildeHeader activePage="membres" accentColor={accent} tone="dark" />
 
       {/* Fond de la fiche : portrait anime flouté, lueur à la couleur du rang, trame. */}
@@ -142,15 +158,15 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
             {panels.length > 1 && (
               <div className="gk-switch pf-switch" role="group" aria-label="Portraits affichés">
                 {(["duo", "real", "anime"] as View[]).map((v) => (
-                  <button key={v} type="button" aria-pressed={view === v} onClick={() => setView(v)}>
+                  <button key={v} type="button" aria-pressed={view === v} onClick={() => changeView(v)}>
                     {v === "duo" ? "Les deux" : v === "real" ? "Réel" : "Anime"}
                   </button>
                 ))}
               </div>
             )}
-            <div className={`pf-diptych${shown.length === 1 ? " is-single" : ""}`}>
+            <div className={`pf-diptych${shown.length === 1 ? " is-single" : ""}`} style={{ viewTransitionName: "member-dossier" }}>
               {shown.map((p, i) => (
-                <figure key={p.key} className="pf-panel">
+                <figure key={p.key} className="pf-panel" style={{ viewTransitionName: `pf-panel-${p.key}` }}>
                   {animated && p.video ? (
                     <VideoPlayer src={p.video} fit="cover" objectPosition={p.pos} fullscreenBtn />
                   ) : (
@@ -176,7 +192,7 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
 
           <div className="pf-id gk-reveal">
             <p className="gk-chapter"><b>#{String(member.id).padStart(3, "0")}</b><span>DOSSIER D&apos;AVENTURIER</span></p>
-            <h1 id="pf-name" className="gk-display pf-name">{member.name}</h1>
+            <h1 id="pf-name" className="gk-display pf-name" style={{ viewTransitionName: "member-name" }}>{member.name}</h1>
             {extras.displayNameRomaji && <p className="pf-alias" lang="ja-Latn">{extras.displayNameRomaji}</p>}
 
             <div className="pf-rank">
@@ -271,8 +287,8 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
         {/* ── SON UNIVERS ─────────────────────────────────────────────── */}
         <section id="pf-univers" className="pf-section" aria-labelledby="pf-universe" data-gk-motion="">
           <SectionHead n={num("pf-univers")} id="pf-universe" romaji="Sekai" fr="Son univers" hand={`ce qui fait vibrer ${member.name.split(" ")[0]}`} />
-          <Favorites title="Suki na anime" fr="Anime préférés" works={anime} onOpen={setOpenWork} />
-          <Favorites title="Suki na manga" fr="Mangas préférés" works={manga} onOpen={setOpenWork} />
+          <Favorites title="Suki na anime" fr="Anime préférés" works={anime} onOpen={openWorkFrom} />
+          <Favorites title="Suki na manga" fr="Mangas préférés" works={manga} onOpen={openWorkFrom} />
         </section>
 
         {music.length > 0 && (
@@ -290,7 +306,7 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
         )}
       </main>
 
-      {openWork && <WorkSheet key={workKey(openWork)} work={openWork} chronique={chroniques[workKey(openWork)]} onClose={() => setOpenWork(null)} />}
+      {openWork && <WorkSheet key={workKey(openWork)} work={openWork} chronique={chroniques[workKey(openWork)]} onClose={closeWork} />}
       <ShareSheet member={member} open={shareOpen} onClose={() => setShareOpen(false)} />
       <Toast />
     </div>
@@ -310,7 +326,9 @@ function SectionHead({ n, id, romaji, fr, hand }: { n: string; id: string; romaj
   );
 }
 
-function Favorites({ title, fr, works, onOpen }: { title: string; fr: string; works: FavoriteWork[]; onOpen: (w: FavoriteWork) => void }) {
+type OpenWork = (w: FavoriteWork, el?: HTMLElement | null) => void;
+
+function Favorites({ title, fr, works, onOpen }: { title: string; fr: string; works: FavoriteWork[]; onOpen: OpenWork }) {
   const [all, setAll] = useState(false);
   const top = featuredWorks(works);
   const rest = works.filter((w) => !top.includes(w));
@@ -366,11 +384,11 @@ function WorkCover({ work }: { work: FavoriteWork }) {
   return <img ref={checkBroken} src={work.coverUrl} alt="" width={112} height={168} loading="lazy" decoding="async" onError={() => setFailed(true)} />;
 }
 
-function WorkCard({ work, onOpen, big = false }: { work: FavoriteWork; onOpen: (w: FavoriteWork) => void; big?: boolean }) {
+function WorkCard({ work, onOpen, big = false }: { work: FavoriteWork; onOpen: OpenWork; big?: boolean }) {
   const title = workTitle(work);
   const sub = workSubtitle(work);
   return (
-    <button type="button" className={`pf-work${big ? " is-big" : ""}`} onClick={() => onOpen(work)} aria-label={`${title}${sub ? `, ${sub}` : ""}. Ouvrir la mini-fiche.`}>
+    <button type="button" className={`pf-work${big ? " is-big" : ""}`} data-work-key={workKey(work)} onClick={(e) => onOpen(work, e.currentTarget)} aria-label={`${title}${sub ? `, ${sub}` : ""}. Ouvrir la mini-fiche.`}>
       <span className="pf-work-cover">
         <WorkCover work={work} />
       </span>
@@ -405,7 +423,7 @@ function WorkSheet({ work, chronique, onClose }: { work: FavoriteWork; chronique
         <div className="pf-ws-body">
           {work.coverUrl && !coverFailed ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={work.coverUrl} alt={`Couverture de ${workTitle(work)}`} width={220} height={330} onError={() => setCoverFailed(true)} />
+            <img src={work.coverUrl} alt={`Couverture de ${workTitle(work)}`} width={220} height={330} style={{ viewTransitionName: "work-cover" }} onError={() => setCoverFailed(true)} />
           ) : <span className="pf-ws-nocover" aria-hidden="true">{workTitle(work).slice(0, 1)}</span>}
           <div className="pf-ws-info">
             <h2 id="pf-ws-title">{workTitle(work)}</h2>
@@ -445,8 +463,15 @@ function WorkSheet({ work, chronique, onClose }: { work: FavoriteWork; chronique
 
 
 function NeighborLink({ n, dir }: { n: ProfileNeighbor; dir: "prev" | "next" }) {
+  const router = useRouter();
+  const href = `/membres/${n.id}`;
   return (
-    <Link href={`/membres/${n.id}`} className={`pf-neighbor is-${dir}`} rel={dir}>
+    <Link href={href} className={`pf-neighbor is-${dir}`} rel={dir} onClick={(e) => {
+      // Passage d'une fiche à l'autre : le dossier glisse dans la direction choisie.
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+      e.preventDefault();
+      viewTransition({ kind: dir === "next" ? "page-next" : "page-prev", update: async () => { router.push(href); await waitFor(`[data-member-page="${n.id}"]`, 700); } });
+    }}>
       {dir === "prev" && <ChevronLeft size={20} aria-hidden="true" />}
       {n.image && (
         <span className="pf-neighbor-img">

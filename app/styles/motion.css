@@ -3,7 +3,7 @@
    JavaScript enhances below-the-fold sections; it never gates visibility. */
 :root {
   --gk-motion-ease: cubic-bezier(.19, 1, .22, 1);
-  --gk-motion-time: 700ms;
+  --gk-motion-time: 480ms;
 }
 
 .gk-reading-progress { display: none; }
@@ -27,7 +27,7 @@
 @media (prefers-reduced-motion: no-preference) {
   [data-gk-motion].gk-motion-pending {
     opacity: 0;
-    transform: translate3d(0, 26px, 0);
+    transform: translate3d(0, 14px, 0);
   }
   [data-gk-motion].gk-motion-visible {
     opacity: 1;
@@ -305,4 +305,37 @@
   .bp-page .bp-coupon { grid-template-columns: 70px minmax(0,1fr); }
   .bp-page .bp-body { padding: 12px 10px; }
   .bp-page .bp-actions { flex-wrap: wrap; }
+}
+
+/* ═══ TRANSITIONS DE VUE (lib/view-transition.ts) ════════════════════════════
+   Continuité entre les états : le portrait touché devient la fiche, la couverture
+   devient la mini-fiche. Brèves (≤ 340 ms), interrompues par toute nouvelle action,
+   absentes si le visiteur demande moins d'animations. */
+::view-transition-group(*) { animation-duration: 300ms; animation-timing-function: cubic-bezier(.2, .9, .25, 1); }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: 180ms; }
+/* Morphoses principales : un peu plus longues pour être suivies du regard. */
+::view-transition-group(member-portrait), ::view-transition-group(member-dossier), ::view-transition-group(work-cover) { animation-duration: 340ms; }
+/* Les images gardent leurs proportions pendant la morphose (pas d'étirement). */
+::view-transition-old(member-portrait), ::view-transition-new(member-portrait),
+::view-transition-old(work-cover), ::view-transition-new(work-cover),
+::view-transition-old(member-dossier), ::view-transition-new(member-dossier) { height: 100%; width: 100%; object-fit: cover; overflow: hidden; }
+/* Ouverture d'une fiche ou d'une œuvre : la page reste en place, la fiche se pose dessus. */
+html[data-vt="member"]::view-transition-old(root), html[data-vt="work"]::view-transition-old(root) { animation: none; }
+/* Pendant une transition, les animations d'entrée propres aux fenêtres sont coupées
+   (sinon le mouvement serait joué deux fois). */
+html[data-vt] .qv-sheet, html[data-vt] .qv-back, html[data-vt] .sh-sheet, html[data-vt] .sh-back,
+html[data-vt] .bb-reader, html[data-vt] .bb-reader-back, html[data-vt] .pf-panel { animation: none !important; }
+/* Fiche suivante / précédente : léger glissement dans le sens choisi. */
+@keyframes gk-vt-out-left { to { opacity: 0; transform: translateX(-28px); } }
+@keyframes gk-vt-in-right { from { opacity: 0; transform: translateX(28px); } }
+@keyframes gk-vt-out-right { to { opacity: 0; transform: translateX(28px); } }
+@keyframes gk-vt-in-left { from { opacity: 0; transform: translateX(-28px); } }
+html[data-vt="page-next"]::view-transition-old(root) { animation: 200ms ease-in both gk-vt-out-left; }
+html[data-vt="page-next"]::view-transition-new(root) { animation: 260ms cubic-bezier(.2, .9, .25, 1) both gk-vt-in-right; }
+html[data-vt="page-prev"]::view-transition-old(root) { animation: 200ms ease-in both gk-vt-out-right; }
+html[data-vt="page-prev"]::view-transition-new(root) { animation: 260ms cubic-bezier(.2, .9, .25, 1) both gk-vt-in-left; }
+/* Filtres : simple fondu enchaîné, rapide. */
+html[data-vt="list"]::view-transition-old(root), html[data-vt="list"]::view-transition-new(root) { animation-duration: 160ms; }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }

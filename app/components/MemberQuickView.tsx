@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { viewTransition, waitFor } from "../../lib/view-transition";
 import { ArrowRight, Cake, Share2, X } from "lucide-react";
 import type { Member } from "../../data/members";
 import type { ViewMode } from "../types";
@@ -51,6 +53,10 @@ export default function MemberQuickView({ member, onClose, viewMode }: { member:
   const [shareOpen, setShareOpen] = useState(false);
   const [errors, setErrors] = useState<Record<string, boolean>>({});
   const ref = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  // La fiche complète est préchargée dès l'ouverture : le passage est instantané.
+  useEffect(() => { if (member) router.prefetch(`/membres/${member.id}`); }, [member, router]);
 
   useEffect(() => {
     if (!member) return;
@@ -104,9 +110,9 @@ export default function MemberQuickView({ member, onClose, viewMode }: { member:
 
         <div className="qv-body">
           {portraits.length > 0 && (
-            <div className={`pf-diptych qv-diptych${portraits.length === 1 ? " is-single" : ""}`}>
+            <div className={`pf-diptych qv-diptych${portraits.length === 1 ? " is-single" : ""}`} style={{ viewTransitionName: "member-dossier" }}>
               {portraits.map((p, i) => (
-                <figure key={p.key} className="pf-panel">
+                <figure key={p.key} className="pf-panel" style={i === 0 ? { viewTransitionName: "member-portrait" } : undefined}>
                   <Image src={p.src} alt={p.key === "real" ? `${member.name}, photo` : `${member.name}, version anime`} fill priority={i === 0}
                     sizes="(max-width: 699px) 50vw, 300px" style={{ objectFit: "cover", objectPosition: p.pos }}
                     onError={() => setErrors((e) => ({ ...e, [p.key]: true }))} />
@@ -117,7 +123,7 @@ export default function MemberQuickView({ member, onClose, viewMode }: { member:
           )}
 
           <div className="qv-id">
-            <h2 id="qv-name" className="gk-display pf-name qv-name">{member.name}</h2>
+            <h2 id="qv-name" className="gk-display pf-name qv-name" style={{ viewTransitionName: "member-name" }}>{member.name}</h2>
             {extras.displayNameRomaji && <p className="pf-alias" lang="ja-Latn">{extras.displayNameRomaji}</p>}
             <div className="pf-rank">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -163,7 +169,12 @@ export default function MemberQuickView({ member, onClose, viewMode }: { member:
         </div>
 
         <div className="qv-foot">
-          <Link className="gk-btn qv-full" href={full}>Voir la fiche complète <ArrowRight size={17} aria-hidden="true" /></Link>
+          <Link className="gk-btn qv-full" href={full} onClick={(e) => {
+            // Clic simple : portraits et nom glissent vers la fiche complète.
+            if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+            e.preventDefault();
+            viewTransition({ kind: "page", update: async () => { router.push(full); await waitFor(`[data-member-page="${member.id}"]`, 700); } });
+          }}>Voir la fiche complète <ArrowRight size={17} aria-hidden="true" /></Link>
         </div>
       </div>
       <ShareSheet member={member} open={shareOpen} onClose={() => setShareOpen(false)} />

@@ -24,7 +24,7 @@ export default function MotionDirector() {
         element.classList.add("gk-motion-visible");
         observer.unobserve(element);
       }
-    }, { rootMargin: "0px 0px -8% 0px", threshold: 0.04 });
+    }, { rootMargin: "0px 0px 4% 0px", threshold: 0 });
 
     const scan = () => {
       document.querySelectorAll<HTMLElement>("[data-gk-motion]").forEach((element) => {

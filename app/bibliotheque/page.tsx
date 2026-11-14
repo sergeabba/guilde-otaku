@@ -5,6 +5,8 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { ArrowRight, Calendar, ChevronLeft, ChevronRight, Eye, EyeOff, Heart, Play, Search, Share2, X } from "lucide-react";
 import GuildeHeader from "../components/GuildeHeader";
+import { flushSync } from "react-dom";
+import { viewTransition } from "../../lib/view-transition";
 import TrailerEmbed from "../components/works/TrailerEmbed";
 import OptimizedImage from "../components/OptimizedImage";
 import { supabase } from "../../lib/supabase";
@@ -217,6 +219,25 @@ export default function BibliothequePage() {
     window.history.replaceState({}, "", url);
   }, []);
 
+  // Couverture touchée → fiche ; fermeture → retour à la couverture si elle est à l'écran.
+  const openFrom = (item: Reading, list: Reading[], el: HTMLElement) => viewTransition({
+    kind: "work", from: [[el.querySelector(".bb-card-cover"), "work-cover"]],
+    update: () => flushSync(() => open(item, list)),
+  });
+  const closeVT = () => {
+    const key = reading?.item.key;
+    viewTransition({
+      kind: "work", update: () => flushSync(() => close()),
+      to: () => {
+        const c = key ? document.querySelector<HTMLElement>(`[data-reading-key="${CSS.escape(key)}"] .bb-card-cover`) : null;
+        const r = c?.getBoundingClientRect();
+        return r && r.bottom > 0 && r.top < window.innerHeight ? [[c, "work-cover"]] : [];
+      },
+    });
+  };
+  // Filtres : fondu enchaîné bref au lieu d'un saut.
+  const vtSet = (fn: () => void) => viewTransition({ kind: "list", update: () => flushSync(fn) });
+
   const close = useCallback(() => {
     setReading(null);
     const url = new URL(window.location.href);
@@ -375,14 +396,14 @@ export default function BibliothequePage() {
                 </button>
               )}
             </div>
-            <select className="bb-select" value={sortBy} onChange={(e) => setSortBy(e.target.value as SortBy)} aria-label="Trier les fiches">
+            <select className="bb-select" value={sortBy} onChange={(e) => { const v = e.target.value as SortBy; vtSet(() => setSortBy(v)); }} aria-label="Trier les fiches">
               <option value="recent">Plus récents</option>
               <option value="oldest">Plus anciens</option>
               <option value="note">Mieux notés</option>
               <option value="alpha">De A à Z</option>
             </select>
             <span />
-            <button type="button" className="gk-chip" aria-pressed={showFavoritesOnly} onClick={() => setShowFavoritesOnly((v) => !v)}>
+            <button type="button" className="gk-chip" aria-pressed={showFavoritesOnly} onClick={() => vtSet(() => setShowFavoritesOnly((v) => !v))}>
               <Heart size={15} aria-hidden="true" fill={showFavoritesOnly ? "currentColor" : "none"} />
               <span>Mes favoris <small>{favoritesCount}</small></span>
             </button>
@@ -391,20 +412,20 @@ export default function BibliothequePage() {
           <div className="bb-filters">
             <div className="gk-chips" role="group" aria-label="Filtrer par catégorie">
               {CATEGORIES.map((cat) => (
-                <button key={cat} type="button" className="gk-chip" aria-pressed={activeCategory === cat} onClick={() => setActiveCategory(cat)}>
+                <button key={cat} type="button" className="gk-chip" aria-pressed={activeCategory === cat} onClick={() => vtSet(() => setActiveCategory(cat))}>
                   <span>{cat}</span>
                 </button>
               ))}
             </div>
             <div className="gk-chips" role="group" aria-label="Filtrer par verdict">
-              <button type="button" className="gk-chip" aria-pressed={activeTier === "Tous"} onClick={() => setActiveTier("Tous")}><span>Tous les verdicts</span></button>
+              <button type="button" className="gk-chip" aria-pressed={activeTier === "Tous"} onClick={() => vtSet(() => setActiveTier("Tous"))}><span>Tous les verdicts</span></button>
               {TIERS.map((t) => (
                 <button
                   key={t}
                   type="button"
                   className="gk-chip"
                   aria-pressed={activeTier === t}
-                  onClick={() => setActiveTier(activeTier === t ? "Tous" : t)}
+                  onClick={() => vtSet(() => setActiveTier(activeTier === t ? "Tous" : t))}
                   style={{ "--gk-accent": tierConfig[t].color } as React.CSSProperties}
                 >
                   <span>{tierConfig[t].label}</span>
@@ -460,7 +481,7 @@ export default function BibliothequePage() {
                       const fav = isFavorite(e.id);
                       const note = numericNote(e.note);
                       return (
-                        <article key={e.id} className="bb-card" style={{ "--i": i, "--cat": categoryColor[e.category] ?? "#f3eee2" } as React.CSSProperties}>
+                        <article key={e.id} className="bb-card" data-reading-key={ficheToReading(e).key} style={{ "--i": i, "--cat": categoryColor[e.category] ?? "#f3eee2" } as React.CSSProperties}>
                           <button
                             type="button"
                             className="bb-fav no-min"
@@ -470,7 +491,7 @@ export default function BibliothequePage() {
                           >
                             <Heart size={17} fill={fav ? "currentColor" : "none"} aria-hidden="true" />
                           </button>
-                          <button type="button" className="bb-card-open" onClick={() => open(ficheToReading(e), filteredReadings)} aria-label={`Ouvrir la fiche de ${e.title}`}>
+                          <button type="button" className="bb-card-open" onClick={(ev) => openFrom(ficheToReading(e), filteredReadings, ev.currentTarget)} aria-label={`Ouvrir la fiche de ${e.title}`}>
                             <div className="bb-card-cover">
                               {e.cover_image ? <OptimizedImage src={e.cover_image} alt="" /> : <span className="bb-nocover" aria-hidden="true">{e.title.slice(0, 1)}</span>}
                               <span className="bb-cat">{e.category}</span>
@@ -504,7 +525,7 @@ export default function BibliothequePage() {
           isFavorite={reading.item.favKey ? isFavorite(reading.item.favKey) : false}
           onToggleFavorite={reading.item.favKey ? () => toggle(reading.item.favKey!) : undefined}
           onOpen={(r) => open(r, reading.list.some((x) => x.key === r.key) ? reading.list : [r])}
-          onClose={close}
+          onClose={closeVT}
           onShare={() => share({
             title: `${reading.item.title} | Bibliothèque de la Guilde`,
             text: reading.item.kind === "chronique" ? `La Chronique du Bash : ${reading.item.title}` : `Le verdict de la Guilde sur ${reading.item.title}`,
@@ -631,7 +652,7 @@ function Reader({ item, list, all, antiSpoiler, isFavorite, onToggleFavorite, on
         <article className="bb-article">
           {item.cover && <div className="bb-article-backdrop" aria-hidden="true" style={{ backgroundImage: `url(${JSON.stringify(item.cover)})` }} />}
           <div className="bb-article-top">
-            <div className="bb-article-cover">{item.cover && <OptimizedImage src={item.cover} alt={`Couverture de ${item.title}`} priority />}</div>
+            <div className="bb-article-cover" style={{ viewTransitionName: "work-cover" }}>{item.cover && <OptimizedImage src={item.cover} alt={`Couverture de ${item.title}`} priority />}</div>
             <div style={{ minWidth: 0 }}>
               <div className="bb-kicker" style={{ "--tag": item.color } as React.CSSProperties}>
                 {item.tag && <span className="bb-colortag">{item.tag}</span>}
