@@ -11,14 +11,23 @@ import type { SupabaseMemberRow } from "../types";
 import PortraitPanel from "./PortraitPanel";
 import UniverseEditor from "./UniverseEditor";
 import AwardsEditor, { awardsIssue } from "./AwardsEditor";
+import { useConfirm } from "../admin-ui/ui";
 
-type Tab = "identite" | "portraits" | "univers";
+type Tab = "identite" | "portraits" | "combat" | "univers";
 
-interface Identity { name: string; rank: Rank; badge: string; birthday: string; country: string; color: string; bio: string }
+interface Identity {
+  name: string; rank: Rank; badge: string; birthday: string; country: string; color: string; bio: string;
+  force: number; vitesse: number; technique: number; specialName: string; specialEffect: string;
+}
 
+const NO_SPECIAL = ["—", "-", "Inconnu"];
+const stat = (n: unknown) => (typeof n === "number" && Number.isFinite(n) ? Math.min(100, Math.max(0, Math.round(n))) : 50);
 const toIdentity = (m: SupabaseMemberRow | null): Identity => ({
   name: m?.name ?? "", rank: (m?.rank as Rank) ?? "New G dorée", badge: m?.badge ?? "", birthday: m?.birthday ?? "",
   country: m?.country ?? "", color: m?.color ?? "#E91E8C", bio: m?.bio ?? "",
+  force: stat(m?.stats?.force), vitesse: stat(m?.stats?.vitesse), technique: stat(m?.stats?.technique),
+  specialName: m?.special?.name && !NO_SPECIAL.includes(m.special.name) ? m.special.name : "",
+  specialEffect: m?.special?.effect && !NO_SPECIAL.includes(m.special.effect) ? m.special.effect : "",
 });
 
 function identityErrors(v: Identity): Partial<Record<keyof Identity, string>> {
@@ -28,7 +37,10 @@ function identityErrors(v: Identity): Partial<Record<keyof Identity, string>> {
   if (!/^#[0-9a-fA-F]{6}$/.test(v.color)) e.color = "Couleur au format #RRGGBB.";
   if (v.bio.length > 1200) e.bio = "1200 caractères maximum.";
   if (v.badge.length > 80) e.badge = "80 caractères maximum.";
-  for (const k of ["name", "badge", "bio", "birthday"] as const) if (!e[k] && hasJapanese(v[k])) e[k] = "Alphabet latin uniquement (règle rōmaji du site).";
+  if (v.specialName.length > 60) e.specialName = "60 caractères maximum.";
+  if (v.specialEffect.length > 240) e.specialEffect = "240 caractères maximum.";
+  if (v.specialEffect.trim() && !v.specialName.trim()) e.specialName = "Donne un nom à l'attaque, ou efface son effet.";
+  for (const k of ["name", "badge", "bio", "birthday", "specialName", "specialEffect"] as const) if (!e[k] && hasJapanese(v[k])) e[k] = "Alphabet latin uniquement (règle rōmaji du site).";
   return e;
 }
 
@@ -55,9 +67,9 @@ export default function MemberEditor({ member, extrasSupported, onClose, onSaved
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState(false);
   const [touched, setTouched] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
+  const [confirm, confirmNode] = useConfirm();
 
   // Rubriques présentes en base mais dans un format que l'éditeur ne sait pas lire.
   const unreadable = (() => {
@@ -79,13 +91,25 @@ export default function MemberEditor({ member, extrasSupported, onClose, onSaved
     return () => { document.body.style.overflow = prev; };
   }, []);
 
-  const requestClose = () => {
-    if (dirty && !window.confirm("Des modifications ne sont pas enregistrées. Fermer quand même ?")) return;
+  const requestClose = async () => {
+    if (dirty && !(await confirm({
+      title: "Fermer sans enregistrer ?",
+      body: <>Les modifications de <strong>{form.name || "ce membre"}</strong> ne sont pas enregistrées et seront perdues.</>,
+      confirmLabel: "Fermer sans enregistrer", cancelLabel: "Continuer l'édition", danger: true,
+    }))) return;
     onClose();
   };
 
+  // Quitter la page (onglet, lien) avec des modifications : le navigateur prévient.
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") requestClose(); };
+    if (!dirty) return;
+    const onBefore = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", onBefore);
+    return () => window.removeEventListener("beforeunload", onBefore);
+  }, [dirty]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape" && !document.querySelector(".am-dialog")) void requestClose(); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   });
@@ -95,13 +119,18 @@ export default function MemberEditor({ member, extrasSupported, onClose, onSaved
 
   async function save() {
     setTouched(true); setError(null); setNotice(null);
-    if (Object.keys(errors).length) { setTab("identite"); setError("Corrige les champs signalés avant d'enregistrer."); return; }
+    if (Object.keys(errors).length) {
+      setTab(errors.specialName || errors.specialEffect ? "combat" : "identite");
+      setError("Corrige les champs signalés avant d'enregistrer."); return;
+    }
     const awardErr = extrasSupported ? awardsIssue(extras.awards ?? []) : null;
     if (awardErr) { setTab("identite"); setError(awardErr); return; }
     setSaving(true);
     const values: Record<string, unknown> = {
       name: form.name.trim(), rank: form.rank, badge: form.badge.trim() || null, birthday: form.birthday.trim(),
       country: form.country || null, color: form.color, bio: form.bio.trim(),
+      stats: { force: form.force, vitesse: form.vitesse, technique: form.technique },
+      special: { name: form.specialName.trim() || "—", effect: form.specialEffect.trim() || "—" },
     };
     const awards = (extras.awards ?? []).map((a) => ({ ...a, title: a.title.trim(), description: a.description?.trim() || undefined }));
     const normalized: MemberExtras = { ...extras, awards: awards.length ? awards : undefined };
@@ -129,7 +158,7 @@ export default function MemberEditor({ member, extrasSupported, onClose, onSaved
       setNotice("Modifications enregistrées. Elles sont visibles sur le site au prochain chargement.");
       onSaved(next, `${next.name} mis à jour`);
     } else {
-      const created = { ...values, photo: "", animechar: "", stats: { force: 50, vitesse: 50, technique: 50 }, special: { name: "—", effect: "—" } };
+      const created = { ...values, photo: "", animechar: "" };
       const { data, error: err } = await adminDb.insert("fighters", [created]);
       setSaving(false);
       if (err || !data?.[0]) { setError(`Création refusée : ${err?.message ?? "aucun identifiant renvoyé"}`); return; }
@@ -165,8 +194,14 @@ export default function MemberEditor({ member, extrasSupported, onClose, onSaved
 
   async function remove() {
     if (!row) return;
+    const ok = await confirm({
+      title: `Supprimer ${row.name} ?`,
+      body: <>La fiche de <strong>{row.name}</strong> (grade, présentation, palmarès, favoris, musique, fiche de combat) sera <strong>effacée définitivement</strong>. Les fichiers photo restent dans le stockage. Pour le retirer du site sans rien effacer, utilise plutôt « Masquer du site ».</>,
+      confirmLabel: `Supprimer ${row.name}`, danger: true,
+    });
+    if (!ok) return;
     const { error: err } = await adminDb.remove("fighters", row.id);
-    if (err) { setError(`Suppression refusée : ${err.message}`); setConfirmDelete(false); return; }
+    if (err) { setError(`Suppression refusée : ${err.message}`); return; }
     onDeleted(row.id, row.name);
   }
 
@@ -175,16 +210,16 @@ export default function MemberEditor({ member, extrasSupported, onClose, onSaved
   const fieldErr = (k: keyof Identity) => (touched || form[k] !== toIdentity(row)[k]) && errors[k];
 
   return createPortal(
-    <div className="am am-back" onClick={(e) => { if (e.target === e.currentTarget) requestClose(); }}>
+    <div className="am am-back" onClick={(e) => { if (e.target === e.currentTarget) void requestClose(); }}>
       <div ref={sheetRef} className="am-sheet" role="dialog" aria-modal="true" aria-labelledby="am-title">
         <div className="am-head">
           <h2 id="am-title"><small>{isNew ? "Nouveau membre" : `Membre n° ${row!.id}${row!.hidden ? " · masqué" : ""}`}</small>{form.name || "Sans nom"}</h2>
           {row && <a className="am-icon" href={`/membres/${row.id}`} target="_blank" rel="noopener noreferrer" aria-label="Voir la fiche publique (nouvel onglet)"><ExternalLink size={18} aria-hidden="true" /></a>}
-          <button type="button" className="am-icon" onClick={requestClose} aria-label="Fermer l'éditeur"><X size={20} aria-hidden="true" /></button>
+          <button type="button" className="am-icon" onClick={() => void requestClose()} aria-label="Fermer l'éditeur"><X size={20} aria-hidden="true" /></button>
         </div>
 
         <div className="am-tabs" role="tablist">
-          {([["identite", "Identité"], ["portraits", "Portraits"], ["univers", "Univers"]] as const).map(([k, label]) => (
+          {([["identite", "Identité"], ["portraits", "Portraits"], ["combat", "Combat"], ["univers", "Univers"]] as const).map(([k, label]) => (
             <button key={k} type="button" role="tab" className="am-tab" aria-selected={tab === k} disabled={isNew && k !== "identite"}
               title={isNew && k !== "identite" ? "Enregistre d'abord le membre" : undefined} onClick={() => { setTab(k); setError(null); setNotice(null); }}>{label}</button>
           ))}
@@ -258,14 +293,7 @@ export default function MemberEditor({ member, extrasSupported, onClose, onSaved
                     <button type="button" className="am-btn" onClick={toggleHidden}>
                       {row.hidden ? <><Eye size={16} aria-hidden="true" /> Réafficher sur le site</> : <><EyeOff size={16} aria-hidden="true" /> Masquer du site</>}
                     </button>
-                    {!confirmDelete ? (
-                      <button type="button" className="am-btn am-btn--danger" onClick={() => setConfirmDelete(true)}><Trash2 size={16} aria-hidden="true" /> Supprimer</button>
-                    ) : (
-                      <>
-                        <button type="button" className="am-btn am-btn--danger" onClick={remove}>Confirmer la suppression définitive</button>
-                        <button type="button" className="am-btn" onClick={() => setConfirmDelete(false)}>Annuler</button>
-                      </>
-                    )}
+                    <button type="button" className="am-btn am-btn--danger" onClick={remove}><Trash2 size={16} aria-hidden="true" /> Supprimer…</button>
                   </div>
                   <p>Masquer retire le membre du site sans rien effacer. La suppression est définitive (les photos restent dans le stockage).</p>
                 </div>
@@ -287,6 +315,32 @@ export default function MemberEditor({ member, extrasSupported, onClose, onSaved
             </>
           )}
 
+          {tab === "combat" && (
+            <>
+              <div className="am-section">
+                <h3>Statistiques</h3>
+                <p>De 0 à 100. Elles s&apos;affichent sur la fiche et nuancent le jeu Fighters.</p>
+                {(["force", "vitesse", "technique"] as const).map((k) => (
+                  <label key={k} className="am-field am-stat">
+                    <span>{k === "force" ? "Force" : k === "vitesse" ? "Vitesse" : "Technique"} <output>{form[k]}</output></span>
+                    <input type="range" min={0} max={100} step={1} value={form[k]} onChange={(e) => set(k, Number(e.target.value))} />
+                  </label>
+                ))}
+              </div>
+              <div className="am-section">
+                <h3>Attaque spéciale</h3>
+                <label className="am-field"><span>Nom</span>
+                  <input className="am-input" value={form.specialName} maxLength={60} onChange={(e) => set("specialName", e.target.value)} aria-invalid={!!fieldErr("specialName")} placeholder="Ex. Quiz Omniscient" />
+                  {fieldErr("specialName") && <small style={{ color: "var(--am-red)" }}>{fieldErr("specialName")}</small>}
+                </label>
+                <label className="am-field"><span>Effet</span>
+                  <textarea className="am-input" value={form.specialEffect} maxLength={240} rows={3} onChange={(e) => set("specialEffect", e.target.value)} aria-invalid={!!fieldErr("specialEffect")} placeholder="Ce que fait l'attaque, en une phrase." />
+                  <small>{fieldErr("specialEffect") || `${form.specialEffect.length} / 240. Laisse vide si le membre n'en a pas : la fiche n'affichera rien.`}</small>
+                </label>
+              </div>
+            </>
+          )}
+
           {tab === "univers" && row && (
             extrasSupported ? (
               <UniverseEditor anime={extras.favoriteAnime ?? []} manga={extras.favoriteManga ?? []} music={extras.music ?? []} alias={extras.displayNameRomaji ?? ""}
@@ -304,12 +358,13 @@ export default function MemberEditor({ member, extrasSupported, onClose, onSaved
         </div>
 
         <div className="am-foot">
-          <button type="button" className="am-btn" onClick={requestClose}>Fermer</button>
+          <button type="button" className="am-btn" onClick={() => void requestClose()}>Fermer</button>
           <button type="button" className="am-btn am-btn--gold" onClick={save} disabled={saving || (!dirty && !isNew)}>
             {saving ? "Enregistrement…" : isNew ? "Créer le membre" : dirty ? "Enregistrer" : "Enregistré"}
           </button>
         </div>
       </div>
+      {confirmNode}
     </div>,
     document.body,
   );

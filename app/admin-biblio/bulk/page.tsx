@@ -1,295 +1,161 @@
 "use client";
 
+// Import en masse dans la Bibliothèque : une liste de titres, recherche française
+// (TMDB pour les anime, MangaDex pour les manga), choix de la bonne œuvre pour chaque
+// ligne (type, année et source visibles), puis ajout. Le synopsis enregistré est
+// toujours français (ou vide) : jamais le résumé anglais de la source.
 import { useState } from "react";
+import { Check, Search } from "lucide-react";
 import { findDossierBashEntry } from "../../../lib/dossier-bash";
-import { Search, Check, X, Loader2, AlertCircle, Plus, Trash2 } from "lucide-react";
-import Link from "next/link";
 import { getAdminHeaders } from "../../../lib/admin-fetch";
 import { adminDb } from "../../../lib/admin-db-client";
+import { FORMAT_LABEL, SOURCE_LABEL, type WorkCandidate, type WorkKind } from "../../../lib/works/types";
+import AdminShell from "../../admin-ui/AdminShell";
+import { Chip, useToast } from "../../admin-ui/ui";
 
-type Tier = "Chef-d'œuvre" | "Pépite" | "Bof" | "Surcoté" | "A définir";
+const TIERS = ["Chef-d'œuvre", "Pépite", "Bof", "Surcoté", "A définir"] as const;
+interface Line { query: string; options: WorkCandidate[]; choice: number; detail?: WorkCandidate; selected: boolean; tier: string; error?: string }
 
-interface BulkResult {
-  query: string;
-  found: boolean;
-  media: any | null;
-  // État local
-  selected: boolean;
-  tier: Tier;
-  note: number;
-  overrideSynopsis: string;
+async function post<T>(url: string, body: unknown): Promise<T> {
+  const res = await fetch(url, { method: "POST", headers: getAdminHeaders(), body: JSON.stringify(body) });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(data?.error || `erreur ${res.status}`);
+  return data as T;
 }
-
-const TIER_COLORS: Record<Tier, string> = {
-  "Chef-d'œuvre": "#FFD700",
-  "Pépite": "#34d399",
-  "Bof": "#94a3b8",
-  "Surcoté": "#f87171",
-  "A définir": "#a1a1aa",
-};
+const detailOf = (c: WorkCandidate) => post<{ work: WorkCandidate }>("/api/works/detail", { source: c.source, id: c.sourceId }).then((d) => d.work);
+const label = (c: WorkCandidate) => `${c.titleFr && !c.titleFrUnverified ? c.titleFr : c.title} · ${FORMAT_LABEL[c.format]}${c.year ? ` · ${c.year}` : ""} · ${SOURCE_LABEL[c.source]}`;
 
 export default function BulkImportPage() {
-  const [rawInput, setRawInput] = useState("");
-  const [results, setResults] = useState<BulkResult[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [savedCount, setSavedCount] = useState(0);
+  const [raw, setRaw] = useState("");
+  const [kind, setKind] = useState<WorkKind>("ANIME");
+  const [lines, setLines] = useState<Line[]>([]);
+  const [progress, setProgress] = useState<string | null>(null);
+  const [notify, toasts] = useToast();
 
-  const handleSearch = async () => {
-    const titles = rawInput
-      .split("\n")
-      .map(t => t.trim())
-      .filter(Boolean);
-    
+  const update = (i: number, patch: Partial<Line>) => setLines((p) => p.map((l, j) => (j === i ? { ...l, ...patch } : l)));
+
+  async function search() {
+    const titles = [...new Set(raw.split("\n").map((t) => t.trim()).filter(Boolean))].slice(0, 30);
     if (!titles.length) return;
-    setLoading(true);
-    setResults([]);
-
-    const res = await fetch("/api/anilist-bulk", {
-      method: "POST",
-      headers: getAdminHeaders(),
-      body: JSON.stringify({ titles }),
-    });
-    const data = await res.json();
-
-    setResults(data.results.map((r: any) => ({
-      ...r,
-      selected: r.found,
-      tier: r.media?.autoTier ?? "A définir",
-      note: r.media?.score ?? 0,
-      overrideSynopsis: "",
-    })));
-    setLoading(false);
-  };
-
-  const toggle = (i: number) => setResults(prev => prev.map((r, idx) => idx === i ? { ...r, selected: !r.selected } : r));
-  const setTier = (i: number, tier: Tier) => setResults(prev => prev.map((r, idx) => idx === i ? { ...r, tier } : r));
-  const setNote = (i: number, note: number) => setResults(prev => prev.map((r, idx) => idx === i ? { ...r, note } : r));
-
-  const handleSaveSelected = async () => {
-    const toSave = results.filter(r => r.selected && r.found && r.media);
-    if (!toSave.length) return;
-    setSaving(true);
-    let count = 0;
-
-    for (const item of toSave) {
+    const out: Line[] = [];
+    for (const [i, q] of titles.entries()) {
+      setProgress(`Recherche ${i + 1} sur ${titles.length} : ${q}`);
       try {
-        const resolveResponse = await fetch("/api/resolve-cover", {
-          method: "POST",
-          headers: getAdminHeaders(),
-          body: JSON.stringify({
-            title: item.media.title,
-            anilistId: item.media.id,
-            coverUrl: item.media.cover,
-            bannerUrl: item.media.banner ?? null,
-          }),
-        });
+        const { results } = await post<{ results: WorkCandidate[] }>("/api/works/search", { q, kind });
+        const options = results.slice(0, 6);
+        out.push({ query: q, options, choice: 0, detail: options[0] ? await detailOf(options[0]).catch(() => options[0]) : undefined, selected: options.length > 0, tier: "A définir" });
+      } catch (e) {
+        out.push({ query: q, options: [], choice: 0, selected: false, tier: "A définir", error: e instanceof Error ? e.message : "erreur réseau" });
+      }
+      setLines([...out]);
+    }
+    setProgress(null);
+  }
 
-        const resolved = await resolveResponse.json();
-        if (!resolveResponse.ok) {
-          throw new Error(resolved.error || "Impossible de préparer la cover");
-        }
+  async function choose(i: number, choice: number) {
+    const c = lines[i].options[choice];
+    update(i, { choice, detail: c });
+    try { update(i, { detail: await detailOf(c) }); } catch { /* le résultat de recherche suffit */ }
+  }
 
-        const dossierMeta = findDossierBashEntry(item.media.title);
-
-        const { error } = await adminDb.insert("bibliotheque", {
-          title: item.media.title,
-          type: item.media.type,
-          cover_image: resolved.coverUrl,
-          banner_image: resolved.bannerUrl,
-          score: item.note,
-          tier: item.tier,
-          status: item.media.status,
-          synopsis: item.overrideSynopsis.trim() || item.media.synopsis,
-          year: item.media.year,
-          episodes: item.media.episodes,
-          genres: item.media.genres,
-          studio: item.media.studio,
-          trailer_url: item.media.trailerUrl,
-          dossier_bash: !!dossierMeta,
-          dossier_bash_tag: dossierMeta?.tag ?? null,
-          dossier_bash_date: dossierMeta?.date ?? null,
-          dossier_bash_color: dossierMeta?.color ?? null,
-        });
-
-        if (!error) count++;
-      } catch {
-        // on passe au suivant
+  async function save() {
+    const todo = lines.map((l, i) => [l, i] as const).filter(([l]) => l.selected && l.detail);
+    const failed: string[] = [];
+    let ok = 0;
+    for (const [n, [l]] of todo.entries()) {
+      const c = l.detail!;
+      const title = c.titleFr && !c.titleFrUnverified ? c.titleFr : c.title;
+      setProgress(`Ajout ${n + 1} sur ${todo.length} : ${title}`);
+      try {
+        const cover = c.coverUrl ? await post<{ coverUrl?: string | null }>("/api/resolve-cover", { title, coverUrl: c.coverUrl }) : null;
+        const meta = findDossierBashEntry(title);
+        const { error } = await adminDb.insert("bibliotheque", [{
+          title, type: kind === "MANGA" ? "Manga" : c.format === "FILM" ? "Film/Série" : "Anime", tier: l.tier,
+          cover_image: cover?.coverUrl ?? c.coverUrl ?? null, status: c.status ?? null, year: c.year ?? null, episodes: c.episodes ?? null,
+          genres: (c.genres ?? []).slice(0, 8), synopsis: c.synopsisFr ?? "",
+          trailer_url: c.trailer ? `https://www.youtube.com/watch?v=${c.trailer.youtubeId}` : null,
+          dossier_bash: !!meta, dossier_bash_tag: meta?.tag ?? null, dossier_bash_date: meta?.date ?? null, dossier_bash_color: meta?.color ?? null,
+        }]);
+        if (error) throw new Error(error.message);
+        ok++;
+        setLines((p) => p.filter((x) => x !== l));
+      } catch (e) {
+        failed.push(`${title} (${e instanceof Error ? e.message : "erreur"})`);
       }
     }
+    setProgress(null);
+    if (ok) notify(`${ok} œuvre${ok > 1 ? "s" : ""} ajoutée${ok > 1 ? "s" : ""} à la Bibliothèque`);
+    if (failed.length) notify(`Non ajoutées : ${failed.join(", ")}`, "error");
+  }
 
-    setSavedCount(count);
-    setSaving(false);
-    // Retire les sauvegardés de la liste
-    setResults(prev => prev.filter(r => !r.selected || !r.found));
-  };
-
-  const selectedCount = results.filter(r => r.selected && r.found).length;
+  const count = lines.filter((l) => l.selected && l.detail).length;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#050508", color: "#fff", fontFamily: "'Barlow Condensed', sans-serif", padding: "60px 40px" }}>
-      <div style={{ maxWidth: "900px", margin: "0 auto" }}>
-
-        {/* Header */}
-        <div style={{ marginBottom: "40px" }}>
-          <Link href="/admin-biblio" style={{ color: "rgba(255,255,255,0.4)", textDecoration: "none", fontSize: "13px", letterSpacing: "0.1em" }}>← Admin Bibliothèque</Link>
-          <h1 style={{ fontSize: "clamp(40px,8vw,72px)", fontWeight: 900, fontStyle: "italic", textTransform: "uppercase", color: "#fff", lineHeight: 0.9, marginTop: "16px" }}>
-            BULK <span style={{ color: "#c9a84c" }}>IMPORT</span>
-          </h1>
-          <p style={{ color: "rgba(255,255,255,0.4)", marginTop: "12px", fontSize: "15px", lineHeight: 1.5 }}>
-            Colle une liste de titres (un par ligne). AniList va chercher tout ça d'un coup, le tier est auto-calculé selon le score.
-          </p>
+    <AdminShell section="bibliotheque" title="Import en masse" intro="Colle une liste de titres, un par ligne (30 maximum). Vérifie l'œuvre trouvée pour chaque ligne avant d'ajouter.">
+      <section className="am-panel" style={{ display: "grid", gap: 12 }}>
+        <div className="am-chips" role="group" aria-label="Type d'œuvre">
+          <Chip active={kind === "ANIME"} onClick={() => setKind("ANIME")}>Anime et films (TMDB)</Chip>
+          <Chip active={kind === "MANGA"} onClick={() => setKind("MANGA")}>Manga (MangaDex)</Chip>
         </div>
-
-        {/* Succès */}
-        {savedCount > 0 && (
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "16px 20px", background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.3)", borderRadius: "12px", marginBottom: "24px" }}>
-            <Check size={18} color="#34d399" />
-            <p style={{ color: "#34d399", fontWeight: 900, fontSize: "16px" }}>{savedCount} œuvre{savedCount > 1 ? "s" : ""} ajoutée{savedCount > 1 ? "s" : ""} avec succès !</p>
-            <button onClick={() => setSavedCount(0)} style={{ marginLeft: "auto", background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer" }}><X size={14} /></button>
-          </div>
-        )}
-
-        {/* Zone de saisie */}
-        <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "20px", padding: "28px", marginBottom: "28px" }}>
-          <label style={{ display: "block", fontSize: "11px", fontWeight: 800, color: "rgba(255,255,255,0.35)", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: "12px" }}>
-            LISTE DES TITRES (1 PAR LIGNE)
-          </label>
-          <textarea
-            value={rawInput}
-            onChange={e => setRawInput(e.target.value)}
-            rows={8}
-            placeholder={"Frieren\nOne Piece\nDemon Slayer\nVinland Saga\nChainsaw Man"}
-            style={{ width: "100%", padding: "14px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", color: "#fff", fontFamily: "'Barlow Condensed', sans-serif", fontSize: "16px", resize: "vertical", lineHeight: 1.7, outline: "none", boxSizing: "border-box" }}
-          />
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "14px" }}>
-            <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.3)" }}>
-              {rawInput.split("\n").filter(t => t.trim()).length} titre{rawInput.split("\n").filter(t => t.trim()).length > 1 ? "s" : ""} détecté{rawInput.split("\n").filter(t => t.trim()).length > 1 ? "s" : ""}
-            </span>
-            <button
-              onClick={handleSearch}
-              disabled={loading || !rawInput.trim()}
-              style={{ display: "flex", alignItems: "center", gap: "8px", padding: "12px 24px", background: loading ? "rgba(201,168,76,0.4)" : "#c9a84c", border: "none", borderRadius: "10px", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "15px", color: "#000", textTransform: "uppercase", letterSpacing: "0.08em" }}
-            >
-              {loading ? <><Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> Recherche en cours...</> : <><Search size={16} /> Rechercher tout</>}
-            </button>
-          </div>
+        <label className="am-field"><span>Titres (un par ligne)</span>
+          <textarea className="am-input" rows={6} value={raw} onChange={(e) => setRaw(e.target.value)} placeholder={"Frieren\nVinland Saga\nMob Psycho 100"} />
+        </label>
+        <div className="am-row">
+          <button type="button" className="am-btn am-btn--gold" onClick={search} disabled={!!progress || !raw.trim()}><Search size={16} aria-hidden="true" /> Rechercher</button>
+          {progress && <p className="am-status is-saving" role="status">{progress}</p>}
         </div>
+      </section>
 
-        {/* Résultats */}
-        {results.length > 0 && (
-          <>
-            {/* Barre d'action sticky */}
-            <div style={{ position: "sticky", top: "16px", zIndex: 20, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px", background: "rgba(5,5,8,0.9)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", marginBottom: "20px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <span style={{ fontSize: "16px", fontWeight: 900, color: "#c9a84c" }}>{selectedCount}</span>
-                <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.5)" }}>sélectionné{selectedCount > 1 ? "s" : ""} sur {results.filter(r => r.found).length} trouvé{results.filter(r => r.found).length > 1 ? "s" : ""}</span>
-              </div>
-              <button
-                onClick={handleSaveSelected}
-                disabled={saving || selectedCount === 0}
-                style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 22px", background: selectedCount === 0 ? "rgba(74,222,128,0.3)" : "#4ade80", border: "none", borderRadius: "10px", cursor: selectedCount === 0 ? "not-allowed" : "pointer", fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "14px", color: "#000", textTransform: "uppercase" }}
-              >
-                {saving ? <><Loader2 size={15} style={{ animation: "spin 1s linear infinite" }} /> Sauvegarde...</> : <><Check size={15} /> Sauvegarder la sélection</>}
-              </button>
-            </div>
-
-            {/* Liste des résultats */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              {results.map((r, i) => (
-                <div key={i} style={{
-                  display: "flex", gap: "16px",
-                  padding: "16px", borderRadius: "14px",
-                  background: r.selected && r.found ? "rgba(201,168,76,0.05)" : "rgba(255,255,255,0.02)",
-                  border: `1px solid ${r.selected && r.found ? "rgba(201,168,76,0.25)" : r.found ? "rgba(255,255,255,0.07)" : "rgba(248,113,113,0.2)"}`,
-                  opacity: !r.found ? 0.6 : 1,
-                  alignItems: "flex-start",
-                }}>
-                  {/* Checkbox */}
-                  <button
-                    onClick={() => r.found && toggle(i)}
-                    style={{
-                      flexShrink: 0, width: "28px", height: "28px",
-                      borderRadius: "6px", border: `2px solid ${r.selected && r.found ? "#c9a84c" : "rgba(255,255,255,0.2)"}`,
-                      background: r.selected && r.found ? "#c9a84c" : "transparent",
-                      cursor: r.found ? "pointer" : "not-allowed",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      marginTop: "2px", flexDirection: "row",
-                    }}
-                  >
-                    {r.selected && r.found && <Check size={14} color="#000" />}
-                  </button>
-
-                  {/* Cover */}
-                  {r.found && r.media?.cover && (
-                    <img src={r.media.cover} alt="" style={{ width: "54px", height: "76px", borderRadius: "6px", objectFit: "cover", flexShrink: 0 }} />
-                  )}
-
-                  {/* Infos */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    {!r.found ? (
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <AlertCircle size={14} color="#f87171" />
-                        <span style={{ fontSize: "14px", color: "#f87171" }}>"{r.query}" — introuvable sur AniList</span>
-                      </div>
-                    ) : (
-                      <>
-                        <h3 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "18px", fontWeight: 900, color: "#fff", textTransform: "uppercase", lineHeight: 1.1, marginBottom: "6px" }}>
-                          {r.media.title}
-                          {r.media.title !== r.query && <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.3)", fontStyle: "italic", fontWeight: 500, marginLeft: "8px" }}>pour "{r.query}"</span>}
-                        </h3>
-
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "12px" }}>
-                          <span style={tagStyle}>{r.media.type}</span>
-                          {r.media.year && <span style={tagStyle}>{r.media.year}</span>}
-                          {r.media.episodes && <span style={tagStyle}>{r.media.episodes} ép.</span>}
-                          <span style={{ ...tagStyle, color: "#ffd700", background: "rgba(255,215,0,0.08)", border: "1px solid rgba(255,215,0,0.2)" }}>★ {r.media.score}/10</span>
-                          {r.media.studio && <span style={tagStyle}>{r.media.studio}</span>}
-                        </div>
-
-                        {/* Contrôles tier + note */}
-                        <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
-                          {/* Tier selector */}
-                          {(["Chef-d'œuvre","Pépite","Bof","Surcoté","A définir"] as Tier[]).map(t => (
-                            <button key={t} onClick={() => setTier(i, t)}
-                              style={{
-                                fontFamily: "'Barlow Condensed', sans-serif", fontSize: "9px", fontWeight: 800,
-                                padding: "4px 10px", borderRadius: "100px", cursor: "pointer",
-                                background: r.tier === t ? `${TIER_COLORS[t]}18` : "rgba(255,255,255,0.04)",
-                                color: r.tier === t ? TIER_COLORS[t] : "rgba(255,255,255,0.4)",
-                                border: `1px solid ${r.tier === t ? TIER_COLORS[t] + "50" : "rgba(255,255,255,0.08)"}`,
-                                textTransform: "uppercase", letterSpacing: "0.06em",
-                                transition: "all 0.2s",
-                              }}
-                            >{t}</button>
-                          ))}
-                          {/* Note override */}
-                          <div style={{ display: "flex", alignItems: "center", gap: "6px", marginLeft: "4px" }}>
-                            <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)" }}>Note:</span>
-                            <input type="number" step="0.1" min="0" max="10" value={r.note}
-                              onChange={e => setNote(i, Math.min(10, Math.max(0, parseFloat(e.target.value) || 0)))}
-                              style={{ width: "52px", padding: "4px 8px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#ffd700", fontFamily: "'Barlow Condensed', sans-serif", fontSize: "13px", fontWeight: 900, outline: "none" }}
-                            />
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
+      {lines.length > 0 && (
+        <ul className="am-rows">
+          {lines.map((l, i) => {
+            const c = l.detail;
+            return (
+              <li key={`${l.query}-${i}`} className="am-row-item">
+                <span className="am-row-thumb">
+                  {c?.coverUrl
+                    // eslint-disable-next-line @next/next/no-img-element
+                    ? <img src={c.coverUrl} alt="" loading="lazy" />
+                    : l.query.slice(0, 1)}
+                </span>
+                <div className="am-row-main">
+                  <small>Ligne : « {l.query} »</small>
+                  {l.error ? <span className="am-tag is-warn">Recherche impossible : {l.error}</span>
+                    : !l.options.length ? <span className="am-tag is-warn">Aucune œuvre trouvée : ajoute-la à la main depuis la Bibliothèque</span>
+                      : (
+                        <>
+                          <select className="am-input" value={l.choice} onChange={(e) => void choose(i, Number(e.target.value))} aria-label={`Œuvre pour ${l.query}`}>
+                            {l.options.map((o, j) => <option key={o.sourceId} value={j}>{label(o)}</option>)}
+                          </select>
+                          <span className="am-row-tags">
+                            {c?.synopsisFr ? <span className="am-tag is-ok">Synopsis français</span> : <span className="am-tag is-warn">Pas de synopsis français (champ laissé vide)</span>}
+                            {c?.titleFrUnverified && <span className="am-tag is-warn">Titre FR à vérifier</span>}
+                          </span>
+                          <select className="am-input" value={l.tier} onChange={(e) => update(i, { tier: e.target.value })} aria-label={`Verdict pour ${l.query}`}>
+                            {TIERS.map((t) => <option key={t}>{t}</option>)}
+                          </select>
+                        </>
+                      )}
                 </div>
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* Animation CSS */}
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
-    </div>
+                <div className="am-row-actions">
+                  {l.options.length > 0 && (
+                    <button type="button" className="am-btn am-btn--sm" aria-pressed={l.selected} onClick={() => update(i, { selected: !l.selected })}>
+                      {l.selected ? <><Check size={14} aria-hidden="true" /> Retenue</> : "Ignorée"}
+                    </button>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {lines.length > 0 && (
+        <div className="am-row" style={{ marginTop: 16 }}>
+          <button type="button" className="am-btn am-btn--gold" onClick={save} disabled={!!progress || !count}>Ajouter {count} œuvre{count > 1 ? "s" : ""}</button>
+          <button type="button" className="am-btn" onClick={() => setLines([])} disabled={!!progress}>Vider la liste</button>
+        </div>
+      )}
+      {toasts}
+    </AdminShell>
   );
 }
-
-const tagStyle: React.CSSProperties = {
-  fontFamily: "'Barlow Condensed', sans-serif", fontSize: "10px",
-  color: "rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.06)",
-  padding: "2px 7px", borderRadius: "100px", border: "1px solid rgba(255,255,255,0.08)",
-};

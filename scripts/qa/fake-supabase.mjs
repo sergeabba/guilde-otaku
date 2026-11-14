@@ -24,6 +24,12 @@ createServer((req, res) => {
     return res.end(JSON.stringify(list));
   }
   const other = /^\/rest\/v1\/([a-z_]+)$/.exec(u.pathname);
+  // Comptage (select … { count: "exact", head: true }) : en-tête Content-Range seul.
+  if (other && req.method === "HEAD") {
+    const n = other[1] === "fighters" ? rows.length : (table(other[1]) ?? []).length;
+    res.setHeader("Content-Range", `0-${Math.max(n - 1, 0)}/${n}`);
+    return res.end();
+  }
   if (other && req.method === "GET") { const t = table(other[1]); if (t) return res.end(JSON.stringify(t)); }
   // Toute écriture est refusée : ce serveur ne sert qu'à afficher.
   if (req.method !== "GET") { res.statusCode = 405; return res.end(JSON.stringify({ message: "lecture seule" })); }

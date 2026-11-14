@@ -75,6 +75,17 @@ function fighterIssue(v: Record<string, unknown>): string | null {
   for (const f of ["birthday", "badge", "country"] as const) {
     if (f in v && v[f] !== null && (typeof v[f] !== "string" || (v[f] as string).length > 80)) return `${f} invalide`;
   }
+  if ("stats" in v && v.stats !== null) {
+    const s = v.stats as Record<string, unknown>;
+    if (!s || typeof s !== "object" || Array.isArray(s)) return "statistiques invalides";
+    for (const k of ["force", "vitesse", "technique"]) {
+      if (!(typeof s[k] === "number" && Number.isInteger(s[k]) && (s[k] as number) >= 0 && (s[k] as number) <= 100)) return "statistiques : nombres entiers de 0 à 100";
+    }
+  }
+  if ("special" in v && v.special !== null) {
+    const s = v.special as Record<string, unknown>;
+    if (!s || typeof s !== "object" || typeof s.name !== "string" || typeof s.effect !== "string" || s.name.length > 60 || s.effect.length > 240) return "attaque spéciale invalide (nom 60, effet 240 caractères max)";
+  }
   for (const f of MEDIA_FIELDS) {
     if (!(f in v) || v[f] === null || v[f] === "") continue;
     const u = v[f];

@@ -1,6 +1,15 @@
 import { parseAdminDbRequest, MAX_INSERT_ROWS } from "../lib/admin-db";
 
 describe("parseAdminDbRequest", () => {
+  it("valide la fiche de combat (statistiques 0 à 100, attaque spéciale bornée)", () => {
+    const ok = { stats: { force: 82, vitesse: 0, technique: 100 }, special: { name: "Quiz Omniscient", effect: "Étourdit." } };
+    expect(parseAdminDbRequest({ table: "fighters", op: "update", id: 1, values: ok })).toEqual({ table: "fighters", op: "update", id: 1, values: ok });
+    for (const stats of [{ force: 101, vitesse: 1, technique: 1 }, { force: 1.5, vitesse: 1, technique: 1 }, { force: 1, vitesse: 1 }, "fort"]) {
+      expect("error" in parseAdminDbRequest({ table: "fighters", op: "update", id: 1, values: { stats } })).toBe(true);
+    }
+    expect("error" in parseAdminDbRequest({ table: "fighters", op: "update", id: 1, values: { special: { name: "x".repeat(61), effect: "" } } })).toBe(true);
+  });
+
   it("accepte une mise à jour sur une colonne autorisée", () => {
     expect(parseAdminDbRequest({ table: "fighters", op: "update", id: 4, values: { hidden: true } }))
       .toEqual({ table: "fighters", op: "update", id: 4, values: { hidden: true } });

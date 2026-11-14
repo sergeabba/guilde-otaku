@@ -1,524 +1,210 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import {
-  Upload, X, Trash2, Loader2, Image as ImageIcon,
-  Lock, Check, ChevronLeft, Plus, Pencil, Palette
-} from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import Link from "next/link";
-import { useAdminAuth } from "../hooks/useAdminAuth";
+// Administration de l'Atelier (images IA) : déposer des images, les retrouver
+// (recherche, catégorie), modifier leurs informations, les supprimer (confirmation précise).
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Pencil, Trash2, Upload } from "lucide-react";
 import { getAdminHeaders, getAdminFormDataHeaders } from "../../lib/admin-fetch";
-import type { AtelierItem, SupabaseAtelierRow } from "../types";
+import type { SupabaseAtelierRow } from "../types";
+import AdminShell from "../admin-ui/AdminShell";
+import { Chip, EditorSheet, ListToolbar, norm, useConfirm, useToast } from "../admin-ui/ui";
 
-// --- STYLES (Matching admin-biblio) ---
-const font = "'Barlow Condensed', sans-serif";
-const colors = {
-  bg:            "#050508",
-  gold:          "#c9a84c",
-  goldBorder:    "rgba(201,168,76,0.3)",
-  goldLight:     "rgba(201,168,76,0.04)",
-  goldGlow:      "rgba(201,168,76,0.4)",
-  border:        "rgba(255,255,255,0.07)",
-  bgCard:        "rgba(255,255,255,0.03)",
-  bgHover:       "rgba(255,255,255,0.06)",
-  textPrimary:   "#fff",
-  textSecondary: "rgba(255,255,255,0.5)",
-  danger:        "#f87171",
-};
+const CATEGORIES = ["Portrait", "Scène", "Création", "VFX"];
+const SIZES: [string, string][] = [["small", "Petite"], ["medium", "Moyenne"], ["wide", "Large (2 colonnes)"], ["tall", "Haute (2 lignes)"]];
+interface Form { title: string; category: string; size: string; description: string; prompt: string; universe: string; accent: string }
+const toForm = (r: SupabaseAtelierRow): Form => ({
+  title: r.title ?? "", category: r.category ?? "Création", size: r.size ?? "small", description: r.description ?? "",
+  prompt: r.prompt ?? "", universe: r.universe ?? "Guilde Otaku", accent: r.accent ?? "#8b5cf6",
+});
 
-export default function AdminAtelier() {
-  const { authed, checking, password: pwInput, setPassword: setPwInput, error: pwError, login } = useAdminAuth();
+// Réduit les grandes images avant l'envoi (1920 px max, JPEG pour les PNG).
+function compressImage(file: File, maxSize = 1920, quality = 0.85): Promise<Blob> {
+  return new Promise((resolve) => {
+    if (!file.type.startsWith("image/")) { resolve(file); return; }
+    const img = new Image();
+    const src = URL.createObjectURL(file);
+    img.onload = () => {
+      let w = img.width, h = img.height;
+      if (w > maxSize || h > maxSize) { const r = Math.min(maxSize / w, maxSize / h); w = Math.round(w * r); h = Math.round(h * r); }
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(src);
+      canvas.toBlob((b) => resolve(b || file), file.type === "image/png" ? "image/jpeg" : file.type, quality);
+    };
+    img.onerror = () => { URL.revokeObjectURL(src); resolve(file); };
+    img.src = src;
+  });
+}
 
+export default function AdminAtelierPage() {
   const [images, setImages] = useState<SupabaseAtelierRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number; name: string } | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [dbWarning, setDbWarning] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [cat, setCat] = useState("Toutes");
+  const [progress, setProgress] = useState<{ current: number; total: number; name: string } | null>(null);
   const [dragActive, setDragActive] = useState(false);
-  const [dbStatus, setDbStatus] = useState<"connected" | "error">("connected");
-  const [dbError, setDbError] = useState<string | null>(null);
-
-  // État d'édition
-  const [editingItem, setEditingItem] = useState<any>(null);
+  const [editing, setEditing] = useState<SupabaseAtelierRow | null>(null);
+  const [form, setForm] = useState<Form | null>(null);
+  const [initial, setInitial] = useState<Form | null>(null);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const input = useRef<HTMLInputElement>(null);
+  const [confirm, confirmNode] = useConfirm();
+  const [notify, toasts] = useToast();
 
-  const fetchImages = async () => {
-    setLoading(true);
+  async function load() {
+    setLoading(true); setLoadError(null);
     try {
       const res = await fetch("/api/atelier");
       const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || `Erreur ${res.status}`);
       setImages(data.images || []);
-      setDbStatus(data.db_status || "connected");
-      setDbError(data.db_error || null);
-    } catch (e: any) {
-      setDbStatus("error");
-      setDbError(e.message);
+      setDbWarning(data.db_status && data.db_status !== "connected" ? data.db_error || "Base de données indisponible" : null);
+    } catch (e) {
+      setLoadError(`Lecture de l'Atelier impossible : ${e instanceof Error ? e.message : "erreur réseau"}`);
     }
     setLoading(false);
-  };
+  }
+  useEffect(() => { void Promise.resolve().then(load); }, []);
 
-  useEffect(() => {
-    if (authed) fetchImages();
-  }, [authed]);
+  const filtered = useMemo(() => images.filter((i) =>
+    (cat === "Toutes" || i.category === cat) && (!query || norm(`${i.title} ${i.description ?? ""} ${i.filename}`).includes(norm(query)))), [images, cat, query]);
 
-  const compressImage = (file: File, maxSize = 1920, quality = 0.85): Promise<Blob> => {
-    return new Promise((resolve) => {
-      if (!file.type.startsWith("image/")) { resolve(file); return; }
-      const img = new Image();
-      img.onload = () => {
-        let w = img.width, h = img.height;
-        if (w > maxSize || h > maxSize) {
-          const ratio = Math.min(maxSize / w, maxSize / h);
-          w = Math.round(w * ratio);
-          h = Math.round(h * ratio);
-        }
-        const canvas = document.createElement("canvas");
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext("2d")!;
-        ctx.drawImage(img, 0, 0, w, h);
-        canvas.toBlob(
-          (blob) => resolve(blob || file),
-          file.type === "image/png" ? "image/jpeg" : file.type,
-          quality
-        );
-      };
-      img.onerror = () => resolve(file);
-      img.src = URL.createObjectURL(file);
-    });
-  };
-
-  const handleUpload = async (files: File[]) => {
-    setUploading(true);
-    let successCount = 0;
-    let failCount = 0;
-
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      setUploadProgress({ current: i + 1, total: files.length, name: file.name });
-
-      const compressed = await compressImage(file);
-      const formData = new FormData();
-      formData.append("files", compressed, file.name.replace(/\.png$/i, ".jpg"));
-
+  async function upload(files: File[]) {
+    const failures: string[] = [];
+    for (const [i, file] of files.entries()) {
+      setProgress({ current: i + 1, total: files.length, name: file.name });
+      const fd = new FormData();
+      fd.append("files", await compressImage(file), file.name.replace(/\.png$/i, ".jpg"));
       try {
-        const res = await fetch("/api/atelier", {
-          method: "POST",
-          headers: getAdminFormDataHeaders(),
-          body: formData,
-        });
-        if (!res.ok) {
-          failCount++;
-          const text = await res.text().catch(() => "");
-          console.error(`Upload HTTP ${res.status} for ${file.name}:`, text);
-          continue;
-        }
-        const data = await res.json();
-        if (data.success || data.results?.[0]?.success) {
-          successCount++;
-        } else {
-          failCount++;
-          console.error(`Upload failed for ${file.name}:`, data.error || data.results?.[0]?.error);
-        }
-      } catch (e: any) {
-        failCount++;
-        console.error(`Network error for ${file.name}:`, e?.message || e);
+        const res = await fetch("/api/atelier", { method: "POST", headers: getAdminFormDataHeaders(), body: fd });
+        const data = await res.json().catch(() => null);
+        const ok = res.ok && (data?.success || data?.results?.[0]?.success);
+        if (!ok) failures.push(`${file.name} (${data?.results?.[0]?.error || data?.error || `erreur ${res.status}`})`);
+      } catch {
+        failures.push(`${file.name} (réseau)`);
       }
     }
+    setProgress(null);
+    const okCount = files.length - failures.length;
+    if (okCount) notify(`${okCount} image${okCount > 1 ? "s" : ""} ajoutée${okCount > 1 ? "s" : ""} à l'Atelier`);
+    if (failures.length) notify(`Échec de l'envoi : ${failures.join(", ")}`, "error");
+    void load();
+  }
 
-    setUploadProgress(null);
-    fetchImages();
-    if (failCount > 0) {
-      alert(`${successCount} image(s) uploadée(s), ${failCount} échouée(s)`);
-    }
-    setUploading(false);
-  };
+  const open = (r: SupabaseAtelierRow) => { const f = toForm(r); setEditing(r); setForm(f); setInitial(f); setSaveError(null); };
+  const dirty = !!form && JSON.stringify(form) !== JSON.stringify(initial);
+  const set = <K extends keyof Form>(k: K, v: Form[K]) => setForm((f) => (f ? { ...f, [k]: v } : f));
 
-  const handleDelete = async (filename: string) => {
-    if (!confirm(`Supprimer définitivement "${filename}" ?`)) return;
+  async function save() {
+    if (!editing || !form) return;
+    if (!form.title.trim()) { setSaveError("Le titre est obligatoire."); return; }
+    if (!/^#[0-9a-fA-F]{6}$/.test(form.accent)) { setSaveError("Couleur au format #RRGGBB."); return; }
+    setSaving(true); setSaveError(null);
     try {
-      const res = await fetch("/api/atelier", {
-        method: "DELETE",
-        headers: getAdminHeaders(),
-        body: JSON.stringify({ filename }),
-      });
-      if (res.ok) fetchImages();
+      const res = await fetch("/api/atelier", { method: "PATCH", headers: getAdminHeaders(), body: JSON.stringify({ filename: editing.filename, ...form, title: form.title.trim() }) });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error || `erreur ${res.status}`);
+      notify(`« ${form.title.trim()} » enregistré`);
+      setEditing(null);
+      void load();
     } catch (e) {
-      alert("Erreur de suppression");
-    }
-  };
+      setSaveError(`Enregistrement refusé : ${e instanceof Error ? e.message : "erreur réseau"}. Si la table atelier n'existe pas encore, l'information ne peut pas être gardée.`);
+    } finally { setSaving(false); }
+  }
 
-  const handleSaveMetadata = async () => {
-    if (!editingItem) return;
-    setSaving(true);
+  async function remove(r: SupabaseAtelierRow) {
+    const ok = await confirm({
+      title: `Supprimer « ${r.title} » ?`,
+      body: <>Le fichier <strong>{r.filename}</strong> et ses informations seront retirés de l&apos;Atelier et <strong>effacés définitivement</strong> du stockage.</>,
+      confirmLabel: "Supprimer cette image", danger: true,
+    });
+    if (!ok) return;
     try {
-      const { id, url, has_db_record, ...dataToSave } = editingItem;
-      const res = await fetch("/api/atelier", {
-        method: "PATCH",
-        headers: getAdminHeaders(),
-        body: JSON.stringify(dataToSave),
-      });
-      if (res.ok) {
-        setEditingItem(null);
-        fetchImages();
-      } else {
-        alert("Erreur de sauvegarde. Vérifiez si la table 'atelier' existe sur Supabase.");
-      }
+      const res = await fetch("/api/atelier", { method: "DELETE", headers: getAdminHeaders(), body: JSON.stringify({ filename: r.filename }) });
+      if (!res.ok) throw new Error(`erreur ${res.status}`);
+      setImages((x) => x.filter((y) => y.filename !== r.filename));
+      notify(`« ${r.title} » supprimé`);
     } catch (e) {
-      alert("Erreur réseau");
+      notify(`Suppression refusée : ${e instanceof Error ? e.message : "erreur réseau"}`, "error");
     }
-    setSaving(false);
-  };
-
-  if (checking) return (
-    <div style={{ minHeight: "100vh", background: colors.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ width: 36, height: 36, borderRadius: "50%", border: "3px solid rgba(201,168,76,0.2)", borderTopColor: "#c9a84c", animation: "spin 0.7s linear infinite" }} />
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </div>
-  );
-
-  if (!authed) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 24, scale: 0.97 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        style={{ minHeight: "100vh", background: colors.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font }}
-      >
-        <div style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: "20px", padding: "48px 40px", width: "min(400px, 90vw)", textAlign: "center" }}>
-          <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: "rgba(201,168,76,0.1)", border: `1px solid ${colors.goldBorder}`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px" }}>
-            <Lock size={24} color={colors.gold} />
-          </div>
-          <h1 style={{ fontSize: "32px", fontWeight: 900, color: colors.textPrimary, textTransform: "uppercase", fontStyle: "italic", lineHeight: 1, marginBottom: "32px" }}>ACCÈS ATELIER</h1>
-          <input
-            type="password"
-            value={pwInput}
-            onChange={e => setPwInput(e.target.value)}
-            onKeyDown={e => { if (e.key === "Enter") login(); }}
-            placeholder="Mot de passe..."
-            style={{ width: "100%", padding: "14px 16px", background: colors.bgCard, border: `1px solid ${pwError ? colors.danger : colors.border}`, borderRadius: "10px", color: colors.textPrimary, fontFamily: font, fontSize: "18px", textAlign: "center", outline: "none", marginBottom: "12px", boxSizing: "border-box" }}
-          />
-          {pwError && <p style={{ color: colors.danger, fontSize: "13px", fontWeight: 700, marginBottom: "12px" }}>Incorrect</p>}
-          <button onClick={() => login()}
-            style={{ width: "100%", padding: "14px", background: colors.gold, border: "none", borderRadius: "10px", color: "#000", fontFamily: font, fontWeight: 900, cursor: "pointer" }}>
-            ENTRER
-          </button>
-        </div>
-      </motion.div>
-    );
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: colors.bg, color: colors.textPrimary, fontFamily: font }}>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    <AdminShell section="atelier" title="Atelier" intro="Les images de la galerie Atelier. Dépose des images puis complète leurs informations."
+      actions={<button type="button" className="am-btn am-btn--gold" onClick={() => input.current?.click()} disabled={!!progress}><Upload size={16} aria-hidden="true" /> Ajouter des images</button>}>
+      {loadError && <p className="am-alert am-alert--error" role="alert">{loadError} <button type="button" className="am-btn am-btn--sm" onClick={load}>Réessayer</button></p>}
+      {dbWarning && <p className="am-alert am-alert--info">Les images s&apos;affichent, mais leurs informations ne peuvent pas être enregistrées : {dbWarning}. La table <code>atelier</code> doit exister dans Supabase.</p>}
 
-      {/* STICKY TOP BAR */}
-      <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(5,5,8,0.95)", backdropFilter: "blur(14px)", position: "sticky", top: 0, zIndex: 50 }}>
-        <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "16px 28px", display: "flex", alignItems: "center", gap: 16 }}>
-          <Link href="/admin" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)", flexShrink: 0, textDecoration: "none" }}>
-            <ChevronLeft size={18} />
-          </Link>
-          <div style={{ flex: 1 }}>
-            <p style={{ fontSize: 10, fontWeight: 800, color: colors.gold, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 2 }}>ADMIN · GUILDE OTAKU</p>
-            <h1 style={{ fontSize: "clamp(20px,3vw,30px)", fontWeight: 900, fontStyle: "italic", textTransform: "uppercase", lineHeight: 1, color: "#fff" }}>
-              ATELIER <span style={{ color: colors.gold }}>VISUEL</span>
-            </h1>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {dbStatus === "connected" && (
-              <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.2)", borderRadius: 100 }}>
-                <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#34d399", boxShadow: "0 0 8px #34d399" }} />
-                <span style={{ fontSize: 11, fontWeight: 700, color: "#34d399", letterSpacing: "0.1em" }}>DB OK</span>
-              </div>
-            )}
-            <span style={{ fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.35)" }}>{images.length} œuvre{images.length !== 1 ? "s" : ""}</span>
-          </div>
-        </div>
-      </div>
+      <input ref={input} type="file" multiple accept="image/png,image/jpeg,image/webp" hidden
+        onChange={(e) => { if (e.target.files?.length) { void upload([...e.target.files]); e.target.value = ""; } }} />
+      <button type="button" className={`am-drop${dragActive ? " is-active" : ""}`} disabled={!!progress}
+        onClick={() => input.current?.click()}
+        onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
+        onDragLeave={() => setDragActive(false)}
+        onDrop={(e) => { e.preventDefault(); setDragActive(false); if (e.dataTransfer.files?.length) void upload([...e.dataTransfer.files]); }}>
+        <Upload size={28} aria-hidden="true" className={progress ? "am-spin" : ""} />
+        {progress
+          ? <span role="status">Envoi {progress.current} sur {progress.total} : {progress.name}</span>
+          : <span><strong>Touche ou dépose des images ici</strong><small>Plusieurs fichiers possibles · PNG, JPG ou WebP, 10 Mo maximum</small></span>}
+      </button>
 
-      {/* CONTENT */}
-      <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "40px 28px 80px" }}>
+      <ListToolbar query={query} onQuery={setQuery} placeholder="Rechercher une image (titre, description, fichier)" count={filtered.length} total={images.length}>
+        {["Toutes", ...CATEGORIES].map((c) => <Chip key={c} active={cat === c} onClick={() => setCat(c)}>{c}</Chip>)}
+      </ListToolbar>
 
-        {/* Zone SQL Alert - Visible only if DB error */}
-        {dbStatus === "error" && (
-          <div style={{ background: "rgba(248,113,113,0.05)", border: `1px solid rgba(248,113,113,0.3)`, borderRadius: "16px", padding: "24px", marginBottom: "32px" }}>
-            <div style={{ display: "flex", gap: "12px", alignItems: "center", marginBottom: "16px" }}>
-              <Palette size={20} color={colors.danger} />
-              <p style={{ fontSize: "14px", color: colors.danger, margin: 0, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em" }}>
-                Configuration Database Requise
-              </p>
-            </div>
-            <p style={{ fontSize: "14px", color: colors.textSecondary, marginBottom: "20px", lineHeight: 1.5 }}>
-              La table <code style={{ background: "rgba(255,255,255,0.05)", padding: "2px 4px", borderRadius: "4px", color: "#fff" }}>atelier</code> est introuvable sur votre Supabase. 
-              Exécutez le SQL suivant dans votre éditeur Supabase pour activer la sauvegarde des métadonnées :
-            </p>
-            <pre style={{ 
-              background: "#000", padding: "16px", borderRadius: "12px", fontSize: "12px", color: "#34d399", 
-              overflowX: "auto", border: "1px solid rgba(255,255,255,0.1)", marginBottom: "16px", fontFamily: "monospace" 
-            }}>
-{`CREATE TABLE atelier (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    filename TEXT UNIQUE NOT NULL,
-    title TEXT,
-    description TEXT,
-    prompt TEXT,
-    category TEXT,
-    universe TEXT DEFAULT 'Guilde Otaku',
-    accent TEXT DEFAULT '#8b5cf6',
-    size TEXT DEFAULT 'small'
-);`}
-            </pre>
-            <button 
-              onClick={() => {
-                navigator.clipboard.writeText(`CREATE TABLE atelier (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    filename TEXT UNIQUE NOT NULL,
-    title TEXT,
-    description TEXT,
-    prompt TEXT,
-    category TEXT,
-    universe TEXT DEFAULT 'Guilde Otaku',
-    accent TEXT DEFAULT '#8b5cf6',
-    size TEXT DEFAULT 'small'
-);`);
-                alert("SQL copié !");
-              }}
-              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", padding: "8px 16px", borderRadius: "8px", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}
-            >
-              Copier le SQL
-            </button>
-          </div>
-        )}
-
-        {/* Upload Zone */}
-        <div 
-          onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
-          onDragLeave={() => setDragActive(false)}
-          onDrop={(e) => { e.preventDefault(); setDragActive(false); if (e.dataTransfer.files?.length) handleUpload(Array.from(e.dataTransfer.files)); }}
-          style={{
-            border: `2px dashed ${dragActive ? colors.gold : colors.border}`,
-            background: dragActive ? colors.goldLight : "transparent",
-            borderRadius: "24px", padding: "60px", textAlign: "center", marginBottom: "60px",
-            transition: "all 0.3s ease", cursor: "pointer", position: "relative"
-          }}
-          onClick={() => document.getElementById("file-input")?.click()}
-        >
-          <input id="file-input" type="file" multiple accept="image/*" hidden onChange={(e) => { if (e.target.files?.length) { handleUpload(Array.from(e.target.files)); e.target.value = ""; } }} />
-          {uploading ? (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" }}>
-              <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }}>
-                <Loader2 size={48} color={colors.gold} />
-              </motion.div>
-              {uploadProgress ? (
-                <>
-                  <p style={{ color: colors.gold, fontWeight: 700 }}>Upload {uploadProgress.current}/{uploadProgress.total}</p>
-                  <p style={{ color: colors.textSecondary, fontSize: "13px" }}>{uploadProgress.name}</p>
-                </>
-              ) : (
-                <p style={{ color: colors.gold, fontWeight: 700 }}>Upload en cours...</p>
-              )}
-            </div>
-          ) : (
-            <>
-              <Upload size={48} color={colors.gold} style={{ marginBottom: "16px" }} />
-              <p style={{ fontSize: "20px", fontWeight: 700, marginBottom: "4px" }}>Cliquez ou déposez vos œuvres</p>
-              <p style={{ color: colors.textSecondary }}>Sélection multiple possible · PNG, JPG, WebP (Max 10Mo)</p>
-            </>
-          )}
-        </div>
-
-        {/* Gallery Grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "24px" }}>
-          <AnimatePresence>
-            {images.map((img) => (
-              <motion.div
-                key={img.filename}
-                layout
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                style={{
-                  background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: "16px",
-                  overflow: "hidden", position: "relative"
-                }}
-              >
-                <div style={{ aspectRatio: "4/5", overflow: "hidden", background: "#000", position: "relative" }}>
-                  <img src={img.url} alt={img.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  <div style={{ position: "absolute", top: "10px", left: "10px", display: "flex", gap: "6px" }}>
-                    <span style={{ fontSize: "10px", fontWeight: 800, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", color: img.accent, padding: "4px 8px", borderRadius: "100px", border: `1px solid ${img.accent}40` }}>
-                      {img.category}
+      {loading ? <p className="am-loading" role="status">Chargement…</p>
+        : filtered.length === 0 ? <p className="am-empty-state">{images.length ? "Aucune image ne correspond." : "Aucune image dans l'Atelier."}</p>
+          : (
+            <ul className="am-gallery">
+              {filtered.map((r) => (
+                <li key={r.filename} className="am-gallery-item">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={r.url} alt="" loading="lazy" />
+                  <div className="am-gallery-info">
+                    <strong>{r.title}</strong>
+                    <span className="am-row-tags">
+                      {r.category && <span className="am-tag" style={{ color: r.accent }}>{r.category}</span>}
+                      {!r.has_db_record && <span className="am-tag is-warn">Infos à compléter</span>}
                     </span>
-                    {img.has_db_record && (
-                       <span style={{ fontSize: "10px", fontWeight: 800, background: "rgba(52,211,153,0.1)", backdropFilter: "blur(4px)", color: "#34d399", padding: "4px 8px", borderRadius: "100px", border: `1px solid rgba(52,211,153,0.3)` }}>
-                          DB LOADED
-                       </span>
-                    )}
+                    <div className="am-row-actions">
+                      <button type="button" className="am-btn am-btn--sm" onClick={() => open(r)}><Pencil size={14} aria-hidden="true" /> Modifier</button>
+                      <button type="button" className="am-btn am-btn--sm am-btn--danger" onClick={() => remove(r)}><Trash2 size={14} aria-hidden="true" /> Supprimer</button>
+                    </div>
                   </div>
-                </div>
-                <div style={{ padding: "16px" }}>
-                   <div style={{ marginBottom: "12px" }}>
-                      <p style={{ fontWeight: 800, fontSize: "16px", textTransform: "uppercase", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{img.title}</p>
-                      <p style={{ fontSize: "12px", color: colors.textSecondary, margin: 0, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", height: "36px" }}>
-                        {img.description || "(Pas de description)"}
-                      </p>
-                   </div>
-                   
-                   <div style={{ display: "flex", gap: "8px" }}>
-                      <button 
-                        onClick={() => setEditingItem({ ...img })}
-                        style={{ 
-                          flex: 1, background: colors.goldLight, border: `1px solid ${colors.goldBorder}`, borderRadius: "8px", 
-                          padding: "10px", color: colors.gold, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
-                          fontFamily: font, fontWeight: 700, textTransform: "uppercase", fontSize: "12px"
-                        }}
-                      >
-                        <Pencil size={14} /> Modifier info
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(img.filename)}
-                        style={{ 
-                          background: "rgba(248,113,113,0.1)", border: "none", borderRadius: "8px", 
-                          padding: "10px", color: colors.danger, cursor: "pointer" 
-                        }}
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                   </div>
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
+                </li>
+              ))}
+            </ul>
+          )}
 
-        {!loading && images.length === 0 && (
-          <div style={{ textAlign: "center", padding: "100px", color: colors.textSecondary, fontSize: "18px", fontStyle: "italic" }}>
-            Aucune image dans l'Atelier.
+      {editing && form && (
+        <EditorSheet kicker="Modifier l'image" title={form.title || "Sans titre"} dirty={dirty} confirm={confirm} onClose={() => setEditing(null)}
+          footer={<>
+            <button type="button" className="am-btn" onClick={() => setEditing(null)}>Annuler</button>
+            <button type="button" className="am-btn am-btn--gold" onClick={save} disabled={saving || !dirty}>{saving ? "Enregistrement…" : dirty ? "Enregistrer" : "Enregistré"}</button>
+          </>}>
+          {saveError && <p className="am-alert am-alert--error" role="alert">{saveError}</p>}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={editing.url} alt="" className="am-gallery-preview" />
+          <p className="am-intro">Fichier : {editing.filename}</p>
+          <label className="am-field"><span>Titre <b>*</b></span><input className="am-input" value={form.title} maxLength={120} onChange={(e) => set("title", e.target.value)} /></label>
+          <div className="am-grid2">
+            <label className="am-field"><span>Catégorie</span><select className="am-input" value={form.category} onChange={(e) => set("category", e.target.value)}>{[...new Set([...CATEGORIES, form.category])].map((c) => <option key={c}>{c}</option>)}</select></label>
+            <label className="am-field"><span>Taille dans la galerie</span><select className="am-input" value={form.size} onChange={(e) => set("size", e.target.value)}>{SIZES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
+            <label className="am-field"><span>Univers</span><input className="am-input" value={form.universe} maxLength={80} onChange={(e) => set("universe", e.target.value)} /></label>
+            <label className="am-field"><span>Couleur d&apos;accent</span>
+              <span className="am-color"><input type="color" value={/^#[0-9a-fA-F]{6}$/.test(form.accent) ? form.accent : "#8b5cf6"} onChange={(e) => set("accent", e.target.value)} aria-label="Choisir la couleur" /><input className="am-input" value={form.accent} onChange={(e) => set("accent", e.target.value)} aria-label="Code couleur" /></span>
+            </label>
           </div>
-        )}
-
-      </div>
-
-      {/* EDIT MODAL */}
-      <AnimatePresence>
-        {editingItem && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            style={{
-              position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)",
-              zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px"
-            }}
-            onClick={() => setEditingItem(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.95, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
-              style={{
-                width: "100%", maxWidth: "800px", background: colors.bg, border: `1px solid ${colors.border}`,
-                borderRadius: "24px", overflow: "hidden", maxHeight: "90vh", display: "flex", flexDirection: "column"
-              }}
-            >
-              <div style={{ display: "flex", borderBottom: `1px solid ${colors.border}`, flex: 1, overflow: "hidden" }}>
-                <div style={{ width: "40%", background: "#000", position: "relative", display: "flex" }}>
-                   <img src={editingItem.url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                   <div style={{ position: "absolute", bottom: "20px", left: "20px", right: "20px", padding: "12px", background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", borderRadius: "12px", border: `1px solid ${colors.border}` }}>
-                      <p style={{ fontSize: "10px", fontWeight: 800, color: colors.gold, textTransform: "uppercase", margin: 0, letterSpacing: "0.1em" }}>ID Fichier</p>
-                      <p style={{ fontSize: "12px", color: "#fff", margin: 0, overflow: "hidden", textOverflow: "ellipsis" }}>{editingItem.filename}</p>
-                   </div>
-                </div>
-
-                <div style={{ flex: 1, padding: "32px", overflowY: "auto" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "24px" }}>
-                    <div>
-                      <h2 style={{ fontSize: "24px", fontWeight: 900, textTransform: "uppercase", fontStyle: "italic", margin: 0 }}>Détails de l'œuvre</h2>
-                      <p style={{ color: colors.textSecondary, fontSize: "14px" }}>Mise à jour des métadonnées</p>
-                    </div>
-                    <button onClick={() => setEditingItem(null)} style={{ background: "none", border: "none", color: colors.textSecondary, cursor: "pointer" }}><X size={24} /></button>
-                  </div>
-
-                  <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-                    <div>
-                      <label style={{ display: "block", fontSize: "11px", fontWeight: 800, color: colors.gold, textTransform: "uppercase", marginBottom: "8px", letterSpacing: "0.1em" }}>Titre de l'œuvre</label>
-                      <input 
-                        type="text" value={editingItem.title} 
-                        onChange={(e) => setEditingItem({ ...editingItem, title: e.target.value })}
-                        style={{ width: "100%", padding: "12px", background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: "8px", color: "#fff", outline: "none", fontFamily: font, fontSize: "18px" }} 
-                      />
-                    </div>
-
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-                      <div>
-                        <label style={{ display: "block", fontSize: "11px", fontWeight: 800, color: colors.gold, textTransform: "uppercase", marginBottom: "8px", letterSpacing: "0.1em" }}>Catégorie</label>
-                        <select 
-                          value={editingItem.category} 
-                          onChange={(e) => setEditingItem({ ...editingItem, category: e.target.value })}
-                          style={{ width: "100%", padding: "12px", background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: "8px", color: "#fff", outline: "none", fontFamily: font }}
-                        >
-                          <option value="Portrait">Portrait</option>
-                          <option value="Scène">Scène</option>
-                          <option value="Création">Création</option>
-                          <option value="VFX">VFX</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label style={{ display: "block", fontSize: "11px", fontWeight: 800, color: colors.gold, textTransform: "uppercase", marginBottom: "8px", letterSpacing: "0.1em" }}>Taille Bento</label>
-                        <select 
-                          value={editingItem.size} 
-                          onChange={(e) => setEditingItem({ ...editingItem, size: e.target.value })}
-                          style={{ width: "100%", padding: "12px", background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: "8px", color: "#fff", outline: "none", fontFamily: font }}
-                        >
-                          <option value="small">Petite</option>
-                          <option value="medium">Moyenne</option>
-                          <option value="wide">Large (2 cols)</option>
-                          <option value="tall">Haute (2 rows)</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label style={{ display: "block", fontSize: "11px", fontWeight: 800, color: colors.gold, textTransform: "uppercase", marginBottom: "8px", letterSpacing: "0.1em" }}>Description / Lore</label>
-                      <textarea 
-                        rows={3} value={editingItem.description} 
-                        onChange={(e) => setEditingItem({ ...editingItem, description: e.target.value })}
-                        style={{ width: "100%", padding: "12px", background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: "8px", color: "#fff", outline: "none", resize: "none", fontFamily: font, fontSize: "15px" }} 
-                      />
-                    </div>
-
-                    <div>
-                      <label style={{ display: "block", fontSize: "11px", fontWeight: 800, color: colors.gold, textTransform: "uppercase", marginBottom: "8px", letterSpacing: "0.1em" }}>AI Prompt (Original)</label>
-                      <textarea 
-                        rows={3} value={editingItem.prompt} 
-                        onChange={(e) => setEditingItem({ ...editingItem, prompt: e.target.value })}
-                        style={{ width: "100%", padding: "12px", background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: "8px", color: "#fff", outline: "none", resize: "none", fontFamily: "monospace", fontSize: "11px" }} 
-                      />
-                    </div>
-
-                    <div style={{ display: "flex", gap: "12px", marginTop: "12px" }}>
-                      <button 
-                        onClick={handleSaveMetadata} disabled={saving}
-                        style={{ flex: 1, padding: "16px", background: colors.gold, border: "none", borderRadius: "12px", color: "#000", fontWeight: 900, textTransform: "uppercase", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", fontFamily: font }}
-                      >
-                        {saving ? <Loader2 size={18} style={{ animation: "spin 1s linear infinite" }} /> : <><Check size={18} /> Sauvegarder</>}
-                      </button>
-                      <button 
-                        onClick={() => setEditingItem(null)}
-                        style={{ padding: "16px 24px", background: "rgba(255,255,255,0.05)", border: `1px solid ${colors.border}`, borderRadius: "12px", color: "#fff", fontWeight: 700, cursor: "pointer", fontFamily: font }}
-                      >
-                        Annuler
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+          <label className="am-field"><span>Description</span><textarea className="am-input" rows={3} value={form.description} onChange={(e) => set("description", e.target.value)} /></label>
+          <label className="am-field"><span>Prompt d&apos;origine</span><textarea className="am-input" rows={3} value={form.prompt} onChange={(e) => set("prompt", e.target.value)} style={{ fontFamily: "ui-monospace, monospace", fontSize: "0.85rem" }} /></label>
+        </EditorSheet>
+      )}
+      {confirmNode}
+      {toasts}
+    </AdminShell>
   );
 }
