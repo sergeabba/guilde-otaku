@@ -12,3 +12,4 @@
 - Code React/Next.js : `vercel-react-best-practices`, `vercel-composition-patterns` (lire seulement les fichiers `rules/` utiles).
 - Vérifier : `guilde-qa` (faux Supabase en lecture seule, captures, tests, build).
 - Économie de tokens : `caveman` (réponses compressées), `cavecrew` (délégation compacte).
+- Méthode de travail : skills `superpowers` (copiées du dépôt obra/superpowers, voir `.claude/skills/using-superpowers/SOURCE.md`) : `brainstorming` avant une nouvelle fonctionnalité, `writing-plans` puis `executing-plans`, `systematic-debugging` pour un bug, `test-driven-development`, `verification-before-completion` avant d'annoncer un résultat.
