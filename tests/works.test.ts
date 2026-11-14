@@ -131,3 +131,12 @@ describe("adaptation animée : titre exact exigé", () => {
     expect(sameTitle("Vagabond", "Rurouni Kenshin")).toBe(false);
   });
 });
+
+import { seasonLabel } from "../lib/ratings";
+describe("notes de la semaine : saison", () => {
+  it("lit la saison dans le titre AniList", () => {
+    expect(seasonLabel("The Apothecary Diaries Season 3")).toBe("Saison 3");
+    expect(seasonLabel(undefined, "Tougen Anki 2nd Season")).toBe("Saison 2");
+    expect(seasonLabel("Steel Ball Run")).toBeNull();
+  });
+});
