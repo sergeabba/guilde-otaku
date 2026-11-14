@@ -172,7 +172,7 @@ export function MusicDockProvider({ children }: { children: React.ReactNode }) {
             <div className={`mdock-card mdock-card--${current.provider}`}>
               <div className="mdock-head">
                 <Cover t={current} />
-                <div className="mdock-txt">
+                <div className="mdock-txt" aria-live="polite">
                   <small>{current.owner ? `Playlist de ${current.owner}` : "Ongaku"} · {index + 1}/{queue.length}</small>
                   <strong>{current.title || "Morceau sans titre"}</strong>
                   {current.artist && <span>{current.artist}</span>}
@@ -217,5 +217,5 @@ function Cover({ t }: { t: DockTrack }) {
   const src = t.cover ?? (t.provider === "youtube" ? `https://i.ytimg.com/vi/${t.id}/mqdefault.jpg` : undefined);
   if (!src || failed) return <span className="mdock-cover is-empty" aria-hidden="true"><Music size={18} /></span>;
   // eslint-disable-next-line @next/next/no-img-element
-  return <img className="mdock-cover" src={src} alt="" loading="lazy" onError={() => setFailed(true)} />;
+  return <img className="mdock-cover" src={src} alt="" width={44} height={44} loading="lazy" onError={() => setFailed(true)} />;
 }

@@ -213,7 +213,7 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
 
             <div className="pf-cta">
               <button type="button" className="gk-btn" onClick={downloadCard} aria-busy={downloading}>
-                <Download size={17} aria-hidden="true" /> {downloading ? "Préparation..." : "Télécharger sa carte"}
+                <Download size={17} aria-hidden="true" /> {downloading ? "Préparation…" : "Télécharger sa carte"}
               </button>
               <button type="button" className="gk-btn gk-btn--ghost" onClick={() => setShareOpen(true)}>
                 <Share2 size={17} aria-hidden="true" /> Partager la fiche
@@ -360,7 +360,7 @@ function WorkCover({ work }: { work: FavoriteWork }) {
     );
   }
   // eslint-disable-next-line @next/next/no-img-element
-  return <img ref={checkBroken} src={work.coverUrl} alt="" loading="lazy" decoding="async" onError={() => setFailed(true)} />;
+  return <img ref={checkBroken} src={work.coverUrl} alt="" width={112} height={168} loading="lazy" decoding="async" onError={() => setFailed(true)} />;
 }
 
 function WorkCard({ work, onOpen, big = false }: { work: FavoriteWork; onOpen: (w: FavoriteWork) => void; big?: boolean }) {
@@ -401,7 +401,7 @@ function WorkSheet({ work, chronique, onClose }: { work: FavoriteWork; chronique
         <div className="pf-ws-body">
           {work.coverUrl && !coverFailed && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={work.coverUrl} alt={`Couverture de ${workTitle(work)}`} onError={() => setCoverFailed(true)} />
+            <img src={work.coverUrl} alt={`Couverture de ${workTitle(work)}`} width={110} height={165} onError={() => setCoverFailed(true)} />
           )}
           <div>
             <h2 id="pf-ws-title">{workTitle(work)}</h2>

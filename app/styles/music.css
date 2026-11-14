@@ -104,3 +104,12 @@ body[data-music-dock] .gk-top { bottom: calc(24px + env(safe-area-inset-bottom) 
 @media (max-width: 599px) { body[data-music-dock="open"] .gk-top { display: none; } }
 /* Pendant un combat Fighters (plein écran), le lecteur est en pause et masqué ; il revient en sortant du jeu. */
 body.fx-ingame .mdock { display: none; }
+
+/* Interface tactile et survol (relecture Web Interface Guidelines). */
+.mpl-play, .mpl-ext, .mdock-icon, .mdock-play, .mdock-pill, .mdock-link { touch-action: manipulation; }
+@media (hover: hover) {
+  .mpl-play:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 #111; }
+  .mdock-play:hover { background: #fff; }
+  .mdock-pill:hover { border-color: var(--gk-gold, #e8b931); }
+}
+.mdock-txt small { font-variant-numeric: tabular-nums; }
