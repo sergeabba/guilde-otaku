@@ -13,6 +13,7 @@ import { useIsMobile } from "../hooks/useIsMobile";
 import { useAdminAuth } from "../hooks/useAdminAuth";
 import { getAdminHeaders } from "../../lib/admin-fetch";
 import { adminDb } from "../../lib/admin-db-client";
+import { FORMAT_LABEL, SOURCE_LABEL, frenchLevel, type WorkCandidate } from "../../lib/works/types";
 
 // ─── TOKENS (inline pour éviter l'import fragile depuis outputs/styles) ──────────
 const font = "'Barlow Condensed', sans-serif";
@@ -73,6 +74,15 @@ interface AniListResult {
   genres:       string[];
   studios:      { nodes: { name: string }[] };
   trailer:      { id: string; site: string } | null;
+  /** Synopsis français de la source (TMDB / MangaDex), s'il existe. */
+  frDescription?: string | null;
+  /** Source et identifiant stable, pour charger le détail (bande-annonce, genres). */
+  sourceRef?: { source: "tmdb" | "mangadex"; sourceId: string };
+  sourceLabel?: string;
+  formatLabel?: string;
+  frLevel?: "complet" | "partiel" | "aucun";
+  /** Identifiant AniList quand la source le connaît. */
+  anilistRef?: number;
 }
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
@@ -98,92 +108,58 @@ function stripHtml(html: string): string {
     .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/\n{3,}/g, "\n\n").trim();
 }
 
-// ─── FONCTIONS DE RECHERCHE HYBRIDES (Français + HD) ─────────────────────────
+// ─── RECHERCHE (serveur commun : TMDB en français pour l'anime, MangaDex pour les mangas) ───
+// Même recherche que les favoris des membres (lib/works). Le synopsis anglais reste une
+// référence : il n'est jamais enregistré comme synopsis français.
 
-async function searchTMDB(query: string): Promise<AniListResult[]> {
-  const res = await fetch(`/api/tmdb-search?q=${encodeURIComponent(query)}`);
-  const json = await res.json();
-  if (!json.results) return [];
-
-  return json.results
-    .filter((item: any) => item.media_type === "tv" || item.media_type === "movie")
-    .map((item: any) => {
-      const isMovie = item.media_type === "movie";
-      const titleFr = isMovie ? item.title : item.name;
-      const titleOrig = isMovie ? item.original_title : item.original_name;
-      const date = isMovie ? item.release_date : item.first_air_date;
-      
-      return {
-        id: item.id,
-        title: { romaji: titleOrig, english: titleFr, native: titleOrig },
-        type: "ANIME" as const,
-        format: isMovie ? "MOVIE" : "TV",
-        status: "FINISHED",
-        description: item.overview || null,
-        startDate: { year: date ? parseInt(date.substring(0, 4)) : null },
-        episodes: null,
-        chapters: null,
-        averageScore: item.vote_average ? item.vote_average * 10 : null, // Convertir de 10 à 100
-        coverImage: {
-          extraLarge: item.poster_path ? `https://image.tmdb.org/t/p/w780${item.poster_path}` : "",
-          large: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : "",
-          color: null,
-        },
-        bannerImage: item.backdrop_path ? `https://image.tmdb.org/t/p/w1280${item.backdrop_path}` : null,
-        genres: [], // Il faudrait fiare un map, vide pour l'instant (non affiché sur la carte)
-        studios: { nodes: [] }, // TMDB ne les renvoie pas dans le search
-        trailer: null, // Nécessite un extra-fetch, laissé null.
-      };
-    });
+let seqId = 0;
+function toResult(c: WorkCandidate): AniListResult {
+  const tmdbNum = c.source === "tmdb" ? Number(c.sourceId.split(":")[1]) : NaN;
+  const title = c.titleFr && !c.titleFrUnverified ? c.titleFr : c.title;
+  return {
+    id: Number.isFinite(tmdbNum) ? tmdbNum : 1_000_000 + ++seqId,
+    title: { romaji: c.titleRomaji ?? c.titleEn ?? title, english: title, native: "" },
+    type: c.kind,
+    format: FORMAT_LABEL[c.format],
+    status: "FINISHED",
+    description: c.synopsisEn ?? null,
+    frDescription: c.synopsisFr ?? null,
+    startDate: { year: c.year ?? null },
+    episodes: c.episodes ?? null,
+    chapters: null,
+    averageScore: null,
+    coverImage: { extraLarge: c.coverUrl ?? "", large: c.coverUrl ?? "", color: null },
+    bannerImage: null,
+    genres: c.genres ?? [],
+    studios: { nodes: [] },
+    trailer: c.trailer ? { id: c.trailer.youtubeId, site: "youtube" } : null,
+    sourceRef: { source: c.source, sourceId: c.sourceId },
+    sourceLabel: SOURCE_LABEL[c.source],
+    formatLabel: FORMAT_LABEL[c.format],
+    frLevel: frenchLevel(c),
+    anilistRef: c.anilistId,
+  };
 }
 
-async function searchMangaDex(query: string): Promise<AniListResult[]> {
-  const res = await fetch(`https://api.mangadex.org/manga?title=${encodeURIComponent(query)}&includes[]=cover_art&limit=5`);
-  const json = await res.json();
-  if (!json.data) return [];
-
-  return json.data.map((item: any) => {
-    const attrs = item.attributes;
-    const title = attrs.title["fr"] || attrs.title["en"] || attrs.title["ja-ro"] || "Inconnu";
-    const desc = attrs.description["fr"] || attrs.description["en"] || null;
-    
-    // cover via relationships
-    const coverRel = item.relationships.find((r: any) => r.type === "cover_art");
-    const coverFileName = coverRel?.attributes?.fileName;
-    // Cover HD originale
-    const extraLarge = coverFileName ? `https://uploads.mangadex.org/covers/${item.id}/${coverFileName}` : "";
-    const large = coverFileName ? `https://uploads.mangadex.org/covers/${item.id}/${coverFileName}.512.jpg` : "";
-
-    return {
-      id: parseInt(item.id.substring(0, 8), 16) || Math.floor(Math.random() * 1000000), // Fake ID compatible avec le nombre
-      title: { romaji: title, english: title, native: title },
-      type: "MANGA" as const,
-      format: "MANGA",
-      status: attrs.status ? attrs.status.toUpperCase() : "FINISHED",
-      description: desc,
-      startDate: { year: attrs.year || null },
-      episodes: null,
-      chapters: null,
-      averageScore: null,
-      coverImage: { extraLarge, large, color: null },
-      bannerImage: null,
-      genres: attrs.tags?.filter((t: any) => t.attributes?.group === "genre").map((t: any) => t.attributes?.name?.en) || [],
-      studios: { nodes: [] },
-      trailer: null,
-    };
-  });
+async function worksApi<T>(url: string, body: unknown): Promise<T> {
+  const res = await fetch(url, { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const json = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(res.status === 401 ? "Session expirée : reconnecte-toi." : json?.error || `Erreur ${res.status}`);
+  return json as T;
 }
 
 async function searchHybrid(search: string, type?: "ANIME" | "MANGA"): Promise<AniListResult[]> {
-  let results: AniListResult[] = [];
-  if (!type || type === "ANIME") {
-    try { const tmdb = await searchTMDB(search); results = [...results, ...tmdb]; } catch(e) { console.error(e); }
-  }
-  if (!type || type === "MANGA") {
-    try { const mdex = await searchMangaDex(search); results = [...results, ...mdex]; } catch(e) { console.error(e); }
-  }
-  if (results.length === 0) throw new Error("Erreur de connexion aux bases distantes.");
-  return results;
+  const kinds: ("ANIME" | "MANGA")[] = type ? [type] : ["ANIME", "MANGA"];
+  const settled = await Promise.allSettled(kinds.map((kind) => worksApi<{ results: WorkCandidate[] }>("/api/works/search", { q: search, kind })));
+  const ok = settled.filter((r): r is PromiseFulfilledResult<{ results: WorkCandidate[] }> => r.status === "fulfilled");
+  if (!ok.length) throw new Error((settled[0] as PromiseRejectedResult).reason?.message ?? "Recherche impossible.");
+  return ok.flatMap((r) => r.value.results).map(toResult);
+}
+
+async function loadDetail(r: AniListResult): Promise<AniListResult> {
+  if (!r.sourceRef) return r;
+  const { work } = await worksApi<{ work: WorkCandidate }>("/api/works/detail", { source: r.sourceRef.source, id: r.sourceRef.sourceId });
+  return { ...toResult(work), id: r.id };
 }
 
 // ─── RESULT CARD ─────────────────────────────────────────────────────────────
@@ -225,7 +201,13 @@ function ResultCard({ anime, isSelected, onSelect }: { anime: AniListResult; isS
           <p style={{ ...typography.meta, marginBottom: "6px", fontStyle: "italic" }}>{anime.title.romaji}</p>
         )}
         <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "6px" }}>
-          <span style={components.tag}>{anime.format?.replace("_", " ") ?? anime.type}</span>
+          <span style={components.tag}>{anime.formatLabel ?? anime.format?.replace("_", " ") ?? anime.type}</span>
+          {anime.sourceLabel && <span style={components.tag}>{anime.sourceLabel}</span>}
+          {anime.frLevel && (
+            <span style={{ ...components.tag, color: anime.frLevel === "complet" ? "#6ee7b7" : anime.frLevel === "partiel" ? "#fcd34d" : colors.textSecondary }}>
+              {anime.frLevel === "complet" ? "Français complet" : anime.frLevel === "partiel" ? "Français partiel" : "Pas de français"}
+            </span>
+          )}
           {anime.startDate?.year && <span style={components.tag}>{anime.startDate.year}</span>}
           {anime.episodes && <span style={components.tag}>{anime.episodes} ép.</span>}
           {score !== "N/A" && (
@@ -430,7 +412,14 @@ export default function AdminBiblio() {
 
   const handleSelect = (anime: AniListResult) => {
     setSelected(anime);
-    setFrenchSynopsis(""); setAvisGuilde("");
+    // Synopsis pré-rempli seulement s'il est réellement en français.
+    setFrenchSynopsis(anime.frDescription ?? ""); setAvisGuilde("");
+    // Détail (bande-annonce, genres, synopsis complet) chargé en arrière-plan.
+    loadDetail(anime).then((full) => {
+      setSelected((cur) => (cur && cur.id === anime.id ? { ...full } : cur));
+      setFrenchSynopsis((cur) => cur || full.frDescription || "");
+      if (full.trailer?.site === "youtube") setTrailerUrl((cur) => cur || `https://www.youtube.com/watch?v=${full.trailer!.id}`);
+    }).catch(() => { /* le résultat de recherche suffit */ });
     setNote(anime.averageScore ? parseFloat((anime.averageScore / 10).toFixed(1)) : 0);
     setMediaType(anime.type === "MANGA" ? "Manga" : "Anime");
     setTier("A définir"); setSaveSuccess(false);
@@ -455,7 +444,7 @@ export default function AdminBiblio() {
         headers: getAdminHeaders(),
         body: JSON.stringify({
           title,
-          anilistId: selected.id,
+          anilistId: selected.anilistRef,
           coverUrl: selected.coverImage?.extraLarge || selected.coverImage?.large || null,
           bannerUrl: selected.bannerImage ?? null,
         }),
@@ -476,7 +465,8 @@ export default function AdminBiblio() {
         score:        note,
         tier,
         status:       selected.status === "FINISHED" ? "Terminé" : selected.status === "RELEASING" ? "En cours" : "À venir",
-        synopsis:     frenchSynopsis.trim() || (selected.description ? stripHtml(selected.description) : ""),
+        // Jamais de résumé anglais publié comme synopsis français.
+        synopsis:     frenchSynopsis.trim(),
         avis_guilde:  avisGuilde.trim() || null,
         trailer_url:  trailerUrl.trim() || null,
         year:         selected.startDate?.year ?? null,
@@ -778,7 +768,7 @@ export default function AdminBiblio() {
               <label style={labelStyle}><FileText size={13} style={{ display: "inline", marginRight: "6px" }} />SYNOPSIS EN FRANÇAIS</label>
               {selected.description && (
                 <div style={{ marginBottom: "10px", padding: "12px 14px", background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: "10px" }}>
-                  <p style={{ ...typography.label, marginBottom: "6px" }}>SYNOPSIS ORIGINAL (EN) — RÉFÉRENCE</p>
+                  <p style={{ ...typography.label, marginBottom: "6px" }}>Résumé en anglais (référence, jamais publié)</p>
                   <p style={{ ...typography.body, fontSize: "13px", fontStyle: "italic" }}>
                     {stripHtml(selected.description).slice(0, 300)}{selected.description.length > 300 ? "..." : ""}
                   </p>
@@ -787,7 +777,7 @@ export default function AdminBiblio() {
               <textarea value={frenchSynopsis} onChange={(e) => setFrenchSynopsis(e.target.value)} rows={4}
                 placeholder="Colle ou écris le synopsis en français ici..."
                 style={{ ...components.input, resize: "vertical", lineHeight: 1.6 }} />
-              <p style={{ ...typography.meta, marginTop: "6px" }}>Si vide, le synopsis original en anglais sera utilisé.</p>
+              <p style={{ ...typography.meta, marginTop: "6px" }}>{selected.frDescription ? "Pré-rempli avec le synopsis français de " + (selected.sourceLabel ?? "la source") + " : relis-le." : "Pas de synopsis français à la source : écris-le ou laisse vide (le résumé anglais n'est jamais publié)."}</p>
             </div>
 
             {/* Avis Guilde */}

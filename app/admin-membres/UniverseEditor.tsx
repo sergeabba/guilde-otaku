@@ -3,11 +3,14 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { ArrowDown, ArrowUp, Plus, Search, Star, Trash2 } from "lucide-react";
-import { hasJapanese, workKey, workTitle, type FavoriteWork, type MemberTrack } from "../../lib/member-extras";
+import { hasJapanese, sameWork, workKey, workTitle, type FavoriteWork, type MemberTrack } from "../../lib/member-extras";
+import WorkSearch from "../components/works/WorkSearch";
+import { candidateToFavorite, trailerLangLabel } from "../../lib/works/favorite";
+import { FORMAT_LABEL, type WorkCandidate } from "../../lib/works/types";
 import { parseMusicLink, openUrl, PROVIDER_LABEL, youtubeSearchUrl } from "../../lib/music";
 
 type Kind = "ANIME" | "MANGA";
-type Candidate = FavoriteWork & { year?: number; format?: string; descriptionEn?: string };
+const SOURCE_NAME: Record<FavoriteWork["source"], string> = { tmdb: "TMDB", mangadex: "MangaDex", anilist: "AniList (ancien favori)", manual: "Saisie manuelle" };
 
 const MAX_FEATURED = 3;
 
@@ -34,7 +37,7 @@ function SynopsisField({ work, reference, library, onChange }: { work: FavoriteW
   return (
     <details style={{ marginTop: 6 }}>
       <summary style={{ cursor: "pointer", font: "700 0.85rem var(--am-font)", textTransform: "uppercase", color: work.synopsis ? "var(--am-green)" : "var(--am-faint)" }}>
-        Synopsis {work.synopsis ? "(renseigné)" : "(facultatif)"}
+        Synopsis {work.synopsis ? (work.synopsisSource === "source" ? "(français de la source)" : "(écrit à la main)") : "(à écrire, facultatif)"}
       </summary>
       <textarea className="am-input" value={work.synopsis ?? ""} maxLength={700} rows={4} placeholder="Deux ou trois phrases en français, sans dévoiler la fin."
         aria-label={`Synopsis en français de ${workTitle(work)}`} aria-invalid={bad} onChange={(e) => onChange(e.target.value || undefined)} style={{ marginTop: 6 }} />
@@ -47,7 +50,7 @@ function SynopsisField({ work, reference, library, onChange }: { work: FavoriteW
       {fromLibrary && <small style={{ display: "block", font: "500 0.78rem var(--am-body)", color: "var(--am-faint)" }}>Une fiche Bibliothèque existe pour ce titre : vérifie que son synopsis est bien en français.</small>}
       {reference && (
         <details style={{ marginTop: 6 }}>
-          <summary style={{ cursor: "pointer", font: "600 0.8rem var(--am-body)", color: "var(--am-faint)" }}>Description AniList en anglais (référence, non publiée)</summary>
+          <summary style={{ cursor: "pointer", font: "600 0.8rem var(--am-body)", color: "var(--am-faint)" }}>Résumé en anglais de la source (référence pour écrire, jamais publié)</summary>
           <p style={{ font: "500 0.85rem/1.45 var(--am-body)", color: "var(--am-dim)", marginTop: 4 }}>{reference}</p>
         </details>
       )}
@@ -56,41 +59,27 @@ function SynopsisField({ work, reference, library, onChange }: { work: FavoriteW
 }
 
 function FavoriteList({ kind, label, works, onChange, library }: { kind: Kind; label: string; works: FavoriteWork[]; onChange: (w: FavoriteWork[]) => void; library: LibraryIndex }) {
-  const [q, setQ] = useState("");
-  const [results, setResults] = useState<Candidate[]>([]);
-  const [searching, setSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [manual, setManual] = useState(false);
   const [mRomaji, setMRomaji] = useState("");
   const [mLocal, setMLocal] = useState("");
-  const keys = new Set(works.map(workKey));
   const featuredCount = works.filter((w) => w.featured).length;
 
-  async function search(e?: React.FormEvent) {
-    e?.preventDefault();
-    if (q.trim().length < 2) { setError("Tape au moins deux lettres."); return; }
-    setSearching(true); setError(null);
-    try {
-      const res = await fetch("/api/admin/anilist-search", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ search: q, type: kind }) });
-      const json = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(res.status === 401 ? "Session expirée : reconnecte-toi" : json?.error || `Erreur ${res.status}`);
-      setResults(json.results);
-      if (!json.results.length) setError("Aucun résultat. Essaie le titre anglais ou rōmaji, ou la saisie manuelle.");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Recherche impossible");
-    } finally { setSearching(false); }
-  }
-
   const renumber = (list: FavoriteWork[]) => list.map((w, i) => ({ ...w, rank: i + 1 }));
+  // Références non enregistrées : résumé anglais et titre français à confirmer.
   const [refs, setRefs] = useState<Record<string, string>>({});
-  const add = (w: Candidate) => {
-    if (keys.has(workKey(w))) return;
-    // Champs d'affichage de la recherche, non enregistrés.
-    const { descriptionEn, ...rest } = w;
-    const clean: Record<string, unknown> = { ...rest };
-    delete clean.year; delete clean.format;
-    if (descriptionEn) setRefs((r) => ({ ...r, [workKey(w)]: descriptionEn }));
-    onChange(renumber([...works, { ...(clean as unknown as FavoriteWork), kind }]));
+  const [frSuggest, setFrSuggest] = useState<Record<string, string>>({});
+  const add = (w: FavoriteWork) => {
+    if (works.some((x) => sameWork(x, w))) { setError("Cette œuvre est déjà dans la liste."); return; }
+    setError(null);
+    onChange(renumber([...works, { ...w, kind }]));
+  };
+  const addCandidate = (c: WorkCandidate) => {
+    const fav = candidateToFavorite(c);
+    const k = workKey({ ...fav, kind });
+    if (c.synopsisEn && !c.synopsisFr) setRefs((r) => ({ ...r, [k]: c.synopsisEn! }));
+    if (c.titleFr && c.titleFrUnverified) setFrSuggest((r) => ({ ...r, [k]: c.titleFr! }));
+    add(fav);
   };
   const move = (i: number, d: -1 | 1) => { const l = [...works]; const j = i + d; if (j < 0 || j >= l.length) return; [l[i], l[j]] = [l[j], l[i]]; onChange(renumber(l)); };
   const patch = (i: number, p: Partial<FavoriteWork>) => onChange(works.map((w, k) => (k === i ? { ...w, ...p } : w)));
@@ -119,12 +108,18 @@ function FavoriteList({ kind, label, works, onChange, library }: { kind: Kind; l
                 <div style={{ minWidth: 0 }}>
                   <strong>{i + 1}. {workTitle(w)}</strong>
                   {w.titleLocalized && w.titleRomaji && w.titleLocalized !== w.titleRomaji && <small>{w.titleLocalized}</small>}
-                  <small>{w.source === "anilist" ? "AniList" : "Saisie manuelle"}{w.featured ? " · coup de cœur" : ""}</small>
+                  <small>{[w.format && FORMAT_LABEL[w.format], w.year, SOURCE_NAME[w.source], w.trailer && `bande-annonce ${trailerLangLabel(w.trailer.lang)}`, w.featured && "coup de cœur"].filter(Boolean).join(" · ")}</small>
+                  {frSuggest[workKey(w)] && (
+                    <div className="am-row">
+                      <small style={{ color: "var(--am-gold)" }}>Titre français proposé par la source : « {frSuggest[workKey(w)]} » (à vérifier)</small>
+                      <button type="button" className="am-btn am-btn--sm" onClick={() => { const t = frSuggest[workKey(w)]; patch(i, { titleLocalized: t, titleRomaji: w.titleRomaji ?? (w.titleLocalized !== t ? w.titleLocalized : undefined) }); setFrSuggest((r) => { const n = { ...r }; delete n[workKey(w)]; return n; }); }}>Utiliser ce titre</button>
+                    </div>
+                  )}
                   <input className="am-input" value={w.personalNote ?? ""} maxLength={280} placeholder="Pourquoi j'aime (facultatif)"
                     aria-label={`Note personnelle pour ${workTitle(w)}`} aria-invalid={noteBad}
                     onChange={(e) => patch(i, { personalNote: e.target.value || undefined })} />
                   {noteBad && <small style={{ color: "var(--am-red)" }}>Pas de caractères japonais : cette note ne serait pas enregistrée.</small>}
-                  <SynopsisField work={w} reference={refs[workKey(w)]} library={library} onChange={(synopsis) => patch(i, { synopsis })} />
+                  <SynopsisField work={w} reference={refs[workKey(w)]} library={library} onChange={(synopsis) => patch(i, { synopsis, synopsisSource: synopsis ? "manual" : undefined })} />
                 </div>
                 <div className="am-item-actions">
                   <button type="button" className="am-icon am-star" aria-pressed={!!w.featured} disabled={!w.featured && featuredCount >= MAX_FEATURED}
@@ -140,33 +135,10 @@ function FavoriteList({ kind, label, works, onChange, library }: { kind: Kind; l
         </ol>
       )}
 
-      <form className="am-search" onSubmit={search} role="search">
-        <input className="am-input" value={q} onChange={(e) => setQ(e.target.value)} placeholder={kind === "ANIME" ? "Chercher un anime…" : "Chercher un manga…"} aria-label={`Chercher ${kind === "ANIME" ? "un anime" : "un manga"} sur AniList`} />
-        <button className="am-btn" disabled={searching} aria-label="Rechercher"><Search size={16} aria-hidden="true" />{searching ? "…" : ""}</button>
-      </form>
+      <WorkSearch kind={kind} pickLabel="Ajouter" onPick={addCandidate} isAdded={(c) => works.some((x) => sameWork(x, { ...candidateToFavorite(c), kind }))} />
       {error && <p className="am-alert am-alert--error" role="alert">{error}</p>}
-      {results.length > 0 && (
-        <div className="am-results" aria-label="Résultats AniList">
-          {results.map((r) => {
-            const already = keys.has(workKey(r));
-            return (
-              <div key={r.sourceId} className="am-result">
-                {r.coverUrl
-                  // eslint-disable-next-line @next/next/no-img-element
-                  ? <img src={r.coverUrl} alt="" loading="lazy" />
-                  : <span className="am-thumb" aria-hidden="true" />}
-                <div style={{ minWidth: 0 }}>
-                  <strong>{workTitle(r)}</strong>
-                  <small>{[r.titleLocalized !== r.titleRomaji ? r.titleLocalized : null, r.format, r.year].filter(Boolean).join(" · ")}</small>
-                </div>
-                <button type="button" className="am-btn am-btn--sm" disabled={already} onClick={() => add(r)}>{already ? "Ajouté" : <><Plus size={14} aria-hidden="true" /> Ajouter</>}</button>
-              </div>
-            );
-          })}
-        </div>
-      )}
       {!manual ? (
-        <button type="button" className="am-btn am-btn--sm" style={{ justifySelf: "start" }} onClick={() => setManual(true)}>Titre absent d&apos;AniList : saisie manuelle</button>
+        <button type="button" className="am-btn am-btn--sm" style={{ justifySelf: "start" }} onClick={() => setManual(true)}>Œuvre introuvable : saisie manuelle</button>
       ) : (
         <div className="am-grid2">
           <label className="am-field"><span>Titre rōmaji</span><input className="am-input" value={mRomaji} onChange={(e) => setMRomaji(e.target.value)} /></label>

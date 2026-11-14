@@ -1,3 +1,4 @@
+import { fetchMangadexCover, MANGADEX_UA } from "./works/mangadex";
 import { createClient } from "@supabase/supabase-js";
 import { fetchBestCover } from "./cover-fetch";
 
@@ -132,9 +133,12 @@ async function uploadAssetToSupabase(options: {
   const { sourceUrl, folder, baseName, force = false } = options;
   await ensureBucketWritable();
 
-  const response = await fetch(sourceUrl, {
-    headers: { Accept: "image/*" },
-  });
+  // Couverture MangaDex passée par notre proxy : on la télécharge chez MangaDex
+  // directement, avec l'en-tête User-Agent exigé par leurs règles.
+  const md = /^\/api\/works\/cover\?md=([0-9a-f-]{36})\/([\w%.-]{1,100})$/i.exec(sourceUrl);
+  const response = md
+    ? await fetchMangadexCover(md[1], decodeURIComponent(md[2]))
+    : await fetch(sourceUrl, { headers: { Accept: "image/*", "User-Agent": MANGADEX_UA } });
 
   if (!response.ok) {
     throw new Error(`Téléchargement cover échoué (${response.status})`);

@@ -12,8 +12,10 @@ export interface FocusPoint {
 }
 
 export interface FavoriteWork {
-  source: "anilist" | "manual";
-  sourceId?: number;
+  /** anilist : anciens favoris (conservés tels quels). tmdb / mangadex : recherche française actuelle. */
+  source: "anilist" | "manual" | "tmdb" | "mangadex";
+  /** AniList : nombre. TMDB : « tv:123 » ou « movie:123 ». MangaDex : UUID. */
+  sourceId?: number | string;
   kind: "ANIME" | "MANGA";
   /** Titre en écriture japonaise : conservé pour l'enrichissement, JAMAIS affiché. */
   titleNative?: string;
@@ -26,6 +28,16 @@ export interface FavoriteWork {
   personalNote?: string;
   /** Court synopsis en français (saisi ou repris de la Bibliothèque, jamais traduit automatiquement). */
   synopsis?: string;
+  /** Origine du synopsis : « source » (texte français de TMDB/MangaDex) ou « manual » (écrit à la main, jamais remplacé). */
+  synopsisSource?: "source" | "manual";
+  /** Forme de l'œuvre : série, film, manga… (voir lib/works/types). */
+  format?: "SERIE" | "FILM" | "MANGA" | "MANHWA" | "MANHUA";
+  year?: number;
+  genres?: string[];
+  /** Bande-annonce YouTube (langue d'origine indiquée). */
+  trailer?: { youtubeId: string; lang?: string };
+  /** Identifiant AniList connu de la source : évite les doublons avec les anciens favoris. */
+  anilistId?: number;
 }
 
 export interface MemberTrack {
@@ -64,7 +76,10 @@ export function hasJapanese(s: string): boolean {
 }
 
 /** Hôtes autorisés pour les jaquettes (images servies telles quelles). */
-const COVER_HOSTS = ["s4.anilist.co", "img.anili.st"];
+const COVER_HOSTS = ["s4.anilist.co", "img.anili.st", "image.tmdb.org"];
+/** Couverture MangaDex servie par notre proxy (chemin relatif du site). */
+const LOCAL_COVER = /^\/api\/works\/cover\?md=[0-9a-f-]{36}\/[\w%.-]{1,100}$/i;
+const FORMATS = ["SERIE", "FILM", "MANGA", "MANHWA", "MANHUA"] as const;
 const SUPABASE_HOST = /\.supabase\.(co|in)$/;
 
 const MAX_WORKS = 30;
@@ -114,26 +129,47 @@ function work(v: unknown, kind: "ANIME" | "MANGA"): FavoriteWork | null {
   const titleLocalized = latinText(o.titleLocalized, 200);
   // Une œuvre sans titre lisible en alphabet latin n'est pas affichable.
   if (!titleRomaji && !titleLocalized) return null;
-  const sourceId = typeof o.sourceId === "number" && Number.isInteger(o.sourceId) && o.sourceId > 0 ? o.sourceId : undefined;
-  return {
-    source: o.source === "anilist" && sourceId ? "anilist" : "manual",
+  const numId = typeof o.sourceId === "number" && Number.isInteger(o.sourceId) && o.sourceId > 0 ? o.sourceId : undefined;
+  const strId = typeof o.sourceId === "string" ? o.sourceId : undefined;
+  let source: FavoriteWork["source"] = "manual";
+  let sourceId: FavoriteWork["sourceId"];
+  if (o.source === "anilist" && numId) { source = "anilist"; sourceId = numId; }
+  else if (o.source === "tmdb" && strId && /^(tv|movie):\d{1,10}$/.test(strId)) { source = "tmdb"; sourceId = strId; }
+  else if (o.source === "mangadex" && strId && /^[0-9a-f-]{36}$/i.test(strId)) { source = "mangadex"; sourceId = strId; }
+  const coverRaw = str(o.coverUrl, 600);
+  const synopsis = latinText(o.synopsis, 700);
+  const year = typeof o.year === "number" && Number.isInteger(o.year) && o.year > 1900 && o.year < 2100 ? o.year : undefined;
+  const t = o.trailer && typeof o.trailer === "object" ? (o.trailer as Record<string, unknown>) : undefined;
+  const trailerId = t && typeof t.youtubeId === "string" && /^[\w-]{11}$/.test(t.youtubeId) ? t.youtubeId : undefined;
+  const al = typeof o.anilistId === "number" && Number.isInteger(o.anilistId) && o.anilistId > 0 ? o.anilistId : undefined;
+  const genres = Array.isArray(o.genres) ? o.genres.map((g) => latinText(g, 40)).filter((g): g is string => !!g).slice(0, 5) : undefined;
+  const w: FavoriteWork = {
+    source,
     sourceId,
     kind,
     titleNative: str(o.titleNative, 200),
     titleRomaji,
     titleLocalized,
-    coverUrl: httpsUrl(o.coverUrl, (h) => COVER_HOSTS.includes(h) || SUPABASE_HOST.test(h)),
+    coverUrl: coverRaw && LOCAL_COVER.test(coverRaw) ? coverRaw : httpsUrl(o.coverUrl, (h) => COVER_HOSTS.includes(h) || SUPABASE_HOST.test(h)),
     sourceUrl: httpsUrl(o.sourceUrl),
     rank: typeof o.rank === "number" && Number.isFinite(o.rank) ? o.rank : undefined,
     featured: o.featured === true,
     personalNote: latinText(o.personalNote, 280),
-    synopsis: latinText(o.synopsis, 700),
+    synopsis,
   };
+  if (synopsis && (o.synopsisSource === "source" || o.synopsisSource === "manual")) w.synopsisSource = o.synopsisSource;
+  if (typeof o.format === "string" && (FORMATS as readonly string[]).includes(o.format)) w.format = o.format as FavoriteWork["format"];
+  if (year) w.year = year;
+  if (genres?.length) w.genres = genres;
+  if (trailerId) w.trailer = { youtubeId: trailerId, ...(t && typeof t.lang === "string" && /^[a-z]{2}$/.test(t.lang) ? { lang: t.lang } : {}) };
+  if (al) w.anilistId = al;
+  return w;
 }
 
 /** Clé de dédoublonnage : identifiant de source s'il existe, sinon titre normalisé. */
 export function workKey(w: FavoriteWork): string {
   if (w.source === "anilist" && w.sourceId) return `anilist:${w.kind}:${w.sourceId}`;
+  if ((w.source === "tmdb" || w.source === "mangadex") && w.sourceId) return `${w.source}:${w.kind}:${w.sourceId}`;
   return `manual:${w.kind}:${(w.titleRomaji || w.titleLocalized || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")}`;
 }
 
@@ -225,14 +261,34 @@ export function featuredWorks(list: FavoriteWork[] = [], max = 3): FavoriteWork[
 }
 
 /** Titre principal affichable (rōmaji vérifié, sinon titre localisé). */
+/** Œuvres issues de la recherche française : le titre localisé (français) passe en premier. */
+const frenchFirst = (w: FavoriteWork) => w.source === "tmdb" || w.source === "mangadex";
+
 export function workTitle(w: FavoriteWork): string {
-  return w.titleRomaji || w.titleLocalized || "";
+  return frenchFirst(w) ? w.titleLocalized || w.titleRomaji || "" : w.titleRomaji || w.titleLocalized || "";
 }
 
 /** Sous-titre affichable s'il diffère du titre principal. */
 export function workSubtitle(w: FavoriteWork): string | undefined {
   if (!w.titleRomaji || !w.titleLocalized) return undefined;
-  return w.titleLocalized.toLowerCase() === w.titleRomaji.toLowerCase() ? undefined : w.titleLocalized;
+  if (w.titleLocalized.toLowerCase() === w.titleRomaji.toLowerCase()) return undefined;
+  return frenchFirst(w) ? w.titleRomaji : w.titleLocalized;
+}
+
+/** Vrai si deux favoris désignent la même œuvre (y compris ancien favori AniList et MangaDex). */
+export function sameWork(a: FavoriteWork, b: FavoriteWork): boolean {
+  if (workKey(a) === workKey(b)) return true;
+  if (a.kind !== b.kind) return false;
+  const alA = a.source === "anilist" ? Number(a.sourceId) : a.anilistId;
+  const alB = b.source === "anilist" ? Number(b.sourceId) : b.anilistId;
+  if (alA && alA === alB) return true;
+  // Saisie manuelle : pas d'identifiant, on compare les titres connus.
+  if (a.source === "manual" || b.source === "manual") {
+    const titles = (w: FavoriteWork) => new Set([w.titleRomaji, w.titleLocalized].filter(Boolean).map((t) => t!.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim()));
+    const ta = titles(a);
+    return [...titles(b)].some((t) => t && ta.has(t));
+  }
+  return false;
 }
 
 /** `object-position` CSS à partir d'un point focal, avec un repli adapté aux portraits. */
