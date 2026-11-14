@@ -189,11 +189,17 @@ function trySpecial(s: MatchState, f: Fighter, pressed: (k: keyof Input) => bool
     s.hitstop = 12;
     return true;
   }
+  // Un raccourci est choisi explicitement par direction : bas = anti-air,
+  // arrière = pied de rupture. Pas de repli implicite vers un autre coup.
+  if (pressed("special")) {
+    const back = f.facing === 1 ? f.prev.left : f.prev.right;
+    const id = f.prev.down ? "rising" : back ? "rushkick" : null;
+    const sp = id ? f.char.specials.find((v) => v.id === id) : f.char.specials[0];
+    return sp ? runSpecial(s, f, sp) : false;
+  }
   for (const sp of f.char.specials) {
     const btn = sp.button === "p" ? pressedP : pressedK;
-    if (pressed("special") || (btn && motionDone(f, s.frame, sp.motion))) {
-      if (runSpecial(s, f, sp)) return true;
-    }
+    if (btn && motionDone(f, s.frame, sp.motion) && runSpecial(s, f, sp)) return true;
   }
   return false;
 }

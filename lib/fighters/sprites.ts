@@ -3,7 +3,7 @@
 import { sheetFor, type SheetMeta } from "./characters";
 import type { Fighter } from "./engine";
 
-export interface LoadedSheet { meta: SheetMeta; img: HTMLImageElement; flash: HTMLCanvasElement | null; ready: boolean }
+export interface LoadedSheet { meta: SheetMeta; img: HTMLImageElement; flash: HTMLCanvasElement | null; ready: boolean; failed: boolean }
 
 const cache = new Map<string, LoadedSheet>();
 
@@ -12,7 +12,7 @@ export function loadSheet(meta: SheetMeta): LoadedSheet {
   const hit = cache.get(meta.key);
   if (hit) return hit;
   const img = new Image();
-  const entry: LoadedSheet = { meta, img, flash: null, ready: false };
+  const entry: LoadedSheet = { meta, img, flash: null, ready: false, failed: false };
   img.onload = () => {
     entry.ready = true;
     const c = document.createElement("canvas");
@@ -20,6 +20,7 @@ export function loadSheet(meta: SheetMeta): LoadedSheet {
     const x = c.getContext("2d");
     if (x) { x.drawImage(img, 0, 0); x.globalCompositeOperation = "source-in"; x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); entry.flash = c; }
   };
+  img.onerror = () => { entry.failed = true; };
   img.src = meta.image;
   cache.set(meta.key, entry);
   return entry;
@@ -33,7 +34,7 @@ export function sheetOf(f: Fighter): LoadedSheet | null {
 type A = SheetMeta["anims"][string];
 
 /** Image d'une animation minutée (durées), en boucle ou bloquée sur la dernière. */
-function timed(a: A, t: number) {
+export function animationFrame(a: A, t: number) {
   const dur = a.dur ?? a.frames.map(() => 8);
   const total = dur.reduce((n, d) => n + d, 0);
   let k = a.loop ? t % total : Math.min(t, total - 1);
@@ -57,12 +58,12 @@ export function frameFor(f: Fighter, meta: SheetMeta, clock: number): number {
   const an = meta.anims;
   const air = f.y < -1;
   switch (f.state) {
-    case "ready": return timed(an.intro, f.t);
-    case "idle": return timed(an.idle, clock);
-    case "walk": return timed(an.walk, clock);
-    case "guard": return Math.abs(f.vx) > 0.1 ? timed(an.walkback, clock) : timed(an.guard, 0);
-    case "crouch": return timed(an.crouch, f.t);
-    case "cguard": return timed(an.cguard, 0);
+    case "ready": return animationFrame(an.intro, f.t);
+    case "idle": return animationFrame(an.idle, clock);
+    case "walk": return animationFrame(an.walk, clock);
+    case "guard": return Math.abs(f.vx) > 0.1 ? animationFrame(an.walkback, clock) : animationFrame(an.guard, 0);
+    case "crouch": return animationFrame(an.crouch, f.t);
+    case "cguard": return animationFrame(an.cguard, 0);
     case "jump": {
       const a = f.vx * f.facing > 0.5 ? an.jumpfwd : an.jump;
       return a.frames[f.vy < -3 ? 1 : f.vy < 2.5 ? 2 : 3];
@@ -73,15 +74,15 @@ export function frameFor(f: Fighter, meta: SheetMeta, clock: number): number {
       const a = an[name] ?? an.s_lp;
       return phased(a, f.t, m.startup, m.active, m.recovery);
     }
-    case "hit": return air ? timed(an.fall, f.t) : f.prev.down ? timed(an.chit, f.t) : timed(an.hit, f.t);
-    case "thrown": return timed(an.hit, f.t);
-    case "block": return f.prev.down ? timed(an.cblock, 0) : timed(an.block, 0);
-    case "down": return timed(an.down, 0);
-    case "getup": return timed(an.getup, f.t);
-    case "dizzy": return timed(an.dizzy, clock);
-    case "dodge": return timed(an.dodge, f.t);
+    case "hit": return air ? animationFrame(an.fall, f.t) : f.prev.down ? animationFrame(an.chit, f.t) : animationFrame(an.hit, f.t);
+    case "thrown": return animationFrame(an.hit, f.t);
+    case "block": return f.prev.down ? animationFrame(an.cblock, 0) : animationFrame(an.block, 0);
+    case "down": return animationFrame(an.down, 0);
+    case "getup": return animationFrame(an.getup, f.t);
+    case "dizzy": return animationFrame(an.dizzy, clock);
+    case "dodge": return animationFrame(an.dodge, f.t);
     case "ko": return air ? an.ko.frames[0] : an.ko.frames[an.ko.frames.length - 1];
-    case "win": return timed(an.win, clock);
+    case "win": return animationFrame(an.win, clock);
   }
   return an.idle.frames[0];
 }

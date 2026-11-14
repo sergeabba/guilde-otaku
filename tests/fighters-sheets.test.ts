@@ -7,14 +7,16 @@ describe("planches de sprites", () => {
   it.each(Object.values(SHEETS))("$key : animations complètes et images valides", (sheet) => {
     for (const a of REQUIRED) expect(sheet.anims[a]?.frames.length).toBeGreaterThan(0);
     for (const a of Object.values(sheet.anims)) for (const f of a.frames) { expect(f).toBeGreaterThanOrEqual(0); expect(f).toBeLessThan(sheet.count); }
-    expect(sheet.image).toMatch(/^\/fighters\/sheets\/[a-z]+\.png$/);
+    expect(sheet.image).toMatch(/^\/fighters\/sheets\/[a-z0-9]+\.png$/);
   });
 
-  it("seuls Craig et Melrick ont des sprites ; les autres restent provisoires", () => {
+  it("les membres avec une apparence dessinée ont une planche, les inconnus restent provisoires", () => {
     expect(sheetFor(CRAIG)?.key).toBe("craig");
     expect(sheetFor(MELRICK)?.key).toBe("melrick");
-    expect(sheetFor(characterFor(3))).toBeNull();
-    expect(characterFor(3).custom).toBe(false);
+    expect(sheetFor(characterFor(3))?.key).toBe("m3");
+    expect(characterFor(3).custom).toBe(true);
+    expect(sheetFor(characterFor(54))).toBeNull();
+    expect(sheetFor(characterFor(999))).toBeNull();
   });
 
   it("les zones d'attaque suivent la portée réelle du dessin", () => {

@@ -1,0 +1,615 @@
+{
+  "base_archive_sha256": "afdb475498a5f0ce480b6ae3a7cf5733a80039855d018db79ab2514dd50272dd",
+  "files": [
+    {
+      "path": "FIGHTERS_MANUEL.md",
+      "before": null,
+      "after": "7322ea80716b2d8c762ad5ebad94c8219afb8387c8a01b3588cd28d2ff318f3e"
+    },
+    {
+      "path": "data/members.ts",
+      "before": "c83c7db0a67e0a2b1e2be1d28d16b1c788a2632476c17d06ac487ad097c4131c",
+      "after": "e9095a267d416b3f7ab2079e8d8b2a9f27dee8855d1a37d928e2b9b4de2587cb"
+    },
+    {
+      "path": "tests/fighters-sheets.test.ts",
+      "before": "bfc1fc645269f247760d5e23f446468e2e8d71338b56dd542604f0e87a86a05b",
+      "after": "94b70d96f8e29411dad042cacbb0c61479b47079b31cdce9ef4234cb92a66861"
+    },
+    {
+      "path": "tests/fighters-engine.test.ts",
+      "before": "d071e9b0e5f4ad341865062e41d1593c3d83c5353cdbef186b9a2b7a084657b8",
+      "after": "1569b111bffbdd43eaa47c3002e1f4a947cb01c235207500852ec461d457e3f4"
+    },
+    {
+      "path": "app/fighters/FightScreen.tsx",
+      "before": "15d8a9566a0f09211087330a2891e57bddf5324135c358f312ceccdabfd20a8a",
+      "after": "13c3a0afc41c913047cb28273f7bd0a1657de931ceb0984fc397e10b8a184c0d"
+    },
+    {
+      "path": "app/fighters/FightersApp.tsx",
+      "before": "4fccdbe782240488d45354a641db4ea83dd66dcac331ec2fec6ec78b0a1d1bed",
+      "after": "3941b372f60e30602ce648fd60f650b0bff0506ff6e0a5a950f96f36cf5b00b1"
+    },
+    {
+      "path": "app/fighters/FighterPreview.tsx",
+      "before": null,
+      "after": "c01ce25866c41af9d4d0126ac88dc9b87cf3c04094c676257fc7e050eacb876c"
+    },
+    {
+      "path": "app/fighters/fighters-select.css",
+      "before": "31b698c36da5671ed8e571c35ed0628964f43f576eec4c9ce661e0cb5d4f0edd",
+      "after": "ba009bfd93537f4a53c9fc20a0289ee05599511ebd863f8a2431aacc10e7c740"
+    },
+    {
+      "path": "public/fighters/sheets/m30.png",
+      "before": null,
+      "after": "822a98c88bb3e6492bc977a5deb31b91a221e92f14994966b440af2314b7e607"
+    },
+    {
+      "path": "public/fighters/sheets/m55.png",
+      "before": null,
+      "after": "44229aec455968eb204e8d6feeb5042141646b6e78c2bcafa6ad1183e1fd257d"
+    },
+    {
+      "path": "public/fighters/sheets/m23.png",
+      "before": null,
+      "after": "b81cd8ca57ee9e5ec37965703ba7f44bba8b3d5bacc20207daa4d7baa916575d"
+    },
+    {
+      "path": "public/fighters/sheets/m25.png",
+      "before": null,
+      "after": "f203807abb1195be2cd7ae2250162eb74dcc588117a42c130cd484fade84708e"
+    },
+    {
+      "path": "public/fighters/sheets/m40.png",
+      "before": null,
+      "after": "deff926fbf49b041ef2de203394590d38c4a03c9f6f7fef92dab124af2a95a72"
+    },
+    {
+      "path": "public/fighters/sheets/m22.png",
+      "before": null,
+      "after": "e3f069a8fd277ec906a9c27a67d15b88e1a28efe3af65cceec37541b3d21412c"
+    },
+    {
+      "path": "public/fighters/sheets/m35.png",
+      "before": null,
+      "after": "34a6ddeeda97bba7fbc08f052fb79e0d5160dc1c572a6b83678dbf0c91c9c546"
+    },
+    {
+      "path": "public/fighters/sheets/m5.png",
+      "before": null,
+      "after": "b994e87ff52a6fb602ab9e6020ac12a6dfa9d4b16b3d86d61fa75b8b9449e4ec"
+    },
+    {
+      "path": "public/fighters/sheets/m13.png",
+      "before": null,
+      "after": "666f420320817fe9f177da6a2055715ab2f1e7b2b5bb75bafecd9877cc24f771"
+    },
+    {
+      "path": "public/fighters/sheets/m18.png",
+      "before": null,
+      "after": "a300a591046f4f0b884eaf4443e096b24ff45a2571cb50b951d9de9bea3c1357"
+    },
+    {
+      "path": "public/fighters/sheets/m26.png",
+      "before": null,
+      "after": "36eaf7f372b092225ebc194cc5b6539f9ff7d3ab84ea53864ba7515ef9fe3762"
+    },
+    {
+      "path": "public/fighters/sheets/m12.png",
+      "before": null,
+      "after": "7ebb10401a3716c18b3c8220e737f8a1592c298624f228afb046531e6ccbe581"
+    },
+    {
+      "path": "public/fighters/sheets/m33.png",
+      "before": null,
+      "after": "5638b81d25196e19480d40f281be32c2d114b04a8ee9be96c774e41a94808698"
+    },
+    {
+      "path": "public/fighters/sheets/m10.png",
+      "before": null,
+      "after": "2e372dcd888c61ca23fcecd801f763621e330bbe7ef9bb2eb3123ce0e9bbe621"
+    },
+    {
+      "path": "public/fighters/sheets/m9.png",
+      "before": null,
+      "after": "75f08bb9e3d0156ebdf6402a55cad0a03bfc72f0a82a9a0733de6a056350c856"
+    },
+    {
+      "path": "public/fighters/sheets/m47.png",
+      "before": null,
+      "after": "3c805bcdd19db3c36a64d398024b4e1d465c091a6e7a8f0e75378eb75cb15038"
+    },
+    {
+      "path": "public/fighters/sheets/m37.png",
+      "before": null,
+      "after": "1e661b442976c6361a5afe9d11497a3317fdaf836a6a298af1334195dd0b993f"
+    },
+    {
+      "path": "public/fighters/sheets/m32.png",
+      "before": null,
+      "after": "5a16c672d384f10f81771b0b5b516e87bc1ef95cc957c3c8f06a35ee15a4e755"
+    },
+    {
+      "path": "public/fighters/sheets/m3.png",
+      "before": null,
+      "after": "28f0701ade438ab96f374cc2435e1f8fc3e95fb05e74531025d8412b2a6f9f40"
+    },
+    {
+      "path": "public/fighters/sheets/m29.png",
+      "before": null,
+      "after": "bb51debf0f445fc074a5d161773e6571c6635ce7754bc7c7c82ebbc5742592f7"
+    },
+    {
+      "path": "public/fighters/sheets/m27.png",
+      "before": null,
+      "after": "385325ae5c13658dc74a7b1d9fb9507bf8baf88bc8ed4e891cab78817cb70823"
+    },
+    {
+      "path": "public/fighters/sheets/m52.png",
+      "before": null,
+      "after": "f9609c91837f3f5e9447385d2aa2ac7f9c65292017bda616655ab8bb9460ace6"
+    },
+    {
+      "path": "public/fighters/sheets/m31.png",
+      "before": null,
+      "after": "0478ce1c3bfa8ad5ed8c2e40a522b66b63dda00bd95ece12b413acc20160b61f"
+    },
+    {
+      "path": "public/fighters/sheets/m21.png",
+      "before": null,
+      "after": "e5beea030574b9652ad514b7f8f8782486015e59d482861dd7d2a6cf8f4add02"
+    },
+    {
+      "path": "public/fighters/sheets/m51.png",
+      "before": null,
+      "after": "fec75dbd30f677761246be2462c14c70ee6aa99c651566b2927473a8b3f5eb42"
+    },
+    {
+      "path": "public/fighters/sheets/m14.png",
+      "before": null,
+      "after": "978a72a486c41640f98e5ba65f750c55689fd700deb72fd3991ec61d3c914024"
+    },
+    {
+      "path": "public/fighters/sheets/m39.png",
+      "before": null,
+      "after": "c103399462dfcbdd0dd77273a20c9a5d364d5e0ff1d05abf91ec14d3f320adef"
+    },
+    {
+      "path": "public/fighters/sheets/m43.png",
+      "before": null,
+      "after": "500d8c565bea7efc33d0b34a2670c683a2893d819fe0c6d70ef14075f7e815be"
+    },
+    {
+      "path": "public/fighters/sheets/m24.png",
+      "before": null,
+      "after": "77b5a6bac8481f8f541b7afcea19516d0af39dcd1cda0a3bc16cc1bfbcde7326"
+    },
+    {
+      "path": "public/fighters/sheets/m44.png",
+      "before": null,
+      "after": "50da5eb80039c4a5b30c6dca39b375af82a98b66e5b2643510858a7695e1b2bf"
+    },
+    {
+      "path": "public/fighters/sheets/m6.png",
+      "before": null,
+      "after": "02062ab62ae3535430767f40fdc51b3f3d00e0a47d474a103a3b2b2ed934e2a1"
+    },
+    {
+      "path": "public/fighters/sheets/m16.png",
+      "before": null,
+      "after": "0d9a9696cb2b244606eadf8a7c4b4775e77c891e2574e1d995cf1762e4d5b34c"
+    },
+    {
+      "path": "public/fighters/sheets/m11.png",
+      "before": null,
+      "after": "3f3787f797c1dafbbdcc6e9f2c8e58981ec22099fe5611cb47bb8fae6417aacd"
+    },
+    {
+      "path": "public/fighters/sheets/m4.png",
+      "before": null,
+      "after": "fb496ee5239243c550660931bb1a4db8904e1ed99b62cfb5ecef35c060c83d44"
+    },
+    {
+      "path": "public/fighters/sheets/m2.png",
+      "before": null,
+      "after": "4b92261385335565ee00ee7e1b87cfd4d63fb20589cfd45953c1af70820fffe8"
+    },
+    {
+      "path": "public/fighters/sheets/m38.png",
+      "before": null,
+      "after": "4eb6c4fe8688b09d9e2c76b70d71b09b7b8074713054111b877f09f57e571171"
+    },
+    {
+      "path": "public/fighters/sheets/m34.png",
+      "before": null,
+      "after": "feee7fc1e4bdfec4a7596228cf2f42882b5243997b93698e4d42febd88bd5766"
+    },
+    {
+      "path": "public/fighters/sheets/m19.png",
+      "before": null,
+      "after": "e8ee3e06ae90dd994ee41ddcdb88ef551aa23aa306a7d28b1c16ed880ec2b720"
+    },
+    {
+      "path": "public/fighters/sheets/m49.png",
+      "before": null,
+      "after": "d60279083558ce3d6f7909f9c3f30a0b7d7aaa8f9954d3221453c9e790912ead"
+    },
+    {
+      "path": "public/fighters/sheets/m28.png",
+      "before": null,
+      "after": "d60cb78719b1dd985415cf8e13d1ee029f4294a6d46e054b7058cda7a0e9b9a8"
+    },
+    {
+      "path": "public/fighters/sheets/m48.png",
+      "before": null,
+      "after": "6b6d7b2f776f18420cbd5241a42aafe8abfc3ec1097c929aeca4c194bccd6c34"
+    },
+    {
+      "path": "public/fighters/sheets/m53.png",
+      "before": null,
+      "after": "9f7d4947b38d31d1347c39eb3502387ef809a68f6dbfae685e39c3924442bae2"
+    },
+    {
+      "path": "public/fighters/sheets/m45.png",
+      "before": null,
+      "after": "2f25560e0dd4f4404b2eb962cfe097942d293f0bfe9a117aaf745236f47afb8e"
+    },
+    {
+      "path": "public/fighters/sheets/m46.png",
+      "before": null,
+      "after": "53af42d13000f06662b805cea2c9821c50719472b662442c924c4310e5e8386a"
+    },
+    {
+      "path": "public/fighters/sheets/m8.png",
+      "before": null,
+      "after": "3553744b2501419f8eb3bab61ae8310c02020509a6c18e323207a34da261e512"
+    },
+    {
+      "path": "public/fighters/sheets/m7.png",
+      "before": null,
+      "after": "9b34854d9c800485c97fd93c7de02e356ad28cd439e1c07f8dd556df6fe1ee4b"
+    },
+    {
+      "path": "public/fighters/sheets/m20.png",
+      "before": null,
+      "after": "16204ec50553752dedd903def263acfed4b5ad6043092f6c871311f4fd6b6eb2"
+    },
+    {
+      "path": "public/fighters/sheets/m41.png",
+      "before": null,
+      "after": "f718349c9e36552cd3663fa0f134179ba1cf4c93f207421009215ec026d1f398"
+    },
+    {
+      "path": "public/fighters/sheets/m15.png",
+      "before": null,
+      "after": "8f5ff2bba8472ed3c4214b9ddc2d39d1329123afadafbd354bc76952e309cc6f"
+    },
+    {
+      "path": "public/fighters/sheets/m42.png",
+      "before": null,
+      "after": "d37bd644d15d539b1fb64e3828c269a5057a693ea574836ad6b29e22d785e7bd"
+    },
+    {
+      "path": "public/fighters/sheets/m36.png",
+      "before": null,
+      "after": "b7d1244f766b27f9ce70f4a2c4f58740484ec3fae22690846717a42c1751126b"
+    },
+    {
+      "path": "public/fighters/sheets/m50.png",
+      "before": null,
+      "after": "b538cf4c3c4109afe304adb7ae9e6a2070b5cc16e25fad3cea3093dcede73b1d"
+    },
+    {
+      "path": "public/fighters/sheets/m17.png",
+      "before": null,
+      "after": "4d5d1ac62db8b3da7fd54c221f413ba4cb85fd5432dbb7fa19e65bb132e183a5"
+    },
+    {
+      "path": "lib/fighters/characters.ts",
+      "before": "d1d0feaa0a27b30756155a25ee45c8e6ae8761c9eb3eae20ef181f472d6f2eae",
+      "after": "f96f7d79e2d0eea46498d6f6a3900fc75653c7962df3c3e1bd5802c7d0fd754a"
+    },
+    {
+      "path": "lib/fighters/engine.ts",
+      "before": "378e477df89bd1c6ff7302eb64bb576f2e517a254d3f1d8bc0aa6b3af4336eab",
+      "after": "df174b4eed1563d4e068479d5835fd474f80032c571a250e689fd8ba16a50e79"
+    },
+    {
+      "path": "lib/fighters/sprites.ts",
+      "before": "d3e6e80c42615d4287984ce607079ac97080f558ff2fd54ccdcff95e7c1806b4",
+      "after": "263fa8ef9312dfa9b5892c7bc7adc3f008c40d7e220699f9a054a00340f8581f"
+    },
+    {
+      "path": "lib/fighters/sheets/m32.json",
+      "before": null,
+      "after": "07b710443b84e7f685c4a1152bac9276608d3f2107df28bea971811662b9a74a"
+    },
+    {
+      "path": "lib/fighters/sheets/m3.json",
+      "before": null,
+      "after": "f6a88de0739642cc608aef84f74fe2396fef1652258502aab6a66fead5774cb2"
+    },
+    {
+      "path": "lib/fighters/sheets/m20.json",
+      "before": null,
+      "after": "b27fdd6cf224ed6be2f3ac2a967a0becb357ab9ac335bdeea4a7a29f3dcb6285"
+    },
+    {
+      "path": "lib/fighters/sheets/m52.json",
+      "before": null,
+      "after": "5240b86caa7d158ccee756e83c8e571a6fcf389a4a608bd2b9d0381428695c9e"
+    },
+    {
+      "path": "lib/fighters/sheets/m33.json",
+      "before": null,
+      "after": "3273d7a1fe58ca4d83ea15e0f0930692331dab7882ed25cd0539f65e10f55ed8"
+    },
+    {
+      "path": "lib/fighters/sheets/m8.json",
+      "before": null,
+      "after": "b1508673e6b297743d7e192ef1d18a155a84c60f3cd211a9908083274ae9287c"
+    },
+    {
+      "path": "lib/fighters/sheets/m34.json",
+      "before": null,
+      "after": "bcb2291564f4abc8455a5634cee23195351d22e24c23620a1e54446e1a93a5c3"
+    },
+    {
+      "path": "lib/fighters/sheets/m2.json",
+      "before": null,
+      "after": "2c54930b20c9c1248bef4a76e811e876cf93acce685128c1367bf19a091cbfc3"
+    },
+    {
+      "path": "lib/fighters/sheets/m22.json",
+      "before": null,
+      "after": "4addc6ea717476e9548ed9d7a6b552e615463042ba3aebb720c0bf9aa5fe6272"
+    },
+    {
+      "path": "lib/fighters/sheets/m40.json",
+      "before": null,
+      "after": "b679883b2a37f03b8d4a2f7c0f2c4f098e85ac96267d57abb1311146f05b4b67"
+    },
+    {
+      "path": "lib/fighters/sheets/m37.json",
+      "before": null,
+      "after": "39fe22dbefe0c95ba8220e53de6d9b6ef59cef651515e1d6b4ad3b256f872437"
+    },
+    {
+      "path": "lib/fighters/sheets/m30.json",
+      "before": null,
+      "after": "ba4dd103ef605429d141eaabf342f156d5686f3459299b50931d997d3a9ebd1d"
+    },
+    {
+      "path": "lib/fighters/sheets/m43.json",
+      "before": null,
+      "after": "512fb392c3ab6e7e96bc3e299ca23a5cccea9ec318b572669829fe1e84e0672c"
+    },
+    {
+      "path": "lib/fighters/sheets/m48.json",
+      "before": null,
+      "after": "5b047aa2d0ecfecd5556aa2850839f359200f295b9d9007e029702f988907d72"
+    },
+    {
+      "path": "lib/fighters/sheets/m21.json",
+      "before": null,
+      "after": "f4bbe7a014e103a6ef83119ebcaabc9b8e6788f6d81716d22859fdd0dab23d6e"
+    },
+    {
+      "path": "lib/fighters/sheets/m26.json",
+      "before": null,
+      "after": "19d549e5ae30d8523aae12cc6b85e3b9f347f0fe647a537253a2ab56b28e30d3"
+    },
+    {
+      "path": "lib/fighters/sheets/m28.json",
+      "before": null,
+      "after": "f02ab6548751492d629841befd93abe300413ccfc7279bf10a43f1fb9d230948"
+    },
+    {
+      "path": "lib/fighters/sheets/m51.json",
+      "before": null,
+      "after": "91544a1442ead3a17e24f4d23af73632ebe8511162a50f9fccefa53bd1082cff"
+    },
+    {
+      "path": "lib/fighters/sheets/m47.json",
+      "before": null,
+      "after": "d1a35859fc3f57a2c8da24a9ac45cb30c1e7b211594ad8b09ae77bf1085ac0f5"
+    },
+    {
+      "path": "lib/fighters/sheets/m17.json",
+      "before": null,
+      "after": "8f9399149ff3ca90d8d41fce7bdb8e42ffef634be3e1d0e4b46490896796de04"
+    },
+    {
+      "path": "lib/fighters/sheets/m36.json",
+      "before": null,
+      "after": "803d03206354d750c6134fdb8be6f300be5755c7cd457c6e415d1e2e2c3c0ace"
+    },
+    {
+      "path": "lib/fighters/sheets/m23.json",
+      "before": null,
+      "after": "220daaee52852e00bc6c15ce3296423c2172c7053c670390d2cefd196e374cfe"
+    },
+    {
+      "path": "lib/fighters/sheets/m46.json",
+      "before": null,
+      "after": "c8f23bffe468b36a13335bf7c1213b96bbcaa02bb3bb79eda7fcc4a02ed3f101"
+    },
+    {
+      "path": "lib/fighters/sheets/m5.json",
+      "before": null,
+      "after": "6f869ca3aae6f0f3d5a0d5216a05a7fe9bd5c7baf506b4508dc41c4e6399cfe1"
+    },
+    {
+      "path": "lib/fighters/sheets/m24.json",
+      "before": null,
+      "after": "8d8548759c63247db428135b21a61a1c53d1aa86943c2b6427b3048c6b60234f"
+    },
+    {
+      "path": "lib/fighters/sheets/m53.json",
+      "before": null,
+      "after": "05b26cfc4114936265bb4d5e01228f1216bebfc3dd4eeb21d79baffa08a5b213"
+    },
+    {
+      "path": "lib/fighters/sheets/m18.json",
+      "before": null,
+      "after": "74b3f92f865831da726efc7c04b1e10f6d0f9e3dd5435a1a88bc9b1bea75f323"
+    },
+    {
+      "path": "lib/fighters/sheets/m16.json",
+      "before": null,
+      "after": "12f75e64a7094c097cb241447b820d7200ec913f727a95608eb98d3e09ddba3e"
+    },
+    {
+      "path": "lib/fighters/sheets/m35.json",
+      "before": null,
+      "after": "f1b3fa4e22d2e2863e38fc0b76be3bac86856c87d6d83003f1a323605d33af8d"
+    },
+    {
+      "path": "lib/fighters/sheets/m49.json",
+      "before": null,
+      "after": "ad8e734321fded52fdb4682d952834d74a4cf12d07e4fb4a09c0b3fab9b99e6a"
+    },
+    {
+      "path": "lib/fighters/sheets/m42.json",
+      "before": null,
+      "after": "08b5e764bbb421f0ab335c9ae3114a00f3764570cff84ed40f5770ab36d0f9ed"
+    },
+    {
+      "path": "lib/fighters/sheets/melrick.json",
+      "before": "f38a4185e5b3cbbbf5a5f9739dfc61793b7fd9832c8dbc808cf40c250605f6a0",
+      "after": "2087c0ddde632a322f2721a05741c91dd3ab0683e53fcabc0882653875f53883"
+    },
+    {
+      "path": "lib/fighters/sheets/m4.json",
+      "before": null,
+      "after": "bce536bc39f9b8afbb39bfb66ad04f8d4329c99be1401630faa7025cb3fc4a6b"
+    },
+    {
+      "path": "lib/fighters/sheets/m50.json",
+      "before": null,
+      "after": "8530a4999de36166b4a1fc03e8eb782fbd358ea39fd8e129f04bbb27f6f81ef4"
+    },
+    {
+      "path": "lib/fighters/sheets/m14.json",
+      "before": null,
+      "after": "cd5faa34bac24d6c9aa0e1aef36b7ee9a4a14b3bb39482a6d9f6e92168ea7ebb"
+    },
+    {
+      "path": "lib/fighters/sheets/m9.json",
+      "before": null,
+      "after": "30a050a8dd28e03cccc0e1106a03aedd9191357e282fbe35cb224836e6d743c2"
+    },
+    {
+      "path": "lib/fighters/sheets/m6.json",
+      "before": null,
+      "after": "a1285ea14c71317e3a207c7c100da2b33064bebc085611d270200258dfa64227"
+    },
+    {
+      "path": "lib/fighters/sheets/m45.json",
+      "before": null,
+      "after": "e52debfc1288c5bc214d2bb4343b333e4c47a1f34032084819265395e9cb3b54"
+    },
+    {
+      "path": "lib/fighters/sheets/m25.json",
+      "before": null,
+      "after": "38e0b0552cfbfbe591392b13ba78d6e2ba5bb4be50cce88763bcd07e8de60ef4"
+    },
+    {
+      "path": "lib/fighters/sheets/m31.json",
+      "before": null,
+      "after": "7579786af643e04bea1358ef922bdd2fc5484252375a54a899255fc7e8102438"
+    },
+    {
+      "path": "lib/fighters/sheets/m11.json",
+      "before": null,
+      "after": "fe17e56941cad612d038f14dc2c804b5f33724e96678295d93a42729cb5a8656"
+    },
+    {
+      "path": "lib/fighters/sheets/m41.json",
+      "before": null,
+      "after": "f8bbaa1f814057e8703561e6ec1030388c282757c47b8e5d5dd67201188afe89"
+    },
+    {
+      "path": "lib/fighters/sheets/m10.json",
+      "before": null,
+      "after": "2fc32cf7b978bcc6cbd23e90e5dff089d20bf5ce3ba37c5e6996b94a7f0ad9aa"
+    },
+    {
+      "path": "lib/fighters/sheets/m12.json",
+      "before": null,
+      "after": "7e58b498377ab85f6967a6eb07865bb6a9e5b124462f61c47f9a7b07a6f25278"
+    },
+    {
+      "path": "lib/fighters/sheets/roster.json",
+      "before": null,
+      "after": "f5f13afc430fdafb7f6a1371d371ae16b57a6bdcc2b8df49a42adf575d32b824"
+    },
+    {
+      "path": "lib/fighters/sheets/m44.json",
+      "before": null,
+      "after": "709848bafc6f6c8f24858896925d686675290624d97cf3613a893faeecc4ea2a"
+    },
+    {
+      "path": "lib/fighters/sheets/m15.json",
+      "before": null,
+      "after": "521a2bdbf764596f59abadb18cb4c55a807467a8b5ce87822d108dfed49cbc73"
+    },
+    {
+      "path": "lib/fighters/sheets/m27.json",
+      "before": null,
+      "after": "f8dd310f4acf945891c497c17448a3c900c27dddab5310b6a412458f0cf6472b"
+    },
+    {
+      "path": "lib/fighters/sheets/m7.json",
+      "before": null,
+      "after": "f96e3f6bf0ca9f21188e3c3d987aca79f7fc001ec81f3720faa5cfd72e996d51"
+    },
+    {
+      "path": "lib/fighters/sheets/m29.json",
+      "before": null,
+      "after": "25cde370d7603263c13bc5c92a892b291aa83134e701d4a19cdf5e0b67956cca"
+    },
+    {
+      "path": "lib/fighters/sheets/m55.json",
+      "before": null,
+      "after": "81051e9d2469eb72817a82e84addf88355e9e23f179954ae92e143d84a8943e4"
+    },
+    {
+      "path": "lib/fighters/sheets/m38.json",
+      "before": null,
+      "after": "907f718778659d40e139ca87c9d333626f6c7b44d5106b690b6fc7245da73fdf"
+    },
+    {
+      "path": "lib/fighters/sheets/m13.json",
+      "before": null,
+      "after": "2d01c4318b43bab9cc724d8f15c4552bea9b244367922d41cf82efc3dbba6e85"
+    },
+    {
+      "path": "lib/fighters/sheets/m19.json",
+      "before": null,
+      "after": "64f6b95f38dd579d7f8bf52242e550d5eacca3616485b3364838fa6152ce7100"
+    },
+    {
+      "path": "lib/fighters/sheets/craig.json",
+      "before": "288a3a0b66e0941bca883509026c758b6c61dc6293b428fe7227c67768302eaa",
+      "after": "4ec3b816bb92e5a83d892ecb3b8b866304d466473a5360eccd1fbc34fb2a273c"
+    },
+    {
+      "path": "lib/fighters/sheets/m39.json",
+      "before": null,
+      "after": "62abd3aae79ad4bec43d310f1d9600c1285bedaed4cac6290b9a55ed414e10b9"
+    },
+    {
+      "path": "scripts/fighters/bake-sprites.ts",
+      "before": "ecc29a2a4ff09b8cf9f52ccbf169e52747755ee24708b52dd603e194a9d730db",
+      "after": "889784947d6dd5c3292dfa1f9cb7279800312ed99291cc545b23a99804d9887c"
+    },
+    {
+      "path": "scripts/fighters/chars/roster.ts",
+      "before": null,
+      "after": "a1ce50f59ad7f8dc6c1e649818e3b98838552e14bda637d07b8d357f7f979e94"
+    }
+  ]
+}

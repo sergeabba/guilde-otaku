@@ -201,3 +201,6 @@ body.fx-ingame .gk-footer, body.fx-ingame .gk-backtop, body.fx-ingame [class*="b
   .fx-buttons { --b: 46px; grid-template-columns: repeat(3, var(--b)); grid-template-rows: repeat(3, var(--b)); gap: 5px;
     grid-template-areas: "sp su dg" "lp hp ." "lk hk ."; }
 }
+
+/* Le bandeau global ne doit pas recouvrir les écrans de jeu plein écran. */
+body.fx-ingame .guilde-birthday-banner { display: none; }

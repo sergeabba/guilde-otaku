@@ -267,6 +267,8 @@ export default function FightScreen({ teams, mode, versus, level, labels, reduce
                   <div><dt>J1</dt><dd>{keyLabel("KeyA", "Q")} {keyLabel("KeyD", "D")} déplacer · {keyLabel("KeyW", "Z")} sauter · {keyLabel("KeyS", "S")} s&apos;accroupir · {keyLabel("KeyU", "U")} poing léger · {keyLabel("KeyI", "I")} poing fort · {keyLabel("KeyJ", "J")} pied léger · {keyLabel("KeyK", "K")} pied fort</dd></div>
                   <div><dt>Garde</dt><dd>reculer = garde haute · reculer accroupi = garde basse</dd></div>
                   <div><dt>Spéciale</dt><dd>bas, bas-avant, avant + poing (ou {keyLabel("KeyO", "O")})</dd></div>
+                  <div><dt>Uppercut</dt><dd>avant, bas, bas-avant + poing · ou bas + Spé</dd></div>
+                  <div><dt>Pied de rupture</dt><dd>bas, bas-arrière, arrière + pied · ou arrière + Spé</dd></div>
                   <div><dt>Super</dt><dd>deux quarts de cercle + poing, jauge pleine (ou {keyLabel("KeyL", "L")})</dd></div>
                   <div><dt>Autres</dt><dd>avant + poing fort au contact = projection · {keyLabel("KeyH", "H")} ou poing léger + pied léger = esquive · enchaîner poing léger puis coup fort</dd></div>
                   {versus === "local" && <div><dt>J2</dt><dd>Flèches · pavé 4 5 1 2 (ou 7 8 9 0) coups · 6 (ou -) spéciale · 3 (ou =) super · 0 (ou .) esquive</dd></div>}

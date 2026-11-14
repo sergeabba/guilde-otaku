@@ -8,6 +8,7 @@ import { RANK_FILTER_ORDER, type Rank } from "../../data/members";
 import { rankAccents, rankRomaji } from "../config/ranks";
 import type { AiLevel } from "../../lib/fighters/ai";
 import { CUSTOM_IDS } from "../../lib/fighters/characters";
+import FighterPreview from "./FighterPreview";
 import { useMusicDock } from "../components/MusicDock";
 
 const FightScreen = dynamic(() => import("./FightScreen"), { ssr: false });
@@ -101,7 +102,7 @@ function TitleScreen({ roster, mode, setMode, versus, setVersus, level, setLevel
           )}
         </div>
         <button type="button" className="fx-cta" onClick={onStart}>Choisir les combattants</button>
-        <p className="fx-proto">Prototype jouable : tous les membres combattent avec deux silhouettes pixel art communes, teintées à leurs couleurs. Leurs portraits, rangs, statistiques et attaques spéciales sont les vrais.</p>
+        <p className="fx-proto">Personnages en pixel art inspirés des photos de la Guilde. Combat à quatre boutons, garde haute et basse, combos et jauge de super. Les interprétations visuelles restent à valider par les membres.</p>
       </div>
     </section>
   );
@@ -132,13 +133,14 @@ function BigPortrait({ side, label, m, team, size, order, active, status }: {
           </div>
         )}
       </div>
+      {m && <FighterPreview memberId={m.id} side={side} />}
       <div className="fxs-plate">
         <p className="fxs-status" aria-live="polite">{status}</p>
         <h2 className="fxs-name">{m ? m.name : "—"}</h2>
         {m && (
           <p className="fxs-rank">
             <span>{m.rank}</span>{rankRomaji[m.rank as Rank] && <em>{rankRomaji[m.rank as Rank]}</em>}
-            <b className={hasSprite(m) ? "fxs-sprite is-custom" : "fxs-sprite"}>{hasSprite(m) ? "Sprite perso" : "Sprite provisoire"}</b>
+            <b className={hasSprite(m) ? "fxs-sprite is-custom" : "fxs-sprite"}>{hasSprite(m) ? "Sprite dédié" : "Sprite provisoire"}</b>
           </p>
         )}
         {m && (m.stats ? (
@@ -330,8 +332,8 @@ function SelectScreen({ roster, mode, versus, reduced, onBack, onReady }: {
     <section className={`fxs fxs--${phase}`} aria-labelledby="fxs-h">
       <div className="fxs-decor" aria-hidden="true"><span className="fxs-decor-word">GUILDE</span></div>
       <header className="fxs-top">
-        <button type="button" className="fx-ghost fxs-back" onClick={onBack}><ArrowLeft size={16} aria-hidden="true" /> Accueil</button>
-        <h1 id="fxs-h" className="fxs-title">{phase === "order" ? "Ordre de passage" : phase === "ready" ? "Prêts au combat" : "Sélection"}</h1>
+        <button type="button" className="fx-ghost fxs-back" onClick={onBack}><ArrowLeft size={16} aria-hidden="true" /> Modes de jeu</button>
+        <h1 id="fxs-h" className="fxs-title">{phase === "order" ? "Ordre de passage" : phase === "ready" ? "Prêts au combat" : "Choisis ton combattant"}</h1>
         <p className="fxs-mode">{mode === "team" ? "Équipes 3 contre 3" : "Duel 1 contre 1"} · {isAi ? "contre l'IA" : "2 joueurs"}</p>
       </header>
 
@@ -380,7 +382,7 @@ function SelectScreen({ roster, mode, versus, reduced, onBack, onReady }: {
               ))}
               {list.length === 0 && <p className="fx-muted">Aucun membre ne correspond.</p>}
             </div>
-            <p className="fxs-legend"><span aria-hidden="true">★</span> sprite personnalisé · les autres membres utilisent une silhouette provisoire</p>
+            <p className="fxs-legend"><span aria-hidden="true">★</span> sprite dédié · {CUSTOM_IDS.length} apparences dessinées · glisse pour parcourir le roster</p>
           </>
         )}
 
@@ -469,7 +471,7 @@ function VsScreen({ teams, labels, onDone, reduced }: { teams: [RosterMember[], 
 
 // ─── Application ──────────────────────────────────────────────────────────────
 export default function FightersApp({ roster }: { roster: RosterMember[] }) {
-  const [screen, setScreen] = useState<Screen>("title");
+  const [screen, setScreen] = useState<Screen>("select");
   const [mode, setMode] = useState<Mode>("team");
   const [versus, setVersus] = useState<Versus>("ia");
   const [level, setLevel] = useState<AiLevel>("normal");

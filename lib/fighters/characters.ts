@@ -65,6 +65,7 @@ export interface CharacterDef {
 
 import craigSheet from "./sheets/craig.json";
 import melrickSheet from "./sheets/melrick.json";
+import rosterSheets from "./sheets/roster.json";
 
 /** Échelle des personnages (sprites d'environ 76 px de haut dans une arène de 216 px). */
 const K = 1.3;
@@ -78,7 +79,7 @@ export interface SheetMeta {
   size: { h: number; crouchH: number; w: number }; reach: Record<string, number>;
   anims: Record<string, { frames: number[]; dur?: number[]; phases?: string[]; loop?: boolean }>;
 }
-export const SHEETS: Record<string, SheetMeta> = { craig: craigSheet as unknown as SheetMeta, melrick: melrickSheet as unknown as SheetMeta };
+export const SHEETS: Record<string, SheetMeta> = { ...rosterSheets as unknown as Record<string, SheetMeta>, craig: craigSheet as unknown as SheetMeta, melrick: melrickSheet as unknown as SheetMeta };
 
 /** Cale la zone d'attaque de chaque coup sur la portée réelle du dessin (image active). */
 function fitToSheet(normals: Record<NormalId, MoveDef>, sheet: SheetMeta): Record<NormalId, MoveDef> {
@@ -122,9 +123,17 @@ const commonSuper = (): SpecialDef => ({
   move: N({ id: "super", startup: 10, active: 10, recovery: 26, damage: 240, guard: "mid", hit: { x: 6, y: 20, w: 48, h: 34 }, hitstun: 30, blockstun: 18, push: 5, knockdown: true, lunge: 5, invuln: [1, 12] }),
 });
 
+/** Techniques communes supplémentaires, distinctes des pouvoirs personnels. */
+const commonTechniques = (): SpecialDef[] => [
+  { id: "rising", name: "Uppercut", motion: "dp", button: "p", provisional: false,
+    move: N({ id: "rising", anim: "c_hp", startup: 7, active: 5, recovery: 25, damage: 95, guard: "mid", hit: { x: 4, y: 34, w: 24, h: 42 }, hitstun: 24, blockstun: 14, push: 2, launch: 7, invuln: [1, 5] }) },
+  { id: "rushkick", name: "Pied de rupture", motion: "qcb", button: "k", provisional: false,
+    move: N({ id: "rushkick", anim: "s_hk", startup: 11, active: 6, recovery: 24, damage: 100, guard: "mid", hit: { x: 8, y: 26, w: 36, h: 18 }, hitstun: 24, blockstun: 15, push: 5, knockdown: true, lunge: 3.5 }) },
+];
+
 const base = (key: string, memberId: number | null, specialName: string, source?: string): CharacterDef => ({
   key, memberId, custom: false, walk: 2.05, backWalk: 1.55, jumpV: -8.1, size: { w: 26, h: 72, crouchH: 48 },
-  normals: COMMON_NORMALS, specials: [commonWave(specialName, source)], superMove: commonSuper(),
+  normals: COMMON_NORMALS, specials: [commonWave(specialName, source), ...commonTechniques()], superMove: commonSuper(),
 });
 
 // ─── Personnages personnalisés ───────────────────────────────────────────────
@@ -144,7 +153,7 @@ export const CRAIG: CharacterDef = {
     source: "Stun l'adversaire avec une question impossible.",
     move: N({ id: "quiz", anim: "special", startup: 14, active: 1, recovery: 20, damage: 0, guard: "mid", hit: { x: 0, y: 0, w: 0, h: 0 }, hitstun: 0, blockstun: 0, push: 0,
       projectile: { speed: 3.1, damage: 40, hitstun: 20, blockstun: 12, ttl: 140, sprite: "quiz", effect: "dizzy", h: 40 } }),
-  }],
+  }, ...commonTechniques()],
 };
 
 /**
@@ -165,9 +174,14 @@ const CUSTOM: Record<number, CharacterDef> = { 1: CRAIG, 56: MELRICK };
 
 /** Personnage d'un membre : personnalisé s'il existe, sinon provisoire (silhouette commune). */
 export function characterFor(memberId: number, specialName?: string): CharacterDef {
-  return CUSTOM[memberId] ?? { ...base(`m${memberId}`, memberId, specialName || "Onde de la Guilde"), key: `m${memberId}` };
+  if (CUSTOM[memberId]) return CUSTOM[memberId];
+  const common = base(`m${memberId}`, memberId, specialName || "Onde de la Guilde");
+  const sheet = SHEETS[common.key];
+  if (!sheet) return common;
+  // Apparence personnalisée, coups communs conservés : aucun pouvoir personnel inventé.
+  return { ...common, custom: true, size: { w: 26, h: sheet.size.h - 2, crouchH: sheet.size.crouchH - 2 }, normals: fitToSheet(COMMON_NORMALS, sheet) };
 }
 
-export const CUSTOM_IDS = Object.keys(CUSTOM).map(Number);
+export const CUSTOM_IDS = [...Object.keys(CUSTOM).map(Number), ...Object.keys(rosterSheets).map((key) => Number(key.slice(1)))];
 /** Planche de sprites d'un personnage, ou rien s'il est encore provisoire. */
 export const sheetFor = (c: CharacterDef): SheetMeta | null => (c.custom ? SHEETS[c.key] ?? null : null);

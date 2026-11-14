@@ -5,16 +5,17 @@
 //
 // Sorties : public/fighters/sheets/<clé>.png et lib/fighters/sheets/<clé>.json.
 // Le script échoue (code 1) si une vérification ne passe pas.
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Canvas, blit, encodePNG, groundTo, hex, rotate, solve } from "./sprite-kit.ts";
 import { ANCHOR, CELL_H, CELL_W, REQUIRED_ANIMS, type Colors, type SpriteChar } from "./rig.ts";
 import { CRAIG_SPRITES } from "./chars/craig.ts";
 import { MELRICK_SPRITES } from "./chars/melrick.ts";
+import { ROSTER_SPRITES } from "./chars/roster.ts";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const CHARS: SpriteChar[] = [CRAIG_SPRITES, MELRICK_SPRITES];
+const CHARS: SpriteChar[] = [CRAIG_SPRITES, MELRICK_SPRITES, ...ROSTER_SPRITES];
 const COLS = 8;
 
 interface FrameInfo { bbox: [number, number, number, number] }
@@ -122,11 +123,16 @@ function bake(ch: SpriteChar) {
   return { errors, report };
 }
 
+const rosterSheets: Record<string, unknown> = {};
 let failed = false;
 for (const ch of CHARS) {
   const { errors, report } = bake(ch);
+  if (ch.key.startsWith("m") && ch.key !== "melrick") {
+    rosterSheets[ch.key] = JSON.parse(readFileSync(join(ROOT, "lib/fighters/sheets", `${ch.key}.json`), "utf8"));
+  }
   for (const r of report) console.log(r);
   if (errors.length) { failed = true; for (const e of errors) console.error(`  ✗ ${ch.key} : ${e}`); }
   else console.log(`  ✓ ${ch.key} : toutes les vérifications passent`);
 }
+writeFileSync(join(ROOT, "lib/fighters/sheets/roster.json"), JSON.stringify(rosterSheets) + "\n");
 process.exit(failed ? 1 : 0);

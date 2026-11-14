@@ -195,3 +195,42 @@ describe("moteur Guilde Fighters v3", () => {
     expect(a.seen).toEqual(expect.arrayContaining(["hit", "special", "combo"]));
   });
 });
+
+describe("techniques arcade supplémentaires", () => {
+  it("bas + spéciale sélectionne l'uppercut et inflige un vrai dégât au contact", () => {
+    const s = closeIn(fresh(2, 3), 30);
+    const hp = s.fighters[1].hp;
+    st(s, I({ down: true, special: true }));
+    expect(s.fighters[0].move?.id).toBe("rising");
+    run(s, 40);
+    expect(s.fighters[1].hp).toBeLessThan(hp);
+    expect(s.projectiles).toHaveLength(0);
+  });
+
+  it("Craig conserve son quiz et dispose aussi des techniques communes", () => {
+    const s = fresh(1, 3);
+    st(s, I({ left: true, special: true }));
+    expect(s.fighters[0].move?.id).toBe("rushkick");
+    expect(CRAIG.specials[0].id).toBe("quiz");
+  });
+
+  it("le quart de cercle arrière + pied lance le pied de rupture", () => {
+    const s = fresh(2, 3);
+    st(s, I({ down: true }));
+    st(s, I({ down: true, left: true }));
+    st(s, I({ left: true }));
+    st(s, I({ left: true, lk: true }));
+    expect(s.fighters[0].move?.id).toBe("rushkick");
+  });
+
+  it("un projectile déjà actif ne transforme pas le raccourci neutre en un autre coup", () => {
+    const s = fresh(2, 3);
+    s.fighters[0].x = 35;
+    s.fighters[1].x = 349;
+    tap(s, { special: true }, {}, 35);
+    expect(s.projectiles.length).toBeGreaterThan(0);
+    st(s, I({ special: true }));
+    expect(s.fighters[0].move?.id).not.toBe("rising");
+    expect(s.fighters[0].move?.id).not.toBe("rushkick");
+  });
+});
