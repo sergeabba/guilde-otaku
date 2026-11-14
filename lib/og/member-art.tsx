@@ -43,7 +43,7 @@ async function portraitData(src: string | undefined, origin: string, width: numb
   const abs = absoluteAsset(src, origin);
   if (!abs) return null;
   const candidates = [
-    `${origin}/_next/image?url=${encodeURIComponent(src!.startsWith("/") ? src! : abs)}&w=${width}&q=80`,
+    `${origin}/_next/image?url=${encodeURIComponent(src!.startsWith("/") ? src! : abs)}&w=${width}&q=75`,
     abs,
   ];
   for (const url of candidates) {
@@ -257,15 +257,22 @@ function displaySize(name: string, width: number, max: number) {
   return Math.max(54, Math.min(max, bySize, byTotal));
 }
 
+/** Coupe un texte au dernier mot entier avant `max` caractères. */
+function cutWords(s: string, max: number): string {
+  if (s.length <= max) return s;
+  const cutAt = s.lastIndexOf(" ", max - 1);
+  return `${s.slice(0, cutAt > max * 0.6 ? cutAt : max - 1).replace(/[\s,;:.]+$/, "")}…`;
+}
+
 /**
- * Carte Otaku 1080×1350, dans l'esprit de la fiche : fond sombre teinté à la couleur
- * du membre (tirée de son portrait anime, ou choisie dans l'admin),
- * diptyque réel / anime à ombre dure, nom en grand, grade, palmarès,
- * pays et anniversaire, bio, favoris et musique s'ils sont renseignés. Aucun lien.
+ * Carte Otaku 1080×1350, façon affiche : en haut, le diptyque réel / anime en grand
+ * avec le nom et le grade posés sur le bas des images ; en bas, deux colonnes
+ * équilibrées (identité, distinctions, bio | jaquettes en grand et musique).
+ * Couleur du membre tirée de son portrait anime (ou choisie dans l'admin). Aucun lien.
  */
 export async function renderMemberCard(m: Member, origin: string): Promise<ImageResponse> {
   const { awards, anime: favA, manga: favM, track, trackLine } = richContent(m);
-  const favs = [...favA, ...favM].slice(0, 5);
+  const favs = [...favA, ...favM].slice(0, 4);
   const { accent: rankColor, romaji, country } = rankInfo(m);
   const [fonts, display, real, anime, logo, flag, trackCover, ...covers] = await Promise.all([
     loadFonts(),
@@ -275,44 +282,66 @@ export async function renderMemberCard(m: Member, origin: string): Promise<Image
     portraitData(rankLogos[m.rank as Rank], origin, 128),
     flagData(m.country, origin),
     portraitData(track?.cover, origin, 128),
-    ...favs.map((w) => portraitData(w.coverUrl, origin, 256)),
+    ...favs.map((w) => portraitData(w.coverUrl, origin, 384)),
   ]);
+  // Logo du grade (logo d'anime, souvent large) : hauteur fixe, largeur selon ses proportions.
+  const logoW = logo ? await (async () => {
+    try {
+      const sharp = (await import("sharp")).default;
+      const meta = await sharp(Buffer.from(logo.split(",")[1], "base64")).metadata();
+      return meta.width && meta.height ? Math.min(190, Math.round((54 * meta.width) / meta.height)) : 54;
+    } catch { return 54; }
+  })() : 0;
   const custom = m.extras?.card;
   const picked = custom?.color ?? (anime ? await dominantVivid(Buffer.from(anime.split(",")[1], "base64")) : null);
   const color = safeHex(picked ?? rankColor);
   const motif: CardMotif = custom?.motif ?? CARD_MOTIFS[m.id % CARD_MOTIFS.length];
   const on = onAccent(color);
 
-  const PAD = 60, W = 1080 - 2 * PAD;
+  const PAD = 48, W = 1080 - 2 * PAD;
   const both = real && anime;
-  const bio = m.bio?.trim() ? cut(m.bio.trim(), 170) : "";
-  const nameSize = displaySize(m.name, W, 124);
+  const heroInner = W - 10; // bordure 5 px de chaque côté
+  const panelW = both ? Math.floor((heroInner - 6) / 2) : heroInner;
+  const nameSize = displaySize(m.name, heroInner - 56, 112);
 
-  // Hauteur des photos = place restante une fois le texte estimé : pas de vide au milieu.
-  const nameLines = Math.min(2, Math.max(1, Math.ceil((cut(m.name, 40).length * nameSize * 0.72) / W)));
-  const bioLines = bio ? Math.ceil(bio.length / ((country || m.birthday) ? 46 : 70)) : 0;
-  const textH = nameLines * nameSize * 1.02 + 16 + 64 + (awards.length ? 62 : 0)
-    + ((country || m.birthday || bio) ? 20 + Math.max(country || m.birthday ? 78 : 0, bioLines * 35) : 0)
-    + (trackLine ? 22 + 64 : 0);
-  const room = 1350 - 2 * PAD - 44 - 30 - 22 - 42 - 10 - textH;
-  // Jaquettes en grand (5 au plus, toute la largeur), réduites si la fiche est très remplie,
-  // pour que les photos gardent au moins 400 px.
-  const coverMaxW = favs.length ? Math.min(176, Math.floor((W - 6 - 16 * (favs.length - 1)) / Math.max(favs.length, 4))) : 0;
-  const coverH = favs.length ? Math.max(130, Math.min(Math.round(coverMaxW * 1.42), room - 400 - 62)) : 0;
-  const coverW = Math.round(coverH / 1.42);
-  const panelH = Math.round(Math.min(780, Math.max(400, room - (favs.length ? 62 + coverH : 0))));
-  const panelW = both ? Math.floor((W - 26 - 6) / 2) : W - 26;
+  // Colonnes du bas : la droite (œuvres, musique) n'existe que s'il y a de quoi la remplir.
+  const hasRight = favs.length > 0 || !!trackLine;
+  const RIGHT_W = hasRight ? 430 : 0;
+  const GAP = hasRight ? 34 : 0;
+  const LEFT_W = W - RIGHT_W - GAP;
+  const bioMax = hasRight ? (awards.length > 2 ? 200 : 260) : 380;
+  const bio = m.bio?.trim() ? cutWords(m.bio.trim(), bioMax) : "";
+  // Jaquettes : 1 à 3 sur une rangée (très grandes), 4 en grille 2 × 2.
+  const cols = favs.length === 4 ? 2 : Math.max(favs.length, 1);
+  const rowsN = Math.ceil(favs.length / cols);
+  const coverGap = 14;
+  const coverAreaH = trackLine ? 360 : 440;
+  let coverW = Math.floor((RIGHT_W - 8 - coverGap * (cols - 1)) / cols);
+  let coverH = Math.round(coverW * 1.42);
+  if (rowsN * coverH + (rowsN - 1) * coverGap > coverAreaH) {
+    coverH = Math.floor((coverAreaH - (rowsN - 1) * coverGap) / rowsN);
+    coverW = Math.round(coverH / 1.42);
+  }
   const coverOf = new Map(favs.map((w, i) => [w, covers[i] ?? null]));
-  const label = (txt: string, bg: string, fg: string) => (
-    <div style={{ position: "absolute", left: 14, bottom: 14, display: "flex", padding: "5px 12px", background: bg, color: fg, fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 24, letterSpacing: 2, border: `3px solid ${INK}` }}>{txt}</div>
+  // Hauteur estimée du bas ; les photos prennent tout le reste (pas de vide).
+  const charsPerLine = Math.floor((LEFT_W - 24) / ((hasRight ? 25 : 28) * 0.5));
+  const leftH = ((country || m.birthday) ? 40 : 0)
+    + (awards.length ? 16 + Math.min(3, awards.length) * 52 : 0)
+    + (bio ? 20 + Math.ceil(bio.length / charsPerLine) * (hasRight ? 35.5 : 40) : 0);
+  const rightH = (favs.length ? 32 + rowsN * (coverH + coverGap) : 0) + (trackLine ? (favs.length ? 70 : 120) : 0);
+  const bottomH = Math.max(leftH, rightH, 60);
+  const HERO_H = Math.round(Math.min(900, Math.max(600, 1350 - 2 * PAD - 44 - 20 - 10 - 40 - 6 - bottomH - 12)));
+  const kicker = (t: string) => <div style={{ display: "flex", fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 20, letterSpacing: 3, color }}>{t}</div>;
+  const tag = (txt: string, bg: string, fg: string) => (
+    <div style={{ position: "absolute", top: 16, left: 16, display: "flex", padding: "4px 12px", background: bg, color: fg, fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 22, letterSpacing: 2, border: `3px solid ${INK}` }}>{txt}</div>
   );
   const panel = (src: string | null, pos: string, txt: string, bg: string, fg: string) => (
-    <div style={{ position: "relative", display: "flex", width: panelW, height: panelH, overflow: "hidden", background: "#1d1a22" }}>
+    <div style={{ position: "relative", display: "flex", width: panelW, height: HERO_H, overflow: "hidden", background: "#1d1a22" }}>
       {src
         // eslint-disable-next-line @next/next/no-img-element
-        ? <img src={src} width={panelW} height={panelH} alt="" style={{ width: panelW, height: panelH, objectFit: "cover", objectPosition: pos }} />
+        ? <img src={src} width={panelW} height={HERO_H} alt="" style={{ width: panelW, height: HERO_H, objectFit: "cover", objectPosition: pos }} />
         : <div style={{ display: "flex", flex: 1, alignItems: "center", justifyContent: "center", fontFamily: "Dela Gothic One", fontSize: 120, color: "rgba(244,239,228,0.1)" }}>?</div>}
-      {label(txt, bg, fg)}
+      {tag(txt, bg, fg)}
     </div>
   );
 
@@ -320,107 +349,104 @@ export async function renderMemberCard(m: Member, origin: string): Promise<Image
     (
       <div style={{ position: "relative", display: "flex", flexDirection: "column", width: "100%", height: "100%", background: INK, color: PAPER, fontFamily: "Barlow", padding: PAD, overflow: "hidden" }}>
         {/* Fond : teinte du membre et motif. */}
-        <div style={{ position: "absolute", top: 0, left: 0, width: 1080, height: 1350, display: "flex", backgroundImage: `linear-gradient(158deg, ${hexA(color, 0.62)} 0%, ${hexA(color, 0.2)} 38%, ${hexA(INK, 0)} 72%)` }} />
+        <div style={{ position: "absolute", top: 0, left: 0, width: 1080, height: 1350, display: "flex", backgroundImage: `linear-gradient(170deg, ${hexA(color, 0.55)} 0%, ${hexA(color, 0.16)} 42%, ${hexA(INK, 0)} 70%)` }} />
         <div style={{ position: "absolute", top: 0, left: 0, width: 1080, height: 1350, display: "flex", ...motifLayer(motif, color) }} />
-        <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 14, display: "flex", background: color }} />
+        <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 12, display: "flex", background: color }} />
 
         {/* En-tête */}
-        <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "stretch", fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 26, letterSpacing: 3 }}>
-            <div style={{ display: "flex", width: 14, background: color, border: `3px solid ${PAPER}`, borderRight: "none" }} />
-            <div style={{ display: "flex", padding: "6px 14px", background: PAPER, color: INK, border: `3px solid ${PAPER}` }}>CARTE DE NAKAMA</div>
+        <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", height: 44 }}>
+          <div style={{ display: "flex", alignItems: "stretch", fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 24, letterSpacing: 3 }}>
+            <div style={{ display: "flex", width: 12, background: color, border: `3px solid ${PAPER}`, borderRight: "none" }} />
+            <div style={{ display: "flex", padding: "5px 14px", background: PAPER, color: INK, border: `3px solid ${PAPER}` }}>CARTE DE NAKAMA</div>
           </div>
-          <div style={{ display: "flex", fontFamily: "Dela Gothic One", fontSize: 26, letterSpacing: 1 }}>GUILDE OTAKU</div>
+          <div style={{ display: "flex", fontFamily: "Dela Gothic One", fontSize: 24, letterSpacing: 1 }}>GUILDE OTAKU</div>
         </div>
 
-        {/* Diptyque */}
-        <div style={{ position: "relative", display: "flex", marginTop: 30, alignSelf: "flex-start" }}>
-          <div style={{ position: "absolute", left: -18, top: 40, width: 10, height: panelH - 80, display: "flex", background: color }} />
-          <div style={{ display: "flex", border: `5px solid ${PAPER}`, background: PAPER, boxShadow: `22px 22px 0 ${color}` }}>
-            {(real || !anime) && panel(real, objectPosition(m.extras?.photoFocus, "50% 20%"), "RÉEL", PAPER, INK)}
-            {both && <div style={{ display: "flex", width: 6, height: panelH, background: PAPER }} />}
-            {anime && panel(anime, objectPosition(m.extras?.animeFocus, "50% 15%"), "ANIME", color, on)}
-          </div>
-        </div>
-
-        {/* Identité */}
-        <div style={{ position: "relative", display: "flex", flexDirection: "column", flex: 1, justifyContent: "flex-end", marginTop: 42 }}>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={{ display: "flex", flexWrap: "wrap", fontFamily: "Dela Gothic One", fontSize: nameSize, lineHeight: 1.02, color: PAPER, textShadow: `6px 6px 0 ${color}`, maxWidth: W }}>
+        {/* Affiche : diptyque, nom et grade sur le bas des images */}
+        <div style={{ position: "relative", display: "flex", marginTop: 20, width: W, height: HERO_H + 10, border: `5px solid ${PAPER}`, background: PAPER, boxShadow: `16px 16px 0 ${color}` }}>
+          {(real || !anime) && panel(real, objectPosition(m.extras?.photoFocus, "50% 20%"), "RÉEL", PAPER, INK)}
+          {both && <div style={{ display: "flex", width: 6, height: HERO_H, background: PAPER }} />}
+          {anime && panel(anime, objectPosition(m.extras?.animeFocus, "50% 15%"), "ANIME", color, on)}
+          <div style={{ position: "absolute", left: 0, bottom: 0, width: heroInner, height: 330, display: "flex", backgroundImage: `linear-gradient(0deg, ${hexA(INK, 0.96)} 0%, ${hexA(INK, 0.82)} 40%, ${hexA(INK, 0)} 100%)` }} />
+          <div style={{ position: "absolute", left: 28, bottom: 24, width: heroInner - 56, display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "flex", flexWrap: "wrap", fontFamily: "Dela Gothic One", fontSize: nameSize, lineHeight: 1.02, color: PAPER, textShadow: `5px 5px 0 ${color}` }}>
               {cut(m.name, 40)}
             </div>
-            <div style={{ display: "flex", alignItems: "center", marginTop: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", marginTop: 14 }}>
               {logo && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={logo} width={58} height={58} alt="" style={{ width: 58, height: 58, objectFit: "contain", marginRight: 14 }} />
+                <img src={logo} width={logoW} height={54} alt="" style={{ width: logoW, height: 54, objectFit: "contain", marginRight: 14 }} />
               )}
-              <div style={{ display: "flex", padding: "5px 16px", background: rankColor, color: onAccent(rankColor), border: `3px solid ${INK}`, boxShadow: `5px 5px 0 ${PAPER}`, fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 32, textTransform: "uppercase" }}>{m.rank}</div>
-              {romaji && <div style={{ display: "flex", marginLeft: 18, fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 30, color }}>{romaji}</div>}
+              <div style={{ display: "flex", padding: "6px 16px", background: rankColor, color: onAccent(rankColor), border: `3px solid ${INK}`, fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 30, textTransform: "uppercase" }}>{m.rank}</div>
+              {romaji && <div style={{ display: "flex", marginLeft: 16, fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 30, color }}>{romaji}</div>}
             </div>
-            {awards.length > 0 && (
-              <div style={{ display: "flex", marginTop: 16 }}>
-                {awards.slice(0, 2).map((a, i) => (
-                  <div key={i} style={{ ...ONE_LINE, marginRight: 10, padding: "5px 14px", background: i === 0 ? GOLD : "transparent", color: i === 0 ? INK : GOLD, border: `3px solid ${GOLD}`, fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 25, textTransform: "uppercase", maxWidth: awards.length > 1 ? 440 : W }}>
-                    {cut(awardText(a), 32)}
-                  </div>
-                ))}
-                {awards.length > 2 && <div style={{ display: "flex", alignItems: "center", fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 25, color: GOLD }}>+{awards.length - 2}</div>}
-              </div>
-            )}
           </div>
+        </div>
 
-          <div style={{ display: "flex", alignItems: "stretch", marginTop: 20 }}>
+        {/* Bas : deux colonnes */}
+        <div style={{ position: "relative", display: "flex", flex: 1, marginTop: 40, paddingBottom: 6 }}>
+          <div style={{ display: "flex", flexDirection: "column", width: LEFT_W }}>
             {(country || m.birthday) && (
-              <div style={{ display: "flex", border: `3px solid ${PAPER}`, flexShrink: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 28 }}>
                 {country && (
-                  <div style={{ display: "flex", flexDirection: "column", padding: "8px 16px", borderRight: m.birthday ? `3px solid ${PAPER}` : "none" }}>
-                    <div style={{ display: "flex", fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 17, letterSpacing: 2, color: "rgba(244,239,228,0.6)" }}>PAYS</div>
-                    <div style={{ display: "flex", alignItems: "center", fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 28 }}>
-                      {flag && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={flag} width={32} height={22} alt="" style={{ width: 32, height: 22, marginRight: 8 }} />
-                      )}
-                      {country.label}
-                    </div>
+                  <div style={{ display: "flex", alignItems: "center", marginRight: 26 }}>
+                    {flag && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={flag} width={36} height={25} alt="" style={{ width: 36, height: 25, marginRight: 10, border: `2px solid ${PAPER}` }} />
+                    )}
+                    {country.label}
                   </div>
                 )}
                 {m.birthday && (
-                  <div style={{ display: "flex", flexDirection: "column", padding: "8px 16px" }}>
-                    <div style={{ display: "flex", fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 17, letterSpacing: 2, color: "rgba(244,239,228,0.6)" }}>ANNIVERSAIRE</div>
-                    <div style={{ display: "flex", fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 28 }}>{m.birthday}</div>
+                  <div style={{ display: "flex", alignItems: "baseline" }}>
+                    <div style={{ display: "flex", fontSize: 18, letterSpacing: 2, color: "rgba(244,239,228,0.6)", marginRight: 10 }}>ANNIVERSAIRE</div>
+                    {m.birthday}
                   </div>
                 )}
               </div>
             )}
+            {awards.length > 0 && (
+              <div style={{ display: "flex", flexWrap: "wrap", marginTop: 16 }}>
+                {awards.slice(0, 3).map((a, i) => (
+                  <div key={i} style={{ ...ONE_LINE, marginRight: 10, marginBottom: 10, padding: "5px 12px", background: i === 0 ? GOLD : "transparent", color: i === 0 ? INK : GOLD, border: `3px solid ${GOLD}`, fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 23, textTransform: "uppercase", maxWidth: LEFT_W }}>
+                    {cut(awardText(a), 34)}
+                  </div>
+                ))}
+              </div>
+            )}
             {bio && (
-              <div style={{ display: "flex", flex: 1, marginLeft: country || m.birthday ? 22 : 0, paddingLeft: 18, borderLeft: `6px solid ${color}`, fontSize: 25, lineHeight: 1.38, color: "rgba(244,239,228,0.9)" }}>
+              <div style={{ display: "flex", marginTop: awards.length ? 8 : 20, paddingLeft: 18, borderLeft: `6px solid ${color}`, fontSize: hasRight ? 25 : 28, lineHeight: 1.42, color: "rgba(244,239,228,0.92)" }}>
                 {bio}
               </div>
             )}
           </div>
 
-          {favs.length > 0 && (
-            <div style={{ display: "flex", flexDirection: "column", marginTop: 24 }}>
-              <div style={{ display: "flex", fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 22, letterSpacing: 3, color }}>SUKI NA SAKUHIN · SES ŒUVRES PRÉFÉRÉES</div>
-              <div style={{ display: "flex", marginTop: 10 }}>
-                {favs.map((w, i) => (
-                  <div key={i} style={{ display: "flex", marginRight: i < favs.length - 1 ? 16 : 0, boxShadow: `6px 6px 0 ${color}` }}>
-                    <Cover src={coverOf.get(w) ?? null} kind={w.kind === "ANIME" ? "ANIME" : "MANGA"} width={coverW} height={coverH} />
+          {hasRight && (
+            <div style={{ display: "flex", flexDirection: "column", width: RIGHT_W, marginLeft: GAP }}>
+              {favs.length > 0 && (
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  {kicker("SES ŒUVRES PRÉFÉRÉES")}
+                  <div style={{ display: "flex", flexWrap: "wrap", marginTop: 10, width: cols * (coverW + 6) + (cols - 1) * coverGap }}>
+                    {favs.map((w, i) => (
+                      <div key={i} style={{ display: "flex", marginRight: (i % cols) < cols - 1 ? coverGap : 0, marginBottom: coverGap, boxShadow: `6px 6px 0 ${color}` }}>
+                        <Cover src={coverOf.get(w) ?? null} kind={w.kind === "ANIME" ? "ANIME" : "MANGA"} width={coverW} height={coverH} />
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-          {trackLine && track && (
-            <div style={{ display: "flex", alignItems: "center", marginTop: 22, maxWidth: W }}>
-              {trackCover && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={trackCover} width={64} height={64} alt="" style={{ width: 64, height: 64, objectFit: "cover", border: `3px solid ${PAPER}`, marginRight: 14 }} />
+                </div>
               )}
-              <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
-                <div style={{ display: "flex", fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 19, letterSpacing: 3, color }}>ONGAKU · {PROVIDER_LABEL[track.provider].toUpperCase()}</div>
-                <div style={{ ...ONE_LINE, fontFamily: "Barlow Condensed", fontWeight: 700, fontSize: 28, maxWidth: W - 90 }}>{trackLine}</div>
-              </div>
+              {trackLine && track && (
+                <div style={{ display: "flex", alignItems: "center", marginTop: favs.length ? 4 : 0 }}>
+                  {trackCover && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={trackCover} width={favs.length ? 60 : 110} height={favs.length ? 60 : 110} alt="" style={{ width: favs.length ? 60 : 110, height: favs.length ? 60 : 110, objectFit: "cover", border: `3px solid ${PAPER}`, marginRight: 14 }} />
+                  )}
+                  <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+                    {kicker(`ONGAKU · ${PROVIDER_LABEL[track.provider].toUpperCase()}`)}
+                    <div style={{ ...ONE_LINE, fontFamily: "Barlow Condensed", fontWeight: 700, fontSize: 27, maxWidth: RIGHT_W - (trackCover ? 80 : 0) }}>{trackLine}</div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
