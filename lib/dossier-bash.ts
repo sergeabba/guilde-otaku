@@ -20,6 +20,39 @@ export function normalizeDossierBashKey(value: string) {
     .trim();
 }
 
+const MOIS = ["janvier", "fevrier", "mars", "avril", "mai", "juin", "juillet", "aout", "septembre", "octobre", "novembre", "decembre"];
+
+/** « 03 Octobre 2026 » → horodatage (0 si la date est illisible). Sert au tri des chroniques. */
+export function dossierBashTime(date: string): number {
+  const m = normalizeDossierBashKey(date).match(/^(\d{1,2}) ([a-z]+) (\d{4})$/);
+  const month = m ? MOIS.indexOf(m[2]) : -1;
+  return m && month >= 0 ? Date.UTC(Number(m[3]), month, Number(m[1])) : 0;
+}
+
+/** « 03 Octobre 2026 » → { label: "Automne 2026", school: "2026/27" } (saison d'anime). */
+export function dossierBashSeason(date: string): { label: string; school: string } | null {
+  const t = dossierBashTime(date);
+  if (!t) return null;
+  const d = new Date(t), m = d.getUTCMonth(), y = d.getUTCFullYear();
+  const label = m <= 2 ? "Hiver" : m <= 5 ? "Printemps" : m <= 8 ? "Été" : "Automne";
+  const start = m >= 8 ? y : y - 1;
+  return { label: `${label} ${y}`, school: `${start}/${String(start + 1).slice(2)}` };
+}
+
+/**
+ * Ordre d'affichage : celui de la Chronique (la plus récente en tête de
+ * DOSSIER_BASH_DATA, dans l'ordre où elle a été écrite : la première est « à la
+ * une ») ; les chroniques connues seulement de la base suivent, les plus récentes d'abord.
+ */
+export function sortDossierBash<T extends { date: string; title?: string; searchQuery?: string }>(list: T[]): T[] {
+  const rank = (e: T) => {
+    const keys = [e.title, e.searchQuery].filter(Boolean).map((k) => normalizeDossierBashKey(k!));
+    const i = DOSSIER_BASH_DATA.findIndex((d) => keys.includes(normalizeDossierBashKey(d.title)) || keys.includes(normalizeDossierBashKey(d.searchQuery)));
+    return i < 0 ? Number.MAX_SAFE_INTEGER : i;
+  };
+  return [...list].sort((a, b) => rank(a) - rank(b) || dossierBashTime(b.date) - dossierBashTime(a.date));
+}
+
 export function findDossierBashEntry(value: string) {
   const normalizedValue = normalizeDossierBashKey(value);
 
@@ -31,6 +64,206 @@ export function findDossierBashEntry(value: string) {
 }
 
 export const DOSSIER_BASH_DATA: DossierBashEntry[] = [
+  // ── Chronique du Bash : saison d'automne 2026 ──
+  {
+    searchQuery: "Black Clover 2nd Season",
+    anilistId: 195604,
+    title: "Black Clover Season 2",
+    date: "03 Octobre 2026",
+    tag: "SHŌNEN TANT ATTENDU",
+    color: "#f1a143",
+    review: "Le 03 octobre, on aura l'anime le plus attendu de la saison (je pense) avec Black Clover saison 2.\n\nL'adaptation du meilleur arc, nouvelle équipe, l'animation est meilleure, ça fait du bien de revoir la bande à Asta.\n\nLa saison fera 12 épisodes normalement. L'ending est époustouflant. L'opening, wow. Les couleurs... Le jeu des seiyū... non vas-y, j'ai trop de choses à dire sur la saison 2 donc je vais m'arrêter là... Retenez juste que les enfers vont se déchaîner sur le monde, et ce pour notre plus grand plaisir.",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx195604-tSZcfKbVqSEG.jpg",
+    trailer_url: "https://www.youtube.com/results?search_query=Black+Clover+Season+2+trailer"
+  },
+  {
+    searchQuery: "Ranma 1/2 (2024) 3rd Season",
+    anilistId: 209872,
+    title: "Ranma1/2 Season 3",
+    date: "03 Octobre 2026",
+    tag: "COMÉDIE MAPPA",
+    color: "#e4bb5d",
+    review: "Un autre anime que j'attends : la saison 3 de Ranma.\n\nBah c'est MAPPA. Le trailer est énervé de fou. C'est juste trop beau.",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx209872-RBeVPqwejHFp.jpg",
+    trailer_url: "https://www.youtube.com/results?search_query=Ranma1%2F2+%282024%29+Season+3+trailer"
+  },
+  {
+    searchQuery: "Aoashi 2nd Season",
+    anilistId: 191788,
+    title: "Aoashi Season 2",
+    date: "04 Octobre 2026",
+    tag: "FOOTBALL",
+    color: "#4ade80",
+    review: "La journée du 04 octobre sera également chargée. On aura la saison 2 de l'excellent Ao Ashi.\n\nRien à dire là-dessus par contre.",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx191788-XC6F24LdX6a4.jpg",
+    trailer_url: "https://www.youtube.com/results?search_query=Aoashi+Season+2+trailer"
+  },
+  {
+    searchQuery: "Ao no Hako Season 2",
+    anilistId: 189123,
+    title: "Blue Box Season 2",
+    date: "04 Octobre 2026",
+    tag: "ROMANCE SPORTIVE",
+    color: "#e4ae50",
+    review: "On aura également le bon Blue Box (la saison 2 adapte un arc intéressant).\n\nL'opening me parle, la réalisation s'est améliorée, donc je conseille.",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx189123-0secXELIhkIW.jpg",
+    trailer_url: "https://www.youtube.com/results?search_query=Blue+Box+Season+2+trailer"
+  },
+  {
+    searchQuery: "Hotel Inhumans 2nd Season",
+    anilistId: 199426,
+    title: "HOTEL INHUMANS Season 2",
+    date: "04 Octobre 2026",
+    tag: "ACTION",
+    color: "#e45d78",
+    review: "Hotel Inhumans saison 2... bah j'en avais parlé mais je n'ai pas suivi, donc vas-y.",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx199426-0nBgTV9BrcJn.jpg",
+    trailer_url: "https://www.youtube.com/results?search_query=HOTEL+INHUMANS+Season+2+trailer"
+  },
+  {
+    searchQuery: "Sasaki to Pii-chan Season 2",
+    anilistId: 176314,
+    title: "Sasaki and Peeps Season 2",
+    date: "07 Octobre 2026",
+    tag: "ISEKAI CHILL",
+    color: "#1a78d6",
+    review: "Sasaki and Peeps... c'est chill, c'est une histoire entre un moineau sage des étoiles et un salary man.\n\nC'est fun et drôle avec un peu d'action, car ça reste un isekai. L'animation de la saison 2 semble bonne.",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx176314-lpvca6vjmkeO.jpg",
+    trailer_url: "https://www.youtube.com/results?search_query=Sasaki+and+Peeps+Season+2+trailer"
+  },
+  {
+    searchQuery: "Kikansha no Mahou wa Tokubetsu desu 2nd Season",
+    anilistId: 172192,
+    title: "A Returner's Magic Should be Special Season 2",
+    date: "07 Octobre 2026",
+    tag: "FANTASY",
+    color: "#f19328",
+    review: "A Returner's Magic Should Be Special... la saison 1 était bien (j'en ai déjà parlé), donc allez-y.",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx172192-W7P5xEUaxF3y.jpg",
+    trailer_url: "https://www.youtube.com/results?search_query=A+Returner%27s+Magic+Should+be+Special+Season+2+trailer"
+  },
+  {
+    searchQuery: "Tantei wa mou, Shindeiru. Season 2",
+    anilistId: 152677,
+    title: "The Detective Is Already Dead Season 2",
+    date: "07 Octobre 2026",
+    tag: "MYSTÈRE",
+    color: "#a78bfa",
+    review: "Et le retour de The Detective Is Already Dead. Je n'ai suivi que le premier épisode, mais je sais que ça a plu à la commu, donc voilà...",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx152677-gtJbgjE94lCN.png",
+    trailer_url: "https://www.youtube.com/results?search_query=The+Detective+Is+Already+Dead+Season+2+trailer"
+  },
+  {
+    searchQuery: "Yozakura-san Chi no Daisakusen 2nd Season Part 2",
+    anilistId: 213657,
+    title: "Mission: Yozakura Family Season 2 Part 2",
+    date: "11 Octobre 2026",
+    tag: "ESPIONNAGE",
+    color: "#5dbbe4",
+    review: "Il n'y a pas grand-chose à dire, mais je note quand même le retour de Yozakura Family pour le 11 octobre.",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx213657-ORNXVEBCjXaz.jpg",
+    trailer_url: "https://www.youtube.com/results?search_query=Mission%3A+Yozakura+Family+Season+2+Part+2+trailer"
+  },
+  {
+    searchQuery: "Dragon Ball Super: Beerus",
+    anilistId: 206814,
+    title: "Dragon Ball Super: Beerus",
+    date: "11 Octobre 2026",
+    tag: "LÉGENDE",
+    color: "#e48643",
+    review: "Dragon Ball Super Beerus : le même film, en mieux, oui.",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx206814-PVVzRbf1IQpe.jpg",
+    trailer_url: "https://www.youtube.com/results?search_query=Dragon+Ball+Super%3A+Beerus+trailer"
+  },
+  {
+    searchQuery: "Diamond no Ace act II: Second Season Part 2",
+    anilistId: 213658,
+    title: "Ace of the Diamond act II Season 2 Part 2",
+    date: "11 Octobre 2026",
+    tag: "BASEBALL",
+    color: "#1a93d6",
+    review: "Et la suite d'Ace of Diamond, le 11 octobre.",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx213658-D3BPJaqawLxS.png",
+    trailer_url: "https://www.youtube.com/results?search_query=Ace+of+the+Diamond+act+II+-Second+Season-+trailer"
+  },
+  {
+    searchQuery: "Chitose-kun wa Ramune Bin no Naka Part 2",
+    anilistId: 198727,
+    title: "Chitose Is in the Ramune Bottle Part 2",
+    date: "13 Octobre 2026",
+    tag: "TRANCHE DE VIE",
+    color: "#7dd3fc",
+    review: "Chitose on the Ramune machin... j'en avais parlé, donc vas-y. C'est le 13 octobre.",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx198727-BL0JTpg0G8tq.jpg",
+    trailer_url: "https://www.youtube.com/results?search_query=Chitose+Is+in+the+Ramune+Bottle+2nd+Cour+trailer"
+  },
+  {
+    searchQuery: "Cyberpunk: Edgerunners 2",
+    anilistId: 195539,
+    title: "Cyberpunk: Edgerunners 2",
+    date: "20 Octobre 2026",
+    tag: "CYBERPUNK",
+    color: "#fe286b",
+    review: "Cyberpunk: Edgerunners 2. C'est la suite qui n'est pas vraiment une suite, vu qu'on aura un nouveau groupe de protagonistes, mais toujours dans le même univers sombre et torturé, avec une D.A que je trouve bien plus marquée.\n\nÇa promet vraiment d'être plus explosif, plus gore, plus cru dans son propos, et ça promet d'être tout aussi intéressant.",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx195539-4LdfmKIHzuxr.png",
+    trailer_url: "https://www.youtube.com/results?search_query=Cyberpunk%3A+Edgerunners+2+trailer"
+  },
+  {
+    searchQuery: "Made in Abyss: Mezameru Shinpi",
+    anilistId: 160275,
+    title: "Made in Abyss : le film",
+    date: "23 Octobre 2026",
+    tag: "FILM ATTENDU",
+    color: "#e4d643",
+    review: "Le film tant attendu de Made in Abyss, qui sera une suite directe des événements de la saison 2, que je ne spoilerai pas.\n\nMais sachez qu'il y aura de nouveaux personnages, de nouveaux biomes, et ça promet d'être top.",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx160275-cBOWJpcCGeMq.jpg",
+    trailer_url: "https://www.youtube.com/results?search_query=Made+in+Abyss%3A+Mezameru+Shinpi+trailer"
+  },
+  {
+    searchQuery: "Watashi no Shiawase na Kekkon Tokubetsu-hen",
+    anilistId: 190054,
+    title: "My Happy Marriage Special Episodes",
+    date: "25 Octobre 2026",
+    tag: "ROMANCE",
+    color: "#e44378",
+    review: "My Happy Marriage revient le 25 octobre.",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx190054-8h0AuqQjwcCL.png",
+    trailer_url: "https://www.youtube.com/results?search_query=My+Happy+Marriage+Special+Episodes+trailer"
+  },
+  {
+    searchQuery: "Takopii no Genzai: Arigatou, Mata Ashita",
+    anilistId: 212539,
+    title: "Takopi's Original Sin : le film",
+    date: "27 Novembre 2026",
+    tag: "FILM",
+    color: "#7dd3fc",
+    review: "En novembre, il y a juste Takopi. Je ne sais pas pourquoi, et c'est sûrement juste un film sans les coupures de l'anime, car oui, l'anime saute certains passages.",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx212539-uiod38Ml39AZ.png",
+    trailer_url: "https://www.youtube.com/results?search_query=Takopii+no+Genzai%3A+Arigatou%2C+Mata+Ashita+trailer"
+  },
+  {
+    searchQuery: "Kusuriya no Hitorigoto: Bouhi no Hihou",
+    anilistId: 200929,
+    title: "The Apothecary Diaries: The Late Lady's Treasure",
+    date: "11 Décembre 2026",
+    tag: "FILM",
+    color: "#e4bba1",
+    review: "À noter en décembre : le film sur Les Carnets de l'apothicaire.",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx200929-dx3hnftE7K7C.jpg",
+    trailer_url: "https://www.youtube.com/results?search_query=The+Apothecary+Diaries%3A+The+Late+Lady%E2%80%99s+Treasure+trailer"
+  },
+  {
+    searchQuery: "Disney Twisted-Wonderland: THE ANIMATION - Season 2: EPISODE of SAVANACLAW",
+    anilistId: 202282,
+    title: "Disney Twisted-Wonderland Season 2",
+    date: "23 Décembre 2026",
+    tag: "FANTASY DISNEY",
+    color: "#e4bb35",
+    review: "La suite de Disney Twisted-Wonderland, en décembre.",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx202282-WOXxDA9Wwey5.jpg",
+    trailer_url: "https://www.youtube.com/results?search_query=Disney+Twisted-Wonderland%3A+THE+ANIMATION+-+Season+2%3A+EPISODE+of+SAVANACLAW+trailer"
+  },
+  // ── Saison de printemps 2026 ──
   {
     searchQuery: "Jishou Akuyaku Reijou na Konyakusha no Kansatsu Kiroku",
     anilistId: 192808,

@@ -11,7 +11,7 @@ import { viewTransition } from "../../lib/view-transition";
 import TrailerEmbed from "../components/works/TrailerEmbed";
 import OptimizedImage from "../components/OptimizedImage";
 import { supabase } from "../../lib/supabase";
-import { DOSSIER_BASH_DATA, normalizeDossierBashKey } from "../../lib/dossier-bash";
+import { DOSSIER_BASH_DATA, dossierBashSeason, normalizeDossierBashKey, sortDossierBash } from "../../lib/dossier-bash";
 import type { BiblioEntry, SupabaseBiblioRow, BiblioCategory, BiblioTier } from "../types";
 import { useFavorites } from "../hooks/useFavorites";
 import { useShare } from "../hooks/useShare";
@@ -70,7 +70,7 @@ export default function BibliothequePage() {
   const [oeuvres, setOeuvres] = useState<SupabaseBiblioRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
-  const [dossierBash, setDossierBash] = useState<Chronique[]>(DOSSIER_BASH_DATA);
+  const [dossierBash, setDossierBash] = useState<Chronique[]>(() => sortDossierBash(DOSSIER_BASH_DATA));
   const [activeCategory, setActiveCategory] = useState<Category>("Tout");
   const [activeTier, setActiveTier] = useState<Tier | "Tous">("Tous");
   const [searchTerm, setSearchTerm] = useState("");
@@ -116,8 +116,11 @@ export default function BibliothequePage() {
             trailer_url: item.trailer_url || match?.trailer_url || undefined,
           };
         });
-        hydrated.sort((a, b) => (a.date || "").localeCompare(b.date || "", "fr"));
-        setDossierBash(hydrated);
+        // Chroniques de la base + celles du code pas encore enregistrées en base
+        // (une nouvelle chronique apparaît sans attendre la synchronisation).
+        const inDb = new Set(hydrated.map((h) => normalizeDossierBashKey(h.title)));
+        const missing = DOSSIER_BASH_DATA.filter((e) => !inDb.has(normalizeDossierBashKey(e.title)) && !inDb.has(normalizeDossierBashKey(e.searchQuery)));
+        setDossierBash(sortDossierBash([...hydrated, ...missing]));
       }
     }
     setLoading(false);
@@ -266,6 +269,8 @@ export default function BibliothequePage() {
   });
 
   const [une, ...restChroniques] = chroniques;
+  // Saison de la chronique à la une (les intitulés suivent la dernière Chronique).
+  const season = dossierBashSeason(dossierBash[0]?.date ?? "") ?? { label: "Printemps 2026", school: "2025/26" };
   const duo = restChroniques.slice(0, 2);
   const briefs = restChroniques.slice(2);
   const visibleBriefs = showAllBriefs ? briefs : briefs.slice(0, 8);
@@ -289,8 +294,8 @@ export default function BibliothequePage() {
             </p>
           </div>
           <p className="bb-issue">
-            Saison 2025/26
-            <b>Printemps 2026</b>
+            Saison {season.school}
+            <b>{season.label}</b>
             {chroniques.length} chroniques{entries.length > 0 ? `, ${entries.length} fiches` : ""}
           </p>
         </header>
@@ -302,7 +307,7 @@ export default function BibliothequePage() {
           <section className="bb-section" data-gk-motion="reveal" aria-labelledby="bb-bash">
             <div className="bb-head">
               <div>
-                <span className="gk-hand">le dossier du printemps 2026</span>
+                <span className="gk-hand">le dossier {season.label.startsWith("Printemps") ? "du " : "de l'"}{season.label.toLowerCase()}</span>
                 <h2 id="bb-bash" className="gk-display gk-h3">La Chronique du Bash</h2>
               </div>
               <span className="gk-stamp" aria-hidden="true">Tokushū</span>

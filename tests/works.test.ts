@@ -140,3 +140,27 @@ describe("notes de la semaine : saison", () => {
     expect(seasonLabel("Steel Ball Run")).toBeNull();
   });
 });
+
+import { dossierBashTime, sortDossierBash } from "../lib/dossier-bash";
+describe("Chronique du Bash : tri par date", () => {
+  it("lit les dates françaises et met la plus récente en premier", () => {
+    expect(dossierBashTime("03 Octobre 2026")).toBe(Date.UTC(2026, 9, 3));
+    expect(dossierBashTime("11 Décembre 2026")).toBe(Date.UTC(2026, 11, 11));
+    expect(dossierBashTime("bientôt")).toBe(0);
+    // Inconnues de la Chronique : les plus récentes d'abord.
+    const sorted = sortDossierBash([{ date: "02 Avril 2026" }, { date: "03 Octobre 2026" }, { date: "28 Mars 2026" }]);
+    expect(sorted.map((e) => e.date)).toEqual(["03 Octobre 2026", "02 Avril 2026", "28 Mars 2026"]);
+    // Connues : l'ordre de la Chronique (Black Clover à la une, avant Twisted-Wonderland de décembre).
+    const known = sortDossierBash([{ title: "Disney Twisted-Wonderland Season 2", date: "23 Décembre 2026" }, { title: "Black Clover Season 2", date: "03 Octobre 2026" }]);
+    expect(known[0].title).toBe("Black Clover Season 2");
+  });
+});
+
+import { dossierBashSeason } from "../lib/dossier-bash";
+describe("Chronique du Bash : saison", () => {
+  it("déduit la saison d'anime de la date", () => {
+    expect(dossierBashSeason("03 Octobre 2026")).toEqual({ label: "Automne 2026", school: "2026/27" });
+    expect(dossierBashSeason("06 Avril 2026")).toEqual({ label: "Printemps 2026", school: "2025/26" });
+    expect(dossierBashSeason("??")).toBeNull();
+  });
+});
