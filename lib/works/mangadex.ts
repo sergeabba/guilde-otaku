@@ -5,6 +5,7 @@
 // - images servies de travers si appelées depuis un autre site : les couvertures
 //   passent par notre proxy /api/works/cover ;
 // - environ 5 requêtes par seconde au maximum.
+import { frenchMangaSynopsis } from "./fr-synopsis";
 import { hasJapanese } from "../member-extras";
 import { WorkSearchError } from "./tmdb";
 import type { WorkCandidate, WorkFormat } from "./types";
@@ -101,6 +102,11 @@ export async function mangadexDetail(id: string): Promise<WorkCandidate> {
   const json = await politeFetch(`${API}/manga/${id}?includes[]=cover_art`);
   const c = json?.data ? toCandidate(json.data as MdManga) : null;
   if (!c) throw new WorkSearchError("Œuvre introuvable sur MangaDex.", 404);
+  // Pas de description française sur MangaDex : Wikipédia FR, puis l'adaptation animée (TMDB).
+  if (!c.synopsisFr) {
+    const fr = await frenchMangaSynopsis([c.titleFr && !c.titleFrUnverified ? c.titleFr : "", c.title, c.titleEn ?? "", c.titleRomaji ?? ""]).catch(() => null);
+    if (fr) { c.synopsisFr = fr.text; c.synopsisCredit = fr.credit; }
+  }
   return c;
 }
 

@@ -147,7 +147,7 @@ export default function WorkSearch({ kind: fixedKind, onPick, isAdded, pickLabel
                   {isOpen && (
                     <div id={panelId} className="wks-detail">
                       {d.synopsisFr
-                        ? <p><span className="wks-tag">Synopsis français ({SOURCE_LABEL[c.source]})</span>{d.synopsisFr}</p>
+                        ? <p><span className="wks-tag">Synopsis français ({d.synopsisCredit ? d.synopsisCredit.label : SOURCE_LABEL[c.source]})</span>{d.synopsisFr}</p>
                         : <p className="wks-none">Pas de synopsis français chez {SOURCE_LABEL[c.source]}. Tu pourras l&apos;écrire après l&apos;ajout.</p>}
                       {d.synopsisEn && !d.synopsisFr && (
                         <details>

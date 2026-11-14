@@ -443,7 +443,9 @@ function WorkSheet({ work, chronique, onClose }: { work: FavoriteWork; chronique
           <div className="pf-ws-block">
             <h3>Synopsis</h3>
             <p className="pf-ws-synopsis">{work.synopsis}</p>
-            {work.synopsisSource === "source" && (work.source === "tmdb" || work.source === "mangadex") && <small className="pf-ws-credit">Synopsis : {work.source === "tmdb" ? "TMDB" : "MangaDex"}</small>}
+            {work.synopsisSource === "source" && (work.synopsisCredit
+              ? <small className="pf-ws-credit">Synopsis : <a href={work.synopsisCredit.url} target="_blank" rel="noopener noreferrer">{work.synopsisCredit.label}</a></small>
+              : (work.source === "tmdb" || work.source === "mangadex") && <small className="pf-ws-credit">Synopsis : {work.source === "tmdb" ? "TMDB" : "MangaDex"}</small>)}
           </div>
         )}
         {work.trailer && (

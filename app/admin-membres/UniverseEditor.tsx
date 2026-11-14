@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { getAdminHeaders } from "../../lib/admin-fetch";
 import { supabase } from "../../lib/supabase";
 import { ArrowDown, ArrowUp, Plus, Search, Star, Trash2 } from "lucide-react";
 import { hasJapanese, sameWork, workKey, workTitle, type FavoriteWork, type MemberTrack } from "../../lib/member-extras";
@@ -31,7 +32,24 @@ function useLibraryIndex(): LibraryIndex {
   return index;
 }
 
-function SynopsisField({ work, reference, library, onChange }: { work: FavoriteWork; reference?: string; library: LibraryIndex; onChange: (s: string | undefined) => void }) {
+function SynopsisField({ work, reference, library, onChange, onSource }: {
+  work: FavoriteWork; reference?: string; library: LibraryIndex; onChange: (s: string | undefined) => void;
+  onSource: (text: string, credit: { label: string; url: string }) => void;
+}) {
+  const [looking, setLooking] = useState(false);
+  const [lookMsg, setLookMsg] = useState<string | null>(null);
+  async function lookup() {
+    setLooking(true); setLookMsg(null);
+    try {
+      const res = await fetch("/api/works/fr-synopsis", { method: "POST", headers: getAdminHeaders(), body: JSON.stringify({ titles: [work.titleLocalized, work.titleRomaji].filter(Boolean) }) });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error || `erreur ${res.status}`);
+      if (data?.synopsis) { onSource(data.synopsis.text, data.synopsis.credit); setLookMsg(`Trouvé : ${data.synopsis.credit.label}. Relis-le avant d'enregistrer.`); }
+      else setLookMsg("Aucun synopsis français trouvé (Wikipédia, adaptation animée) : écris-le à la main.");
+    } catch (e) {
+      setLookMsg(`Recherche impossible : ${e instanceof Error ? e.message : "erreur réseau"}`);
+    } finally { setLooking(false); }
+  }
   const fromLibrary = [work.titleRomaji, work.titleLocalized].map((t) => t && library.get(norm(t))).find(Boolean);
   const bad = !!work.synopsis && hasJapanese(work.synopsis);
   return (
@@ -43,10 +61,17 @@ function SynopsisField({ work, reference, library, onChange }: { work: FavoriteW
         aria-label={`Synopsis en français de ${workTitle(work)}`} aria-invalid={bad} onChange={(e) => onChange(e.target.value || undefined)} style={{ marginTop: 6 }} />
       <div className="am-row" style={{ marginTop: 6 }}>
         <small style={{ font: "500 0.8rem var(--am-body)", color: bad ? "var(--am-red)" : "var(--am-faint)" }}>{bad ? "Alphabet latin uniquement." : `${(work.synopsis ?? "").length} / 700`}</small>
+        {!work.synopsis && (
+          <button type="button" className="am-btn am-btn--sm" onClick={lookup} disabled={looking}>{looking ? "Recherche…" : "Chercher un synopsis français"}</button>
+        )}
         {fromLibrary && fromLibrary !== work.synopsis && (
           <button type="button" className="am-btn am-btn--sm" onClick={() => onChange(fromLibrary.slice(0, 700))}>Reprendre celui de la Bibliothèque</button>
         )}
       </div>
+      {lookMsg && <small role="status" style={{ display: "block", font: "500 0.8rem var(--am-body)", color: "var(--am-dim)", marginTop: 4 }}>{lookMsg}</small>}
+      {work.synopsisSource === "source" && work.synopsisCredit && (
+        <small style={{ display: "block", font: "500 0.78rem var(--am-body)", color: "var(--am-faint)", marginTop: 4 }}>Source affichée sur la fiche : <a href={work.synopsisCredit.url} target="_blank" rel="noopener noreferrer">{work.synopsisCredit.label}</a>. Le modifier en fait un texte « écrit à la main ».</small>
+      )}
       {fromLibrary && <small style={{ display: "block", font: "500 0.78rem var(--am-body)", color: "var(--am-faint)" }}>Une fiche Bibliothèque existe pour ce titre : vérifie que son synopsis est bien en français.</small>}
       {reference && (
         <details style={{ marginTop: 6 }}>
@@ -119,7 +144,8 @@ function FavoriteList({ kind, label, works, onChange, library }: { kind: Kind; l
                     aria-label={`Note personnelle pour ${workTitle(w)}`} aria-invalid={noteBad}
                     onChange={(e) => patch(i, { personalNote: e.target.value || undefined })} />
                   {noteBad && <small style={{ color: "var(--am-red)" }}>Pas de caractères japonais : cette note ne serait pas enregistrée.</small>}
-                  <SynopsisField work={w} reference={refs[workKey(w)]} library={library} onChange={(synopsis) => patch(i, { synopsis, synopsisSource: synopsis ? "manual" : undefined })} />
+                  <SynopsisField work={w} reference={refs[workKey(w)]} library={library} onChange={(synopsis) => patch(i, { synopsis, synopsisSource: synopsis ? "manual" : undefined, synopsisCredit: undefined })}
+                    onSource={(synopsis, synopsisCredit) => patch(i, { synopsis, synopsisSource: "source", synopsisCredit })} />
                 </div>
                 <div className="am-item-actions">
                   <button type="button" className="am-icon am-star" aria-pressed={!!w.featured} disabled={!w.featured && featuredCount >= MAX_FEATURED}

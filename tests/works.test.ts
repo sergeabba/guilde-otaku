@@ -103,3 +103,31 @@ describe("favoris : conversion et conservation", () => {
     expect(sameWork({ source: "manual", kind: "ANIME", titleRomaji: "Vagabond" }, b)).toBe(false);
   });
 });
+
+import { synopsisSection, trimSynopsis } from "../lib/works/fr-synopsis";
+describe("synopsis français des mangas (Wikipédia)", () => {
+  it("extrait la section Synopsis et s'arrête à la section suivante", () => {
+    const ex = "Intro sur le manga.\n\n== Synopsis ==\n" + "Une histoire de sabre et de rivalité au Japon médiéval. ".repeat(3) + "\n\n=== Détail ===\nSuite.\n\n== Personnages ==\nNe doit pas apparaître.";
+    const s = synopsisSection(ex)!;
+    expect(s).toContain("Une histoire de sabre");
+    expect(s).toContain("Suite.");
+    expect(s).not.toContain("Ne doit pas");
+  });
+  it("ignore un article sans section synopsis", () => {
+    expect(synopsisSection("Intro.\n\n== Historique ==\nPublication.")).toBeNull();
+  });
+  it("coupe à la fin d'une phrase", () => {
+    const t = trimSynopsis("Première phrase assez longue pour compter. ".repeat(30), 120);
+    expect(t.length).toBeLessThanOrEqual(120);
+    expect(t.endsWith(".")).toBe(true);
+  });
+});
+
+import { sameTitle } from "../lib/works/fr-synopsis";
+describe("adaptation animée : titre exact exigé", () => {
+  it("compare sans accents ni ponctuation", () => {
+    expect(sameTitle("Vinland Saga", "VINLAND SAGA")).toBe(true);
+    expect(sameTitle("Fullmetal Alchemist", "Fullmetal Alchemist: Brotherhood")).toBe(false);
+    expect(sameTitle("Vagabond", "Rurouni Kenshin")).toBe(false);
+  });
+});

@@ -72,7 +72,7 @@ export default function BulkImportPage() {
         const { error } = await adminDb.insert("bibliotheque", [{
           title, type: kind === "MANGA" ? "Manga" : c.format === "FILM" ? "Film/Série" : "Anime", tier: l.tier,
           cover_image: cover?.coverUrl ?? c.coverUrl ?? null, status: c.status ?? null, year: c.year ?? null, episodes: c.episodes ?? null,
-          genres: (c.genres ?? []).slice(0, 8), synopsis: c.synopsisFr ?? "",
+          genres: (c.genres ?? []).slice(0, 8), synopsis: c.synopsisFr ? (c.synopsisCredit ? `${c.synopsisFr}\n\n(Synopsis : ${c.synopsisCredit.label}, ${c.synopsisCredit.url})` : c.synopsisFr) : "",
           trailer_url: c.trailer ? `https://www.youtube.com/watch?v=${c.trailer.youtubeId}` : null,
           dossier_bash: !!meta, dossier_bash_tag: meta?.tag ?? null, dossier_bash_date: meta?.date ?? null, dossier_bash_color: meta?.color ?? null,
         }]);

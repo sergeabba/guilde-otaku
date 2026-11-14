@@ -45,6 +45,8 @@ export interface WorkCandidate {
   year?: number;
   /** Synopsis en français fourni par la source. Absent s'il n'existe pas. */
   synopsisFr?: string;
+  /** Provenance du synopsis français quand il ne vient pas de la source elle-même (Wikipédia, adaptation animée). */
+  synopsisCredit?: { label: string; url: string };
   /** Synopsis anglais : référence pour rédiger un texte français, jamais affiché comme français. */
   synopsisEn?: string;
   /** Couverture affichable : TMDB direct, MangaDex via notre proxy (règle MangaDex). */

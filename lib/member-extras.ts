@@ -30,6 +30,8 @@ export interface FavoriteWork {
   synopsis?: string;
   /** Origine du synopsis : « source » (texte français de TMDB/MangaDex) ou « manual » (écrit à la main, jamais remplacé). */
   synopsisSource?: "source" | "manual";
+  /** Crédit du synopsis repris d'ailleurs (Wikipédia : licence CC BY-SA, lien obligatoire). */
+  synopsisCredit?: { label: string; url: string };
   /** Forme de l'œuvre : série, film, manga… (voir lib/works/types). */
   format?: "SERIE" | "FILM" | "MANGA" | "MANHWA" | "MANHUA";
   year?: number;
@@ -173,6 +175,10 @@ function work(v: unknown, kind: "ANIME" | "MANGA"): FavoriteWork | null {
     synopsis,
   };
   if (synopsis && (o.synopsisSource === "source" || o.synopsisSource === "manual")) w.synopsisSource = o.synopsisSource;
+  const cr = o.synopsisCredit as Record<string, unknown> | undefined;
+  const crLabel = cr && typeof cr === "object" ? latinText(cr.label, 80) : undefined;
+  const crUrl = cr && typeof cr === "object" ? httpsUrl(cr.url, (h) => h === "fr.wikipedia.org" || h === "www.themoviedb.org") : undefined;
+  if (synopsis && w.synopsisSource === "source" && crLabel && crUrl) w.synopsisCredit = { label: crLabel, url: crUrl };
   if (typeof o.format === "string" && (FORMATS as readonly string[]).includes(o.format)) w.format = o.format as FavoriteWork["format"];
   if (year) w.year = year;
   if (genres?.length) w.genres = genres;

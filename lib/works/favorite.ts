@@ -19,7 +19,10 @@ export function candidateToFavorite(c: WorkCandidate, opts: { useUnverifiedFrTit
     sourceUrl: c.sourceUrl,
     format: c.format,
   };
-  if (c.synopsisFr) { w.synopsis = c.synopsisFr.slice(0, 700); w.synopsisSource = "source"; }
+  if (c.synopsisFr) {
+    w.synopsis = c.synopsisFr.slice(0, 700); w.synopsisSource = "source";
+    if (c.synopsisCredit) w.synopsisCredit = c.synopsisCredit;
+  }
   if (c.year) w.year = c.year;
   if (c.genres?.length) w.genres = c.genres.slice(0, 5);
   if (c.trailer) w.trailer = { youtubeId: c.trailer.youtubeId, ...(c.trailer.lang ? { lang: c.trailer.lang } : {}) };

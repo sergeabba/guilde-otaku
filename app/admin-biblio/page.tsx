@@ -109,7 +109,7 @@ export default function AdminBiblioPage() {
       type: c.kind === "MANGA" ? "Manga" : c.format === "FILM" ? "Film/Série" : "Anime",
       year: c.year ? String(c.year) : "", episodes: c.episodes ? String(c.episodes) : "",
       genres: (c.genres ?? []).join(", "), status: c.status && (STATUSES as readonly string[]).includes(c.status) ? c.status : f.status,
-      synopsis: c.synopsisFr ?? "", trailer: c.trailer ? `https://www.youtube.com/watch?v=${c.trailer.youtubeId}` : "", cover: c.coverUrl ?? "",
+      synopsis: c.synopsisFr ? (c.synopsisCredit ? `${c.synopsisFr}\n\n(Synopsis : ${c.synopsisCredit.label}, ${c.synopsisCredit.url})` : c.synopsisFr) : "", trailer: c.trailer ? `https://www.youtube.com/watch?v=${c.trailer.youtubeId}` : "", cover: c.coverUrl ?? "",
     }));
   }
 
@@ -292,7 +292,7 @@ export default function AdminBiblioPage() {
               <fieldset className="am-fieldset"><legend>Textes</legend>
                 <label className="am-field"><span>Synopsis en français</span>
                   <textarea className="am-input" rows={5} value={form.synopsis} onChange={(e) => set("synopsis", e.target.value)} aria-invalid={!!err("synopsis")} />
-                  <small>{err("synopsis") || (picked?.synopsisFr ? `Synopsis français de ${SOURCE_LABEL[picked.source]} : relis-le.` : picked ? `Pas de synopsis français chez ${SOURCE_LABEL[picked.source]} : écris-le, ou laisse vide.` : `${form.synopsis.length} / 2000`)}</small>
+                  <small>{err("synopsis") || (picked?.synopsisFr ? `Synopsis français de ${picked.synopsisCredit ? picked.synopsisCredit.label : SOURCE_LABEL[picked.source]} : relis-le${picked.synopsisCredit?.label.startsWith("Wikipédia") ? " (garde la mention de source : licence CC BY-SA)" : ""}.` : picked ? `Pas de synopsis français chez ${SOURCE_LABEL[picked.source]} : écris-le, ou laisse vide.` : `${form.synopsis.length} / 2000`)}</small>
                 </label>
                 {picked?.synopsisEn && !picked.synopsisFr && (
                   <details><summary className="am-hint-summary">Résumé en anglais de la source (référence, jamais publié)</summary><p className="am-hint-text" lang="en">{picked.synopsisEn}</p></details>
