@@ -24,7 +24,7 @@ function auth(): { headers: Record<string, string>; param: string } {
   throw new WorkSearchError("Clé TMDB absente : ajoute TMDB_API_KEY (ou TMDB_READ_TOKEN) dans les variables d'environnement Vercel.", 503);
 }
 
-async function get<T>(path: string): Promise<T> {
+export async function tmdbGet<T>(path: string): Promise<T> {
   const { headers, param } = auth();
   const sep = path.includes("?") ? "&" : "?";
   const res = await fetch(`${API}${path}${sep}language=fr-FR${param}`, {
@@ -75,8 +75,8 @@ function toCandidate(x: TmdbItem, type: "tv" | "movie"): WorkCandidate | null {
 export async function searchTmdbAnime(query: string): Promise<WorkCandidate[]> {
   const q = encodeURIComponent(query);
   const [tv, movie] = await Promise.all([
-    get<{ results?: TmdbItem[] }>(`/search/tv?query=${q}&include_adult=false`),
-    get<{ results?: TmdbItem[] }>(`/search/movie?query=${q}&include_adult=false`),
+    tmdbGet<{ results?: TmdbItem[] }>(`/search/tv?query=${q}&include_adult=false`),
+    tmdbGet<{ results?: TmdbItem[] }>(`/search/movie?query=${q}&include_adult=false`),
   ]);
   const rank = (x: TmdbItem) => (x.original_language === "ja" ? 0 : 1);
   const pick = (list: TmdbItem[] | undefined, type: "tv" | "movie") =>
@@ -98,7 +98,7 @@ export async function tmdbDetail(sourceId: string): Promise<WorkCandidate> {
   const m = /^(tv|movie):(\d{1,10})$/.exec(sourceId);
   if (!m) throw new WorkSearchError("Identifiant TMDB invalide.", 400);
   const [, type, id] = m;
-  const d = await get<TmdbDetail>(`/${type}/${id}?append_to_response=videos,translations&include_video_language=fr,en,ja,null`);
+  const d = await tmdbGet<TmdbDetail>(`/${type}/${id}?append_to_response=videos,translations&include_video_language=fr,en,ja,null`);
   const base = toCandidate(d, type as "tv" | "movie");
   if (!base) throw new WorkSearchError("Œuvre sans titre en alphabet latin.", 404);
   // Le titre est français seulement si TMDB a une traduction française qui le donne.

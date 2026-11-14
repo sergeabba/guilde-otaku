@@ -467,7 +467,7 @@ function NeighborLink({ n, dir }: { n: ProfileNeighbor; dir: "prev" | "next" }) 
   // Fiche voisine préchargée en entier dès l'arrivée : le passage est immédiat.
   useEffect(() => { router.prefetch(href); }, [router, href]);
   return (
-    <Link href={href} prefetch className={`pf-neighbor is-${dir}`} rel={dir} onClick={(e) => {
+    <Link href={href} prefetch data-vt-own className={`pf-neighbor is-${dir}`} rel={dir} onClick={(e) => {
       // Passage d'une fiche à l'autre : le dossier glisse dans la direction choisie.
       if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
       e.preventDefault();

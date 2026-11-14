@@ -169,7 +169,7 @@ export default function MemberQuickView({ member, onClose, viewMode }: { member:
         </div>
 
         <div className="qv-foot">
-          <Link className="gk-btn qv-full" href={full} onClick={(e) => {
+          <Link className="gk-btn qv-full" href={full} data-vt-own onClick={(e) => {
             // Clic simple : portraits et nom glissent vers la fiche complète.
             if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
             e.preventDefault();

@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BookOpen, CornerDownLeft, ExternalLink, Palette, Search, Tag, X } from "lucide-react";
+import { BookOpen, CalendarDays, CornerDownLeft, ExternalLink, Film, Heart, Music, Palette, Search, Tag, X } from "lucide-react";
+import songs from "../../data/anime-songs.json";
+import { workTitle } from "../../lib/member-extras";
 import { NAV, chapterNo } from "../config/nav";
 import { fetchMembers, fetchBonsPlans } from "../utils/dataAdapter";
 import { supabase } from "../../lib/supabase";
@@ -10,7 +12,7 @@ import { normalize } from "../utils/text";
 
 interface Item {
   key: string;
-  group: "Rubriques" | "Membres" | "Bibliothèque" | "Atelier" | "Bons plans";
+  group: "Rubriques" | "Membres" | "Favoris" | "Calendrier" | "Cinéma" | "Génériques" | "Bibliothèque" | "Atelier" | "Bons plans";
   title: string;
   sub?: string;
   href: string;
@@ -19,7 +21,7 @@ interface Item {
   hay: string;
 }
 
-const GROUP_ORDER: Item["group"][] = ["Rubriques", "Membres", "Bibliothèque", "Atelier", "Bons plans"];
+const GROUP_ORDER: Item["group"][] = ["Rubriques", "Membres", "Favoris", "Calendrier", "Cinéma", "Génériques", "Bibliothèque", "Atelier", "Bons plans"];
 const MAX_PER_GROUP = 6;
 
 const PAGE_ITEMS: Item[] = NAV.map((n, i) => ({
@@ -32,14 +34,48 @@ const PAGE_ITEMS: Item[] = NAV.map((n, i) => ({
 }));
 
 async function loadIndex(): Promise<Item[]> {
-  const [members, biblio, atelier, plans] = await Promise.allSettled([
+  const [members, biblio, atelier, plans, airing, cinema] = await Promise.allSettled([
     fetchMembers(),
     supabase.from("bibliotheque").select("id, title, type, tier"),
     fetch("/api/atelier").then((r) => (r.ok ? r.json() : { images: [] })),
     fetchBonsPlans(),
+    fetch("/api/calendrier").then((r) => (r.ok ? r.json() : { series: [] })),
+    fetch("/api/cinema?list=1").then((r) => (r.ok ? r.json() : { items: [] })),
   ]);
 
   const items: Item[] = [];
+
+  // Génériques du catalogue (opening / ending) : ouverts dans la section de l'accueil.
+  (songs as { title: string; artist: string; anime: string; kind: string; year: number }[]).forEach((g, i) => items.push({
+    key: `g-${i}`, group: "Génériques", title: g.title,
+    sub: `${g.kind === "OP" ? "Opening" : "Ending"} de ${g.anime} · ${g.artist}`,
+    href: `/?generique=${i}#generique`,
+    hay: normalize(`${g.title} ${g.artist} ${g.anime} ${g.kind === "OP" ? "opening" : "ending"} generique`),
+  }));
+  if (airing.status === "fulfilled" && Array.isArray(airing.value?.series)) {
+    for (const a of airing.value.series as { id: number; title: string; alt?: string | null; cover?: string | null; episode: number; fans: number }[]) {
+      items.push({
+        key: `c-${a.id}`, group: "Calendrier", title: a.title,
+        sub: `Épisode ${a.episode} cette semaine${a.fans ? ` · suivi par ${a.fans} membre${a.fans > 1 ? "s" : ""}` : ""}`,
+        href: `/calendrier?serie=${a.id}`, image: a.cover ?? undefined,
+        hay: normalize(`${a.title} ${a.alt ?? ""} calendrier sortie episode`),
+      });
+    }
+  }
+  if (cinema.status === "fulfilled" && Array.isArray(cinema.value?.items)) {
+    const seen = new Set<string>();
+    for (const c of cinema.value.items as { kind: string; id: number; title: string; year?: number | null; poster?: string | null }[]) {
+      const k = `${c.kind}-${c.id}`;
+      if (seen.has(k)) continue;
+      seen.add(k);
+      items.push({
+        key: `v-${k}`, group: "Cinéma", title: c.title,
+        sub: `${c.kind === "movie" ? "Film" : "Série"}${c.year ? ` · ${c.year}` : ""} · bande-annonce et où regarder`,
+        href: `/cinema?titre=${k}`, image: c.poster ?? undefined,
+        hay: normalize(`${c.title} cinema regarder streaming`),
+      });
+    }
+  }
 
   if (members.status === "fulfilled") {
     for (const m of members.value) {
@@ -52,6 +88,16 @@ async function loadIndex(): Promise<Item[]> {
         image: m.animeChar || m.photo || undefined,
         hay: normalize(`${m.name} ${m.rank} ${m.badge ?? ""}`),
       });
+      for (const w of [...(m.extras?.favoriteAnime ?? []), ...(m.extras?.favoriteManga ?? [])]) {
+        const t = workTitle(w);
+        if (!t) continue;
+        items.push({
+          key: `f-${m.id}-${w.kind}-${t}`, group: "Favoris", title: t,
+          sub: `${w.kind === "MANGA" ? "Manga" : "Anime"} préféré de ${m.name}`,
+          href: `/membres/${m.id}`, image: w.coverUrl || undefined,
+          hay: normalize(`${t} ${w.titleRomaji ?? ""} ${w.titleLocalized ?? ""} ${m.name} favori`),
+        });
+      }
     }
   }
   if (biblio.status === "fulfilled" && Array.isArray(biblio.value.data)) {
@@ -96,6 +142,10 @@ async function loadIndex(): Promise<Item[]> {
 }
 
 const GROUP_ICON = {
+  "Favoris": Heart,
+  "Calendrier": CalendarDays,
+  "Cinéma": Film,
+  "Génériques": Music,
   "Bibliothèque": BookOpen,
   "Atelier": Palette,
   "Bons plans": Tag,

@@ -12,6 +12,7 @@ import BirthdayBanner from "./components/BirthdayBanner";
 import Footer from "./components/Footer";
 import BackToTop from "./components/BackToTop";
 import MotionDirector from "./components/MotionDirector";
+import RouteTransitions from "./components/RouteTransitions";
 import MotionSettings from "./components/MotionSettings";
 import CommandPalette from "./components/CommandPalette";
 import SplashWrapper from "./components/SplashWrapper";
@@ -75,6 +76,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <CommandPalette />
           <BackToTop />
           <MotionDirector />
+          <RouteTransitions />
           </MusicDockProvider>
           </MotionSettings>
         </ThemeProvider>

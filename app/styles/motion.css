@@ -385,6 +385,15 @@ html[data-vt="page-next"]::view-transition-old(root) { animation: 200ms ease-in 
 html[data-vt="page-next"]::view-transition-new(root) { animation: 260ms cubic-bezier(.2, .9, .25, 1) both gk-vt-in-right; }
 html[data-vt="page-prev"]::view-transition-old(root) { animation: 200ms ease-in both gk-vt-out-right; }
 html[data-vt="page-prev"]::view-transition-new(root) { animation: 260ms cubic-bezier(.2, .9, .25, 1) both gk-vt-in-left; }
+/* Changement de page : l'ancienne recule et s'assombrit, la nouvelle arrive par
+   une coupe en biais qui balaie l'écran (planche de manga). */
+@keyframes gk-route-out { to { transform: scale(.94); filter: brightness(.45); } }
+@keyframes gk-route-in {
+  from { clip-path: polygon(110% 0, 140% 0, 120% 100%, 90% 100%); }
+  to { clip-path: polygon(-30% 0, 140% 0, 120% 100%, -50% 100%); }
+}
+html[data-vt="route"]::view-transition-old(root) { animation: 420ms cubic-bezier(.4, 0, .2, 1) both gk-route-out; }
+html[data-vt="route"]::view-transition-new(root) { animation: 460ms cubic-bezier(.7, 0, .2, 1) both gk-route-in; }
 /* Filtres : simple fondu enchaîné, rapide. */
 html[data-vt="list"]::view-transition-old(root), html[data-vt="list"]::view-transition-new(root) { animation-duration: 160ms; }
 @media (prefers-reduced-motion: reduce) {

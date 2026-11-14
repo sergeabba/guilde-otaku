@@ -33,11 +33,12 @@ export interface FeaturedFilm {
 
 const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"];
 
-export default function HomePageClient({ initialMembers, featuredFilm, atelierTiles = [], song = null }: {
+export default function HomePageClient({ initialMembers, featuredFilm, atelierTiles = [], song = null, songIsToday = true }: {
   initialMembers: Member[];
   featuredFilm?: FeaturedFilm | null;
   atelierTiles?: AtelierTile[];
   song?: AnimeSong | null;
+  songIsToday?: boolean;
 }) {
   const [activeRank, setActiveRank] = useState<Rank | "Tous">("Tous");
   const [activeCountry, setActiveCountry] = useState<string | null>(null);
@@ -241,7 +242,7 @@ export default function HomePageClient({ initialMembers, featuredFilm, atelierTi
             </div>
           </div>
 
-          {song && <SongOfTheDay initial={song} />}
+          {song && <SongOfTheDay initial={song} today={songIsToday} />}
 
           <ChapterStory />
 

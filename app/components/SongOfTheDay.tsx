@@ -8,9 +8,9 @@ import { ExternalLink, Pause, Play, Shuffle } from "lucide-react";
 import type { AnimeSong } from "../../lib/anime-song";
 import { useMusicDock } from "./MusicDock";
 
-export default function SongOfTheDay({ initial }: { initial: AnimeSong }) {
+export default function SongOfTheDay({ initial, today = true }: { initial: AnimeSong; today?: boolean }) {
   const [song, setSong] = useState(initial);
-  const [isToday, setIsToday] = useState(true);
+  const [isToday, setIsToday] = useState(today);
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -45,7 +45,7 @@ export default function SongOfTheDay({ initial }: { initial: AnimeSong }) {
 
   const label = song.kind === "OP" ? "Opening" : "Ending";
   return (
-    <section className={`sotd tone-dark${playing ? " is-playing" : ""}`} aria-labelledby="sotd-title" style={{ "--sotd-cover": song.cover ? `url(${JSON.stringify(song.cover)})` : "none" } as React.CSSProperties}>
+    <section id="generique" className={`sotd tone-dark${playing ? " is-playing" : ""}`} aria-labelledby="sotd-title" style={{ "--sotd-cover": song.cover ? `url(${JSON.stringify(song.cover)})` : "none" } as React.CSSProperties}>
       <div className="sotd-backdrop" aria-hidden="true" />
       <div className="gk-wrap sotd-inner">
         <div className="sotd-art">
