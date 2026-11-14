@@ -125,3 +125,24 @@
    qu'il remplisse les cadres dont la hauteur vient d'un ratio ou d'un min-height. */
 .bb-une-cover > div, .bb-dossier-cover > div, .bb-brief-thumb > div,
 .bb-card-cover > div, .bb-article-cover > div { position: absolute !important; inset: 0; }
+
+/* Chronique à la une : grande image paysage en fond, affiche HD nette. */
+.bb-une { position: relative; isolation: isolate; }
+.bb-une.has-bd::before { content: ""; position: absolute; inset: 0; z-index: -2; background: var(--bd) center 30% / cover no-repeat; transform: scale(1.04); transition: transform 900ms cubic-bezier(.2,.8,.2,1); }
+.bb-une.has-bd::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, color-mix(in srgb, var(--gk-surface) 30%, transparent), color-mix(in srgb, var(--gk-surface) 88%, transparent) 42%, var(--gk-surface) 75%); }
+@media (max-width: 819px) { .bb-une.has-bd::after { background: linear-gradient(0deg, var(--gk-surface) 45%, color-mix(in srgb, var(--gk-surface) 55%, transparent)); } }
+@media (hover: hover) { .bb-une.has-bd:hover::before { transform: scale(1.09); } }
+.bb-une.has-bd .bb-une-cover { margin: clamp(14px, 2.4vw, 28px); border: var(--gk-stroke) solid var(--gk-border); box-shadow: 10px 10px 0 var(--tag, var(--gk-accent)); aspect-ratio: 2 / 3; min-height: 0; align-self: center; }
+
+/* Archives : saisons précédentes, à part. */
+.bb-archives { margin-top: clamp(18px, 3vw, 30px); }
+.bb-archive-tabs { margin-top: 6px; }
+.bb-archive-sub { margin-top: 12px; color: var(--gk-dim); font: 700 .85rem var(--gk-font-ui); text-transform: uppercase; letter-spacing: .08em; }
+.bb-archive-grid { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: clamp(12px, 1.6vw, 18px); grid-template-columns: repeat(auto-fill, minmax(min(46%, 150px), 1fr)); }
+.bb-archive-card { width: 100%; display: grid; gap: 6px; text-align: left; background: none; border: 0; padding: 0; color: inherit; cursor: pointer; }
+.bb-archive-cover { position: relative; display: block; aspect-ratio: 2 / 3; overflow: hidden; border: var(--gk-stroke) solid var(--gk-border); background: var(--gk-surface-2); filter: saturate(.85); transition: transform 240ms cubic-bezier(.2,.8,.2,1), box-shadow 240ms cubic-bezier(.2,.8,.2,1), filter 240ms ease; }
+@media (hover: hover) { .bb-archive-card:hover .bb-archive-cover { transform: translateY(-4px); box-shadow: 6px 6px 0 var(--tag, var(--gk-accent)); filter: none; } }
+.bb-archive-card strong { font: 900 italic .95rem/1.1 var(--gk-font-ui); text-transform: uppercase; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.bb-archive-card small { color: var(--gk-faint); font: 700 .72rem var(--gk-font-ui); text-transform: uppercase; letter-spacing: .05em; }
+.bb-archive-card:focus-visible { outline: 3px solid var(--gk-accent); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .bb-une.has-bd::before, .bb-archive-cover { transition: none; } }

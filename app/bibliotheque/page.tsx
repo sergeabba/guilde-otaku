@@ -42,6 +42,10 @@ interface Reading {
   kind: "chronique" | "fiche";
   title: string;
   cover: string;
+  /** Grande image paysage (chronique à la une). */
+  backdrop?: string;
+  /** Saison de la chronique (« Automne 2026 »). */
+  season?: string;
   tag?: string;
   color?: string;
   date?: string;
@@ -112,6 +116,8 @@ export default function BibliothequePage() {
             color: item.dossier_bash_color || match?.color || "#c9a84c",
             review: item.avis_guilde || match?.review || item.synopsis || "",
             cover: item.cover_image || match?.localCover || match?.cover || "",
+            hdCover: match?.hdCover,
+            backdrop: match?.backdrop,
             localCover: match?.localCover,
             trailer_url: item.trailer_url || match?.trailer_url || undefined,
           };
@@ -176,7 +182,9 @@ export default function BibliothequePage() {
       key: `chronique-${slug(c.title)}`,
       kind: "chronique",
       title: c.title,
-      cover: c.cover,
+      cover: c.hdCover || c.cover,
+      backdrop: c.backdrop,
+      season: dossierBashSeason(c.date)?.label,
       tag: c.tag,
       color: c.color,
       date: c.date,
@@ -268,9 +276,21 @@ export default function BibliothequePage() {
     return !v;
   });
 
-  const [une, ...restChroniques] = chroniques;
-  // Saison de la chronique à la une (les intitulés suivent la dernière Chronique).
+  // Saison de la dernière Chronique : elle seule occupe le haut de la page ; les
+  // précédentes sont rangées à part, par saison (archives).
   const season = dossierBashSeason(dossierBash[0]?.date ?? "") ?? { label: "Printemps 2026", school: "2025/26" };
+  const current = chroniques.filter((c) => !c.season || c.season === season.label);
+  const archives = useMemo(() => {
+    const map = new Map<string, Reading[]>();
+    for (const c of chroniques) {
+      if (!c.season || c.season === season.label) continue;
+      map.set(c.season, [...(map.get(c.season) ?? []), c]);
+    }
+    return [...map.entries()];
+  }, [chroniques, season.label]);
+  const [archiveSeason, setArchiveSeason] = useState<string | null>(null);
+  const shownArchive = archives.find(([k]) => k === archiveSeason) ?? archives[0];
+  const [une, ...restChroniques] = current;
   const duo = restChroniques.slice(0, 2);
   const briefs = restChroniques.slice(2);
   const visibleBriefs = showAllBriefs ? briefs : briefs.slice(0, 8);
@@ -313,7 +333,7 @@ export default function BibliothequePage() {
               <span className="gk-stamp" aria-hidden="true">Tokushū</span>
             </div>
 
-            <button type="button" className="gk-panel gk-press bb-une" onClick={() => open(une, chroniques)} style={{ "--tag": une.color } as React.CSSProperties}>
+            <button type="button" className={`gk-panel gk-press bb-une${une.backdrop ? " has-bd" : ""}`} onClick={() => open(une, chroniques)} style={{ "--tag": une.color, "--bd": une.backdrop ? `url(${JSON.stringify(une.backdrop)})` : "none" } as React.CSSProperties}>
               <div className="bb-une-cover">
                 {une.cover && <OptimizedImage src={une.cover} alt="" priority />}
               </div>
@@ -373,6 +393,37 @@ export default function BibliothequePage() {
                 )}
               </>
             )}
+          </section>
+        )}
+
+        {/* ── ARCHIVES DE LA CHRONIQUE (saisons précédentes) ─────────── */}
+        {shownArchive && (
+          <section className="bb-section bb-archives" data-gk-motion="reveal" aria-labelledby="bb-archives">
+            <div className="bb-head">
+              <div>
+                <span className="gk-hand">les dossiers précédents</span>
+                <h2 id="bb-archives" className="gk-display gk-h3">Archives de la Chronique</h2>
+              </div>
+            </div>
+            {archives.length > 1 && (
+              <div className="gk-chips bb-archive-tabs" role="group" aria-label="Saison">
+                {archives.map(([k, list]) => (
+                  <button key={k} type="button" className="gk-chip" aria-pressed={k === shownArchive[0]} onClick={() => setArchiveSeason(k)}>{k} · {list.length}</button>
+                ))}
+              </div>
+            )}
+            <p className="bb-archive-sub">{shownArchive[0]} · {shownArchive[1].length} chroniques</p>
+            <ul className="bb-archive-grid">
+              {shownArchive[1].map((c) => (
+                <li key={c.key}>
+                  <button type="button" className="bb-archive-card" onClick={() => open(c, chroniques)} style={{ "--tag": c.color } as React.CSSProperties}>
+                    <span className="bb-archive-cover">{c.cover && <OptimizedImage src={c.cover} alt="" />}</span>
+                    <strong>{c.title}</strong>
+                    <small>{[c.tag, c.date].filter(Boolean).join(" · ")}</small>
+                  </button>
+                </li>
+              ))}
+            </ul>
           </section>
         )}
 
