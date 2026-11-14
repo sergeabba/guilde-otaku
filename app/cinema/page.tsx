@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getCinemaRows, type CinemaItem } from "../../lib/cinema";
+import { driveConfig, getGuildVideos, type GuildCollection } from "../../lib/drive";
 import CinemaClient from "./CinemaClient";
 
 export const metadata: Metadata = {
@@ -14,8 +15,13 @@ function pickHero(series: CinemaItem[]): CinemaItem | null {
 }
 
 export default async function CinemaPage() {
-  const rows = await getCinemaRows().catch(() => null);
+  const [rows, guild] = await Promise.all([
+    getCinemaRows().catch(() => null),
+    driveConfig()
+      ? getGuildVideos().then((c): { collections: GuildCollection[]; error?: string } => ({ collections: c })).catch((e: unknown) => ({ collections: [] as GuildCollection[], error: e instanceof Error ? e.message : "Google Drive indisponible." }))
+      : Promise.resolve(null),
+  ]);
   // Affiche à la une : tirée au hasard parmi les séries populaires qui ont une image et un synopsis.
   const hero = pickHero(rows?.series ?? []);
-  return <CinemaClient rows={rows} hero={hero} />;
+  return <CinemaClient rows={rows} hero={hero} guild={guild} />;
 }

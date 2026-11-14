@@ -71,3 +71,17 @@
   .cin-hero::before, .cin-hero-title, .cin-hero-syn, .cin-play, .cin-theater, .cin-room { animation: none; }
   .cin-poster, .cin-poster img { transition: none; }
 }
+
+/* Vidéos de la Guilde : vignettes 16:9 */
+.cin-guild { border-bottom: 2px solid rgba(246,240,228,.08); padding-bottom: clamp(20px, 4vw, 40px); }
+.cin-strip.is-wide > li { width: clamp(240px, 26vw, 360px); }
+.cin-thumb { position: relative; display: block; aspect-ratio: 16 / 9; overflow: hidden; background: #1d1a22; border: 3px solid rgba(246,240,228,.85); transition: transform 260ms cubic-bezier(.2,.8,.2,1), box-shadow 260ms cubic-bezier(.2,.8,.2,1); }
+.cin-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 500ms cubic-bezier(.2,.8,.2,1); }
+.cin-thumb-empty { display: grid; place-items: center; height: 100%; font: 900 3rem var(--gk-font-display); color: rgba(246,240,228,.15); }
+.cin-dur { position: absolute; left: 8px; bottom: 8px; padding: 2px 7px; background: rgba(0,0,0,.78); color: #fff; font: 800 .78rem var(--gk-font-ui); letter-spacing: .04em; }
+@media (hover: hover) {
+  .cin-card:hover .cin-thumb { transform: translateY(-5px); box-shadow: 8px 8px 0 #c9a84c; }
+  .cin-card:hover .cin-thumb img { transform: scale(1.05); }
+  .cin-card:hover .cin-thumb .cin-poster-play { opacity: 1; transform: none; }
+}
+.cin-room-info.is-single { grid-template-columns: 1fr; }
