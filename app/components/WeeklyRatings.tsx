@@ -6,6 +6,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Star } from "lucide-react";
 import type { EpisodeRating } from "../../lib/ratings";
+import "../styles/ratings.css";
 
 function Score({ value }: { value: number }) {
   const ref = useRef<HTMLSpanElement>(null);
@@ -34,10 +35,21 @@ function Score({ value }: { value: number }) {
 
 const DAY = new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long" });
 
+/** Charge les notes (API en cache) puis les affiche ; rien tant qu'elles ne sont pas là. */
+export function WeeklyRatingsLoader() {
+  const [ratings, setRatings] = useState<EpisodeRating[]>([]);
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/ratings").then((r) => (r.ok ? r.json() : { ratings: [] })).then((d) => { if (alive) setRatings(d.ratings ?? []); }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
+  return <WeeklyRatings ratings={ratings} />;
+}
+
 export default function WeeklyRatings({ ratings }: { ratings: EpisodeRating[] }) {
   if (ratings.length < 3) return null;
   return (
-    <section className="wr gk-wrap" aria-labelledby="wr-title">
+    <section className="wr" aria-labelledby="wr-title">
       <header className="wr-head">
         <h2 id="wr-title" className="gk-display">Les notes de la semaine</h2>
         <p>Les épisodes diffusés ces 7 derniers jours, notés par les spectateurs (TMDB)</p>

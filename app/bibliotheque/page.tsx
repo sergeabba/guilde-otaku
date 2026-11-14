@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
+import { WeeklyRatingsLoader } from "../components/WeeklyRatings";
 import { ArrowRight, Calendar, ChevronLeft, ChevronRight, Eye, EyeOff, Heart, Play, Search, Share2, X } from "lucide-react";
 import GuildeHeader from "../components/GuildeHeader";
 import { flushSync } from "react-dom";
@@ -369,6 +370,9 @@ export default function BibliothequePage() {
             )}
           </section>
         )}
+
+        {/* ── LES NOTES DE LA SEMAINE (épisodes d'anime, TMDB) ────────── */}
+        <WeeklyRatingsLoader />
 
         <hr className="gk-rule" />
 

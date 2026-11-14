@@ -13,8 +13,6 @@ import ChapterStory from "./ChapterStory";
 import WordReveal from "./WordReveal";
 import AtelierWall from "./AtelierWall";
 import SongOfTheDay from "./SongOfTheDay";
-import WeeklyRatings from "./WeeklyRatings";
-import type { EpisodeRating } from "../../lib/ratings";
 import type { AnimeSong } from "../../lib/anime-song";
 import type { AtelierTile } from "../../lib/atelier-server";
 import { rankAccents, rankLogos, darkRanks, rankRomaji } from "../config/ranks";
@@ -35,13 +33,12 @@ export interface FeaturedFilm {
 
 const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"];
 
-export default function HomePageClient({ initialMembers, featuredFilm, atelierTiles = [], song = null, songIsToday = true, ratings = [] }: {
+export default function HomePageClient({ initialMembers, featuredFilm, atelierTiles = [], song = null, songIsToday = true }: {
   initialMembers: Member[];
   featuredFilm?: FeaturedFilm | null;
   atelierTiles?: AtelierTile[];
   song?: AnimeSong | null;
   songIsToday?: boolean;
-  ratings?: EpisodeRating[];
 }) {
   const [activeRank, setActiveRank] = useState<Rank | "Tous">("Tous");
   const [activeCountry, setActiveCountry] = useState<string | null>(null);
@@ -246,8 +243,6 @@ export default function HomePageClient({ initialMembers, featuredFilm, atelierTi
           </div>
 
           {song && <SongOfTheDay initial={song} today={songIsToday} />}
-
-          <WeeklyRatings ratings={ratings} />
 
           <ChapterStory />
 
