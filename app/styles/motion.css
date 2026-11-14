@@ -390,3 +390,60 @@ html[data-vt="list"]::view-transition-old(root), html[data-vt="list"]::view-tran
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }
+
+/* ─── MUR DE L'ATELIER (AtelierWall) ─────────────────────────────────────── */
+.gk-wall { background: #0f0e13; color: #f6f0e6; overflow: hidden; padding-block: clamp(40px, 6vw, 84px) clamp(56px, 8vw, 110px); border-block: 3px solid #0f0e13; }
+.gk-wall-head { display: flex; justify-content: space-between; align-items: end; gap: 24px; margin-bottom: clamp(30px, 5vw, 64px); }
+.gk-wall-head h2 { font-size: clamp(2.6rem, 7.5vw, 6.4rem); line-height: .92; color: #fff9ed; }
+.gk-wall-head h2 em { color: #d1af58; font-style: normal; }
+.gk-wall-side { display: grid; gap: 4px; justify-items: start; max-width: 32ch; }
+.gk-wall-side p { font: 500 clamp(.95rem, 1.4vw, 1.15rem)/1.5 var(--font-barlow), sans-serif; color: #bdb5a9; }
+@media (max-width: 680px) { .gk-wall-head { display: block; } .gk-wall-side { margin-top: 16px; } }
+
+.gk-wall-stage {
+  --row-h: clamp(150px, 22vw, 260px);
+  position: relative;
+  /* Marge pour que les bandes inclinées ne soient pas coupées par le masque. */
+  padding-block: 70px; margin-block: -70px;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+}
+.gk-wall-tilt { display: grid; gap: clamp(16px, 2.2vw, 28px); transform: rotate(-3.5deg) scale(1.1); padding-block: 26px; }
+.gk-wall-row { overflow: visible; }
+.gk-wall-track { display: flex; width: max-content; gap: clamp(14px, 1.8vw, 24px); padding-inline: 12px; }
+.gk-wall-tile {
+  position: relative; flex: none; display: block;
+  height: var(--row-h); width: calc(var(--row-h) * var(--w, 1));
+  border: 3px solid #f6f0e6; background: #1d1a22; overflow: hidden;
+  box-shadow: 8px 8px 0 var(--acc, #c9a84c);
+  transform: rotate(var(--rot, 0deg));
+  transition: transform 320ms cubic-bezier(.2, .8, .2, 1), box-shadow 320ms cubic-bezier(.2, .8, .2, 1);
+}
+.gk-wall-tile img { object-fit: cover; }
+.gk-wall-cap {
+  position: absolute; left: 0; right: 0; bottom: 0; padding: 22px 12px 10px;
+  background: linear-gradient(0deg, rgba(8,7,10,.92), transparent);
+  font: 900 .95rem/1.1 var(--font-barlow-condensed), sans-serif; text-transform: uppercase; letter-spacing: .04em;
+  color: #fff8ec; opacity: 0; transform: translateY(8px);
+  transition: opacity 240ms ease, transform 240ms ease;
+}
+@media (hover: hover) {
+  .gk-wall-tile:hover { transform: rotate(0deg) scale(1.06); box-shadow: 12px 12px 0 var(--acc, #c9a84c); z-index: 2; }
+  .gk-wall-tile:hover .gk-wall-cap { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .gk-wall-track { animation: gk-wall-x linear infinite; animation-duration: calc(var(--n, 10) * 5.5s); }
+  .gk-wall-row.is-rev .gk-wall-track { animation-direction: reverse; }
+  @media (hover: hover) { .gk-wall-row:hover .gk-wall-track { animation-play-state: paused; } }
+  /* Parallaxe : le défilement de la page pousse les bandes en sens contraires. */
+  @supports (animation-timeline: view()) {
+    .gk-wall-row { animation: gk-wall-push-l linear both; animation-timeline: view(); animation-range: cover 0% cover 100%; }
+    .gk-wall-row.is-rev { animation-name: gk-wall-push-r; }
+    .gk-wall-tilt { animation: gk-wall-tilt linear both; animation-timeline: view(); animation-range: entry 0% cover 60%; }
+  }
+}
+@keyframes gk-wall-x { to { transform: translateX(-50%); } }
+@keyframes gk-wall-push-l { from { transform: translateX(6%); } to { transform: translateX(-6%); } }
+@keyframes gk-wall-push-r { from { transform: translateX(-6%); } to { transform: translateX(6%); } }
+@keyframes gk-wall-tilt { from { transform: rotate(-7deg) scale(1.16); } to { transform: rotate(-3.5deg) scale(1.1); } }

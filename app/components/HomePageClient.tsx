@@ -11,6 +11,8 @@ import MemberQuickView from "./MemberQuickView";
 import GuildeHeader from "./GuildeHeader";
 import ChapterStory from "./ChapterStory";
 import WordReveal from "./WordReveal";
+import AtelierWall from "./AtelierWall";
+import type { AtelierTile } from "../../lib/atelier-server";
 import { rankAccents, rankLogos, darkRanks, rankRomaji } from "../config/ranks";
 import { COUNTRIES, flagUrl } from "../config/countries";
 import { NAV, chapterNo } from "../config/nav";
@@ -29,9 +31,10 @@ export interface FeaturedFilm {
 
 const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"];
 
-export default function HomePageClient({ initialMembers, featuredFilm }: {
+export default function HomePageClient({ initialMembers, featuredFilm, atelierTiles = [] }: {
   initialMembers: Member[];
   featuredFilm?: FeaturedFilm | null;
+  atelierTiles?: AtelierTile[];
 }) {
   const [activeRank, setActiveRank] = useState<Rank | "Tous">("Tous");
   const [activeCountry, setActiveCountry] = useState<string | null>(null);
@@ -236,6 +239,8 @@ export default function HomePageClient({ initialMembers, featuredFilm }: {
           </div>
 
           <ChapterStory />
+
+          <AtelierWall tiles={atelierTiles} />
 
           <hr className="gk-rule" />
 
