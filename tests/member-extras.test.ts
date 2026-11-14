@@ -102,3 +102,15 @@ describe("shareVersion", () => {
     expect(shareVersion(m)).not.toBe(shareVersion({ ...m, extras: { photoFocus: { x: 10, y: 10 } } }));
   });
 });
+
+describe("style de carte", () => {
+  it("garde une couleur et un motif valides, rejette le reste", () => {
+    expect(parseMemberExtras({ card: { color: "#E0218A", motif: "trame" } })?.card).toEqual({ color: "#e0218a", motif: "trame" });
+    expect(parseMemberExtras({ card: { color: "red", motif: "laser" } })).toBeUndefined();
+    expect(parseMemberExtras({ card: { motif: "vitesse" } })?.card).toEqual({ motif: "vitesse" });
+  });
+  it("change la version de partage (carte régénérée)", () => {
+    const m = { id: 1, name: "A", rank: "Monarque" as const, photo: "/a.jpg", animeChar: "/b.jpg", color: "#ffffff", extras: {} };
+    expect(shareVersion(m)).not.toBe(shareVersion({ ...m, extras: { card: { color: "#112233" } } }));
+  });
+});

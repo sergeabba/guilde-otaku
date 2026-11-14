@@ -12,7 +12,7 @@ const CHAPTERS = [
     kicker: "LES VISAGES",
     heading: "UNE GUILDE. DES LÉGENDES.",
     description: "Des personnages, des grades et surtout les personnes qui font vivre la communauté.",
-    image: "/atelier/teamotaku.png",
+    image: "/atelier/teamotaku.png", w: 2080, h: 2048,
     alt: "Illustration collective de la Guilde Otaku",
     href: "/#annuaire",
     action: "Rencontrer la Guilde",
@@ -22,7 +22,7 @@ const CHAPTERS = [
     kicker: "L'ARÈNE",
     heading: "CHOISIS TON CAMP.",
     description: "Entre dans l'arène et découvre les affrontements de la Guilde.",
-    image: "/arena_xillia.jpg",
+    image: "/arena_xillia.jpg", w: 1920, h: 1080,
     alt: "Décor illustré de l'arène",
     href: "/fighters",
     action: "Entrer dans l'arène",
@@ -32,7 +32,7 @@ const CHAPTERS = [
     kicker: "LES CHRONIQUES",
     heading: "UNE HISTOIRE À LA FOIS.",
     description: "Critiques, découvertes et verdicts : les histoires qui nourrissent nos discussions.",
-    image: "/covers/bash/drops-of-god.jpg",
+    image: "/covers/bash/drops-of-god.jpg", w: 424, h: 600,
     alt: "Couverture illustrée d'une œuvre présentée dans la bibliothèque",
     href: "/bibliotheque",
     action: "Lire les chroniques",
@@ -50,9 +50,16 @@ function ChapterPanel({ chapter, index, active, staged = false }: {
       aria-hidden={staged && !active ? true : undefined}
     >
       <div className="gk-story-image">
-        <Image src={chapter.image} alt={chapter.alt} fill sizes="(max-width: 899px) 90vw, 100vw" />
+        <Image src={chapter.image} alt={staged ? "" : chapter.alt} fill sizes={staged ? "50vw" : "(max-width: 899px) 90vw, 540px"} />
       </div>
       <div className="gk-story-shade" aria-hidden="true" />
+      {/* Ordinateur : l'illustration à sa taille réelle (jamais agrandie au-delà),
+          encadrée comme une case ; le fond flouté reprend ses couleurs. */}
+      {staged && (
+        <figure className="gk-story-figure" style={{ aspectRatio: `${chapter.w} / ${chapter.h}`, maxWidth: `min(${chapter.w}px, 46vw)`, maxHeight: chapter.h }}>
+          <Image src={chapter.image} alt={chapter.alt} fill sizes="(min-width: 900px) 46vw, 1px" />
+        </figure>
+      )}
       <div className="gk-story-content">
         <div className="gk-story-meta"><span>CHAPITRE {chapter.number}</span><span>0{index + 1} / 03</span></div>
         <p className="gk-story-kicker">{chapter.kicker}</p>
@@ -82,9 +89,9 @@ export default function ChapterStory() {
     <section className="gk-story" aria-labelledby="gk-story-heading">
       <div className="gk-wrap gk-story-heading" data-gk-motion="reveal">
         <div><span className="gk-chapter"><b>✦</b><span>LA GUILDE EN TROIS ACTES</span></span>
-          <h2 id="gk-story-heading" className="gk-display">L'HISTOIRE <em>CONTINUE.</em></h2>
+          <h2 id="gk-story-heading" className="gk-display">L&apos;HISTOIRE <em>CONTINUE.</em></h2>
         </div>
-        <p>Trois portes d'entrée, mille façons de vivre la passion anime. Fais défiler l'histoire.</p>
+        <p>Trois portes d&apos;entrée, mille façons de vivre la passion anime. Fais défiler l&apos;histoire.</p>
       </div>
       <div className="gk-story-runway" ref={runway}>
         <div className="gk-story-sticky">

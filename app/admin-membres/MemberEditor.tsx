@@ -6,7 +6,7 @@ import { ExternalLink, Eye, EyeOff, Trash2, X } from "lucide-react";
 import { RANK_FILTER_ORDER, type Rank } from "../../data/members";
 import { COUNTRIES } from "../config/countries";
 import { adminDb } from "../../lib/admin-db-client";
-import { EXTRAS_KEYS, hasJapanese, memberAwards, parseMemberExtras, type FocusPoint, type MemberExtras } from "../../lib/member-extras";
+import { CARD_MOTIFS, CARD_MOTIF_LABEL, EXTRAS_KEYS, hasJapanese, memberAwards, parseMemberExtras, type FocusPoint, type MemberExtras } from "../../lib/member-extras";
 import type { SupabaseMemberRow } from "../types";
 import PortraitPanel from "./PortraitPanel";
 import UniverseEditor from "./UniverseEditor";
@@ -78,7 +78,7 @@ export default function MemberEditor({ member, extrasSupported, onClose, onSaved
     const parsed = (parseMemberExtras(raw) ?? {}) as Record<string, unknown>;
     return EXTRAS_KEYS.filter((k) => (raw as Record<string, unknown>)[k] !== undefined && parsed[k] === undefined);
   })();
-  const UNREADABLE_LABEL: Record<string, string> = { displayNameRomaji: "surnom", favoriteAnime: "anime préférés", favoriteManga: "mangas préférés", music: "musique", awards: "palmarès", photoFocus: "cadrage réel", animeFocus: "cadrage anime" };
+  const UNREADABLE_LABEL: Record<string, string> = { displayNameRomaji: "surnom", favoriteAnime: "anime préférés", favoriteManga: "mangas préférés", music: "musique", awards: "palmarès", photoFocus: "cadrage réel", animeFocus: "cadrage anime", card: "style de carte" };
 
   const errors = identityErrors(form);
   const dirty = JSON.stringify([form, extras]) !== savedSnapshot;
@@ -133,7 +133,8 @@ export default function MemberEditor({ member, extrasSupported, onClose, onSaved
       special: { name: form.specialName.trim() || "—", effect: form.specialEffect.trim() || "—" },
     };
     const awards = (extras.awards ?? []).map((a) => ({ ...a, title: a.title.trim(), description: a.description?.trim() || undefined }));
-    const normalized: MemberExtras = { ...extras, awards: awards.length ? awards : undefined };
+    const card = extras.card?.color || extras.card?.motif ? JSON.parse(JSON.stringify(extras.card)) : undefined;
+    const normalized: MemberExtras = { ...extras, awards: awards.length ? awards : undefined, card };
     if (extrasSupported) {
       // N'envoyer que les rubriques modifiées (null = rubrique retirée) : une donnée
       // non touchée, ou que l'admin ne sait pas lire, n'est jamais réécrite.
@@ -312,6 +313,28 @@ export default function MemberEditor({ member, extrasSupported, onClose, onSaved
                 <PortraitPanel title="Anime" kind="anime" src={row.animechar} video={row.animevideo} focus={extras.animeFocus} fallbackFocus="50% 15%"
                   onFocus={setFocus("animeFocus")} canFocus={extrasSupported} member={{ id: row.id, name: row.name }} onUploaded={onUploaded} />
               </div>
+              {extrasSupported && (
+                <fieldset className="am-fieldset">
+                  <legend>Carte téléchargeable</legend>
+                  <p className="am-intro" style={{ margin: 0 }}>Par défaut, la couleur de la carte est tirée du portrait anime. Tu peux la forcer et choisir le motif du fond.</p>
+                  <div className="am-row">
+                    <label className="am-row" style={{ gap: 8 }}>
+                      <input type="checkbox" checked={!!extras.card?.color} onChange={(e) => patchExtras({ card: { ...extras.card, color: e.target.checked ? "#e0218a" : undefined } })} />
+                      Forcer la couleur
+                    </label>
+                    {extras.card?.color && (
+                      <span className="am-color"><input type="color" value={extras.card.color} onChange={(e) => patchExtras({ card: { ...extras.card, color: e.target.value } })} aria-label="Couleur de la carte" /><code>{extras.card.color}</code></span>
+                    )}
+                  </div>
+                  <div className="am-chips" role="group" aria-label="Motif du fond">
+                    <button type="button" className="am-chip" aria-pressed={!extras.card?.motif} onClick={() => patchExtras({ card: { ...extras.card, motif: undefined } })}>Automatique</button>
+                    {CARD_MOTIFS.map((m) => (
+                      <button key={m} type="button" className="am-chip" aria-pressed={extras.card?.motif === m} onClick={() => patchExtras({ card: { ...extras.card, motif: m } })}>{CARD_MOTIF_LABEL[m]}</button>
+                    ))}
+                  </div>
+                  <button type="button" className="am-btn am-btn--sm" style={{ justifySelf: "start" }} onClick={() => window.open(`/api/card/member?id=${row.id}&v=${Date.now()}`, "_blank", "noopener")}><ExternalLink size={14} aria-hidden="true" /> Voir la carte enregistrée</button>
+                </fieldset>
+              )}
             </>
           )}
 

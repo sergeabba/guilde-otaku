@@ -66,7 +66,14 @@ export interface MemberExtras {
   awards?: MemberAward[];
   photoFocus?: FocusPoint;
   animeFocus?: FocusPoint;
+  /** Personnalisation de la carte téléchargeable (couleur forcée, motif de fond). */
+  card?: CardStyle;
 }
+
+export const CARD_MOTIFS = ["points", "vitesse", "trame", "rayons"] as const;
+export type CardMotif = (typeof CARD_MOTIFS)[number];
+export const CARD_MOTIF_LABEL: Record<CardMotif, string> = { points: "Points", vitesse: "Lignes de vitesse", trame: "Trame manga", rayons: "Rayons" };
+export interface CardStyle { color?: string; motif?: CardMotif }
 
 const JAPANESE = /[　-〿぀-ヿ㐀-䶿一-鿿ｦ-ﾟ]/;
 
@@ -84,7 +91,7 @@ const SUPABASE_HOST = /\.supabase\.(co|in)$/;
 
 const MAX_WORKS = 30;
 /** Rubriques de `extras` gérées par l'admin (toute autre clé est conservée telle quelle). */
-export const EXTRAS_KEYS = ["displayNameRomaji", "favoriteAnime", "favoriteManga", "music", "awards", "photoFocus", "animeFocus"] as const;
+export const EXTRAS_KEYS = ["displayNameRomaji", "favoriteAnime", "favoriteManga", "music", "awards", "photoFocus", "animeFocus", "card"] as const;
 
 const MAX_TRACKS = 10;
 const MAX_AWARDS = 20;
@@ -120,6 +127,14 @@ function focus(v: unknown): FocusPoint | undefined {
   if (typeof x !== "number" || typeof y !== "number" || !Number.isFinite(x) || !Number.isFinite(y)) return undefined;
   const clamp = (n: number) => Math.min(100, Math.max(0, n));
   return { x: clamp(x), y: clamp(y) };
+}
+
+function cardStyle(v: unknown): CardStyle | undefined {
+  if (!v || typeof v !== "object" || Array.isArray(v)) return undefined;
+  const o = v as Record<string, unknown>;
+  const color = typeof o.color === "string" && /^#[0-9a-f]{6}$/i.test(o.color) ? o.color.toLowerCase() : undefined;
+  const motif = CARD_MOTIFS.find((m) => m === o.motif);
+  return color || motif ? { ...(color && { color }), ...(motif && { motif }) } : undefined;
 }
 
 function work(v: unknown, kind: "ANIME" | "MANGA"): FavoriteWork | null {
@@ -249,6 +264,7 @@ export function parseMemberExtras(raw: unknown): MemberExtras | undefined {
     awards: awards(o.awards),
     photoFocus: focus(o.photoFocus),
     animeFocus: focus(o.animeFocus),
+    card: cardStyle(o.card),
   };
   const clean = Object.fromEntries(Object.entries(extras).filter(([, val]) => val !== undefined)) as MemberExtras;
   return Object.keys(clean).length ? clean : undefined;
