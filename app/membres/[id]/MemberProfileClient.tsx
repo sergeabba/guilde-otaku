@@ -137,7 +137,6 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
       {/* Fond de la fiche : portrait anime flouté, lueur à la couleur du rang, trame. */}
       <div className="pf-backdrop" aria-hidden="true">
         {(member.animeChar || member.photo) && <span className="pf-backdrop-img" style={{ backgroundImage: `url(${JSON.stringify(member.animeChar || member.photo)})` }} />}
-        <span className="pf-backdrop-num">{String(member.id).padStart(3, "0")}</span>
       </div>
 
       <main className="gk-wrap pf-main" style={{ paddingBottom: "clamp(56px, 9vw, 110px)" }}>
@@ -192,7 +191,7 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
 
           <div className="pf-id gk-reveal">
             <p className="gk-chapter"><b>#{String(member.id).padStart(3, "0")}</b><span>DOSSIER D&apos;AVENTURIER</span></p>
-            <h1 id="pf-name" className="gk-display pf-name" style={{ viewTransitionName: "member-name" }}>{member.name}</h1>
+            <h1 id="pf-name" className="gk-display pf-name" style={{ viewTransitionName: "member-name", "--pf-longest": Math.max(...member.name.split(/\s+/).map((w) => w.length), 4) } as React.CSSProperties}>{member.name}</h1>
             {extras.displayNameRomaji && <p className="pf-alias" lang="ja-Latn">{extras.displayNameRomaji}</p>}
 
             <div className="pf-rank">

@@ -10,8 +10,6 @@
     radial-gradient(60% 55% at 22% 30%, color-mix(in srgb, var(--gk-accent) 34%, transparent), transparent 70%),
     linear-gradient(180deg, transparent, var(--gk-bg) 92%); }
 .pf-backdrop-img { position: absolute; inset: -60px; background-size: cover; background-position: 50% 20%; filter: blur(42px) saturate(1.3); opacity: 0.32; transform: scale(1.1); }
-.pf-backdrop-num { position: absolute; z-index: 2; right: -0.04em; top: 64px; font: 400 clamp(9rem, 30vw, 26rem)/0.8 var(--gk-font-display); color: transparent;
-  -webkit-text-stroke: 2px color-mix(in srgb, var(--gk-accent) 45%, transparent); letter-spacing: -0.04em; }
 html[data-theme="light"] .pf-backdrop-img { opacity: 0.2; }
 
 .pf-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-block: 16px 4px; }
@@ -32,7 +30,9 @@ html[data-theme="light"] .pf-backdrop-img { opacity: 0.2; }
 .pf-panel figcaption.is-accent { background: var(--gk-accent); color: var(--pf-on, #111); }
 .pf-anim { justify-self: start; }
 
-.pf-name { font-size: clamp(2.4rem, 9.5vw, 6rem); line-height: 0.9; margin-top: 16px; overflow-wrap: anywhere; text-shadow: 4px 4px 0 color-mix(in srgb, var(--gk-accent) 70%, #000); }
+.pf-id { container-type: inline-size; }
+/* Le mot le plus long tient toujours sur une ligne : jamais de coupure au milieu d'un mot. */
+.pf-name { font-size: clamp(2.2rem, min(11vw, 100cqi / (var(--pf-longest, 8) * 0.92)), 6rem); line-height: 0.9; margin-top: 16px; overflow-wrap: normal; hyphens: none; text-shadow: 4px 4px 0 color-mix(in srgb, var(--gk-accent) 70%, #000); }
 .pf-alias { margin-top: 10px; font: 800 italic 1.2rem var(--gk-font-ui); color: var(--gk-dim); letter-spacing: 0.14em; text-transform: uppercase; }
 .pf-alias::before { content: "« "; color: var(--gk-accent); } .pf-alias::after { content: " »"; color: var(--gk-accent); }
 .pf-rank { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-top: 18px; }
