@@ -44,6 +44,15 @@
 .qv-full { width: 100%; justify-content: center; }
 
 @media (prefers-reduced-motion: no-preference) {
-  .qv-back { animation: gk-fade 160ms both; }
-  .qv-sheet { animation: gk-rise 260ms var(--gk-ease) both; }
+  /* Le fond s'assombrit, la fiche se dévoile comme une case de manga (du haut vers
+     le bas) ; seul le découpage bouge, la mise en page reste fixe : le portrait
+     partagé arrive exactement à sa place. */
+  .qv-back { animation: gk-qv-dim 220ms ease-out both; }
+  .qv-diptych .pf-panel { animation: none; }
+  .qv-sheet { animation: gk-qv-in 300ms cubic-bezier(.2, .8, .2, 1) both; }
+}
+@keyframes gk-qv-dim { from { background-color: transparent; } }
+@keyframes gk-qv-in {
+  from { clip-path: polygon(-24px -24px, calc(100% + 24px) -24px, calc(100% + 24px) -24px, -24px 0); }
+  to { clip-path: polygon(-24px -24px, calc(100% + 24px) -24px, calc(100% + 24px) calc(100% + 24px), -24px calc(100% + 24px)); }
 }

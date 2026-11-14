@@ -22,6 +22,8 @@ interface ViewTransitionLike { finished: Promise<void>; ready: Promise<void>; up
 type DocWithVT = Document & { startViewTransition?: (cb: () => void | Promise<void>) => ViewTransitionLike };
 
 let current: ViewTransitionLike | null = null;
+/** Fenêtres dont l'animation d'entrée est coupée pendant une transition (voir motion.css). */
+const PAUSED_ENTRANCES = ".sh-sheet, .sh-back, .bb-reader, .bb-reader-back, .pf-panel";
 
 export function reducedMotion(): boolean {
   return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -56,7 +58,15 @@ export function viewTransition({ update, from = [], to, kind = "default" }: VTOp
   const done = () => {
     for (const [el] of named) setName(el, "");
     for (const [el] of from) setName(el, "");
-    if (current === t) { current = null; delete document.documentElement.dataset.vt; }
+    if (current === t) {
+      current = null;
+      delete document.documentElement.dataset.vt;
+      // Les entrées coupées pendant la transition (motion.css) redémarreraient au retrait
+      // de l'attribut : on les termine aussitôt pour éviter un second mouvement.
+      for (const el of document.querySelectorAll(PAUSED_ENTRANCES)) {
+        for (const a of el.getAnimations()) if (a instanceof CSSAnimation) a.finish();
+      }
+    }
   };
   t.finished.then(done, done);
 }

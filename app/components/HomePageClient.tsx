@@ -43,12 +43,15 @@ export default function HomePageClient({ initialMembers, featuredFilm }: {
       kind: "member",
       from: [[el?.querySelector(".mc-media") ?? el, "member-portrait"]],
       update: () => flushSync(() => setSelectedMember(m)),
+      // Un seul élément partagé : le portrait de la carte devient celui de la fiche.
+      to: () => [[document.querySelector(".qv-diptych .pf-panel"), "member-portrait"]],
     });
   }, []);
   const closeMember = useCallback(() => {
     const id = selectedMember?.id;
     viewTransition({
-      kind: "member",
+      kind: "member-close",
+      from: [[document.querySelector(".qv-diptych .pf-panel"), "member-portrait"]],
       update: () => flushSync(() => setSelectedMember(null)),
       // Retour vers la carte, seulement si elle est à l'écran.
       to: () => {

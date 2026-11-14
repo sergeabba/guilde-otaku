@@ -110,9 +110,9 @@ export default function MemberQuickView({ member, onClose, viewMode }: { member:
 
         <div className="qv-body">
           {portraits.length > 0 && (
-            <div className={`pf-diptych qv-diptych${portraits.length === 1 ? " is-single" : ""}`} style={{ viewTransitionName: "member-dossier" }}>
+            <div className={`pf-diptych qv-diptych${portraits.length === 1 ? " is-single" : ""}`}>
               {portraits.map((p, i) => (
-                <figure key={p.key} className="pf-panel" style={i === 0 ? { viewTransitionName: "member-portrait" } : undefined}>
+                <figure key={p.key} className="pf-panel">
                   <Image src={p.src} alt={p.key === "real" ? `${member.name}, photo` : `${member.name}, version anime`} fill priority={i === 0}
                     sizes="(max-width: 699px) 50vw, 300px" style={{ objectFit: "cover", objectPosition: p.pos }}
                     onError={() => setErrors((e) => ({ ...e, [p.key]: true }))} />
@@ -123,7 +123,7 @@ export default function MemberQuickView({ member, onClose, viewMode }: { member:
           )}
 
           <div className="qv-id">
-            <h2 id="qv-name" className="gk-display pf-name qv-name" style={{ viewTransitionName: "member-name" }}>{member.name}</h2>
+            <h2 id="qv-name" className="gk-display pf-name qv-name">{member.name}</h2>
             {extras.displayNameRomaji && <p className="pf-alias" lang="ja-Latn">{extras.displayNameRomaji}</p>}
             <div className="pf-rank">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -173,7 +173,7 @@ export default function MemberQuickView({ member, onClose, viewMode }: { member:
             // Clic simple : portraits et nom glissent vers la fiche complète.
             if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
             e.preventDefault();
-            viewTransition({ kind: "page", update: async () => { router.push(full); await waitFor(`[data-member-page="${member.id}"]`, 700); } });
+            viewTransition({ kind: "page", from: [[document.querySelector(".qv-diptych"), "member-dossier"], [document.getElementById("qv-name"), "member-name"]], update: async () => { router.push(full); await waitFor(`[data-member-page="${member.id}"]`, 700); } });
           }}>Voir la fiche complète <ArrowRight size={17} aria-hidden="true" /></Link>
         </div>
       </div>

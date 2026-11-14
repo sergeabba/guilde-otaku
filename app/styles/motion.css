@@ -320,10 +320,24 @@
 ::view-transition-old(work-cover), ::view-transition-new(work-cover),
 ::view-transition-old(member-dossier), ::view-transition-new(member-dossier) { height: 100%; width: 100%; object-fit: cover; overflow: hidden; }
 /* Ouverture d'une fiche ou d'une œuvre : la page reste en place, la fiche se pose dessus. */
-html[data-vt="member"]::view-transition-old(root), html[data-vt="work"]::view-transition-old(root) { animation: none; }
-/* Pendant une transition, les animations d'entrée propres aux fenêtres sont coupées
-   (sinon le mouvement serait joué deux fois). */
-html[data-vt] .qv-sheet, html[data-vt] .qv-back, html[data-vt] .sh-sheet, html[data-vt] .sh-back,
+html[data-vt="work"]::view-transition-old(root) { animation: none; }
+/* Fiche rapide d'un membre : un seul élément partagé, le portrait, opaque du début à
+   la fin (pas de fondu fantôme). La page ne bouge pas ; le fond et la fiche jouent
+   leur propre entrée (quickview.css), qui ne change pas la mise en page. */
+html[data-vt="member"]::view-transition-old(root), html[data-vt="member"]::view-transition-new(root) { animation: none; }
+html[data-vt="member"]::view-transition-old(member-portrait) { animation: none; opacity: 0; }
+html[data-vt="member"]::view-transition-new(member-portrait) { animation: none; }
+/* Fermeture : la fiche s'efface, le portrait revient dans sa carte puis s'y fond. */
+@keyframes gk-vt-fade-out { to { opacity: 0; } }
+@keyframes gk-vt-fade-in { from { opacity: 0; } }
+html[data-vt="member-close"]::view-transition-old(root) { animation: 180ms ease-in both gk-vt-fade-out; }
+html[data-vt="member-close"]::view-transition-new(root) { animation: none; }
+html[data-vt="member-close"]::view-transition-old(member-portrait) { animation: none; }
+html[data-vt="member-close"]::view-transition-new(member-portrait) { animation: 90ms 230ms linear both gk-vt-fade-in; }
+html[data-vt="member"]::view-transition-group(member-portrait), html[data-vt="member-close"]::view-transition-group(member-portrait) { animation-duration: 320ms; animation-timing-function: cubic-bezier(.2, .8, .2, 1); }
+/* Pendant une autre transition, les animations d'entrée propres aux fenêtres sont
+   coupées (sinon le mouvement serait joué deux fois). */
+html[data-vt] .sh-sheet, html[data-vt] .sh-back,
 html[data-vt] .bb-reader, html[data-vt] .bb-reader-back, html[data-vt] .pf-panel { animation: none !important; }
 /* Fiche suivante / précédente : léger glissement dans le sens choisi. */
 @keyframes gk-vt-out-left { to { opacity: 0; transform: translateX(-28px); } }
