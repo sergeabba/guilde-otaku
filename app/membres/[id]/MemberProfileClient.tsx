@@ -62,7 +62,13 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
     });
   };
   // Réel / anime : les panneaux se redimensionnent au lieu de sauter.
-  const changeView = (v: View) => viewTransition({ kind: "swap", update: () => flushSync(() => setView(v)) });
+  // Les noms de transition ne sont posés que le temps de l'animation (Safari garde
+  // sinon ces blocs en calques séparés, ce qui alourdit le défilement).
+  const panelNames = (): [Element | null, string][] => (["real", "anime"] as const).map((k) => [document.querySelector(`.pf-diptych [data-panel="${k}"]`), `pf-panel-${k}`]);
+  const changeView = (v: View) => {
+    if (v === view) return;
+    viewTransition({ kind: "swap", from: panelNames(), update: () => flushSync(() => setView(v)), to: panelNames });
+  };
   const [downloading, setDownloading] = useState(false);
   const { notify, Toast } = useShare();
 
@@ -136,7 +142,7 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
 
       {/* Fond de la fiche : portrait anime flouté, lueur à la couleur du rang, trame. */}
       <div className="pf-backdrop" aria-hidden="true">
-        {(member.animeChar || member.photo) && <span className="pf-backdrop-img" style={{ backgroundImage: `url(${JSON.stringify(member.animeChar || member.photo)})` }} />}
+        {(member.animeChar || member.photo) && <span className="pf-backdrop-img" style={{ backgroundImage: `url(${JSON.stringify(`/_next/image?url=${encodeURIComponent(member.animeChar || member.photo)}&w=64&q=75`)})` }} />}
       </div>
 
       <main className="gk-wrap pf-main" style={{ paddingBottom: "clamp(56px, 9vw, 110px)" }}>
@@ -163,9 +169,9 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
                 ))}
               </div>
             )}
-            <div className={`pf-diptych${shown.length === 1 ? " is-single" : ""}`} style={{ viewTransitionName: "member-dossier" }}>
+            <div className={`pf-diptych${shown.length === 1 ? " is-single" : ""}`}>
               {shown.map((p, i) => (
-                <figure key={p.key} className="pf-panel" style={{ viewTransitionName: `pf-panel-${p.key}` }}>
+                <figure key={p.key} className="pf-panel" data-panel={p.key}>
                   {animated && p.video ? (
                     <VideoPlayer src={p.video} fit="cover" objectPosition={p.pos} fullscreenBtn />
                   ) : (
@@ -191,7 +197,7 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
 
           <div className="pf-id gk-reveal">
             <p className="gk-chapter"><b>#{String(member.id).padStart(3, "0")}</b><span>DOSSIER D&apos;AVENTURIER</span></p>
-            <h1 id="pf-name" className="gk-display pf-name" style={{ viewTransitionName: "member-name", "--pf-longest": Math.max(...member.name.split(/\s+/).map((w) => w.length), 4) } as React.CSSProperties}>{member.name}</h1>
+            <h1 id="pf-name" className="gk-display pf-name" style={{ "--pf-longest": Math.max(...member.name.split(/\s+/).map((w) => w.length), 4) } as React.CSSProperties}>{member.name}</h1>
             {extras.displayNameRomaji && <p className="pf-alias" lang="ja-Latn">{extras.displayNameRomaji}</p>}
 
             <div className="pf-rank">

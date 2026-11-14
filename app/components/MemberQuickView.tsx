@@ -173,7 +173,12 @@ export default function MemberQuickView({ member, onClose, viewMode }: { member:
             // Clic simple : portraits et nom glissent vers la fiche complète.
             if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
             e.preventDefault();
-            viewTransition({ kind: "page", from: [[document.querySelector(".qv-diptych"), "member-dossier"], [document.getElementById("qv-name"), "member-name"]], update: async () => { router.push(full); await waitFor(`[data-member-page="${member.id}"]`, 700); } });
+            viewTransition({
+              kind: "page",
+              from: [[document.querySelector(".qv-diptych"), "member-dossier"], [document.getElementById("qv-name"), "member-name"]],
+              update: async () => { router.push(full); await waitFor(`[data-member-page="${member.id}"]`, 700); },
+              to: () => [[document.querySelector(".pf-diptych"), "member-dossier"], [document.getElementById("pf-name"), "member-name"]],
+            });
           }}>Voir la fiche complète <ArrowRight size={17} aria-hidden="true" /></Link>
         </div>
       </div>

@@ -225,6 +225,8 @@
   transform: translateX(-50%); z-index: var(--z-fab, 200);
 }
 body.modal-open .hm-float { display: none; }
+/* Téléphone : au-dessus de la barre de navigation du bas (sinon cachée dessous). */
+@media (max-width: 899px) { .hm-float { bottom: calc(67px + 14px + env(safe-area-inset-bottom)); z-index: 520; } }
 
 /* Couverture : le titre sort du flou mot à mot au chargement, puis la couverture
    recule doucement quand on la quitte (défilement natif, compositeur). */
@@ -290,3 +292,4 @@ body.modal-open .hm-float { display: none; }
 }
 .sotd-copy { position: relative; z-index: 3; min-width: 0; }
 @media (min-width: 821px) { .sotd.is-playing .sotd-disc { transform: translateX(26%) rotate(0deg); } }
+@media (max-width: 899px) { body:has(.mdock) .hm-float { bottom: calc(67px + 76px + env(safe-area-inset-bottom)); } }
