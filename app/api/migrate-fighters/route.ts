@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServiceClient, SERVICE_KEY_MISSING } from "../../../lib/supabase-admin";
 import { members } from "../../../data/members";
 import { isAdmin } from "../../../lib/auth";
+import { revalidateMembers } from "../../../lib/revalidate-members";
 
 export async function POST(req: NextRequest) {
   if (!isAdmin(req)) {
@@ -48,6 +49,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error }, { status: 500 });
     }
 
+    revalidateMembers();
     return NextResponse.json({ success: true, count: data.length, message: "Migration Supabase Fighters terminée avec succès !" });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: "Erreur serveur" }, { status: 500 });

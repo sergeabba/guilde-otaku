@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "../../../../lib/auth";
 import { mergeExtras, parseAdminDbRequest } from "../../../../lib/admin-db";
 import { getServiceClient, SERVICE_KEY_MISSING } from "../../../../lib/supabase-admin";
+import { revalidateMembers } from "../../../../lib/revalidate-members";
 
 const NO_STORE = { "Cache-Control": "no-store" };
 
@@ -41,5 +42,6 @@ export async function POST(req: NextRequest) {
   if (parsed.op !== "insert" && (!data || data.length === 0)) {
     return NextResponse.json({ error: "Ligne introuvable" }, { status: 404, headers: NO_STORE });
   }
+  if (parsed.table === "fighters") revalidateMembers();
   return NextResponse.json({ data }, { headers: NO_STORE });
 }

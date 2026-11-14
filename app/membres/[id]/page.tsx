@@ -7,8 +7,9 @@ import { DOSSIER_BASH_DATA, normalizeDossierBashKey } from "../../../lib/dossier
 import { workKey, type FavoriteWork } from "../../../lib/member-extras";
 import { rankRomaji, type Rank } from "../../config/ranks";
 
-// Toujours servie à jour : une modification dans l'admin est visible au rechargement.
-export const dynamic = "force-dynamic";
+// Rendue à la demande (la mise en page lit un cookie). Les données des membres sont
+// mises en cache côté serveur et vidées à chaque modification dans l'admin
+// (lib/revalidate-members.ts) ; les fiches voisines sont préchargées par le navigateur.
 
 interface Props {
   params: Promise<{ id: string }>;

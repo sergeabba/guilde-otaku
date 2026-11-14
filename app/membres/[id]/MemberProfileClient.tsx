@@ -465,12 +465,14 @@ function WorkSheet({ work, chronique, onClose }: { work: FavoriteWork; chronique
 function NeighborLink({ n, dir }: { n: ProfileNeighbor; dir: "prev" | "next" }) {
   const router = useRouter();
   const href = `/membres/${n.id}`;
+  // Fiche voisine préchargée en entier dès l'arrivée : le passage est immédiat.
+  useEffect(() => { router.prefetch(href); }, [router, href]);
   return (
-    <Link href={href} className={`pf-neighbor is-${dir}`} rel={dir} onClick={(e) => {
+    <Link href={href} prefetch className={`pf-neighbor is-${dir}`} rel={dir} onClick={(e) => {
       // Passage d'une fiche à l'autre : le dossier glisse dans la direction choisie.
       if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
       e.preventDefault();
-      viewTransition({ kind: dir === "next" ? "page-next" : "page-prev", update: async () => { router.push(href); await waitFor(`[data-member-page="${n.id}"]`, 700); } });
+      viewTransition({ kind: dir === "next" ? "page-next" : "page-prev", update: async () => { router.push(href); await waitFor(`[data-member-page="${n.id}"]`, 450); } });
     }}>
       {dir === "prev" && <ChevronLeft size={20} aria-hidden="true" />}
       {n.image && (

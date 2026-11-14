@@ -74,14 +74,15 @@ export function viewTransition({ update, from = [], to, kind = "default" }: VTOp
 /**
  * Attend qu'un élément apparaisse (nouvelle page rendue), au plus `max` ms :
  * au-delà, la transition se termine quand même pour ne jamais bloquer l'écran.
+ * Pas de requestAnimationFrame ici : le navigateur suspend le rendu pendant la mise
+ * à jour d'une transition, il ne serait jamais appelé (gel jusqu'au délai de 4 s).
  */
 export function waitFor(selector: string, max = 600): Promise<void> {
   return new Promise((resolve) => {
-    const start = performance.now();
-    const tick = () => {
-      if (document.querySelector(selector) || performance.now() - start > max) resolve();
-      else requestAnimationFrame(tick);
-    };
-    tick();
+    if (document.querySelector(selector)) { resolve(); return; }
+    const done = () => { observer.disconnect(); clearTimeout(timer); resolve(); };
+    const observer = new MutationObserver(() => { if (document.querySelector(selector)) done(); });
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-member-page"] });
+    const timer = setTimeout(done, max);
   });
 }

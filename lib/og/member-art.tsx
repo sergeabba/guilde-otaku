@@ -259,13 +259,13 @@ function displaySize(name: string, width: number, max: number) {
 
 /**
  * Carte Otaku 1080×1350, dans l'esprit de la fiche : fond sombre teinté à la couleur
- * du membre (tirée de son portrait anime, ou choisie dans l'admin), numéro de dossier
- * en filigrane, diptyque réel / anime à ombre dure, nom en grand, grade, palmarès,
+ * du membre (tirée de son portrait anime, ou choisie dans l'admin),
+ * diptyque réel / anime à ombre dure, nom en grand, grade, palmarès,
  * pays et anniversaire, bio, favoris et musique s'ils sont renseignés. Aucun lien.
  */
 export async function renderMemberCard(m: Member, origin: string): Promise<ImageResponse> {
   const { awards, anime: favA, manga: favM, track, trackLine } = richContent(m);
-  const favs = [...favA, ...favM].slice(0, 6);
+  const favs = [...favA, ...favM].slice(0, 5);
   const { accent: rankColor, romaji, country } = rankInfo(m);
   const [fonts, display, real, anime, logo, flag, trackCover, ...covers] = await Promise.all([
     loadFonts(),
@@ -287,15 +287,21 @@ export async function renderMemberCard(m: Member, origin: string): Promise<Image
   const both = real && anime;
   const bio = m.bio?.trim() ? cut(m.bio.trim(), 170) : "";
   const nameSize = displaySize(m.name, W, 124);
+
   // Hauteur des photos = place restante une fois le texte estimé : pas de vide au milieu.
   const nameLines = Math.min(2, Math.max(1, Math.ceil((cut(m.name, 40).length * nameSize * 0.72) / W)));
   const bioLines = bio ? Math.ceil(bio.length / ((country || m.birthday) ? 46 : 70)) : 0;
   const textH = nameLines * nameSize * 1.02 + 16 + 64 + (awards.length ? 62 : 0)
     + ((country || m.birthday || bio) ? 20 + Math.max(country || m.birthday ? 78 : 0, bioLines * 35) : 0)
-    + ((favs.length || trackLine) ? 22 + (favs.length ? 136 : 70) : 0);
-  const panelH = Math.round(Math.min(780, Math.max(440, 1350 - 2 * PAD - 44 - 30 - 22 - 42 - textH - 10)));
+    + (trackLine ? 22 + 64 : 0);
+  const room = 1350 - 2 * PAD - 44 - 30 - 22 - 42 - 10 - textH;
+  // Jaquettes en grand (5 au plus, toute la largeur), réduites si la fiche est très remplie,
+  // pour que les photos gardent au moins 400 px.
+  const coverMaxW = favs.length ? Math.min(176, Math.floor((W - 6 - 16 * (favs.length - 1)) / Math.max(favs.length, 4))) : 0;
+  const coverH = favs.length ? Math.max(130, Math.min(Math.round(coverMaxW * 1.42), room - 400 - 62)) : 0;
+  const coverW = Math.round(coverH / 1.42);
+  const panelH = Math.round(Math.min(780, Math.max(400, room - (favs.length ? 62 + coverH : 0))));
   const panelW = both ? Math.floor((W - 26 - 6) / 2) : W - 26;
-  const num = String(m.id).padStart(3, "0");
   const coverOf = new Map(favs.map((w, i) => [w, covers[i] ?? null]));
   const label = (txt: string, bg: string, fg: string) => (
     <div style={{ position: "absolute", left: 14, bottom: 14, display: "flex", padding: "5px 12px", background: bg, color: fg, fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 24, letterSpacing: 2, border: `3px solid ${INK}` }}>{txt}</div>
@@ -313,17 +319,16 @@ export async function renderMemberCard(m: Member, origin: string): Promise<Image
   return new ImageResponse(
     (
       <div style={{ position: "relative", display: "flex", flexDirection: "column", width: "100%", height: "100%", background: INK, color: PAPER, fontFamily: "Barlow", padding: PAD, overflow: "hidden" }}>
-        {/* Fond : teinte du membre, motif, numéro en filigrane. */}
+        {/* Fond : teinte du membre et motif. */}
         <div style={{ position: "absolute", top: 0, left: 0, width: 1080, height: 1350, display: "flex", backgroundImage: `linear-gradient(158deg, ${hexA(color, 0.62)} 0%, ${hexA(color, 0.2)} 38%, ${hexA(INK, 0)} 72%)` }} />
         <div style={{ position: "absolute", top: 0, left: 0, width: 1080, height: 1350, display: "flex", ...motifLayer(motif, color) }} />
-        <div style={{ position: "absolute", top: 1010, left: 400, display: "flex", fontFamily: "Dela Gothic One", fontSize: 270, lineHeight: 1, color: hexA(color, 0.1), WebkitTextStroke: `4px ${hexA(color, 0.5)}` }}>{num}</div>
         <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 14, display: "flex", background: color }} />
 
         {/* En-tête */}
         <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "stretch", fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 26, letterSpacing: 2 }}>
-            <div style={{ display: "flex", padding: "6px 12px", background: PAPER, color: INK, border: `3px solid ${PAPER}` }}>#{num}</div>
-            <div style={{ display: "flex", padding: "6px 14px", border: `3px solid ${PAPER}`, borderLeft: "none" }}>DOSSIER D&apos;AVENTURIER</div>
+          <div style={{ display: "flex", alignItems: "stretch", fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 26, letterSpacing: 3 }}>
+            <div style={{ display: "flex", width: 14, background: color, border: `3px solid ${PAPER}`, borderRight: "none" }} />
+            <div style={{ display: "flex", padding: "6px 14px", background: PAPER, color: INK, border: `3px solid ${PAPER}` }}>CARTE DE NAKAMA</div>
           </div>
           <div style={{ display: "flex", fontFamily: "Dela Gothic One", fontSize: 26, letterSpacing: 1 }}>GUILDE OTAKU</div>
         </div>
@@ -394,32 +399,28 @@ export async function renderMemberCard(m: Member, origin: string): Promise<Image
             )}
           </div>
 
-          {(favs.length > 0 || trackLine) && (
-            <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginTop: 22 }}>
-              {favs.length > 0 && (
-                <div style={{ display: "flex", flexDirection: "column" }}>
-                  <div style={{ display: "flex", fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 20, letterSpacing: 3, color }}>SUKI NA SAKUHIN · SES ŒUVRES</div>
-                  <div style={{ display: "flex", marginTop: 8 }}>
-                    {favs.map((w, i) => (
-                      <div key={i} style={{ display: "flex", marginRight: 10 }}>
-                        <Cover src={coverOf.get(w) ?? null} kind={w.kind === "ANIME" ? "ANIME" : "MANGA"} width={70} height={100} />
-                      </div>
-                    ))}
+          {favs.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", marginTop: 24 }}>
+              <div style={{ display: "flex", fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 22, letterSpacing: 3, color }}>SUKI NA SAKUHIN · SES ŒUVRES PRÉFÉRÉES</div>
+              <div style={{ display: "flex", marginTop: 10 }}>
+                {favs.map((w, i) => (
+                  <div key={i} style={{ display: "flex", marginRight: i < favs.length - 1 ? 16 : 0, boxShadow: `6px 6px 0 ${color}` }}>
+                    <Cover src={coverOf.get(w) ?? null} kind={w.kind === "ANIME" ? "ANIME" : "MANGA"} width={coverW} height={coverH} />
                   </div>
-                </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {trackLine && track && (
+            <div style={{ display: "flex", alignItems: "center", marginTop: 22, maxWidth: W }}>
+              {trackCover && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={trackCover} width={64} height={64} alt="" style={{ width: 64, height: 64, objectFit: "cover", border: `3px solid ${PAPER}`, marginRight: 14 }} />
               )}
-              {trackLine && track && (
-                <div style={{ display: "flex", alignItems: "center", maxWidth: favs.length ? 420 : W }}>
-                  {trackCover && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={trackCover} width={64} height={64} alt="" style={{ width: 64, height: 64, objectFit: "cover", border: `3px solid ${PAPER}`, marginRight: 12 }} />
-                  )}
-                  <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
-                    <div style={{ display: "flex", fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 18, letterSpacing: 3, color }}>ONGAKU · {PROVIDER_LABEL[track.provider].toUpperCase()}</div>
-                    <div style={{ ...ONE_LINE, fontFamily: "Barlow Condensed", fontWeight: 700, fontSize: 26, maxWidth: favs.length ? 340 : W - 80 }}>{trackLine}</div>
-                  </div>
-                </div>
-              )}
+              <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+                <div style={{ display: "flex", fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 19, letterSpacing: 3, color }}>ONGAKU · {PROVIDER_LABEL[track.provider].toUpperCase()}</div>
+                <div style={{ ...ONE_LINE, fontFamily: "Barlow Condensed", fontWeight: 700, fontSize: 28, maxWidth: W - 90 }}>{trackLine}</div>
+              </div>
             </div>
           )}
         </div>

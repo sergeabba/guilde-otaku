@@ -1,6 +1,7 @@
 // Module serveur uniquement (lit le système de fichiers) : ne pas importer côté client.
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { unstable_cache } from "next/cache";
 import { fetchMembers } from "../app/utils/dataAdapter";
 import type { Member } from "../data/members";
 import { parseMemberExtras, type MemberExtras } from "./member-extras";
@@ -37,8 +38,13 @@ async function devFixture(): Promise<Record<string, MemberExtras> | null> {
 }
 
 /** Membres publics (non masqués), dans l'ordre de l'annuaire. */
+/** Étiquette du cache serveur des membres, vidée à chaque écriture admin (lib/revalidate-members.ts). */
+export const MEMBERS_TAG = "members";
+// Lecture partagée entre les requêtes : passer d'une fiche à l'autre n'attend plus la base.
+const cachedMembers = unstable_cache(fetchMembers, ["public-members-v1"], { revalidate: 300, tags: [MEMBERS_TAG] });
+
 export async function getPublicMembers(): Promise<Member[]> {
-  const [members, fixture] = await Promise.all([fetchMembers(), devFixture()]);
+  const [members, fixture] = await Promise.all([cachedMembers(), devFixture()]);
   if (!fixture) return members;
   return members.map((m) => (fixture[m.id] ? { ...m, extras: { ...m.extras, ...fixture[m.id] } } : m));
 }
