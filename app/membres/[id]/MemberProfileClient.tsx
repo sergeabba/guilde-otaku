@@ -18,6 +18,9 @@ import { useShare } from "../../hooks/useShare";
 import { featuredWorks, memberAwards, objectPosition, workKey, workSubtitle, workTitle, type FavoriteWork } from "../../../lib/member-extras";
 import MemberAwards from "../../components/MemberAwards";
 import MemberMusic from "../../components/MemberMusic";
+import TrailerEmbed from "../../components/works/TrailerEmbed";
+import { trailerLangLabel } from "../../../lib/works/favorite";
+import { FORMAT_LABEL } from "../../../lib/works/types";
 import "./profile.css";
 
 export interface ProfileNeighbor {
@@ -372,9 +375,10 @@ function WorkCard({ work, onOpen, big = false }: { work: FavoriteWork; onOpen: (
         <WorkCover work={work} />
       </span>
       <span className="pf-work-body">
+        {(work.format || work.year) && <span className="pf-work-meta">{[work.format && FORMAT_LABEL[work.format], work.year].filter(Boolean).join(" · ")}</span>}
         <strong>{title}</strong>
         {sub && <small>{sub}</small>}
-        {big && work.personalNote && <em>« {work.personalNote} »</em>}
+        {big && (work.personalNote ? <em>« {work.personalNote} »</em> : work.synopsis ? <span className="pf-work-syn">{work.synopsis}</span> : null)}
       </span>
     </button>
   );
@@ -399,22 +403,37 @@ function WorkSheet({ work, chronique, onClose }: { work: FavoriteWork; chronique
           <button type="button" className="gk-icon-btn" onClick={onClose} aria-label="Fermer la mini-fiche"><X size={20} aria-hidden="true" /></button>
         </div>
         <div className="pf-ws-body">
-          {work.coverUrl && !coverFailed && (
+          {work.coverUrl && !coverFailed ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={work.coverUrl} alt={`Couverture de ${workTitle(work)}`} width={110} height={165} onError={() => setCoverFailed(true)} />
-          )}
-          <div>
+            <img src={work.coverUrl} alt={`Couverture de ${workTitle(work)}`} width={220} height={330} onError={() => setCoverFailed(true)} />
+          ) : <span className="pf-ws-nocover" aria-hidden="true">{workTitle(work).slice(0, 1)}</span>}
+          <div className="pf-ws-info">
             <h2 id="pf-ws-title">{workTitle(work)}</h2>
             {sub && <p className="pf-ws-sub">{sub}</p>}
-            {work.synopsis && <p className="pf-ws-synopsis">{work.synopsis}</p>}
+            <p className="pf-ws-meta">
+              {[work.format ? FORMAT_LABEL[work.format] : work.kind === "ANIME" ? "Anime" : "Manga", work.year, ...(work.genres ?? []).slice(0, 3)].filter(Boolean).map((m) => <span key={String(m)}>{m}</span>)}
+            </p>
             {work.personalNote && <p className="pf-ws-note">« {work.personalNote} »</p>}
           </div>
         </div>
+        {work.synopsis && (
+          <div className="pf-ws-block">
+            <h3>Synopsis</h3>
+            <p className="pf-ws-synopsis">{work.synopsis}</p>
+            {work.synopsisSource === "source" && (work.source === "tmdb" || work.source === "mangadex") && <small className="pf-ws-credit">Synopsis : {work.source === "tmdb" ? "TMDB" : "MangaDex"}</small>}
+          </div>
+        )}
+        {work.trailer && (
+          <div className="pf-ws-block">
+            <h3>Bande-annonce</h3>
+            <TrailerEmbed youtubeId={work.trailer.youtubeId} title={workTitle(work)} langLabel={trailerLangLabel(work.trailer.lang)} />
+          </div>
+        )}
         <div className="sh-actions">
           {chronique && <Link className="gk-btn" href={`/bibliotheque?chronique=${chronique}`}>Lire la chronique</Link>}
           {work.sourceUrl && (
             <a className="gk-btn gk-btn--ghost" href={work.sourceUrl} target="_blank" rel="noopener noreferrer">
-              Fiche complète <ExternalLink size={15} aria-hidden="true" /><span className="gk-sr"> (nouvel onglet)</span>
+              {work.source === "tmdb" ? "Voir sur TMDB" : work.source === "mangadex" ? "Voir sur MangaDex" : "Fiche complète"} <ExternalLink size={15} aria-hidden="true" /><span className="gk-sr"> (nouvel onglet)</span>
             </a>
           )}
         </div>

@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { ArrowRight, Calendar, ChevronLeft, ChevronRight, Eye, EyeOff, Heart, Search, Share2, X } from "lucide-react";
+import { ArrowRight, Calendar, ChevronLeft, ChevronRight, Eye, EyeOff, Heart, Play, Search, Share2, X } from "lucide-react";
 import GuildeHeader from "../components/GuildeHeader";
+import TrailerEmbed from "../components/works/TrailerEmbed";
 import OptimizedImage from "../components/OptimizedImage";
 import { supabase } from "../../lib/supabase";
 import { DOSSIER_BASH_DATA, normalizeDossierBashKey } from "../../lib/dossier-bash";
@@ -471,13 +472,15 @@ export default function BibliothequePage() {
                           </button>
                           <button type="button" className="bb-card-open" onClick={() => open(ficheToReading(e), filteredReadings)} aria-label={`Ouvrir la fiche de ${e.title}`}>
                             <div className="bb-card-cover">
-                              {e.cover_image ? <OptimizedImage src={e.cover_image} alt="" /> : null}
+                              {e.cover_image ? <OptimizedImage src={e.cover_image} alt="" /> : <span className="bb-nocover" aria-hidden="true">{e.title.slice(0, 1)}</span>}
                               <span className="bb-cat">{e.category}</span>
                               {note !== undefined && <span className="bb-note">{note}<small>/10</small></span>}
                             </div>
                             <div className="bb-card-body">
                               <strong>{e.title}</strong>
-                              <small>{[e.status, e.year].filter(Boolean).join(", ")}</small>
+                              {/* Court synopsis (masqué en mode anti-spoiler). */}
+                              {e.synopsis && !antiSpoiler && <p className="bb-card-syn">{e.synopsis}</p>}
+                              <small>{[e.category, e.status, e.year].filter(Boolean).join(" · ")}</small>
                             </div>
                           </button>
                         </article>
@@ -626,6 +629,7 @@ function Reader({ item, list, all, antiSpoiler, isFavorite, onToggleFavorite, on
         </div>
 
         <article className="bb-article">
+          {item.cover && <div className="bb-article-backdrop" aria-hidden="true" style={{ backgroundImage: `url(${JSON.stringify(item.cover)})` }} />}
           <div className="bb-article-top">
             <div className="bb-article-cover">{item.cover && <OptimizedImage src={item.cover} alt={`Couverture de ${item.title}`} priority />}</div>
             <div style={{ minWidth: 0 }}>
@@ -644,6 +648,13 @@ function Reader({ item, list, all, antiSpoiler, isFavorite, onToggleFavorite, on
                 <p className="bb-verdict">
                   {item.note !== undefined && <b>{item.note}<small>/10</small></b>}
                   {item.tier && <span>{item.tier === "A définir" ? "En attente de verdict" : item.tier}</span>}
+                </p>
+              )}
+              {video && (
+                <p style={{ marginTop: 16 }}>
+                  <button type="button" className="gk-btn gk-btn--red gk-btn--sm" onClick={() => jump("trailer")}>
+                    <Play size={15} aria-hidden="true" /> Bande-annonce
+                  </button>
                 </p>
               )}
             </div>
@@ -678,15 +689,7 @@ function Reader({ item, list, all, antiSpoiler, isFavorite, onToggleFavorite, on
             <section id="bb-trailer" className="bb-block">
               <h3>Bande-annonce</h3>
               {video ? (
-                <div className="bb-video">
-                  <iframe
-                    src={`https://www.youtube-nocookie.com/embed/${video}?rel=0`}
-                    title={`Bande-annonce de ${item.title}`}
-                    loading="lazy"
-                    allow="encrypted-media; picture-in-picture"
-                    allowFullScreen
-                  />
-                </div>
+                <TrailerEmbed youtubeId={video} title={item.title} />
               ) : (
                 <a className="gk-btn gk-btn--red" href={item.trailer} target="_blank" rel="noopener noreferrer">Voir la bande-annonce</a>
               )}

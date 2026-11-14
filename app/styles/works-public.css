@@ -1,0 +1,10 @@
+/* ═══ Œuvres : éléments partagés (Bibliothèque, profils) ═════════════════════ */
+.wk-trailer { position: relative; aspect-ratio: 16 / 9; width: 100%; background: #000; border: var(--gk-stroke, 2.5px) solid var(--gk-border, #f3eee2); overflow: hidden; }
+.wk-trailer iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
+.wk-trailer-btn { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; background: #111; cursor: pointer; display: grid; place-items: center; touch-action: manipulation; }
+.wk-trailer-btn img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.82; transition: opacity var(--gk-fast, 140ms), transform var(--gk-med, 260ms) var(--gk-ease, ease); }
+.wk-trailer-play { position: relative; width: 68px; height: 68px; display: grid; place-items: center; border-radius: 50%; background: var(--gk-hanko, #d7332b); color: #fff; border: 3px solid #fff; box-shadow: 4px 4px 0 #111; }
+.wk-trailer-play svg { margin-left: 4px; }
+.wk-trailer-lang { position: absolute; left: 0; bottom: 10px; padding: 3px 10px; font: 900 0.78rem var(--gk-font-ui, sans-serif); letter-spacing: 0.06em; text-transform: uppercase; background: #fff; color: #111; border: 2px solid #111; border-left: 0; }
+@media (hover: hover) { .wk-trailer-btn:hover img { opacity: 1; transform: scale(1.03); } }
+@media (prefers-reduced-motion: reduce) { .wk-trailer-btn img { transition: none; } }

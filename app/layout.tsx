@@ -6,6 +6,7 @@ import "./globals.css";
 import "./styles/shonen.css";
 import "./styles/motion.css";
 import "./styles/music.css";
+import "./styles/works-public.css";
 
 import BirthdayBanner from "./components/BirthdayBanner";
 import Footer from "./components/Footer";

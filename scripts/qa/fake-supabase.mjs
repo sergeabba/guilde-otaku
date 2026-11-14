@@ -8,6 +8,8 @@ import { readFileSync } from "node:fs";
 
 const port = Number(process.argv[2] ?? 5556);
 const rows = JSON.parse(readFileSync(new URL("./fixture.json", import.meta.url), "utf8"));
+// Autres tables : scripts/qa/fixture-<table>.json (facultatif).
+const table = (name) => { try { return JSON.parse(readFileSync(new URL(`./fixture-${name}.json`, import.meta.url), "utf8")); } catch { return null; } };
 
 createServer((req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -21,6 +23,8 @@ createServer((req, res) => {
     if ((req.headers.accept ?? "").includes("vnd.pgrst.object")) return res.end(list[0] ? JSON.stringify(list[0]) : "null");
     return res.end(JSON.stringify(list));
   }
+  const other = /^\/rest\/v1\/([a-z_]+)$/.exec(u.pathname);
+  if (other && req.method === "GET") { const t = table(other[1]); if (t) return res.end(JSON.stringify(t)); }
   // Toute écriture est refusée : ce serveur ne sert qu'à afficher.
   if (req.method !== "GET") { res.statusCode = 405; return res.end(JSON.stringify({ message: "lecture seule" })); }
   res.end("[]");
