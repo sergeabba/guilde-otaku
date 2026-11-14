@@ -10,6 +10,7 @@ import MemberCard from "./MemberCard";
 import MemberQuickView from "./MemberQuickView";
 import GuildeHeader from "./GuildeHeader";
 import ChapterStory from "./ChapterStory";
+import WordReveal from "./WordReveal";
 import { rankAccents, rankLogos, darkRanks, rankRomaji } from "../config/ranks";
 import { COUNTRIES, flagUrl } from "../config/countries";
 import { NAV, chapterNo } from "../config/nav";
@@ -244,7 +245,7 @@ export default function HomePageClient({ initialMembers, featuredFilm }: {
               <div>
                 <div className="hm-section-head">
                   <h2 id="hm-toc-title" className="gk-display gk-h3">
-                    Au sommaire <span className="gk-jp" aria-hidden="true">Mokuji</span>
+                    <WordReveal>Au sommaire</WordReveal> <span className="gk-jp" aria-hidden="true">Mokuji</span>
                   </h2>
                 </div>
                 <ol className="hm-toc">
@@ -265,7 +266,7 @@ export default function HomePageClient({ initialMembers, featuredFilm }: {
 
               <div>
                 <div className="hm-section-head">
-                  <h2 className="gk-display gk-h3">À la une</h2>
+                  <h2 className="gk-display gk-h3"><WordReveal>À la une</WordReveal></h2>
                   <span className="gk-hand">cette semaine à la Guilde</span>
                 </div>
                 <div className="hm-une">
@@ -347,7 +348,7 @@ export default function HomePageClient({ initialMembers, featuredFilm }: {
               <div>
                 <span className="gk-hand">du Fondateur aux Revenants</span>
                 <h2 id="hm-dir-title" className="gk-display gk-h2" style={{ marginTop: 4 }}>
-                  L&apos;annuaire
+                  <WordReveal>L&apos;annuaire</WordReveal>
                 </h2>
               </div>
               <span className="gk-stamp" aria-hidden="true">Kōshiki meibo</span>
