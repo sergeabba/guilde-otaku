@@ -3,6 +3,10 @@ import { createClient } from "@supabase/supabase-js";
 import { isAdmin, sanitizeFilename, validateImageFile } from "../../../lib/auth";
 import { revalidateTag } from "next/cache";
 import { ATELIER_TAG } from "../../../lib/atelier-server";
+import { atelierTitles, titleFromFilename } from "../../../lib/atelier-title";
+import { getPublicMembers } from "../../../lib/members-server";
+
+const memberNames = () => getPublicMembers().then((l) => l.map((m) => m.name)).catch(() => [] as string[]);
 
 // L'accueil affiche ces images : son cache est vidé à chaque écriture.
 const refreshHome = () => { try { revalidateTag(ATELIER_TAG, { expire: 0 }); } catch { /* sans effet hors requête */ } };
@@ -89,6 +93,9 @@ export async function GET() {
       };
     });
 
+    // Titres lisibles : titre saisi s'il est propre, sinon déduit du fichier, sinon « Création n°07 ».
+    const names = atelierTitles(images.map((i) => ({ filename: i.filename, title: i.has_db_record ? (i.title as string) : null })), await memberNames());
+    images.forEach((i, k) => { i.title = names[k]; });
     return NextResponse.json({ images, db_status: "connected", db_error: null });
   } catch {
     return NextResponse.json(
@@ -143,10 +150,8 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
-      const title = finalName
-        .replace(/\.[^.]+$/, "")
-        .replace(/[-_]/g, " ")
-        .replace(/\b\w/g, (c) => c.toUpperCase());
+      // Nom lisible dès l'envoi (vide si le fichier n'en donne pas : l'affichage numérote).
+      const title = titleFromFilename(finalName, await memberNames()) ?? "";
 
       await adminClient.from("atelier").upsert(
         {

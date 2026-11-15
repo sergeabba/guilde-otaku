@@ -5,13 +5,14 @@ import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { createClient } from "@supabase/supabase-js";
 import { unstable_cache } from "next/cache";
+import { atelierTitles } from "./atelier-title";
+import { getPublicMembers } from "./members-server";
 
 export const ATELIER_TAG = "atelier";
 const IMAGE = /\.(jpe?g|png|webp|gif)$/i;
 
-export interface AtelierTile { src: string; title: string; accent: string }
+export interface AtelierTile { src: string; title: string; accent: string; filename?: string }
 
-const titleOf = (name: string) => name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " ").replace(/\s+/g, " ").trim();
 const safeAccent = (c: unknown) => (typeof c === "string" && /^#[0-9a-f]{6}$/i.test(c) ? c : "#c9a84c");
 
 async function fromStorage(): Promise<AtelierTile[]> {
@@ -24,7 +25,7 @@ async function fromStorage(): Promise<AtelierTile[]> {
   const byName = new Map((meta ?? []).map((m: { filename: string; title?: string; accent?: string }) => [m.filename, m]));
   return files.filter((f) => IMAGE.test(f.name)).map((f) => {
     const m = byName.get(f.name);
-    return { src: client.storage.from("atelier").getPublicUrl(f.name).data.publicUrl, title: m?.title || titleOf(f.name), accent: safeAccent(m?.accent) };
+    return { src: client.storage.from("atelier").getPublicUrl(f.name).data.publicUrl, title: m?.title || "", accent: safeAccent(m?.accent), filename: f.name };
   });
 }
 
@@ -32,7 +33,7 @@ async function fromStorage(): Promise<AtelierTile[]> {
 async function fromPublic(): Promise<AtelierTile[]> {
   try {
     const names = await readdir(join(process.cwd(), "public/atelier"));
-    return names.filter((n) => IMAGE.test(n) && n !== "teamotaku.png").map((n) => ({ src: `/atelier/${encodeURIComponent(n)}`, title: titleOf(n), accent: "#c9a84c" }));
+    return names.filter((n) => IMAGE.test(n) && n !== "teamotaku.png").map((n) => ({ src: `/atelier/${encodeURIComponent(n)}`, title: "", accent: "#c9a84c", filename: n }));
   } catch {
     return [];
   }
@@ -40,8 +41,10 @@ async function fromPublic(): Promise<AtelierTile[]> {
 
 const cached = unstable_cache(async () => {
   const stored = await fromStorage().catch(() => []);
-  return stored.length ? stored : fromPublic();
-}, ["home-atelier-v1"], { revalidate: 600, tags: [ATELIER_TAG] });
+  const list = stored.length ? stored : await fromPublic();
+  const names = atelierTitles(list.map((t) => ({ filename: t.filename ?? "", title: t.title })), (await getPublicMembers().catch(() => [])).map((m) => m.name));
+  return list.map((t, i) => ({ ...t, title: names[i] }));
+}, ["home-atelier-v2"], { revalidate: 600, tags: [ATELIER_TAG] });
 
 /** Images de l'Atelier dans un ordre aléatoire (nouveau tirage à chaque visite). */
 export async function getAtelierTiles(max = 36): Promise<AtelierTile[]> {
