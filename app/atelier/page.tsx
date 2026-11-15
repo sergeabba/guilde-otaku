@@ -8,6 +8,7 @@ import GuildeHeader from "../components/GuildeHeader";
 import { useFavorites } from "../hooks/useFavorites";
 import { useShare } from "../hooks/useShare";
 import { viewTransition } from "../../lib/view-transition";
+import { applyPalette, paletteOf } from "../../lib/palette";
 import "./atelier.css";
 
 interface AtelierImage {
@@ -215,7 +216,7 @@ export default function AtelierPage() {
             <div className="at-fan" role="group" aria-label="Trois futilités tirées au hasard">
               {fan.map((w, i) => (
                 <button key={keyOf(w)} type="button" className="at-fan-card" style={{ "--i": i, "--at": safeColor(w.accent) } as React.CSSProperties} onClick={(e) => openWork(w, e.currentTarget.querySelector("img"))} aria-label={`Agrandir ${w.title}`}>
-                  <Image src={w.url} alt="" fill sizes="260px" priority />
+                  <Image src={w.url} alt="" fill sizes="260px" priority onLoad={(e) => applyPalette(e.currentTarget.closest<HTMLElement>(".at-fan-card"), paletteOf(e.currentTarget, keyOf(w)))} />
                 </button>
               ))}
             </div>
@@ -307,7 +308,7 @@ export default function AtelierPage() {
                               height={1000}
                               sizes={PLATE_SIZES}
                               priority={i < cols}
-                              onLoad={(e) => e.currentTarget.parentElement?.setAttribute("data-loaded", "")}
+                              onLoad={(e) => { const img = e.currentTarget; img.parentElement?.setAttribute("data-loaded", ""); applyPalette(img.closest<HTMLElement>(".at-plate"), paletteOf(img, keyOf(w))); }}
                               style={{ width: "100%", height: "auto" }}
                             />
                           </div>
@@ -354,7 +355,11 @@ export default function AtelierPage() {
 function Art({ work, ratio }: { work: AtelierImage; ratio: number | null }) {
   const [r, setR] = useState(ratio ?? 0.8);
   const [sharp, setSharp] = useState(false);
-  const learn = (img: HTMLImageElement) => { if (!ratio && img.naturalWidth) setR(img.naturalWidth / img.naturalHeight); };
+  const learn = (img: HTMLImageElement) => {
+    if (!ratio && img.naturalWidth) setR(img.naturalWidth / img.naturalHeight);
+    // La visionneuse prend les couleurs de l'œuvre (fond, cadre, titre, boutons).
+    applyPalette(img.closest<HTMLElement>(".at-view"), paletteOf(img, work.filename));
+  };
   return (
     <div className="at-art" style={{ "--r": r } as React.CSSProperties}>
       <Image src={work.url} alt="" aria-hidden="true" fill sizes={PLATE_SIZES} className="at-art-lo" onLoad={(e) => learn(e.currentTarget)} />
