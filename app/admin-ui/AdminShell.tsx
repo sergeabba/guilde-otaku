@@ -15,7 +15,7 @@ const NAV: { key: AdminSection; href: string; label: string; icon: React.ReactNo
   { key: "membres", href: "/admin-membres", label: "Membres", icon: <Users size={17} aria-hidden="true" /> },
   { key: "bibliotheque", href: "/admin-biblio", label: "Bibliothèque", icon: <BookOpen size={17} aria-hidden="true" /> },
   { key: "film", href: "/admin-film-semaine", label: "Film de la semaine", icon: <Clapperboard size={17} aria-hidden="true" /> },
-  { key: "atelier", href: "/admin-atelier", label: "Atelier", icon: <ImageIcon size={17} aria-hidden="true" /> },
+  { key: "atelier", href: "/admin-atelier", label: "Futilités", icon: <ImageIcon size={17} aria-hidden="true" /> },
   { key: "bons-plans", href: "/admin-bons-plans", label: "Bons plans", icon: <Gift size={17} aria-hidden="true" /> },
 ];
 

@@ -13,7 +13,7 @@ const SECTIONS = [
   { href: "/admin-membres", table: "fighters", label: "Membres", desc: "Ajouter, modifier, masquer ou supprimer un membre ; portraits, cadrage, grade, palmarès, favoris, musique, fiche de combat.", icon: Users },
   { href: "/admin-biblio", table: "bibliotheque", label: "Bibliothèque", desc: "Ajouter une œuvre depuis la recherche française, modifier synopsis, verdict et bande-annonce, supprimer.", icon: BookOpen },
   { href: "/admin-film-semaine", table: null, label: "Film de la semaine", desc: "Choisir le film mis en avant et son texte.", icon: Clapperboard },
-  { href: "/admin-atelier", table: null, label: "Atelier", desc: "Images et vidéos des créations de la Guilde.", icon: ImageIcon },
+  { href: "/admin-atelier", table: null, label: "Futilités", desc: "Images et vidéos des futilités de la Guilde.", icon: ImageIcon },
   { href: "/admin-bons-plans", table: "bons_plans", label: "Bons plans", desc: "Liens utiles : ajouter, modifier, supprimer.", icon: Gift },
 ] as const;
 

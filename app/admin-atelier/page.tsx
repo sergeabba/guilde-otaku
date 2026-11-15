@@ -64,7 +64,7 @@ export default function AdminAtelierPage() {
       setImages(data.images || []);
       setDbWarning(data.db_status && data.db_status !== "connected" ? data.db_error || "Base de données indisponible" : null);
     } catch (e) {
-      setLoadError(`Lecture de l'Atelier impossible : ${e instanceof Error ? e.message : "erreur réseau"}`);
+      setLoadError(`Lecture des futilités impossible : ${e instanceof Error ? e.message : "erreur réseau"}`);
     }
     setLoading(false);
   }
@@ -90,7 +90,7 @@ export default function AdminAtelierPage() {
     }
     setProgress(null);
     const okCount = files.length - failures.length;
-    if (okCount) notify(`${okCount} image${okCount > 1 ? "s" : ""} ajoutée${okCount > 1 ? "s" : ""} à l'Atelier`);
+    if (okCount) notify(`${okCount} image${okCount > 1 ? "s" : ""} ajoutée${okCount > 1 ? "s" : ""} aux futilités`);
     if (failures.length) notify(`Échec de l'envoi : ${failures.join(", ")}`, "error");
     void load();
   }
@@ -119,7 +119,7 @@ export default function AdminAtelierPage() {
   async function remove(r: SupabaseAtelierRow) {
     const ok = await confirm({
       title: `Supprimer « ${r.title} » ?`,
-      body: <>Le fichier <strong>{r.filename}</strong> et ses informations seront retirés de l&apos;Atelier et <strong>effacés définitivement</strong> du stockage.</>,
+      body: <>Le fichier <strong>{r.filename}</strong> et ses informations seront retirés des futilités et <strong>effacés définitivement</strong> du stockage.</>,
       confirmLabel: "Supprimer cette image", danger: true,
     });
     if (!ok) return;
@@ -134,7 +134,7 @@ export default function AdminAtelierPage() {
   }
 
   return (
-    <AdminShell section="atelier" title="Atelier" intro="Les images de la galerie Atelier. Dépose des images puis complète leurs informations."
+    <AdminShell section="atelier" title="Futilités" intro="Les images de la galerie Les futilités de la Guilde. Dépose des images puis complète leurs informations."
       actions={<button type="button" className="am-btn am-btn--gold" onClick={() => input.current?.click()} disabled={!!progress}><Upload size={16} aria-hidden="true" /> Ajouter des images</button>}>
       {loadError && <p className="am-alert am-alert--error" role="alert">{loadError} <button type="button" className="am-btn am-btn--sm" onClick={load}>Réessayer</button></p>}
       {dbWarning && <p className="am-alert am-alert--info">Les images s&apos;affichent, mais leurs informations ne peuvent pas être enregistrées : {dbWarning}. La table <code>atelier</code> doit exister dans Supabase.</p>}
@@ -157,7 +157,7 @@ export default function AdminAtelierPage() {
       </ListToolbar>
 
       {loading ? <p className="am-loading" role="status">Chargement…</p>
-        : filtered.length === 0 ? <p className="am-empty-state">{images.length ? "Aucune image ne correspond." : "Aucune image dans l'Atelier."}</p>
+        : filtered.length === 0 ? <p className="am-empty-state">{images.length ? "Aucune image ne correspond." : "Aucune image dans les futilités."}</p>
           : (
             <ul className="am-gallery">
               {filtered.map((r) => (
