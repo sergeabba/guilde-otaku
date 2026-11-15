@@ -341,8 +341,8 @@ export default function HomePageClient({ initialMembers, featuredFilm, atelierTi
                       <Image src="/atelier/teamotaku.png" alt="" fill sizes="96px" />
                     </div>
                     <div className="hm-une-body">
-                      <span className="hm-une-kicker">Atelier</span>
-                      <h3>L&apos;Atelier de la Guilde</h3>
+                      <span className="hm-une-kicker">Futilités</span>
+                      <h3>Les futilités de la Guilde</h3>
                       <p>La galerie des créations de la Guilde, générées par intelligence artificielle.</p>
                     </div>
                   </Link>

@@ -12,7 +12,7 @@ import { normalize } from "../utils/text";
 
 interface Item {
   key: string;
-  group: "Rubriques" | "Membres" | "Favoris" | "Calendrier" | "Cinéma" | "Génériques" | "Bibliothèque" | "Atelier" | "Bons plans";
+  group: "Rubriques" | "Membres" | "Favoris" | "Calendrier" | "Cinéma" | "Génériques" | "Bibliothèque" | "Futilités" | "Bons plans";
   title: string;
   sub?: string;
   href: string;
@@ -21,7 +21,7 @@ interface Item {
   hay: string;
 }
 
-const GROUP_ORDER: Item["group"][] = ["Rubriques", "Membres", "Favoris", "Calendrier", "Cinéma", "Génériques", "Bibliothèque", "Atelier", "Bons plans"];
+const GROUP_ORDER: Item["group"][] = ["Rubriques", "Membres", "Favoris", "Calendrier", "Cinéma", "Génériques", "Bibliothèque", "Futilités", "Bons plans"];
 const MAX_PER_GROUP = 6;
 
 const PAGE_ITEMS: Item[] = NAV.map((n, i) => ({
@@ -117,7 +117,7 @@ async function loadIndex(): Promise<Item[]> {
       if (!a.title) continue;
       items.push({
         key: `a-${a.filename}`,
-        group: "Atelier",
+        group: "Futilités",
         title: a.title,
         sub: [a.category, a.universe].filter(Boolean).join(", "),
         href: `/atelier?oeuvre=${encodeURIComponent(a.filename)}`,
@@ -147,7 +147,7 @@ const GROUP_ICON = {
   "Cinéma": Film,
   "Génériques": Music,
   "Bibliothèque": BookOpen,
-  "Atelier": Palette,
+  "Futilités": Palette,
   "Bons plans": Tag,
 } as const;
 

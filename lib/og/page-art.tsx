@@ -34,7 +34,7 @@ async function artFor(page: PageId): Promise<Art> {
     case "atelier": {
       const { getAtelierTiles } = await import("../atelier-server");
       const tiles = await getAtelierTiles(3).catch(() => []);
-      return { ...BASE, kicker: "KŌBŌ · LA GALERIE", title: "L'Atelier", sub: "Les créations de la Guilde, dans un ordre différent à chaque visite.", images: tiles.map((t) => t.src) };
+      return { ...BASE, kicker: "KŌBŌ · LA GALERIE", title: "Les futilités de la Guilde", sub: "Portraits, scènes et délires visuels : la galerie des créations de la Guilde.", images: tiles.map((t) => t.src) };
     }
     case "calendrier": {
       const { getAiringWeek } = await import("../airing");

@@ -149,7 +149,7 @@ export function AtelierBanner({ isMobile, isDark, theme, accent }: { isMobile?: 
                 <span style={{ fontSize: "12px", fontWeight: 800, color: accent, letterSpacing: "0.2em", textTransform: "uppercase" }}>Nouveau</span>
               </div>
               <h3 style={{ fontSize: isMobile ? "24px" : "32px", fontWeight: 900, color: theme.text, textTransform: "uppercase", fontStyle: "italic", lineHeight: 1, margin: 0 }}>
-                L'Atelier de la Guilde
+                Les futilités de la Guilde
               </h3>
               <p style={{ fontSize: isMobile ? "14px" : "16px", color: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)", fontWeight: 500, margin: "8px 0 0 0" }}>
                 Découvre notre galerie d'Art générée par Intelligence Artificielle.
@@ -158,7 +158,7 @@ export function AtelierBanner({ isMobile, isDark, theme, accent }: { isMobile?: 
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "12px 24px", background: accent, borderRadius: "100px", color: "#000", fontWeight: 900, fontSize: "14px", textTransform: "uppercase", letterSpacing: "0.1em", flexShrink: 0, alignSelf: isMobile ? "stretch" : "auto", justifyContent: "center", position: "relative", zIndex: 1, transform: "translateZ(40px)" }}>
-            Explorer l'Atelier <ArrowRight size={16} />
+            Voir les futilités <ArrowRight size={16} />
           </div>
         </div>
       </TiltWrapper>

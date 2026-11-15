@@ -23,12 +23,12 @@ export default function AtelierWall({ tiles }: { tiles: AtelierTile[] }) {
     <section className="gk-wall tone-dark" aria-labelledby="gk-wall-title">
       <div className="gk-wrap gk-wall-head">
         <div>
-          <span className="gk-chapter"><b>✦</b><span>L&apos;ATELIER</span></span>
-          <h2 id="gk-wall-title" className="gk-display"><WordReveal>Sorti de <em>l&apos;Atelier.</em></WordReveal></h2>
+          <span className="gk-chapter"><b>✦</b><span>KŌBŌ</span></span>
+          <h2 id="gk-wall-title" className="gk-display"><WordReveal>Les futilités <em>de la Guilde.</em></WordReveal></h2>
         </div>
         <div className="gk-wall-side">
           <p>Les créations de la Guilde, dans un ordre différent à chaque visite.</p>
-          <Link href="/atelier" className="gk-story-link">Ouvrir l&apos;Atelier <ArrowUpRight size={18} aria-hidden="true" /></Link>
+          <Link href="/atelier" className="gk-story-link">Voir toutes les futilités <ArrowUpRight size={18} aria-hidden="true" /></Link>
         </div>
       </div>
       <div className="gk-wall-stage" aria-hidden="true">

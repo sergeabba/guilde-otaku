@@ -30,7 +30,7 @@ export const NAV: NavEntry[] = [
   { id: "film-semaine", label: "Film Semaine",  href: "/film-semaine", jp: "Eiga",   blurb: "Le film élu et les séances passées." },
   { id: "bibliotheque", label: "Bibliothèque",  href: "/bibliotheque", jp: "Toshokan", blurb: "La Chronique du Bash et les verdicts de la Guilde." },
   { id: "bons-plans",   label: "Bons Plans",    href: "/bons-plans",   jp: "Otoku",   blurb: "Les adresses que la Guilde se refile." },
-  { id: "atelier",      label: "Atelier",       href: "/atelier",      jp: "Kōbō",   blurb: "La galerie des créations." },
+  { id: "atelier",      label: "Futilités",     href: "/atelier",      jp: "Kōbō",   blurb: "Les futilités de la Guilde : la galerie des créations." },
   { id: "calendrier",   label: "Calendrier",    href: "/calendrier",   jp: "Hōsō",   blurb: "Les épisodes de la semaine, et qui les suit." },
   { id: "cinema",       label: "Cinéma",        href: "/cinema",       jp: "Gekijō", blurb: "Bandes-annonces et où regarder en France." },
 ];

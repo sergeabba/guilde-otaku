@@ -122,7 +122,7 @@ export default function AtelierPage() {
             <p className="gk-chapter"><b>08</b><span>L&apos;ARTBOOK DE LA GUILDE</span></p>
             <span className="gk-jp" aria-hidden="true">Kōbō</span>
           </div>
-          <h1 className="gk-display at-title">L&apos;Atelier <span className="gk-inked">visuel</span></h1>
+          <h1 className="gk-display at-title">Les futilités <span className="gk-inked">de la Guilde</span></h1>
           <p className="gk-body gk-hero-lede">
             La galerie expérimentale de la Guilde Otaku : des créations générées par intelligence artificielle,
             avec le prompt qui les a fait naître.
@@ -225,7 +225,7 @@ export default function AtelierPage() {
           onToggleFavorite={() => toggle(keyOf(current))}
           onClose={() => setOpen(null)}
           onStep={step}
-          onShare={() => share({ title: `${current.title} | Atelier de la Guilde`, text: current.description || `Une création de l'Atelier de la Guilde Otaku.` })}
+          onShare={() => share({ title: `${current.title} | Les futilités de la Guilde`, text: current.description || `Une des futilités de la Guilde Otaku.` })}
           onDownload={() => download(current)}
         />
       )}
