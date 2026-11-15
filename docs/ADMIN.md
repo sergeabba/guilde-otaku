@@ -68,3 +68,13 @@ d'écriture japonaise affichée, liens YouTube vérifiés).
    - Effet : la clé publique ne permet plus d'écrire ; l'admin continue de
      fonctionner via le serveur.
    - Prérequis : le code actuel en production et `SUPABASE_SERVICE_ROLE_KEY` vérifiée.
+
+## Contrôles des fiches (V4.2 § 7B : `members:validate`, `media:audit`)
+
+Lecture seule : rien n'est modifié ni effacé, le rapport dit quoi corriger dans l'admin Membres.
+
+- **Admin** : Tableau de bord → « Contrôles des fiches ». « Vérifier aussi les images » teste en plus chaque portrait, jaquette et pochette.
+- **Terminal** : `npm run members:validate` (ajouter `-- --links` pour les images, `-- --json` pour une sortie JSON). Lit `NEXT_PUBLIC_SUPABASE_URL` et `NEXT_PUBLIC_SUPABASE_ANON_KEY` dans `.env.local`. Code de sortie 1 s'il reste des erreurs.
+- Logique commune : `lib/services/member-quality.ts` (tests : `tests/member-quality.test.ts`).
+
+Contrôles : nom, portraits réel et anime, anniversaire lisible, caractères japonais (nom, présentation, distinction, grade), doublons de nom ou de photo, profil enrichi illisible, favoris/musiques/distinctions écartés ou en double, favoris sans jaquette ni titre, fiches masquées.

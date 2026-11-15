@@ -164,3 +164,14 @@ body:has(.am-sheet) .am-toasts { bottom: calc(88px + env(safe-area-inset-bottom)
 @media (max-width: 479px) { .am-edit-top > div { width: 100%; } }
 /* L'admin reste sombre quel que soit le thème du site : textes d'aide lisibles. */
 :root .am-page input::placeholder, :root .am-page textarea::placeholder { color: rgba(255,255,255,0.5); }
+
+/* Contrôles des fiches (tableau de bord) */
+.am-quality { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 420px; overflow-y: auto; overscroll-behavior: contain; }
+.am-quality li { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px; align-items: baseline; padding: 8px 10px; border: 1px solid var(--am-line); border-left-width: 4px; border-radius: 10px; font-size: .95rem; }
+.am-quality li[data-level="error"] { border-left-color: #e5484d; }
+.am-quality li[data-level="warn"] { border-left-color: #f5a524; }
+.am-quality li[data-level="info"] { border-left-color: #6e7781; }
+.am-quality b { font: 800 .74rem var(--am-font); letter-spacing: .08em; text-transform: uppercase; }
+.am-quality span { overflow-wrap: anywhere; }
+.am-quality a { font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+@media (max-width: 520px) { .am-quality li { grid-template-columns: 1fr; gap: 2px; } }
