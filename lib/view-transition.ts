@@ -23,7 +23,7 @@ type DocWithVT = Document & { startViewTransition?: (cb: () => void | Promise<vo
 
 let current: ViewTransitionLike | null = null;
 /** Fenêtres dont l'animation d'entrée est coupée pendant une transition (voir motion.css). */
-const PAUSED_ENTRANCES = ".sh-sheet, .sh-back, .bb-reader, .bb-reader-back, .pf-panel";
+const PAUSED_ENTRANCES = ".sh-sheet, .sh-back, .bb-reader, .bb-reader-back, .pf-panel, .at-view";
 
 export function reducedMotion(): boolean {
   return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
