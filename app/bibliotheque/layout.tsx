@@ -1,30 +1,9 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/og/page-meta";
 
-export const metadata: Metadata = {
-  title: "La Bibliothèque | Guilde Otaku",
-  description: "Les verdicts définitifs de la Guilde. Retrouvez nos reviews d'animes, mangas, films, séries et jeux vidéo jugés sans pitié, ainsi que la fameuse Chronique du Bash !",
-  openGraph: {
-    title: "La Bibliothèque - Guilde Otaku",
-    description: "Les verdicts définitifs de la Guilde. Reviews d'animes et dossiers exclusifs jugés sans pitié.",
-    siteName: "Guilde Otaku",
-    images: [
-      {
-        url: "https://image.thum.io/get/width/1200/crop/630/delay/3000/noanimate/https://guilde-otaku.vercel.app/bibliotheque?v=3",
-        width: 1200,
-        height: 630,
-        alt: "Aperçu de la Bibliothèque - Chronique du Bash",
-      },
-    ],
-    locale: "fr_FR",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "La Bibliothèque | Guilde Otaku",
-    description: "Découvrez les verdicts définitifs de la Guilde Otaku.",
-    images: ["https://image.thum.io/get/width/1200/crop/630/delay/3000/noanimate/https://guilde-otaku.vercel.app/bibliotheque?v=3"],
-  },
-};
+// Aperçu de lien (WhatsApp…) : image du jour générée par /api/og/page.
+export async function generateMetadata() {
+  return pageMetadata("bibliotheque", "/bibliotheque", "La Bibliothèque", "La Chronique du Bash, les verdicts de la Guilde et les notes des épisodes de la semaine.");
+}
 
 export default function BibliothequeLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;

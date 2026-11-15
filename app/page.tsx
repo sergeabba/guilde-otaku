@@ -1,4 +1,5 @@
 import { getPublicMembers } from "../lib/members-server";
+import { pageMetadata } from "../lib/og/page-meta";
 import HomePageClient, { type FeaturedFilm } from "./components/HomePageClient";
 import { supabase } from "../lib/supabase";
 import { getAtelierTiles } from "../lib/atelier-server";
@@ -26,6 +27,11 @@ async function fetchFeaturedFilm(): Promise<FeaturedFilm | null> {
   } catch {
     return null;
   }
+}
+
+export async function generateMetadata() {
+  const m = pageMetadata("accueil", "/", "Le registre des membres", "Une bande d'amis qui débat d'animes, élit ses films et se décerne des titres depuis 2020.");
+  return { ...m, title: "Guilde Otaku", openGraph: { ...m.openGraph, title: "Guilde Otaku" }, twitter: { ...m.twitter, title: "Guilde Otaku" } };
 }
 
 export default async function HomePage({ searchParams }: { searchParams: Promise<{ generique?: string }> }) {

@@ -16,12 +16,12 @@ import { absoluteAsset } from "../members-server";
 export const OG_SIZE = { width: 1200, height: 630 } as const;
 export const CARD_SIZE = { width: 1080, height: 1350 } as const;
 
-const INK = "#0d0c10";
-const PAPER = "#f4efe4";
-const GOLD = "#c9a84c";
+export const INK = "#0d0c10";
+export const PAPER = "#f4efe4";
+export const GOLD = "#c9a84c";
 
 let fontsPromise: Promise<{ name: string; data: Buffer; weight: 500 | 700 | 900; style: "normal" }[]> | null = null;
-function loadFonts() {
+export function loadFonts() {
   fontsPromise ??= Promise.all([
     readFile(join(process.cwd(), "assets/fonts/BarlowCondensed-Black.ttf")),
     readFile(join(process.cwd(), "assets/fonts/BarlowCondensed-Bold.ttf")),
@@ -39,7 +39,7 @@ function loadFonts() {
  * Passe par l'optimiseur d'images de Next (formats déjà autorisés dans next.config),
  * puis par l'original. Renvoie null si l'image est indisponible : la carte affiche alors un repli.
  */
-async function portraitData(src: string | undefined, origin: string, width: number): Promise<string | null> {
+export async function portraitData(src: string | undefined, origin: string, width: number): Promise<string | null> {
   const abs = absoluteAsset(src, origin);
   if (!abs) return null;
   const candidates = [
@@ -218,7 +218,7 @@ function Cover({ src, kind, width, height }: { src: string | null; kind: string;
 const hexA = (hex: string, a: number) => `${hex}${Math.round(a * 255).toString(16).padStart(2, "0")}`;
 
 let displayFontPromise: Promise<{ name: string; data: Buffer; weight: 400; style: "normal" }[]> | null = null;
-function loadDisplayFont() {
+export function loadDisplayFont() {
   displayFontPromise ??= Promise.all([
     readFile(join(process.cwd(), "assets/fonts/DelaGothicOne-latin.ttf")),
     readFile(join(process.cwd(), "assets/fonts/DelaGothicOne-latin-ext.ttf")),

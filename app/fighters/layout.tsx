@@ -1,30 +1,9 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/og/page-meta";
 
-export const metadata: Metadata = {
-  title: "Arène | Guilde Otaku",
-  description: "Sélectionne tes combattants et affronte les membres de la Guilde dans des duels épiques ! Stats, spéciales et K.O. garantis.",
-  openGraph: {
-    title: "Arène - Guilde Otaku",
-    description: "Sélectionne tes combattants et affronte les membres de la Guilde dans des duels épiques !",
-    siteName: "Guilde Otaku",
-    images: [
-      {
-        url: "https://image.thum.io/get/width/1200/crop/630/delay/3000/noanimate/https://guilde-otaku.vercel.app/fighters?v=3",
-        width: 1200,
-        height: 630,
-        alt: "Arène de Combat - Guilde Otaku",
-      },
-    ],
-    locale: "fr_FR",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Arène | Guilde Otaku",
-    description: "Sélectionne tes combattants et affronte les membres de la Guilde !",
-    images: ["https://image.thum.io/get/width/1200/crop/630/delay/3000/noanimate/https://guilde-otaku.vercel.app/fighters?v=3"],
-  },
-};
+// Aperçu de lien (WhatsApp…) : image du jour générée par /api/og/page.
+export async function generateMetadata() {
+  return pageMetadata("fighters", "/fighters", "Fighters", "Choisis ton combattant parmi les membres de la Guilde et lance le duel.");
+}
 
 export default function FightersLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;

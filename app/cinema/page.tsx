@@ -1,12 +1,11 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/og/page-meta";
 import { getCinemaRows, type CinemaItem } from "../../lib/cinema";
 import { driveConfig, getGuildVideos, type GuildCollection } from "../../lib/drive";
 import CinemaClient from "./CinemaClient";
 
-export const metadata: Metadata = {
-  title: "Cinéma Otaku | Guilde Otaku",
-  description: "Les animes japonais à voir légalement en France : bandes-annonces, plateformes incluses dans l'abonnement ou gratuites.",
-};
+export async function generateMetadata() {
+  return pageMetadata("cinema", "/cinema", "Le Cinéma Otaku", "Bandes-annonces, vidéos de la Guilde et où regarder les animes en France.");
+}
 
 /** Une série au hasard parmi les dix plus populaires qui ont une image et un synopsis. */
 function pickHero(series: CinemaItem[]): CinemaItem | null {

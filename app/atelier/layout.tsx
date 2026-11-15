@@ -1,30 +1,9 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/og/page-meta";
 
-export const metadata: Metadata = {
-  title: "L'Atelier | Guilde Otaku",
-  description: "La galerie expérimentale de la Guilde Otaku. Créations visuelles générées par Intelligence Artificielle, design cinématique et art numérique.",
-  openGraph: {
-    title: "L'Atelier - Guilde Otaku",
-    description: "La galerie expérimentale de la Guilde Otaku. Créations visuelles générées par IA.",
-    siteName: "Guilde Otaku",
-    images: [
-      {
-        url: "https://image.thum.io/get/width/1200/crop/630/delay/3000/noanimate/https://guilde-otaku.vercel.app/atelier?v=3",
-        width: 1200,
-        height: 630,
-        alt: "L'Atelier Visuel - Guilde Otaku",
-      },
-    ],
-    locale: "fr_FR",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "L'Atelier | Guilde Otaku",
-    description: "La galerie expérimentale de la Guilde Otaku. Créations visuelles par IA.",
-    images: ["https://image.thum.io/get/width/1200/crop/630/delay/3000/noanimate/https://guilde-otaku.vercel.app/atelier?v=3"],
-  },
-};
+// Aperçu de lien (WhatsApp…) : image du jour générée par /api/og/page.
+export async function generateMetadata() {
+  return pageMetadata("atelier", "/atelier", "L'Atelier", "La galerie des créations de la Guilde Otaku.");
+}
 
 export default function AtelierLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;

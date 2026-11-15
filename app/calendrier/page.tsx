@@ -1,11 +1,10 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/og/page-meta";
 import { getAiringWeek } from "../../lib/airing";
 import CalendarClient from "./CalendarClient";
 
-export const metadata: Metadata = {
-  title: "Calendrier des sorties | Guilde Otaku",
-  description: "Les épisodes d'anime diffusés cette semaine, jour par jour, et les membres de la Guilde qui les suivent.",
-};
+export async function generateMetadata() {
+  return pageMetadata("calendrier", "/calendrier", "Les sorties Crunchyroll", "Les épisodes de la semaine sur Crunchyroll, jour par jour, avec synopsis et fans de la Guilde.");
+}
 
 export default async function CalendrierPage() {
   const episodes = await getAiringWeek().catch(() => null);
