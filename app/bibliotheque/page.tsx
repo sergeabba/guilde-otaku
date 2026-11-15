@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { WeeklyRatingsLoader } from "../components/WeeklyRatings";
+import TrendingShelf from "../components/TrendingShelf";
 import BashPoll from "../components/BashPoll";
 import { ArrowRight, Calendar, ChevronLeft, ChevronRight, Eye, EyeOff, Heart, Play, Search, Share2, X } from "lucide-react";
 import GuildeHeader from "../components/GuildeHeader";
@@ -430,6 +431,9 @@ export default function BibliothequePage() {
 
         {/* ── LES NOTES DE LA SEMAINE (épisodes d'anime, TMDB) ────────── */}
         <WeeklyRatingsLoader />
+
+        {/* ── TENDANCES (AniList : saison, à venir, mangas) ──────────── */}
+        <TrendingShelf />
 
         <hr className="gk-rule" />
 

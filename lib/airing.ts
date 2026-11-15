@@ -54,7 +54,7 @@ const fetchWeek = unstable_cache(async (from: number, to: number) => {
 }, ["airing-week-v2"], { revalidate: 1800 });
 
 /** Synopsis français et image large d'une série (TMDB, recherche par titre), mis en cache. */
-const frenchInfo = unstable_cache(async (mediaId: number, titles: string[], year: number | null) => {
+export const frenchInfo = unstable_cache(async (mediaId: number, titles: string[], year: number | null) => {
   for (const t of titles) {
     const r = await tmdbGet<{ results?: { id: number; overview?: string; backdrop_path?: string | null; genre_ids?: number[]; first_air_date?: string }[] }>(`/search/tv?query=${encodeURIComponent(t)}&include_adult=false`);
     const hit = (r.results ?? []).find((x) => x.genre_ids?.includes(16) && (!year || !x.first_air_date || Math.abs(Number(x.first_air_date.slice(0, 4)) - year) <= 25));
