@@ -146,3 +146,27 @@
 .bb-archive-card small { color: var(--gk-faint); font: 700 .72rem var(--gk-font-ui); text-transform: uppercase; letter-spacing: .05em; }
 .bb-archive-card:focus-visible { outline: 3px solid var(--gk-accent); outline-offset: 3px; }
 @media (prefers-reduced-motion: reduce) { .bb-une.has-bd::before, .bb-archive-cover { transition: none; } }
+
+/* Sondage du Bash */
+.bash-poll { border-top: 2px dashed var(--gk-rule); padding-top: 22px; }
+.bash-q { margin-top: 6px; color: var(--gk-dim); }
+.bash-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.bash-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 10px 12px; cursor: pointer;
+  font: 900 1rem var(--gk-font-ui); text-transform: uppercase; letter-spacing: .03em; color: var(--gk-text);
+  background: var(--gk-surface-2); border: var(--gk-stroke) solid var(--gk-border); transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease; }
+.bash-btn b { margin-left: 4px; padding: 1px 8px; background: rgba(0,0,0,.25); font-variant-numeric: tabular-nums; }
+.bash-btn.is-watch[aria-pressed="true"] { background: var(--gk-accent); color: var(--pf-on, #111); box-shadow: 4px 4px 0 var(--gk-border); transform: translate(-2px,-2px); }
+.bash-btn.is-skip[aria-pressed="true"] { background: var(--gk-ink-3, #2a2630); color: #fff; box-shadow: 4px 4px 0 var(--gk-border); transform: translate(-2px,-2px); }
+.bash-btn:disabled { opacity: .7; cursor: progress; }
+.bash-btn:focus-visible { outline: 3px solid var(--gk-accent); outline-offset: 3px; }
+.bash-bar { height: 8px; margin-top: 14px; background: var(--gk-surface-2); border: 2px solid var(--gk-border); overflow: hidden; }
+.bash-bar span { display: block; height: 100%; background: var(--gk-accent); transition: width 500ms cubic-bezier(.2,.8,.2,1); }
+.bash-sum { margin-top: 8px; font: 700 .85rem var(--gk-font-ui); text-transform: uppercase; letter-spacing: .05em; color: var(--gk-dim); }
+.bash-faces { display: flex; align-items: center; margin-top: 12px; }
+.bash-faces img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; object-position: 50% 15%; border: 2px solid var(--gk-accent); background: var(--gk-surface-2); }
+.bash-faces img + img { margin-left: -9px; }
+.bash-faces span { margin-left: 8px; font: 800 .85rem var(--gk-font-ui); color: var(--gk-dim); }
+.bash-me { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; font: 800 .82rem var(--gk-font-ui); text-transform: uppercase; color: var(--gk-dim); }
+.bash-me select { min-height: 40px; padding: 4px 8px; background: var(--gk-surface-2); color: var(--gk-text); border: 2px solid var(--gk-border); font: 600 .95rem var(--gk-font-body); }
+.bash-err { margin-top: 10px; color: #f87171; font-size: .9rem; }
+@media (prefers-reduced-motion: reduce) { .bash-btn, .bash-bar span { transition: none; } }

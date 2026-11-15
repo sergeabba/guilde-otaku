@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { WeeklyRatingsLoader } from "../components/WeeklyRatings";
+import BashPoll from "../components/BashPoll";
 import { ArrowRight, Calendar, ChevronLeft, ChevronRight, Eye, EyeOff, Heart, Play, Search, Share2, X } from "lucide-react";
 import GuildeHeader from "../components/GuildeHeader";
 import { flushSync } from "react-dom";
@@ -756,6 +757,7 @@ function Reader({ item, list, all, antiSpoiler, isFavorite, onToggleFavorite, on
               {prose("avis", item.avis, true)}
             </section>
           )}
+          {item.kind === "chronique" && <BashPoll slug={slug(item.title)} title={item.title} />}
           {item.synopsis ? (
             <section id="bb-synopsis" className="bb-block">
               <h3>Synopsis</h3>

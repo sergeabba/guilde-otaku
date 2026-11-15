@@ -31,6 +31,27 @@ createServer((req, res) => {
     return res.end();
   }
   if (other && req.method === "GET") { const t = table(other[1]); if (t) return res.end(JSON.stringify(t)); }
+  // Sondage du Bash : votes gardés en mémoire (recette uniquement, rien n'est écrit sur disque).
+  if (u.pathname === "/rest/v1/bash_votes") {
+    globalThis.__votes ??= [];
+    const V = globalThis.__votes;
+    if (req.method === "GET") return res.end(JSON.stringify(V));
+    if (req.method === "DELETE") {
+      const c = (u.searchParams.get("chronique") ?? "").replace(/^eq\./, ""), v = (u.searchParams.get("voter") ?? "").replace(/^eq\./, "");
+      globalThis.__votes = V.filter((x) => !(x.chronique === c && x.voter === v));
+      res.statusCode = 204; return res.end();
+    }
+    if (req.method === "POST") {
+      let body = ""; req.on("data", (d) => (body += d)); req.on("end", () => {
+        for (const row of [].concat(JSON.parse(body || "[]"))) {
+          const i = V.findIndex((x) => x.chronique === row.chronique && x.voter === row.voter);
+          if (i >= 0) V[i] = { ...V[i], ...row }; else V.push(row);
+        }
+        res.statusCode = 201; res.end("[]");
+      });
+      return;
+    }
+  }
   // Toute écriture est refusée : ce serveur ne sert qu'à afficher.
   if (req.method !== "GET") { res.statusCode = 405; return res.end(JSON.stringify({ message: "lecture seule" })); }
   res.end("[]");
