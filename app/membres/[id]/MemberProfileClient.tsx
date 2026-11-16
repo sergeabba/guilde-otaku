@@ -22,6 +22,7 @@ import MemberAwards from "../../components/MemberAwards";
 import MemberMusic from "../../components/MemberMusic";
 import TrailerEmbed from "../../components/works/TrailerEmbed";
 import { trailerLangLabel } from "../../../lib/works/favorite";
+import TrailerReel, { useWorkTrailer } from "../../components/works/TrailerReel";
 import { FORMAT_LABEL } from "../../../lib/works/types";
 import "./profile.css";
 
@@ -293,6 +294,7 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
         <section id="pf-univers" className="pf-section" aria-labelledby="pf-universe" data-gk-motion="">
           <SectionHead n={num("pf-univers")} id="pf-universe" romaji="Sekai" fr="Son univers" hand={`ce qui fait vibrer ${member.name.split(" ")[0]}`} />
           <Favorites title="Suki na anime" fr="Anime préférés" works={anime} onOpen={openWorkFrom} />
+          <TrailerReel works={anime} name={member.name.split(" ")[0]} />
           <Favorites title="Suki na manga" fr="Mangas préférés" works={manga} onOpen={openWorkFrom} />
         </section>
 
@@ -408,6 +410,7 @@ function WorkCard({ work, onOpen, big = false }: { work: FavoriteWork; onOpen: O
 }
 
 function WorkSheet({ work, chronique, onClose }: { work: FavoriteWork; chronique?: string; onClose: () => void }) {
+  const trailer = useWorkTrailer(work);
   const ref = useRef<HTMLDivElement>(null);
   const [coverFailed, setCoverFailed] = useState(false);
   useEffect(() => {
@@ -448,10 +451,10 @@ function WorkSheet({ work, chronique, onClose }: { work: FavoriteWork; chronique
               : (work.source === "tmdb" || work.source === "mangadex") && <small className="pf-ws-credit">Synopsis : {work.source === "tmdb" ? "TMDB" : "MangaDex"}</small>)}
           </div>
         )}
-        {work.trailer && (
+        {trailer && (
           <div className="pf-ws-block">
             <h3>Bande-annonce</h3>
-            <TrailerEmbed youtubeId={work.trailer.youtubeId} title={workTitle(work)} langLabel={trailerLangLabel(work.trailer.lang)} />
+            <TrailerEmbed youtubeId={trailer.youtubeId} title={workTitle(work)} langLabel={trailerLangLabel(trailer.lang)} />
           </div>
         )}
         <div className="sh-actions">
