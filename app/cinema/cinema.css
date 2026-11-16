@@ -85,3 +85,8 @@
   .cin-card:hover .cin-thumb .cin-poster-play { opacity: 1; transform: none; }
 }
 .cin-room-info.is-single { grid-template-columns: 1fr; }
+
+/* Vidéos de la Guilde en tête : affiche de la dernière séance, dossier intégré sans clé */
+.cin-hero.is-guild { --cin-guild: 1; }
+.cin-folder { display: grid; gap: 14px; justify-items: start; margin-block: 8px 28px; }
+.cin-folder iframe { width: 100%; height: clamp(360px, 60vh, 620px); border: 3px solid #f3eee2; background: #fff; box-shadow: 10px 10px 0 #e8412c; }

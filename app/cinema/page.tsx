@@ -1,6 +1,6 @@
 import { pageMetadata } from "../../lib/og/page-meta";
 import { getCinemaRows, type CinemaItem } from "../../lib/cinema";
-import { driveConfig, getGuildVideos, type GuildCollection } from "../../lib/drive";
+import { driveConfig, driveFolder, getGuildVideos, type GuildCollection } from "../../lib/drive";
 import CinemaClient from "./CinemaClient";
 
 export async function generateMetadata() {
@@ -17,8 +17,9 @@ export default async function CinemaPage() {
   const [rows, guild] = await Promise.all([
     getCinemaRows().catch(() => null),
     driveConfig()
-      ? getGuildVideos().then((c): { collections: GuildCollection[]; error?: string } => ({ collections: c })).catch((e: unknown) => ({ collections: [] as GuildCollection[], error: e instanceof Error ? e.message : "Google Drive indisponible." }))
-      : Promise.resolve(null),
+      ? getGuildVideos().then((c): { collections: GuildCollection[]; error?: string; embedFolder?: string } => ({ collections: c })).catch((e: unknown) => ({ collections: [] as GuildCollection[], error: e instanceof Error ? e.message : "Google Drive indisponible.", embedFolder: driveFolder() ?? undefined }))
+      // Lien du dossier sans clé d'API : le dossier partagé s'affiche tel quel (vue intégrée de Drive).
+      : Promise.resolve(driveFolder() ? { collections: [] as GuildCollection[], embedFolder: driveFolder()! } : null),
   ]);
   // Affiche à la une : tirée au hasard parmi les séries populaires qui ont une image et un synopsis.
   const hero = pickHero(rows?.series ?? []);

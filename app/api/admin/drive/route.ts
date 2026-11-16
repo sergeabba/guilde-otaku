@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { requireAdmin } from "../../../../lib/auth";
-import { DRIVE_TAG, driveConfig, getGuildVideos } from "../../../../lib/drive";
+import { DRIVE_TAG, driveConfig, driveFolder, getGuildVideos } from "../../../../lib/drive";
 
 const NO_STORE = { "Cache-Control": "no-store" };
 
@@ -10,7 +10,10 @@ export async function GET(req: NextRequest) {
   const denied = requireAdmin(req);
   if (denied) return denied;
   const cfg = driveConfig();
-  if (!cfg) return NextResponse.json({ configured: false }, { headers: NO_STORE });
+  if (!cfg) {
+    const folder = driveFolder();
+    return NextResponse.json({ configured: false, folderOnly: !!folder, folderUrl: folder ? `https://drive.google.com/drive/folders/${folder}` : undefined }, { headers: NO_STORE });
+  }
   try {
     const collections = await getGuildVideos();
     return NextResponse.json({

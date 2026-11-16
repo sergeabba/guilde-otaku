@@ -14,7 +14,9 @@ import "./cinema.css";
 
 type Rows = { series: CinemaItem[]; free: CinemaItem[]; films: CinemaItem[] };
 
-export default function CinemaClient({ rows, hero: picked = null, guild = null }: { rows: Rows | null; hero?: CinemaItem | null; guild?: { collections: GuildCollection[]; error?: string } | null }) {
+type Guild = { collections: GuildCollection[]; error?: string; embedFolder?: string };
+
+export default function CinemaClient({ rows, hero: picked = null, guild = null }: { rows: Rows | null; hero?: CinemaItem | null; guild?: Guild | null }) {
   const [open, setOpen] = useState<CinemaItem | null>(null);
   const [screening, setScreening] = useState<GuildVideo | null>(null);
   const hero = picked ?? rows?.series.find((i) => i.backdrop && i.overview) ?? rows?.series[0] ?? null;
@@ -26,7 +28,12 @@ export default function CinemaClient({ rows, hero: picked = null, guild = null }
     if (hit) void Promise.resolve().then(() => setOpen(hit));
   }, [rows]);
 
-  if (!rows) {
+  // Les vidéos de la Guilde passent en premier : la plus récente devient l'affiche.
+  const guildVideos = (guild?.collections ?? []).flatMap((c) => c.videos);
+  const latest = [...guildVideos].sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""))[0] ?? null;
+  const hasGuild = !!guild && (guildVideos.length > 0 || !!guild.embedFolder);
+
+  if (!rows && !hasGuild) {
     return (
       <div className="gk-page tone-dark cin-page">
         <GuildeHeader activePage="cinema" tone="dark" />
@@ -38,7 +45,17 @@ export default function CinemaClient({ rows, hero: picked = null, guild = null }
   return (
     <div className="gk-page tone-dark cin-page">
       <GuildeHeader activePage="cinema" tone="dark" />
-      {hero && (
+      {latest ? (
+        <section className="cin-hero is-guild" style={{ "--bd": latest.thumb ? `url(${JSON.stringify(latest.thumb)})` : "none" } as React.CSSProperties}>
+          <div className="gk-wrap cin-hero-inner">
+            <span className="gk-chapter"><b>▶</b><span>GEKIJŌ · LES SÉANCES DE LA GUILDE</span></span>
+            <p className="cin-hero-kicker">Dernière séance</p>
+            <h1 className="gk-display cin-hero-title">{latest.title}</h1>
+            <p className="cin-hero-syn">{latest.description || [latest.collection, latest.createdAt ? DAY.format(new Date(latest.createdAt)) : null, duration(latest.durationMs)].filter(Boolean).join(" · ")}</p>
+            <button type="button" className="cin-play" onClick={() => setScreening(latest)}><Play size={20} aria-hidden="true" /> Regarder</button>
+          </div>
+        </section>
+      ) : !hasGuild && hero && (
         <section className="cin-hero" style={{ "--bd": hero.backdrop ? `url(${JSON.stringify(hero.backdrop)})` : "none" } as React.CSSProperties}>
           <div className="gk-wrap cin-hero-inner">
             <span className="gk-chapter"><b>▶</b><span>GEKIJŌ · LE CINÉMA OTAKU</span></span>
@@ -51,6 +68,7 @@ export default function CinemaClient({ rows, hero: picked = null, guild = null }
       )}
       <main className="cin-main">
         {guild && <GuildVideos guild={guild} onPlay={setScreening} />}
+        {rows && <>
         <div className="gk-wrap cin-intro">
           <h2 className="gk-display cin-h2"><WordReveal>Ce soir, <em>on regarde quoi ?</em></WordReveal></h2>
           <p>Des animes japonais disponibles légalement en France. Choisis une affiche : bande-annonce en grand, puis les plateformes où regarder la série.</p>
@@ -59,6 +77,7 @@ export default function CinemaClient({ rows, hero: picked = null, guild = null }
         <Row title="Gratuit et légal" sub="Avec publicités, sans abonnement" items={rows.free} onOpen={setOpen} />
         <Row title="Films d'animation" sub="En streaming en France" items={rows.films} onOpen={setOpen} />
         <p className="gk-wrap cin-credit">Disponibilités en France : JustWatch, via TMDB. Ce site utilise l&apos;API TMDB mais n&apos;est ni approuvé ni certifié par TMDB.</p>
+        </>}
       </main>
       {open && <Theater item={open} onClose={() => setOpen(null)} />}
       {screening && <GuildTheater video={screening} onClose={() => setScreening(null)} />}
@@ -180,7 +199,7 @@ const duration = (ms: number | null) => {
 const DAY = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 
 /** Les vidéos de la Guilde (dossier Google Drive), une rangée par collection. */
-function GuildVideos({ guild, onPlay }: { guild: { collections: GuildCollection[]; error?: string }; onPlay: (v: GuildVideo) => void }) {
+function GuildVideos({ guild, onPlay }: { guild: Guild; onPlay: (v: GuildVideo) => void }) {
   return (
     <section className="cin-guild" aria-labelledby="cin-guild-title">
       <div className="gk-wrap cin-intro">
@@ -189,7 +208,14 @@ function GuildVideos({ guild, onPlay }: { guild: { collections: GuildCollection[
         <p>Nos soirées, nos tournois, nos moments. Choisis une vidéo, la salle s&apos;éteint.</p>
       </div>
       {guild.error && <p className="gk-wrap cin-muted" role="alert">{guild.error}</p>}
-      {!guild.error && !guild.collections.length && <p className="gk-wrap cin-muted">Aucune vidéo pour l&apos;instant : dépose-les dans le dossier Google Drive du Cinéma.</p>}
+      {/* Sans clé d'API Google : le dossier partagé s'affiche tel quel, ouvert en un clic. */}
+      {!guild.collections.length && guild.embedFolder && (
+        <div className="gk-wrap cin-folder">
+          <iframe src={`https://drive.google.com/embeddedfolderview?id=${encodeURIComponent(guild.embedFolder)}#grid`} title="Dossier des vidéos de la Guilde" loading="lazy" />
+          <a className="cin-play" href={`https://drive.google.com/drive/folders/${encodeURIComponent(guild.embedFolder)}`} target="_blank" rel="noopener noreferrer"><ExternalLink size={18} aria-hidden="true" /> Ouvrir le dossier</a>
+        </div>
+      )}
+      {!guild.error && !guild.collections.length && !guild.embedFolder && <p className="gk-wrap cin-muted">Aucune vidéo pour l&apos;instant : dépose-les dans le dossier Google Drive du Cinéma.</p>}
       {guild.collections.map((c) => (
         <section key={c.name} className="cin-row" aria-label={c.name}>
           <div className="gk-wrap cin-row-head"><h3>{c.name}</h3><small>{c.videos.length} vidéo{c.videos.length > 1 ? "s" : ""}</small></div>

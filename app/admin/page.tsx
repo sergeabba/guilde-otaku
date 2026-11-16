@@ -18,7 +18,7 @@ const SECTIONS = [
   { href: "/admin-bons-plans", table: "bons_plans", label: "Bons plans", desc: "Liens utiles : ajouter, modifier, supprimer.", icon: Gift },
 ] as const;
 
-interface DriveStatus { configured: boolean; folderUrl?: string; collections?: { name: string; count: number }[]; error?: string }
+interface DriveStatus { configured: boolean; folderOnly?: boolean; folderUrl?: string; collections?: { name: string; count: number }[]; error?: string }
 
 /** Cinéma de la Guilde : les vidéos viennent d'un dossier Google Drive partagé. */
 function DrivePanel() {
@@ -42,9 +42,16 @@ function DrivePanel() {
       <h2 id="am-drive-title" style={{ display: "flex", alignItems: "center", gap: 10, font: "900 1.2rem var(--am-font)", textTransform: "uppercase" }}><Video size={20} aria-hidden="true" /> Cinéma de la Guilde</h2>
       {!st ? <p className="am-loading" role="status">Chargement…</p>
         : !st.configured ? (
-          <div className="am-alert am-alert--info">
-            Pas encore relié à Google Drive. Ajoute dans Vercel (Settings → Environment Variables) <b>GOOGLE_DRIVE_API_KEY</b> (clé d&apos;API Google avec l&apos;API Drive activée) et <b>GOOGLE_DRIVE_FOLDER_ID</b> (l&apos;identifiant du dossier, partagé avec « tous les utilisateurs disposant du lien »), puis redéploie.
-          </div>
+          st.folderOnly ? (
+            <div className="am-alert am-alert--info">
+              Dossier relié : il s&apos;affiche en tête du Cinéma (vue intégrée de Drive). Pour une vraie salle de projection (vignettes, durées, lecture sur le site, vidéos aussi dans les Futilités), ajoute dans Vercel <b>GOOGLE_DRIVE_API_KEY</b> : clé d&apos;API Google avec l&apos;API Drive activée (console.cloud.google.com → API et services → Identifiants), puis redéploie.
+              {st.folderUrl && <> <a href={st.folderUrl} target="_blank" rel="noopener noreferrer">Ouvrir le dossier</a></>}
+            </div>
+          ) : (
+            <div className="am-alert am-alert--info">
+              Pas encore relié à Google Drive. Dans Vercel (Settings → Environment Variables), ajoute <b>GOOGLE_DRIVE_FOLDER_ID</b> en collant simplement le <b>lien de partage du dossier</b> (partagé avec « tous les utilisateurs disposant du lien »), puis redéploie : le dossier s&apos;affiche aussitôt en tête du Cinéma. Pour la salle complète, ajoute aussi <b>GOOGLE_DRIVE_API_KEY</b> (clé d&apos;API Google avec l&apos;API Drive activée).
+            </div>
+          )
         ) : (
           <>
             {st.error ? <p className="am-alert am-alert--error" role="alert">{st.error}</p>

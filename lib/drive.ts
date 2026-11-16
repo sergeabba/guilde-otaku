@@ -24,10 +24,28 @@ interface RawFile {
   videoMediaMetadata?: { durationMillis?: string };
 }
 
+/**
+ * Identifiant du dossier à partir du lien de partage complet
+ * (« https://drive.google.com/drive/folders/1AbC…?usp=sharing ») ou de l'identifiant seul.
+ */
+export function parseFolderId(raw?: string | null): string | null {
+  const s = raw?.trim();
+  if (!s) return null;
+  const m = s.match(/\/folders\/([\w-]{10,100})/) ?? s.match(/[?&]id=([\w-]{10,100})/);
+  const id = m ? m[1] : s;
+  return /^[\w-]{10,100}$/.test(id) ? id : null;
+}
+
+/** Dossier du Cinéma (variable GOOGLE_DRIVE_FOLDER_ID : lien ou identifiant). */
+export function driveFolder(): string | null {
+  return parseFolderId(process.env.GOOGLE_DRIVE_FOLDER_ID);
+}
+
+/** Configuration complète (clé d'API + dossier) : liste détaillée des vidéos. */
 export function driveConfig(): { key: string; folder: string } | null {
   const key = process.env.GOOGLE_DRIVE_API_KEY?.trim();
-  const folder = process.env.GOOGLE_DRIVE_FOLDER_ID?.trim();
-  return key && folder && /^[\w-]{10,100}$/.test(folder) ? { key, folder } : null;
+  const folder = driveFolder();
+  return key && folder ? { key, folder } : null;
 }
 
 async function list(parent: string, key: string): Promise<RawFile[]> {

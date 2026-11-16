@@ -15,3 +15,16 @@ describe("vidéos Google Drive", () => {
     expect(v).toMatchObject({ id: "abc_123", title: "Tournoi", durationMs: 65000, collection: "Fighters", thumb: null, description: null });
   });
 });
+
+describe("lien du dossier Drive", () => {
+  it("accepte le lien de partage complet ou l'identifiant seul", () => {
+    const { parseFolderId } = jest.requireActual("../lib/drive") as typeof import("../lib/drive");
+    const id = "1AbCdEfGhIjKlMnOpQrStUvWxYz012345";
+    expect(parseFolderId(`https://drive.google.com/drive/folders/${id}?usp=sharing`)).toBe(id);
+    expect(parseFolderId(`https://drive.google.com/drive/u/0/folders/${id}`)).toBe(id);
+    expect(parseFolderId(`https://drive.google.com/open?id=${id}`)).toBe(id);
+    expect(parseFolderId(`  ${id} `)).toBe(id);
+    expect(parseFolderId("https://exemple.com/pas-un-dossier")).toBeNull();
+    expect(parseFolderId("")).toBeNull();
+  });
+});
