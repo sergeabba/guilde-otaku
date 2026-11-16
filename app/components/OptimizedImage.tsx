@@ -10,6 +10,7 @@
 //   - Props flexibles pour couvrir tous les usages (cover, contain, top center...)
 
 import { useState, CSSProperties } from "react";
+import { optimizedSrc } from "../../lib/img";
 
 interface OptimizedImageProps {
   src: string;
@@ -28,6 +29,8 @@ interface OptimizedImageProps {
   fallback?: React.ReactNode;
   /** borderRadius hérité du parent */
   borderRadius?: string | number;
+  /** Largeur servie (px, avant densité d'écran) ; défaut 384, ou 828 si priority. */
+  width?: number;
 }
 
 export default function OptimizedImage({
@@ -39,6 +42,7 @@ export default function OptimizedImage({
   priority = false,
   fallback,
   borderRadius,
+  width,
 }: OptimizedImageProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -70,10 +74,13 @@ export default function OptimizedImage({
 
       {/* ── IMAGE ────────────────────────────────────────────────────────────── */}
       {!hasError && (
+        // Redimensionnée par l'optimiseur du site (lib/img) : équivalent de next/image ici.
+        // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={src}
+          src={optimizedSrc(src, width ?? (priority ? 828 : 384)) ?? src}
           alt={alt}
           loading={priority ? "eager" : "lazy"}
+          decoding="async"
           onLoad={() => setIsLoaded(true)}
           onError={() => setHasError(true)}
           style={{

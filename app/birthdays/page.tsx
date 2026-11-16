@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { optimizedSrc } from "../../lib/img";
 import { CalendarDays, ChevronLeft, ChevronRight, List, PartyPopper, Share2, Sword, User } from "lucide-react";
 import { Member, Rank } from "../../data/members";
 import MemberQuickView from "../components/MemberQuickView";
@@ -204,7 +205,7 @@ export default function BirthdaysPage() {
                 {soonest.map((m) => (
                   <button key={m.id} type="button" onClick={() => setSelectedMember(m)} aria-label={`Ouvrir la fiche de ${m.name}`}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    {portrait(m) && <img key={viewMode} className="gk-wipe-in" src={portrait(m)} alt="" />}
+                    {portrait(m) && <img key={viewMode} className="gk-wipe-in" src={optimizedSrc(portrait(m), 640)} alt="" />}
                   </button>
                 ))}
               </div>
@@ -331,7 +332,7 @@ export default function BirthdaysPage() {
                             {c.people.map((m) => (
                               <button key={m.id} type="button" className="no-min" onClick={() => setSelectedMember(m)} aria-label={`${m.name}, le ${c.day} ${MONTHS[calMonth - 1].toLowerCase()}`} title={m.name}>
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                                {portrait(m) && <img src={portrait(m)} alt="" loading="lazy" />}
+                                {portrait(m) && <img src={optimizedSrc(portrait(m), 128)} alt="" loading="lazy" />}
                               </button>
                             ))}
                           </div>
@@ -380,7 +381,7 @@ function Row({ m, src, label, onOpen, showMonth = false }: { m: Dated; src: stri
         <span className="bd-day" aria-hidden="true">{String(m.day).padStart(2, "0")}</span>
         <span className="bd-avatar" style={{ borderColor: rk }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          {src && <img src={src} alt="" loading="lazy" />}
+          {src && <img src={optimizedSrc(src, 128)} alt="" loading="lazy" />}
         </span>
         <span className="bd-who">
           <strong>{m.name}</strong>

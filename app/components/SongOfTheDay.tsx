@@ -37,8 +37,10 @@ export default function SongOfTheDay({ initial, today = true }: { initial: Anime
     if (a.getAttribute("src") !== url) { release(a); a.src = url; a.load(); }
     try { await a.play(); setError(null); }
     catch (e) {
-      // Lecture refusée hors d'un appui (iOS) : on attend simplement le bouton Lecture.
-      if ((e as Error).name !== "NotAllowedError") setError("Lecture impossible sur cet appareil : ouvre la version complète.");
+      // Refus hors d'un appui (NotAllowedError) ou lecture interrompue par le changement
+      // de morceau (AbortError, fréquent sur iOS) : ce n'est pas une panne, on n'affiche rien.
+      const name = (e as Error).name;
+      if (name !== "NotAllowedError" && name !== "AbortError" && a.paused) setError("Lecture impossible sur cet appareil : ouvre la version complète.");
     }
   }
 
@@ -100,7 +102,7 @@ export default function SongOfTheDay({ initial, today = true }: { initial: Anime
                 <audio
                   ref={audio} preload="none"
                   onError={() => { if (audio.current?.getAttribute("src")) { setPlaying(false); setError("Cet extrait ne se charge pas. Touche Lecture pour réessayer ou tire-en un autre."); release(audio.current); } }}
-                  onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)}
+                  onPlay={() => setPlaying(true)} onPlaying={() => setError(null)} onPause={() => setPlaying(false)}
                   onEnded={() => { setPlaying(false); setProgress(0); }}
                   onTimeUpdate={(e) => { const a = e.currentTarget; setProgress(a.duration ? a.currentTime / a.duration : 0); }}
                 />

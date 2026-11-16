@@ -83,7 +83,7 @@ export default function GuildeHeader({
       <div className={`gk-mast${rightSlot ? " has-slot" : ""}`}>
         <Link href="/" className="gk-brand" aria-label="Guilde Otaku, accueil">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="" width={44} height={38} />
+          <img src="/logo-header.png" alt="" width={44} height={38} />
           <div>
             <div className="gk-brand-name">GUILDE OTAKU</div>
             <div className="gk-brand-sub">

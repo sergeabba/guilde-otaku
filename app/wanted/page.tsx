@@ -8,6 +8,7 @@ import { fetchMembers } from "../utils/dataAdapter";
 import { normalize } from "../utils/text";
 import { useShare } from "../hooks/useShare";
 import type { Member } from "../../data/members";
+import { optimizedSrc } from "../../lib/img";
 import "./wanted.css";
 
 type ViewMode = "real" | "anime";
@@ -38,7 +39,7 @@ function Poster({ member, viewMode, eager = false }: { member: Member; viewMode:
               <img
                 key={src}
                 className="is-swap"
-                src={src}
+                src={optimizedSrc(src, eager ? 828 : 384)}
                 alt=""
                 loading={eager ? "eager" : "lazy"}
                 decoding="async"

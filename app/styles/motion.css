@@ -456,3 +456,16 @@ html[data-vt="list"]::view-transition-old(root), html[data-vt="list"]::view-tran
 @keyframes gk-wall-push-l { from { transform: translateX(6%); } to { transform: translateX(-6%); } }
 @keyframes gk-wall-push-r { from { transform: translateX(-6%); } to { transform: translateX(6%); } }
 @keyframes gk-wall-tilt { from { transform: rotate(-7deg) scale(1.16); } to { transform: rotate(-3.5deg) scale(1.1); } }
+
+/* ═══ ÉCONOMIE DE MÉMOIRE SUR TÉLÉPHONE ═══════════════════════════════════
+   Safari iOS ferme l'onglet quand la page consomme trop de mémoire graphique
+   (« Un problème récurrent est survenu »). Les flous animés et les grands calques
+   flous sont les plus gourmands : sur écran tactile, on les remplace par des fondus
+   simples, et le mur des futilités garde deux bandes au lieu de trois. */
+@keyframes gk-word-on-lite { from { opacity: .14; transform: translateY(.18em); } }
+@media (hover: none), (max-width: 899px) {
+  .gk-word { animation-name: gk-word-on-lite; }
+  .gk-wall-row:nth-child(n + 3) { display: none; }
+  .gk-wall { content-visibility: auto; contain-intrinsic-size: auto 720px; }
+  .gk-wall-tile { box-shadow: 5px 5px 0 var(--acc, #c9a84c); }
+}

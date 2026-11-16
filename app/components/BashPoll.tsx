@@ -5,6 +5,7 @@
 // peut dire qui il est pour que son visage apparaisse. Masqué tant que la table
 // des votes n'existe pas.
 import { useEffect, useState, useSyncExternalStore } from "react";
+import Image from "next/image";
 import { Eye, EyeOff } from "lucide-react";
 import { fetchMembers } from "../utils/dataAdapter";
 import type { Member } from "../../data/members";
@@ -91,8 +92,8 @@ export default function BashPoll({ slug, title }: { slug: string; title: string 
       {faces.length > 0 && (
         <div className="bash-faces" aria-label="Membres qui regardent">
           {faces.slice(0, 12).map((m) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img key={m.id} src={m.animeChar || m.photo} alt={m.name} title={m.name} width={36} height={36} />
+            // Vignette redimensionnée (les portraits d'origine font jusqu'à 1920 × 2560).
+            <Image key={m.id} src={m.animeChar || m.photo} alt={m.name} title={m.name} width={36} height={36} sizes="36px" />
           ))}
           {faces.length > 12 && <span>+{faces.length - 12}</span>}
         </div>

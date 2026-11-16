@@ -293,3 +293,13 @@ body.modal-open .hm-float { display: none; }
 .sotd-copy { position: relative; z-index: 3; min-width: 0; }
 @media (min-width: 821px) { .sotd.is-playing .sotd-disc { transform: translateX(26%) rotate(0deg); } }
 @media (max-width: 899px) { body:has(.mdock) .hm-float { bottom: calc(67px + 76px + env(safe-area-inset-bottom)); } }
+
+/* Téléphone : pas de flou géant derrière le générique (mémoire graphique, Safari iOS). */
+@keyframes hm-title-in-lite { from { opacity: 0; transform: translateY(.35em) scale(.98); } }
+@keyframes sotd-in-lite { from { opacity: 0; transform: translateY(18px); } }
+@media (hover: none), (max-width: 899px) {
+  .sotd-backdrop { inset: 0; filter: none; transform: none; opacity: .18; background-position: center; }
+  .sotd { content-visibility: auto; contain-intrinsic-size: auto 900px; }
+  .hm-title > span { animation-name: hm-title-in-lite; }
+  .sotd-cover img, .sotd-title { animation-name: sotd-in-lite; }
+}
