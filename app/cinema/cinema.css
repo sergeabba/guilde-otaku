@@ -160,3 +160,29 @@
 .cin-room { min-width: 0; justify-self: center; }
 .cin-room-info.is-single { grid-template-columns: minmax(0, 1fr); }
 .cin-program { min-width: 0; }
+
+/* ─── Salle de la Guilde sur téléphone ───────────────────────────────────
+   Plein écran noir, barre du haut (titre, plein écran, fermer) hors de la vidéo
+   pour ne pas masquer les commandes du lecteur Drive ; écran collé en haut
+   pendant qu'on parcourt le programme ; en paysage, la vidéo remplit l'écran. */
+.cin-room-top { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.cin-room-top-title { flex: 1 1 auto; min-width: 0; font: 900 italic 1rem var(--gk-font-ui); text-transform: uppercase; color: #f6f0e6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cin-top-btn { display: inline-flex; align-items: center; gap: 6px; min-width: 44px; min-height: 44px; padding: 0 12px; justify-content: center; cursor: pointer; font: 900 .85rem var(--gk-font-ui); text-transform: uppercase; color: #fff; background: rgba(255,255,255,.08); border: 2px solid rgba(246,240,228,.5); }
+.cin-top-btn:hover { border-color: #f6f0e6; }
+.cin-top-btn:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.cin-screen:fullscreen { border: 0; box-shadow: none; width: 100vw; height: 100vh; aspect-ratio: auto; }
+@media (max-width: 760px) {
+  .cin-theater:has(.cin-room-top) { place-items: start stretch; padding: 0; background: #000; }
+  .cin-room:has(.cin-room-top) { width: 100%; min-height: 100dvh; padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+  .cin-room-top { position: sticky; top: 0; z-index: 3; margin: 0; padding: calc(8px + env(safe-area-inset-top)) 10px 8px; background: #000; }
+  .cin-room-top-title { font-size: .92rem; }
+  .cin-top-btn span { display: none; }
+  .cin-room:has(.cin-room-top) .cin-screen { position: sticky; top: calc(60px + env(safe-area-inset-top)); z-index: 2; border-inline: 0; box-shadow: none; }
+  .cin-room:has(.cin-room-top) .cin-room-info { padding-inline: 14px; }
+}
+@media (orientation: landscape) and (max-height: 520px) {
+  .cin-theater:has(.cin-room-top) { padding: 0; place-items: start stretch; background: #000; }
+  .cin-room:has(.cin-room-top) { width: 100%; }
+  .cin-room:has(.cin-room-top) .cin-room-top { position: absolute; top: 0; left: 0; right: 0; z-index: 4; padding: 6px 10px; background: linear-gradient(#000c, transparent); margin: 0; }
+  .cin-room:has(.cin-room-top) .cin-screen { height: 100dvh; aspect-ratio: auto; border: 0; box-shadow: none; }
+}

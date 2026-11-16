@@ -5,7 +5,7 @@
 // plateformes où regarder la série, données JustWatch via TMDB).
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight, ExternalLink, Play, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, ExternalLink, Maximize, Play, X } from "lucide-react";
 import GuildeHeader from "../components/GuildeHeader";
 import WordReveal from "../components/WordReveal";
 import type { CinemaDetail, CinemaItem, Provider } from "../../lib/cinema";
@@ -264,11 +264,23 @@ function GuildTheater({ video, playlist, onPick, onClose }: { video: GuildVideo;
   const ref = useRef<HTMLDivElement>(null);
   const close = useCallback(() => onClose(), [onClose]);
   const i = playlist.findIndex((v) => v.id === video.id);
+  const screenRef = useRef<HTMLDivElement>(null);
+  // Plein écran de l'écran entier (et paysage sur Android) quand le navigateur le permet.
+  const [canFull] = useState(() => typeof document !== "undefined" && !!document.fullscreenEnabled);
+  const fullscreen = useCallback(async () => {
+    const el = screenRef.current;
+    if (!el) return;
+    try {
+      await el.requestFullscreen();
+      const o = screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> };
+      await o.lock?.("landscape").catch(() => {});
+    } catch { /* refusé : le bouton plein écran du lecteur Drive reste disponible */ }
+  }, []);
   const step = useCallback((d: 1 | -1) => { if (playlist.length > 1) onPick(playlist[(i + d + playlist.length) % playlist.length]); }, [i, playlist, onPick]);
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    ref.current?.focus();
+    ref.current?.focus({ preventScroll: true });
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") close();
       // Flèches : seulement quand le lecteur n'a pas le focus (il gère lui-même ses touches).
@@ -281,8 +293,12 @@ function GuildTheater({ video, playlist, onPick, onClose }: { video: GuildVideo;
   return (
     <div className="cin-theater" onClick={(e) => { if (e.target === e.currentTarget) close(); }}>
       <div ref={ref} tabIndex={-1} className="cin-room" role="dialog" aria-modal="true" aria-labelledby="cin-guild-room-title">
-        <button type="button" className="cin-close" onClick={close} aria-label="Quitter la salle"><X size={22} aria-hidden="true" /></button>
-        <div className="cin-screen" key={video.id}>
+        <div className="cin-room-top">
+          <span className="cin-room-top-title">{video.title}</span>
+          {canFull && <button type="button" className="cin-top-btn" onClick={fullscreen} aria-label="Plein écran"><Maximize size={18} aria-hidden="true" /><span>Plein écran</span></button>}
+          <button type="button" className="cin-top-btn" onClick={close} aria-label="Quitter la salle"><X size={20} aria-hidden="true" /></button>
+        </div>
+        <div className="cin-screen" key={video.id} ref={screenRef}>
           <iframe src={`https://drive.google.com/file/d/${encodeURIComponent(video.id)}/preview`} title={video.title} allow="autoplay; fullscreen; picture-in-picture" allowFullScreen />
         </div>
         <div className="cin-room-info is-single">
