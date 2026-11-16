@@ -56,6 +56,7 @@ export default function SplashWrapper({
     finishedRef.current = true;
     try {
       document.cookie = "guilde-splash-seen=1; path=/; max-age=86400; SameSite=Lax";
+      document.cookie = "guilde-splash-force=; path=/; max-age=0; SameSite=Lax";
     } catch {}
     setShowSplash(false);
     setReveal("revealing");

@@ -54,7 +54,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const isMobileVisitor = /android|iphone|ipad|ipod|mobile/i.test(userAgent);
 
   // A blocking intro is expensive on mobile: visitors reach content immediately.
-  const hasSeenSplash = isBot || isMobileVisitor || cookieStore.get("guilde-splash-seen")?.value === "1";
+  // « Revoir l'intro » (pied de page) la redemande explicitement, téléphone compris.
+  const forceSplash = !isBot && cookieStore.get("guilde-splash-force")?.value === "1";
+  const hasSeenSplash = !forceSplash && (isBot || isMobileVisitor || cookieStore.get("guilde-splash-seen")?.value === "1");
 
   return (
     <html lang="fr" data-scroll-behavior="smooth">

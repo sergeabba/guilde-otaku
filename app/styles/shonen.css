@@ -674,6 +674,12 @@ html[data-theme="light"] .tone-dark {
   margin-top: 32px; padding-top: 16px; border-top: 1px solid rgba(243,238,226,0.14);
   font: 500 0.85rem var(--gk-font-body); color: rgba(243,238,226,0.55);
 }
+.gk-footer-replay {
+  min-height: 44px; padding: 0 2px; background: none; border: 0; cursor: pointer;
+  font: 800 0.8rem var(--gk-font-ui); letter-spacing: 0.1em; text-transform: uppercase;
+  color: rgba(243,238,226,0.75); text-decoration: underline; text-underline-offset: 3px;
+}
+.gk-footer-replay:hover, .gk-footer-replay:focus-visible { color: var(--gk-gold); }
 
 /* ═══ RETOUR EN HAUT ══════════════════════════════════════════════════════ */
 @media (max-width: 899px) { .gk-top { bottom: calc(67px + 14px + env(safe-area-inset-bottom)) !important; z-index: 520 !important; } }

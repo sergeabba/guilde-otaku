@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { NAV, chapterNo } from "../config/nav";
+import ReplayIntro from "./ReplayIntro";
 
 export default function Footer() {
   return (
@@ -33,6 +34,7 @@ export default function Footer() {
         <div className="gk-footer-base">
           <span>&copy; 2020-{new Date().getFullYear()} Guilde Otaku. Fait par la Guilde, pour la Guilde.</span>
           <span>Les œuvres citées appartiennent à leurs ayants droit.</span>
+          <ReplayIntro />
         </div>
       </div>
     </footer>
