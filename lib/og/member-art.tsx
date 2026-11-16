@@ -289,8 +289,8 @@ export async function renderMemberCard(m: Member, origin: string): Promise<Image
     try {
       const sharp = (await import("sharp")).default;
       const meta = await sharp(Buffer.from(logo.split(",")[1], "base64")).metadata();
-      return meta.width && meta.height ? Math.min(190, Math.round((54 * meta.width) / meta.height)) : 54;
-    } catch { return 54; }
+      return meta.width && meta.height ? Math.min(220, Math.round((64 * meta.width) / meta.height)) : 64;
+    } catch { return 64; }
   })() : 0;
   const custom = m.extras?.card;
   const picked = custom?.color ?? (anime ? await dominantVivid(Buffer.from(anime.split(",")[1], "base64")) : null);
@@ -302,14 +302,14 @@ export async function renderMemberCard(m: Member, origin: string): Promise<Image
   const both = real && anime;
   const heroInner = W - 10; // bordure 5 px de chaque côté
   const panelW = both ? Math.floor((heroInner - 6) / 2) : heroInner;
-  const nameSize = displaySize(m.name, heroInner - 56, 112);
+  const nameSize = displaySize(m.name, heroInner - 56, 128);
 
   // Colonnes du bas : la droite (œuvres, musique) n'existe que s'il y a de quoi la remplir.
   const hasRight = favs.length > 0 || !!trackLine;
   const RIGHT_W = hasRight ? 430 : 0;
   const GAP = hasRight ? 34 : 0;
   const LEFT_W = W - RIGHT_W - GAP;
-  const bioMax = hasRight ? (awards.length > 2 ? 200 : 260) : 380;
+  const bioMax = hasRight ? (awards.length > 2 ? 150 : 200) : 300;
   const bio = m.bio?.trim() ? cutWords(m.bio.trim(), bioMax) : "";
   // Jaquettes : 1 à 3 sur une rangée (très grandes), 4 en grille 2 × 2.
   const cols = favs.length === 4 ? 2 : Math.max(favs.length, 1);
@@ -324,16 +324,17 @@ export async function renderMemberCard(m: Member, origin: string): Promise<Image
   }
   const coverOf = new Map(favs.map((w, i) => [w, covers[i] ?? null]));
   // Hauteur estimée du bas ; les photos prennent tout le reste (pas de vide).
-  const charsPerLine = Math.floor((LEFT_W - 24) / ((hasRight ? 25 : 28) * 0.5));
-  const leftH = ((country || m.birthday) ? 40 : 0)
-    + (awards.length ? 16 + Math.min(3, awards.length) * 52 : 0)
-    + (bio ? 20 + Math.ceil(bio.length / charsPerLine) * (hasRight ? 35.5 : 40) : 0);
-  const rightH = (favs.length ? 32 + rowsN * (coverH + coverGap) : 0) + (trackLine ? (favs.length ? 70 : 120) : 0);
+  const BIO_SIZE = hasRight ? 31 : 34;
+  const charsPerLine = Math.floor((LEFT_W - 24) / (BIO_SIZE * 0.5));
+  const leftH = ((country || m.birthday) ? 48 : 0)
+    + (awards.length ? 16 + Math.min(3, awards.length) * 62 : 0)
+    + (bio ? 20 + Math.ceil(bio.length / charsPerLine) * BIO_SIZE * 1.38 : 0);
+  const rightH = (favs.length ? 38 + rowsN * (coverH + coverGap) : 0) + (trackLine ? (favs.length ? 82 : 130) : 0);
   const bottomH = Math.max(leftH, rightH, 60);
-  const HERO_H = Math.round(Math.min(900, Math.max(600, 1350 - 2 * PAD - 44 - 20 - 10 - 40 - 6 - bottomH - 12)));
-  const kicker = (t: string) => <div style={{ display: "flex", fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 20, letterSpacing: 3, color }}>{t}</div>;
+  const HERO_H = Math.round(Math.min(900, Math.max(560, 1350 - 2 * PAD - 52 - 20 - 10 - 40 - 6 - bottomH - 12)));
+  const kicker = (t: string) => <div style={{ display: "flex", fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 25, letterSpacing: 3, color }}>{t}</div>;
   const tag = (txt: string, bg: string, fg: string) => (
-    <div style={{ position: "absolute", top: 16, left: 16, display: "flex", padding: "4px 12px", background: bg, color: fg, fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 22, letterSpacing: 2, border: `3px solid ${INK}` }}>{txt}</div>
+    <div style={{ position: "absolute", top: 16, left: 16, display: "flex", padding: "4px 12px", background: bg, color: fg, fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 27, letterSpacing: 2, border: `3px solid ${INK}` }}>{txt}</div>
   );
   const panel = (src: string | null, pos: string, txt: string, bg: string, fg: string) => (
     <div style={{ position: "relative", display: "flex", width: panelW, height: HERO_H, overflow: "hidden", background: "#1d1a22" }}>
@@ -354,12 +355,12 @@ export async function renderMemberCard(m: Member, origin: string): Promise<Image
         <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 12, display: "flex", background: color }} />
 
         {/* En-tête */}
-        <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", height: 44 }}>
-          <div style={{ display: "flex", alignItems: "stretch", fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 24, letterSpacing: 3 }}>
+        <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", height: 52 }}>
+          <div style={{ display: "flex", alignItems: "stretch", fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 30, letterSpacing: 3 }}>
             <div style={{ display: "flex", width: 12, background: color, border: `3px solid ${PAPER}`, borderRight: "none" }} />
             <div style={{ display: "flex", padding: "5px 14px", background: PAPER, color: INK, border: `3px solid ${PAPER}` }}>CARTE DE NAKAMA</div>
           </div>
-          <div style={{ display: "flex", fontFamily: "Dela Gothic One", fontSize: 24, letterSpacing: 1 }}>GUILDE OTAKU</div>
+          <div style={{ display: "flex", fontFamily: "Dela Gothic One", fontSize: 30, letterSpacing: 1 }}>GUILDE OTAKU</div>
         </div>
 
         {/* Affiche : diptyque, nom et grade sur le bas des images */}
@@ -375,10 +376,10 @@ export async function renderMemberCard(m: Member, origin: string): Promise<Image
             <div style={{ display: "flex", alignItems: "center", marginTop: 14 }}>
               {logo && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={logo} width={logoW} height={54} alt="" style={{ width: logoW, height: 54, objectFit: "contain", marginRight: 14 }} />
+                <img src={logo} width={logoW} height={64} alt="" style={{ width: logoW, height: 64, objectFit: "contain", marginRight: 14 }} />
               )}
-              <div style={{ display: "flex", padding: "6px 16px", background: rankColor, color: onAccent(rankColor), border: `3px solid ${INK}`, fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 30, textTransform: "uppercase" }}>{m.rank}</div>
-              {romaji && <div style={{ display: "flex", marginLeft: 16, fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 30, color }}>{romaji}</div>}
+              <div style={{ display: "flex", padding: "6px 16px", background: rankColor, color: onAccent(rankColor), border: `3px solid ${INK}`, fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 38, textTransform: "uppercase" }}>{m.rank}</div>
+              {romaji && <div style={{ display: "flex", marginLeft: 16, fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 36, color }}>{romaji}</div>}
             </div>
           </div>
         </div>
@@ -387,19 +388,19 @@ export async function renderMemberCard(m: Member, origin: string): Promise<Image
         <div style={{ position: "relative", display: "flex", flex: 1, marginTop: 40, paddingBottom: 6 }}>
           <div style={{ display: "flex", flexDirection: "column", width: LEFT_W }}>
             {(country || m.birthday) && (
-              <div style={{ display: "flex", alignItems: "center", fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 28 }}>
+              <div style={{ display: "flex", alignItems: "center", fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 36 }}>
                 {country && (
                   <div style={{ display: "flex", alignItems: "center", marginRight: 26 }}>
                     {flag && (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={flag} width={36} height={25} alt="" style={{ width: 36, height: 25, marginRight: 10, border: `2px solid ${PAPER}` }} />
+                      <img src={flag} width={44} height={30} alt="" style={{ width: 44, height: 30, marginRight: 10, border: `2px solid ${PAPER}` }} />
                     )}
                     {country.label}
                   </div>
                 )}
                 {m.birthday && (
                   <div style={{ display: "flex", alignItems: "baseline" }}>
-                    <div style={{ display: "flex", fontSize: 18, letterSpacing: 2, color: "rgba(244,239,228,0.6)", marginRight: 10 }}>ANNIVERSAIRE</div>
+                    <div style={{ display: "flex", fontSize: 23, letterSpacing: 2, color: "rgba(244,239,228,0.6)", marginRight: 10 }}>ANNIVERSAIRE</div>
                     {m.birthday}
                   </div>
                 )}
@@ -408,14 +409,14 @@ export async function renderMemberCard(m: Member, origin: string): Promise<Image
             {awards.length > 0 && (
               <div style={{ display: "flex", flexWrap: "wrap", marginTop: 16 }}>
                 {awards.slice(0, 3).map((a, i) => (
-                  <div key={i} style={{ ...ONE_LINE, marginRight: 10, marginBottom: 10, padding: "5px 12px", background: i === 0 ? GOLD : "transparent", color: i === 0 ? INK : GOLD, border: `3px solid ${GOLD}`, fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 23, textTransform: "uppercase", maxWidth: LEFT_W }}>
-                    {cut(awardText(a), 34)}
+                  <div key={i} style={{ ...ONE_LINE, marginRight: 10, marginBottom: 10, padding: "6px 14px", background: i === 0 ? GOLD : "transparent", color: i === 0 ? INK : GOLD, border: `3px solid ${GOLD}`, fontFamily: "Barlow Condensed", fontWeight: 900, fontSize: 30, textTransform: "uppercase", maxWidth: LEFT_W }}>
+                    {cut(awardText(a), 30)}
                   </div>
                 ))}
               </div>
             )}
             {bio && (
-              <div style={{ display: "flex", marginTop: awards.length ? 8 : 20, paddingLeft: 18, borderLeft: `6px solid ${color}`, fontSize: hasRight ? 25 : 28, lineHeight: 1.42, color: "rgba(244,239,228,0.92)" }}>
+              <div style={{ display: "flex", marginTop: awards.length ? 8 : 20, paddingLeft: 18, borderLeft: `6px solid ${color}`, fontSize: BIO_SIZE, lineHeight: 1.38, color: "rgba(244,239,228,0.92)" }}>
                 {bio}
               </div>
             )}
@@ -439,11 +440,11 @@ export async function renderMemberCard(m: Member, origin: string): Promise<Image
                 <div style={{ display: "flex", alignItems: "center", marginTop: favs.length ? 4 : 0 }}>
                   {trackCover && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={trackCover} width={favs.length ? 60 : 110} height={favs.length ? 60 : 110} alt="" style={{ width: favs.length ? 60 : 110, height: favs.length ? 60 : 110, objectFit: "cover", border: `3px solid ${PAPER}`, marginRight: 14 }} />
+                    <img src={trackCover} width={favs.length ? 70 : 120} height={favs.length ? 70 : 120} alt="" style={{ width: favs.length ? 70 : 120, height: favs.length ? 70 : 120, objectFit: "cover", border: `3px solid ${PAPER}`, marginRight: 14 }} />
                   )}
                   <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
                     {kicker(`ONGAKU · ${PROVIDER_LABEL[track.provider].toUpperCase()}`)}
-                    <div style={{ ...ONE_LINE, fontFamily: "Barlow Condensed", fontWeight: 700, fontSize: 27, maxWidth: RIGHT_W - (trackCover ? 80 : 0) }}>{trackLine}</div>
+                    <div style={{ ...ONE_LINE, fontFamily: "Barlow Condensed", fontWeight: 700, fontSize: 33, maxWidth: RIGHT_W - (trackCover ? 86 : 0) }}>{trackLine}</div>
                   </div>
                 </div>
               )}
