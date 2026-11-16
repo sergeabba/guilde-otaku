@@ -23,6 +23,7 @@ import MemberMusic from "../../components/MemberMusic";
 import TrailerEmbed from "../../components/works/TrailerEmbed";
 import { trailerLangLabel } from "../../../lib/works/favorite";
 import TrailerReel, { useWorkTrailer } from "../../components/works/TrailerReel";
+import MemberBadges from "../../components/MemberBadges";
 import { FORMAT_LABEL } from "../../../lib/works/types";
 import "./profile.css";
 
@@ -250,6 +251,8 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
         <nav className="pf-tabs" aria-label="Sommaire de la fiche">
           {sections.map((t) => <a key={t.id} href={`#${t.id}`}><b>{t.n}</b>{t.label}</a>)}
         </nav>
+
+        <MemberBadges id={member.id} />
 
         {awards.length > 0 && (
           <section id="pf-palmares" className="pf-section" aria-labelledby="pf-palmares-title" data-gk-motion="">

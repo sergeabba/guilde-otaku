@@ -10,7 +10,8 @@ export type PageId =
   | "bons-plans"
   | "atelier"
   | "calendrier"
-  | "cinema";
+  | "cinema"
+  | "jeux";
 
 export interface NavEntry {
   id: PageId;
@@ -32,6 +33,7 @@ export const NAV: NavEntry[] = [
   { id: "bons-plans",   label: "Bons Plans",    href: "/bons-plans",   jp: "Otoku",   blurb: "Les adresses que la Guilde se refile." },
   { id: "atelier",      label: "Futilités",     href: "/atelier",      jp: "Kōbō",   blurb: "Les futilités de la Guilde : la galerie des créations." },
   { id: "calendrier",   label: "Calendrier",    href: "/calendrier",   jp: "Hōsō",   blurb: "Les épisodes de la semaine, et qui les suit." },
+  { id: "jeux",         label: "Jeux",          href: "/jeux",         jp: "Asobi",   blurb: "Quiz des génériques, duels de goûts et badges." },
   { id: "cinema",       label: "Cinéma",        href: "/cinema",       jp: "Gekijō", blurb: "Bandes-annonces et où regarder en France." },
 ];
 

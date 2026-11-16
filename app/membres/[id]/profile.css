@@ -187,3 +187,10 @@ html:has(.pf-page) { scroll-padding-top: calc(var(--pf-head, 0px) + 72px); }
 .pf-reel-btn:focus-visible .pf-reel-screen { outline: 3px solid var(--gk-accent); outline-offset: 3px; }
 /* Téléphone : l'image de fond (64 px agrandie) est déjà floue ; pas de filtre sur un grand calque. */
 @media (hover: none), (max-width: 899px) { .pf-backdrop-img { filter: saturate(1.3); inset: 0; transform: none; } }
+
+/* Badges automatiques (page Jeux) */
+.pf-badges { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 14px 0 0; }
+.pf-badges-title { display: inline-flex; align-items: center; gap: 5px; margin-right: 4px; font: 800 .76rem var(--gk-font-ui); letter-spacing: .12em; text-transform: uppercase; color: var(--gk-dim); text-decoration: none; }
+.pf-badges-title:hover { color: var(--gk-accent); }
+.pf-badge { padding: 3px 9px; font: 900 .74rem var(--gk-font-ui); letter-spacing: .06em; text-transform: uppercase; color: #0d0c10; border: 2px solid #0d0c10; }
+.pf-badge.is-bronze { background: #d08b4f; } .pf-badge.is-argent { background: #c9cdd6; } .pf-badge.is-or { background: #f5c542; }

@@ -6,7 +6,7 @@ import { DOSSIER_BASH_DATA, dossierBashSeason, sortDossierBash } from "../dossie
 import { getPublicMembers } from "../members-server";
 import { GOLD, INK, OG_SIZE, PAPER, loadDisplayFont, loadFonts, portraitData } from "./member-art";
 
-export const PAGE_IDS = ["accueil", "bibliotheque", "atelier", "calendrier", "cinema", "fighters", "anniversaires", "wanted", "bons-plans"] as const;
+export const PAGE_IDS = ["accueil", "bibliotheque", "atelier", "calendrier", "cinema", "fighters", "anniversaires", "wanted", "bons-plans", "jeux"] as const;
 export type PageId = (typeof PAGE_IDS)[number];
 
 interface Art {
@@ -66,6 +66,8 @@ async function artFor(page: PageId): Promise<Art> {
       const ms = (await getPublicMembers().catch(() => [])).filter((m) => m.animeChar || m.photo).slice(0, 3);
       return { ...BASE, kicker: "TEHAISHO · AVIS DE RECHERCHE", title: "Wanted", sub: "Les avis de recherche et les primes des membres de la Guilde.", accent: "#c8241d", images: ms.map((m) => m.animeChar || m.photo) };
     }
+    case "jeux":
+      return { ...BASE, kicker: "ASOBI · LA SALLE DE JEUX", title: "Jeux de la Guilde", sub: "Quiz des génériques, duels de goûts entre membres et badges à débloquer.", accent: "#e8412c", images: ["/atelier/duel-food.png"] };
     case "bons-plans":
       return { ...BASE, kicker: "OTOKU · LES BONNES ADRESSES", title: "Bons plans", sub: "Les liens que la Guilde se refile : animes, scans, films et outils.", images: ["/logo.png"] };
   }
