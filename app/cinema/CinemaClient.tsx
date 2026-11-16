@@ -10,6 +10,7 @@ import GuildeHeader from "../components/GuildeHeader";
 import WordReveal from "../components/WordReveal";
 import type { CinemaDetail, CinemaItem, Provider } from "../../lib/cinema";
 import type { GuildCollection, GuildVideo } from "../../lib/drive";
+import { FREE_SHOWS, ytChannelUrl, ytPlaylistEmbed, ytThumb, type FreeShow } from "../../lib/free-channels";
 import "./cinema.css";
 
 type Rows = { series: CinemaItem[]; free: CinemaItem[]; films: CinemaItem[] };
@@ -19,6 +20,7 @@ type Guild = { collections: GuildCollection[]; error?: string; embedFolder?: str
 export default function CinemaClient({ rows, hero: picked = null, guild = null }: { rows: Rows | null; hero?: CinemaItem | null; guild?: Guild | null }) {
   const [open, setOpen] = useState<CinemaItem | null>(null);
   const [screening, setScreening] = useState<GuildVideo | null>(null);
+  const [freeShow, setFreeShow] = useState<FreeShow | null>(null);
   const hero = picked ?? rows?.series.find((i) => i.backdrop && i.overview) ?? rows?.series[0] ?? null;
   // ?titre=tv-123 : ouvert depuis la recherche globale, la séance démarre.
   useEffect(() => {
@@ -77,6 +79,7 @@ export default function CinemaClient({ rows, hero: picked = null, guild = null }
       )}
       <main className="cin-main">
         {guild && <GuildVideos guild={guild} onPlay={setScreening} />}
+        <FreeShows onOpen={setFreeShow} />
         {rows && <>
         <div className="gk-wrap cin-intro">
           <h2 className="gk-display cin-h2"><WordReveal>Ce soir, <em>on regarde quoi ?</em></WordReveal></h2>
@@ -89,6 +92,7 @@ export default function CinemaClient({ rows, hero: picked = null, guild = null }
         </>}
       </main>
       {open && <Theater item={open} onClose={() => setOpen(null)} />}
+      {freeShow && <FreeTheater show={freeShow} onClose={() => setFreeShow(null)} />}
       {screening && <GuildTheater video={screening} playlist={guildVideos} onPick={setScreening} onClose={() => setScreening(null)} />}
     </div>
   );
@@ -334,6 +338,91 @@ function GuildTheater({ video, playlist, onPick, onClose }: { video: GuildVideo;
                   </li>
                 ))}
               </ol>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Séries gratuites et légales : épisodes complets sur les chaînes YouTube officielles. */
+function FreeShows({ onOpen }: { onOpen: (s: FreeShow) => void }) {
+  return (
+    <section className="cin-free" aria-labelledby="cin-free-title">
+      <div className="gk-wrap cin-intro">
+        <span className="gk-chapter"><b>▶</b><span>MURYŌ · GRATUIT ET LÉGAL</span></span>
+        <h2 id="cin-free-title" className="gk-display cin-h2"><WordReveal>Des saisons entières, <em>offertes.</em></WordReveal></h2>
+        <p>Les chaînes YouTube officielles publient des épisodes complets en français. Choisis une série : la saison se lance ici, épisode après épisode.</p>
+      </div>
+      <ul className="gk-wrap cin-free-grid">
+        {FREE_SHOWS.map((s, k) => (
+          <li key={s.key} style={{ "--tk": s.color, "--i": k } as React.CSSProperties}>
+            <button type="button" className="cin-free-card" onClick={() => onOpen(s)} aria-label={`${s.title} : regarder gratuitement (${s.seasons.length} ${s.seasons.length > 1 ? "saisons" : "playlist"})`}>
+              <span className="cin-free-shot">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={ytThumb(s.seasons[0].first)} alt="" loading="lazy" />
+                <span className="cin-free-kind">{s.kind}</span>
+                <span className="cin-ticket-play" aria-hidden="true"><Play size={24} fill="currentColor" /></span>
+              </span>
+              <span className="cin-free-body">
+                <span className="cin-free-title">{s.title}</span>
+                <span className="cin-free-pitch">{s.pitch}</span>
+                <span className="cin-free-meta">{s.seasons.map((x) => x.label).join(" · ")}</span>
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+      <p className="gk-wrap cin-credit">Vidéos des chaînes officielles des ayants droit, lues avec le lecteur YouTube. Leur disponibilité peut varier selon le pays : le lecteur l&apos;indique, et la chaîne reste accessible.</p>
+    </section>
+  );
+}
+
+/** Salle d'une série gratuite : playlist officielle en lecture continue, choix de la saison. */
+function FreeTheater({ show, onClose }: { show: FreeShow; onClose: () => void }) {
+  const [season, setSeason] = useState(0);
+  const ref = useRef<HTMLDivElement>(null);
+  const screenRef = useRef<HTMLDivElement>(null);
+  const close = useCallback(() => onClose(), [onClose]);
+  const [canFull] = useState(() => typeof document !== "undefined" && !!document.fullscreenEnabled);
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    ref.current?.focus({ preventScroll: true });
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
+    window.addEventListener("keydown", onKey);
+    return () => { document.body.style.overflow = prev; window.removeEventListener("keydown", onKey); };
+  }, [close]);
+  const s = show.seasons[season];
+  return (
+    <div className="cin-theater" onClick={(e) => { if (e.target === e.currentTarget) close(); }}>
+      <div ref={ref} tabIndex={-1} className="cin-room" role="dialog" aria-modal="true" aria-labelledby="cin-free-room-title">
+        <div className="cin-room-top">
+          <span className="cin-room-top-title">{show.title} · {s.label}</span>
+          {canFull && <button type="button" className="cin-top-btn" onClick={() => screenRef.current?.requestFullscreen().catch(() => {})} aria-label="Plein écran"><Maximize size={18} aria-hidden="true" /><span>Plein écran</span></button>}
+          <button type="button" className="cin-top-btn" onClick={close} aria-label="Quitter la salle"><X size={20} aria-hidden="true" /></button>
+        </div>
+        <div className="cin-screen" key={s.list} ref={screenRef}>
+          <iframe src={ytPlaylistEmbed(s.list)} title={`${show.title} · ${s.label}`} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen />
+        </div>
+        <div className="cin-room-info is-single">
+          <div className="cin-room-now">
+            <div>
+              <p className="cin-room-meta">{show.kind} · gratuit · chaîne officielle{show.verified ? " vérifiée" : ""}</p>
+              <h2 id="cin-free-room-title" className="gk-display">{show.title}</h2>
+              <p className="cin-room-syn">{show.pitch} Les épisodes s&apos;enchaînent ; la liste complète est dans le lecteur.</p>
+            </div>
+            <a className="cin-step" href={ytChannelUrl(show.channelId)} target="_blank" rel="noopener noreferrer"><ExternalLink size={18} aria-hidden="true" /> {show.channel}</a>
+          </div>
+          {show.seasons.length > 1 && (
+            <div className="cin-program">
+              <p className="cin-where-title">Choisir</p>
+              <div className="cin-seasons" role="group" aria-label="Saison">
+                {show.seasons.map((x, k) => (
+                  <button key={x.list} type="button" className="cin-season" aria-pressed={k === season} onClick={() => setSeason(k)} style={{ "--tk": show.color } as React.CSSProperties}>{x.label}</button>
+                ))}
+              </div>
             </div>
           )}
         </div>

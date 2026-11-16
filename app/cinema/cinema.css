@@ -186,3 +186,23 @@
   .cin-room:has(.cin-room-top) .cin-room-top { position: absolute; top: 0; left: 0; right: 0; z-index: 4; padding: 6px 10px; background: linear-gradient(#000c, transparent); margin: 0; }
   .cin-room:has(.cin-room-top) .cin-screen { height: 100dvh; aspect-ratio: auto; border: 0; box-shadow: none; }
 }
+
+/* ═══ GRATUIT ET LÉGAL (chaînes YouTube officielles) ═══════════════════════ */
+.cin-free { padding-top: clamp(24px, 4vw, 44px); border-bottom: 2px solid rgba(246,240,228,.08); padding-bottom: clamp(20px, 4vw, 40px); }
+.cin-free-grid { list-style: none; margin-top: 16px; display: grid; gap: clamp(16px, 2.2vw, 26px); grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); }
+.cin-free-grid > li { animation: cin-ticket-in 600ms calc(var(--i, 0) * 60ms) cubic-bezier(.2,.9,.25,1.1) backwards; }
+.cin-free-card { display: grid; width: 100%; height: 100%; padding: 0; text-align: left; cursor: pointer; color: #f6f0e6; background: #15131a; border: 3px solid #f6f0e6; box-shadow: 6px 6px 0 var(--tk); transition: transform 240ms cubic-bezier(.2,.9,.25,1.2), box-shadow 240ms; }
+.cin-free-shot { position: relative; display: block; aspect-ratio: 16 / 9; overflow: hidden; background: color-mix(in oklab, var(--tk) 35%, #120f14); border-bottom: 3px solid #f6f0e6; }
+.cin-free-shot img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 600ms cubic-bezier(.2,.8,.2,1); }
+.cin-free-kind { position: absolute; left: 10px; top: 10px; padding: 3px 9px; font: 900 .74rem var(--gk-font-ui); letter-spacing: .1em; text-transform: uppercase; background: var(--tk); color: #0d0c10; border: 2px solid #0d0c10; }
+.cin-free-body { display: grid; gap: 6px; padding: 12px 14px 14px; align-content: start; }
+.cin-free-title { font: 900 italic clamp(1.25rem, 2vw, 1.5rem)/1 var(--gk-font-ui); text-transform: uppercase; }
+.cin-free-pitch { color: #cfc7ba; font-size: .94rem; line-height: 1.45; }
+.cin-free-meta { font: 800 .74rem var(--gk-font-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--tk); }
+@media (hover: hover) { .cin-free-card:hover { transform: translate(-4px, -4px); box-shadow: 10px 10px 0 var(--tk); } .cin-free-card:hover .cin-free-shot img { transform: scale(1.06); } .cin-free-card:hover .cin-ticket-play { transform: scale(1.15); background: var(--tk); } }
+.cin-free-card:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+.cin-seasons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.cin-season { min-height: 44px; padding: 0 16px; cursor: pointer; font: 900 .9rem var(--gk-font-ui); text-transform: uppercase; color: #f6f0e6; background: transparent; border: 2px solid rgba(246,240,228,.45); }
+.cin-season[aria-pressed="true"] { background: var(--tk); color: #0d0c10; border-color: #0d0c10; box-shadow: 4px 4px 0 #f6f0e6; }
+a.cin-step { text-decoration: none; }
+@media (prefers-reduced-motion: reduce) { .cin-free-grid > li { animation: none; } .cin-free-card { transition: none; } }
