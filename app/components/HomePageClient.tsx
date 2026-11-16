@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback, useSyncExternalStore } from "react";
 import { createPortal, flushSync } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
@@ -32,6 +32,24 @@ export interface FeaturedFilm {
 }
 
 const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"];
+
+// Créneau de 5 minutes (même valeur pour tous les visiteurs au même moment).
+const COVER_MS = 5 * 60 * 1000;
+const readCoverSlot = () => Math.floor(Date.now() / COVER_MS);
+function subscribeCoverSlot(cb: () => void) {
+  let t: ReturnType<typeof setTimeout>;
+  const arm = () => { t = setTimeout(() => { cb(); arm(); }, COVER_MS - (Date.now() % COVER_MS) + 50); };
+  arm();
+  return () => clearTimeout(t);
+}
+/** Trois membres tirés de façon reproductible pour un créneau (mélange à graine). */
+function pickTrio<T>(list: T[], slot: number): T[] {
+  let seed = (slot * 2654435761) >>> 0;
+  const rnd = () => ((seed = (Math.imul(seed, 1103515245) + 12345) >>> 0) / 4294967296);
+  const idx = list.map((_, i) => i);
+  for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+  return idx.slice(0, 3).map((i) => list[i]);
+}
 
 export default function HomePageClient({ initialMembers, featuredFilm, atelierTiles = [], song = null, songIsToday = true }: {
   initialMembers: Member[];
@@ -139,13 +157,16 @@ export default function HomePageClient({ initialMembers, featuredFilm, atelierTi
     );
   }, [activeRank, searchTerm, activeCountry, initialMembers]);
 
-  // Couverture : les trois premiers du registre, dans l'ordre de la hiérarchie
+  // Couverture : trois membres qui changent toutes les 5 minutes (le même trio pour
+  // tout le monde au même moment). Avant le montage : les trois premiers du registre.
+  const coverSlot = useSyncExternalStore(subscribeCoverSlot, readCoverSlot, () => null);
   const coverMembers = useMemo(() => {
-    const ordered = [...initialMembers].sort(
-      (a, b) => RANK_FILTER_ORDER.indexOf(a.rank) - RANK_FILTER_ORDER.indexOf(b.rank)
-    );
-    return ordered.filter((m) => m.animeChar || m.photo).slice(0, 3);
-  }, [initialMembers]);
+    const ordered = [...initialMembers]
+      .sort((a, b) => RANK_FILTER_ORDER.indexOf(a.rank) - RANK_FILTER_ORDER.indexOf(b.rank))
+      .filter((m) => m.animeChar || m.photo);
+    if (coverSlot === null || ordered.length <= 3) return ordered.slice(0, 3);
+    return pickTrio(ordered, coverSlot);
+  }, [initialMembers, coverSlot]);
 
   // À la une : anniversaire du jour, sinon le prochain. Calculé côté client
   // (fuseau du visiteur), donc seulement après montage.
@@ -211,9 +232,9 @@ export default function HomePageClient({ initialMembers, featuredFilm, atelierTi
                 <span className="gk-vertical hm-board-jp" aria-hidden="true">Densetsu no nakama</span>
                 {coverMembers.map((m, i) => (
                   <button
-                    key={m.id}
+                    key={`${coverSlot ?? "x"}-${m.id}`}
                     type="button"
-                    className="hm-case"
+                    className="hm-case hm-case-swap"
                     onClick={(e) => openMember(m, e.currentTarget)}
                     aria-label={`Ouvrir la fiche de ${m.name}, ${m.rank}`}
                     style={{ padding: 0, cursor: "pointer" }}

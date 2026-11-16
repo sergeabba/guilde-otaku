@@ -303,3 +303,11 @@ body.modal-open .hm-float { display: none; }
   .hm-title > span { animation-name: hm-title-in-lite; }
   .sotd-cover img, .sotd-title { animation-name: sotd-in-lite; }
 }
+
+/* Couverture : le trio change toutes les 5 minutes, chaque case entre en glissant. */
+@keyframes hm-case-swap { from { opacity: 0; transform: translateY(14px) rotate(-1.5deg); } }
+@media (prefers-reduced-motion: no-preference) {
+  .hm-case-swap { animation: hm-case-swap 560ms cubic-bezier(.2,.9,.25,1.1) both; }
+  .hm-case-swap:nth-of-type(2) { animation-delay: 90ms; }
+  .hm-case-swap:nth-of-type(3) { animation-delay: 180ms; }
+}
