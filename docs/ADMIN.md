@@ -78,3 +78,13 @@ Lecture seule : rien n'est modifié ni effacé, le rapport dit quoi corriger dan
 - Logique commune : `lib/services/member-quality.ts` (tests : `tests/member-quality.test.ts`).
 
 Contrôles : nom, portraits réel et anime, anniversaire lisible, caractères japonais (nom, présentation, distinction, grade), doublons de nom ou de photo, profil enrichi illisible, favoris/musiques/distinctions écartés ou en double, favoris sans jaquette ni titre, fiches masquées.
+
+## Actualités (V4.2 § 6 : flux de médias + relecture avant publication)
+
+1. **Migration** (une fois) : `scripts/migrations/2026-11-16_news.sql` dans Supabase → SQL Editor. Crée `news_items` et `news_runs`, RLS fermé à la clé publique.
+2. **Récupération** : chaque matin (tâche planifiée Vercel, `vercel.json` → `crons`, route `/api/cron/news`) ou bouton « Récupérer maintenant » dans Admin → Actualités. Les nouveaux articles arrivent **en attente**. Un lien déjà connu n'est jamais ajouté deux fois.
+3. **Relecture** : corriger le titre ou l'extrait si besoin, puis Publier ou Écarter. Seuls les articles publiés apparaissent dans la Bibliothèque, avec le nom du média et le lien vers l'article.
+4. **Tâche planifiée** : définir `CRON_SECRET` dans Vercel (Settings → Environment Variables, valeur aléatoire d'au moins 16 caractères) ; sans elle la route refuse l'appel et seul le bouton de l'admin fonctionne.
+5. **Aperçu sans écrire** : `npm run news:sync` (lecture seule).
+
+Médias suivis (`lib/news.ts`, `NEWS_FEEDS`) : Adala News, Journal du Japon. On ne reprend que ce que le flux publie (titre, date, court extrait), jamais l'article entier.

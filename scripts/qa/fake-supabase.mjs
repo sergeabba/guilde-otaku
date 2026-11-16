@@ -23,6 +23,41 @@ createServer((req, res) => {
     if ((req.headers.accept ?? "").includes("vnd.pgrst.object")) return res.end(list[0] ? JSON.stringify(list[0]) : "null");
     return res.end(JSON.stringify(list));
   }
+  // Actualités : tables gardées en mémoire (recette uniquement, rien n'est écrit sur disque).
+  const memTable = /^\/rest\/v1\/(news_items|news_runs)$/.exec(u.pathname)?.[1];
+  if (memTable) {
+    globalThis.__mem ??= { news_items: [], news_runs: [], seq: 0 };
+    const M = globalThis.__mem;
+    const eqs = [...u.searchParams].filter(([k, v]) => v.startsWith("eq.") && k !== "select").map(([k, v]) => [k, v.slice(3)]);
+    const match = (r) => eqs.every(([k, v]) => String(r[k]) === v);
+    const list = () => {
+      let rows = M[memTable].filter(match);
+      const order = u.searchParams.get("order");
+      if (order) { const [col, dir] = order.split("."); rows = [...rows].sort((a, b) => String(a[col] ?? "").localeCompare(String(b[col] ?? "")) * (dir === "desc" ? -1 : 1)); }
+      return rows.slice(0, Number(u.searchParams.get("limit") ?? 1000));
+    };
+    if (req.method === "HEAD") { const n = M[memTable].filter(match).length; res.setHeader("Content-Range", `0-${Math.max(n - 1, 0)}/${n}`); return res.end(); }
+    if (req.method === "GET") return res.end(JSON.stringify(list()));
+    let body = ""; req.on("data", (d) => (body += d)); req.on("end", () => {
+      const data = JSON.parse(body || "null");
+      if (req.method === "POST") {
+        const added = [];
+        for (const row of [].concat(data)) {
+          if (memTable === "news_items" && M.news_items.some((x) => x.source_url === row.source_url)) continue;
+          const full = memTable === "news_items" ? { status: "pending", edited_title: null, edited_excerpt: null, reviewed_at: null, created_at: new Date().toISOString(), ...row, id: ++M.seq } : { ...row, id: ++M.seq };
+          M[memTable].push(full); added.push(full);
+        }
+        res.statusCode = 201; return res.end(JSON.stringify(added));
+      }
+      if (req.method === "PATCH") {
+        const hit = M[memTable].filter(match); hit.forEach((r) => Object.assign(r, data));
+        const one = (req.headers.accept ?? "").includes("vnd.pgrst.object");
+        return res.end(JSON.stringify(one ? hit[0] ?? null : hit));
+      }
+      res.statusCode = 405; res.end("{}");
+    });
+    return;
+  }
   const other = /^\/rest\/v1\/([a-z_]+)$/.exec(u.pathname);
   // Comptage (select … { count: "exact", head: true }) : en-tête Content-Range seul.
   if (other && req.method === "HEAD") {

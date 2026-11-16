@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { WeeklyRatingsLoader } from "../components/WeeklyRatings";
 import TrendingShelf from "../components/TrendingShelf";
+import NewsFeed from "../components/NewsFeed";
 import BashPoll from "../components/BashPoll";
 import { ArrowRight, Calendar, ChevronLeft, ChevronRight, Eye, EyeOff, Heart, Play, Search, Share2, X } from "lucide-react";
 import GuildeHeader from "../components/GuildeHeader";
@@ -434,6 +435,9 @@ export default function BibliothequePage() {
 
         {/* ── TENDANCES (AniList : saison, à venir, mangas) ──────────── */}
         <TrendingShelf />
+
+        {/* ── ACTUALITÉS (articles relus et publiés dans l'admin) ─────── */}
+        <NewsFeed />
 
         <hr className="gk-rule" />
 
