@@ -90,21 +90,84 @@ export function toVideo(f: RawFile, collection: string): GuildVideo {
   };
 }
 
-/** Collections (sous-dossiers) et vidéos, les plus récentes d'abord. Mis en cache 10 min. */
+// ── Sans clé d'API : lecture de la vue publique du dossier partagé ─────────────
+// Drive publie pour tout dossier partagé « avec le lien » une page de liste simple
+// (embeddedfolderview) : identifiants, noms et type de chaque élément. On la lit
+// côté serveur pour afficher les vidéos dans le style du site et les lire sur place.
+
+export interface PublicEntry { id: string; name: string; kind: "folder" | "video" | "other" }
+
+const decodeHtml = (s: string) => s.replace(/&(#x[0-9a-f]+|#\d+|amp|lt|gt|quot|apos|#39);/gi, (m, e: string) => {
+  if (e[0] === "#") { const n = e[1].toLowerCase() === "x" ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10); return Number.isFinite(n) ? String.fromCodePoint(n) : m; }
+  return ({ amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" } as Record<string, string>)[e.toLowerCase()] ?? m;
+});
+
+/** Éléments de la vue publique d'un dossier Drive (HTML de embeddedfolderview). */
+export function parseEmbeddedFolder(html: string): PublicEntry[] {
+  const out: PublicEntry[] = [];
+  for (const block of html.split('<div class="flip-entry" ').slice(1)) {
+    const id = /^id="entry-([\w-]{10,100})"/.exec(block)?.[1];
+    const name = decodeHtml(/<div class="flip-entry-title">([^<]*)<\/div>/.exec(block)?.[1] ?? "").trim();
+    if (!id || !name) continue;
+    const href = /<a href="([^"]+)"/.exec(block)?.[1] ?? "";
+    const kind = /\/folders\//.test(href) || /vnd\.google-apps\.folder/.test(block) ? "folder"
+      : /\/type\/video\//.test(block) || /\.(mp4|mov|m4v|webm|mkv|avi)$/i.test(name) ? "video" : "other";
+    out.push({ id, name, kind });
+  }
+  return out;
+}
+
+async function listPublic(folder: string): Promise<PublicEntry[]> {
+  const res = await fetch(`https://drive.google.com/embeddedfolderview?id=${encodeURIComponent(folder)}`, {
+    headers: { "User-Agent": "Mozilla/5.0 (compatible; GuildeOtaku/1.0)", Accept: "text/html" },
+    signal: AbortSignal.timeout(10000),
+  });
+  if (res.status === 404) throw new Error("Dossier Google Drive introuvable : vérifie le lien dans GOOGLE_DRIVE_FOLDER_ID.");
+  if (!res.ok) throw new Error(`Google Drive indisponible (${res.status}).`);
+  const html = await res.text();
+  if (!html.includes("flip-entries")) throw new Error("Dossier Google Drive illisible : vérifie qu'il est partagé avec « tous les utilisateurs disposant du lien ».");
+  return parseEmbeddedFolder(html);
+}
+
+/** Vignette d'une vidéo partagée (adresse stable, largeur au choix). */
+export const publicThumb = (id: string, w = 1280) => `https://lh3.googleusercontent.com/d/${encodeURIComponent(id)}=w${w}`;
+
+const publicVideo = (e: PublicEntry, collection: string): GuildVideo => ({
+  id: e.id, title: cleanTitle(e.name), description: null, thumb: publicThumb(e.id), durationMs: null, createdAt: null, collection,
+});
+
+const ROOT_COLLECTION = "Les vidéos de la Guilde";
+
+/**
+ * Collections (sous-dossiers) et vidéos. Avec GOOGLE_DRIVE_API_KEY : API officielle
+ * (durées, descriptions, dates). Sans clé : vue publique du dossier partagé.
+ * Mis en cache 10 min (bouton « Rafraîchir » dans l'admin).
+ */
 export const getGuildVideos = unstable_cache(async (): Promise<GuildCollection[]> => {
+  const folder = driveFolder();
+  if (!folder) return [];
   const cfg = driveConfig();
-  if (!cfg) return [];
-  const root = await list(cfg.folder, cfg.key);
-  const isVideo = (f: RawFile) => f.mimeType.startsWith("video/");
   const collections: GuildCollection[] = [];
-  const loose = root.filter(isVideo).map((f) => toVideo(f, "Les vidéos de la Guilde"));
-  if (loose.length) collections.push({ name: "Les vidéos de la Guilde", videos: loose });
-  for (const folder of root.filter((f) => f.mimeType === FOLDER).sort((a, b) => a.name.localeCompare(b.name, "fr"))) {
-    const videos = (await list(folder.id, cfg.key)).filter(isVideo).map((f) => toVideo(f, folder.name.trim()));
-    if (videos.length) collections.push({ name: folder.name.trim(), videos });
+  if (cfg) {
+    const root = await list(cfg.folder, cfg.key);
+    const isVideo = (f: RawFile) => f.mimeType.startsWith("video/");
+    const loose = root.filter(isVideo).map((f) => toVideo(f, ROOT_COLLECTION));
+    if (loose.length) collections.push({ name: ROOT_COLLECTION, videos: loose });
+    for (const sub of root.filter((f) => f.mimeType === FOLDER).sort((a, b) => a.name.localeCompare(b.name, "fr"))) {
+      const videos = (await list(sub.id, cfg.key)).filter(isVideo).map((f) => toVideo(f, sub.name.trim()));
+      if (videos.length) collections.push({ name: sub.name.trim(), videos });
+    }
+    return collections;
+  }
+  const root = await listPublic(folder);
+  const loose = root.filter((e) => e.kind === "video").map((e) => publicVideo(e, ROOT_COLLECTION));
+  if (loose.length) collections.push({ name: ROOT_COLLECTION, videos: loose });
+  for (const sub of root.filter((e) => e.kind === "folder").slice(0, 20).sort((a, b) => a.name.localeCompare(b.name, "fr"))) {
+    const videos = (await listPublic(sub.id).catch(() => [])).filter((e) => e.kind === "video").map((e) => publicVideo(e, sub.name));
+    if (videos.length) collections.push({ name: sub.name, videos });
   }
   return collections;
-}, ["guild-drive-v1"], { revalidate: 600, tags: [DRIVE_TAG] });
+}, ["guild-drive-v2"], { revalidate: 600, tags: [DRIVE_TAG] });
 
 /** Lecteur intégré de Google Drive pour une vidéo partagée. */
 export const drivePlayer = (id: string) => `https://drive.google.com/file/d/${encodeURIComponent(id)}/preview`;

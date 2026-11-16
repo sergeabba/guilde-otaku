@@ -90,3 +90,73 @@
 .cin-hero.is-guild { --cin-guild: 1; }
 .cin-folder { display: grid; gap: 14px; justify-items: start; margin-block: 8px 28px; }
 .cin-folder iframe { width: 100%; height: clamp(360px, 60vh, 620px); border: 3px solid #f3eee2; background: #fff; box-shadow: 10px 10px 0 #e8412c; }
+
+/* ═══ LA SALLE DE LA GUILDE (vidéos Google Drive) ═════════════════════════
+   Affiche : fond flouté tiré de la vidéo, écran net à droite. Séances : tickets
+   de cinéma papier, une couleur chacun. Salle : lecteur + programme. */
+.cin-hero.is-guild::before { filter: blur(26px) saturate(1.5) brightness(.75); transform: scale(1.25); animation: none; }
+.cin-hero.is-guild::after { background: linear-gradient(0deg, #07060a 2%, rgba(7,6,10,.35) 50%, rgba(7,6,10,.55)), radial-gradient(60% 80% at 15% 70%, rgba(232,65,44,.28), transparent 70%), radial-gradient(50% 70% at 90% 20%, rgba(201,168,76,.22), transparent 70%); }
+.cin-gh { display: grid; gap: clamp(22px, 4vw, 48px); align-items: center; padding-block: clamp(84px, 11vw, 140px) clamp(36px, 6vw, 72px); }
+@media (min-width: 960px) { .cin-gh { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); } }
+.cin-gh-text .cin-hero-title { font-size: clamp(2.4rem, 6vw, 5.4rem); }
+.cin-gh-screen { position: relative; display: block; width: 100%; aspect-ratio: 16 / 9; padding: 0; overflow: hidden; cursor: pointer; background: #0d0c10; border: 4px solid #f6f0e6; box-shadow: 14px 14px 0 #e8412c, 0 30px 80px rgba(0,0,0,.6); transform: rotate(1.2deg); transition: transform 320ms cubic-bezier(.2,.9,.25,1.2), box-shadow 320ms; animation: cin-rise 800ms 160ms cubic-bezier(.16,1,.3,1) both; }
+.cin-gh-screen img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cin-gh-screen::after { content: ""; position: absolute; inset: 0; background: linear-gradient(0deg, rgba(0,0,0,.45), transparent 50%), repeating-linear-gradient(0deg, rgba(255,255,255,.035) 0 2px, transparent 2px 4px); pointer-events: none; }
+.cin-gh-play { position: absolute; left: 50%; top: 50%; z-index: 1; width: 92px; height: 92px; display: grid; place-items: center; transform: translate(-50%, -50%); border-radius: 50%; background: #e8412c; color: #fff; border: 4px solid #0d0c10; box-shadow: 6px 6px 0 #0d0c10; transition: transform 260ms cubic-bezier(.2,.9,.25,1.3); }
+.cin-gh-play svg { margin-left: 6px; }
+@media (hover: hover) { .cin-gh-screen:hover { transform: rotate(0deg) translate(-4px, -4px); box-shadow: 18px 18px 0 #e8412c, 0 30px 80px rgba(0,0,0,.6); } .cin-gh-screen:hover .cin-gh-play { transform: translate(-50%, -50%) scale(1.12); } }
+.cin-gh-screen:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+
+.cin-tickets-block { margin-top: clamp(18px, 3vw, 30px); }
+.cin-tickets { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: clamp(18px, 2.4vw, 30px); grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr)); }
+.cin-tickets > li { animation: cin-ticket-in 600ms calc(var(--i, 0) * 70ms) cubic-bezier(.2,.9,.25,1.1) backwards; }
+@keyframes cin-ticket-in { from { opacity: 0; transform: translateY(26px) rotate(-2deg); } }
+.cin-ticket { --notch: 13px; display: grid; width: 100%; padding: 0; text-align: left; cursor: pointer; color: #17120c; background: none; border: 0; filter: drop-shadow(7px 7px 0 var(--tk)); transition: transform 260ms cubic-bezier(.2,.9,.25,1.2), filter 260ms; }
+.cin-ticket-shot { position: relative; display: block; aspect-ratio: 16 / 9; overflow: hidden; background: color-mix(in oklab, var(--tk) 35%, #120f14); border: 3px solid #f6f0e6; border-bottom: 0; }
+.cin-ticket-shot img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 600ms cubic-bezier(.2,.8,.2,1); }
+.cin-ticket-shot::after { content: ""; position: absolute; inset: 0; background: linear-gradient(160deg, color-mix(in oklab, var(--tk) 30%, transparent), transparent 45%, rgba(0,0,0,.4)); pointer-events: none; }
+.cin-ticket-no { position: absolute; left: 10px; top: 10px; z-index: 1; padding: 3px 9px; font: 900 .8rem var(--gk-font-ui); letter-spacing: .12em; background: var(--tk); color: #0d0c10; border: 2px solid #0d0c10; transform: rotate(-3deg); }
+.cin-ticket-play { position: absolute; right: 12px; bottom: 12px; z-index: 1; width: 52px; height: 52px; display: grid; place-items: center; border-radius: 50%; background: #f6f0e6; color: #0d0c10; border: 3px solid #0d0c10; transition: transform 240ms cubic-bezier(.2,.9,.25,1.4), background 200ms; }
+.cin-ticket-play svg { margin-left: 3px; }
+.cin-ticket .cin-dur { left: auto; right: 74px; bottom: 22px; z-index: 1; }
+/* Talon du ticket : papier, perforation, encoches */
+.cin-ticket-stub { position: relative; display: grid; gap: 8px; padding: 14px 16px 14px; background: #f6f0e6; border: 3px solid #f6f0e6; border-top: 0;
+  -webkit-mask: radial-gradient(circle var(--notch) at 0 0, transparent 98%, #000) top left / 51% 100% no-repeat, radial-gradient(circle var(--notch) at 100% 0, transparent 98%, #000) top right / 51% 100% no-repeat;
+          mask: radial-gradient(circle var(--notch) at 0 0, transparent 98%, #000) top left / 51% 100% no-repeat, radial-gradient(circle var(--notch) at 100% 0, transparent 98%, #000) top right / 51% 100% no-repeat; }
+.cin-ticket-stub::before { content: ""; position: absolute; left: calc(var(--notch) + 4px); right: calc(var(--notch) + 4px); top: 0; border-top: 3px dashed rgba(23,18,12,.35); }
+.cin-ticket-title { font: 900 italic clamp(1.25rem, 2vw, 1.55rem)/1 var(--gk-font-ui); text-transform: uppercase; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.cin-ticket-meta { display: flex; justify-content: space-between; align-items: center; gap: 10px; font: 800 .74rem var(--gk-font-ui); letter-spacing: .1em; text-transform: uppercase; color: rgba(23,18,12,.6); }
+.cin-ticket-meta b { padding: 2px 8px; color: #f6f0e6; background: #17120c; letter-spacing: .14em; }
+@media (hover: hover) {
+  .cin-ticket:hover { transform: translate(-4px, -6px) rotate(-1deg); filter: drop-shadow(11px 11px 0 var(--tk)); }
+  .cin-ticket:hover .cin-ticket-shot img { transform: scale(1.06); }
+  .cin-ticket:hover .cin-ticket-play { transform: scale(1.15); background: var(--tk); }
+}
+.cin-ticket:focus-visible { outline: 3px solid #fff; outline-offset: 5px; }
+
+/* Salle : séance en cours, précédente / suivante, programme */
+.cin-room-now { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 14px 24px; }
+.cin-room-steps { display: flex; gap: 8px; }
+.cin-step { display: inline-flex; align-items: center; gap: 6px; min-height: 46px; padding: 0 16px; cursor: pointer; font: 900 .95rem var(--gk-font-ui); text-transform: uppercase; letter-spacing: .04em; background: #f6f0e6; color: #0d0c10; border: 3px solid #0d0c10; box-shadow: 4px 4px 0 #e8412c; transition: transform 160ms, box-shadow 160ms; }
+.cin-step:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 #e8412c; }
+.cin-step:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.cin-program { margin-top: 18px; }
+.cin-program-list { list-style: none; margin: 10px 0 0; padding: 4px 2px 12px; display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: thin; }
+.cin-program-list > li { flex: none; width: clamp(150px, 18vw, 200px); scroll-snap-align: start; }
+.cin-program-item { display: grid; gap: 6px; width: 100%; padding: 0; text-align: left; color: #e9e2d6; background: none; border: 0; cursor: pointer; }
+.cin-program-shot { position: relative; display: block; aspect-ratio: 16 / 9; overflow: hidden; background: color-mix(in oklab, var(--tk) 35%, #120f14); border: 2px solid rgba(246,240,228,.35); transition: border-color 160ms, transform 200ms; }
+.cin-program-shot img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: .75; }
+.cin-program-shot b { position: absolute; left: 6px; top: 6px; padding: 1px 6px; font: 900 .74rem var(--gk-font-ui); background: var(--tk); color: #0d0c10; }
+.cin-program-title { font: 800 .86rem/1.15 var(--gk-font-ui); text-transform: uppercase; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.cin-program-item[aria-current="true"] .cin-program-shot { border-color: var(--tk); box-shadow: 4px 4px 0 var(--tk); }
+.cin-program-item[aria-current="true"] .cin-program-shot img { opacity: 1; }
+.cin-program-item:hover .cin-program-shot { transform: translateY(-3px); }
+.cin-program-item:focus-visible .cin-program-shot { outline: 3px solid #fff; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .cin-tickets > li, .cin-gh-screen { animation: none; } .cin-ticket, .cin-gh-screen, .cin-ticket-play, .cin-gh-play { transition: none; } }
+.cin-room-now > div:first-child { flex: 1 1 260px; min-width: 0; }
+.cin-room-now h2 { font-size: clamp(1.6rem, 6vw, 3rem); }
+/* La salle ne s'élargit jamais au-delà de l'écran (programme défilant inclus). */
+.cin-theater { grid-template-columns: minmax(0, 1fr); }
+.cin-room { min-width: 0; justify-self: center; }
+.cin-room-info.is-single { grid-template-columns: minmax(0, 1fr); }
+.cin-program { min-width: 0; }

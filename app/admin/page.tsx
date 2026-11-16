@@ -18,7 +18,7 @@ const SECTIONS = [
   { href: "/admin-bons-plans", table: "bons_plans", label: "Bons plans", desc: "Liens utiles : ajouter, modifier, supprimer.", icon: Gift },
 ] as const;
 
-interface DriveStatus { configured: boolean; folderOnly?: boolean; folderUrl?: string; collections?: { name: string; count: number }[]; error?: string }
+interface DriveStatus { configured: boolean; folderOnly?: boolean; withKey?: boolean; folderUrl?: string; collections?: { name: string; count: number }[]; error?: string }
 
 /** Cinéma de la Guilde : les vidéos viennent d'un dossier Google Drive partagé. */
 function DrivePanel() {
@@ -56,7 +56,7 @@ function DrivePanel() {
           <>
             {st.error ? <p className="am-alert am-alert--error" role="alert">{st.error}</p>
               : <p>{total} vidéo{total > 1 ? "s" : ""}{st.collections?.length ? ` dans ${st.collections.length} collection${st.collections.length > 1 ? "s" : ""} : ${st.collections.map((c) => `${c.name} (${c.count})`).join(", ")}` : ""}.</p>}
-            <p className="am-intro" style={{ margin: 0 }}>Pour ajouter des vidéos : dépose-les dans le dossier Drive (un sous-dossier = une collection), puis rafraîchis. Le titre affiché est le nom du fichier ; la description Drive sert de résumé.</p>
+            <p className="am-intro" style={{ margin: 0 }}>Pour ajouter des vidéos : dépose-les dans le dossier Drive (un sous-dossier = une collection), puis rafraîchis. Le titre affiché est le nom du fichier : renomme-le dans Drive pour changer le titre sur le site.{st.withKey ? " La description Drive sert de résumé." : " Facultatif : GOOGLE_DRIVE_API_KEY dans Vercel ajoute durées, dates et descriptions."}</p>
             <div className="am-row">
               {st.folderUrl && <a className="am-btn am-btn--gold" href={st.folderUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={16} aria-hidden="true" /> Ouvrir le dossier Drive</a>}
               <button type="button" className="am-btn" onClick={refresh} disabled={busy}><RefreshCw size={16} className={busy ? "am-spin" : ""} aria-hidden="true" /> {busy ? "Rafraîchissement…" : "Rafraîchir la liste"}</button>

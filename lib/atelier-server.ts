@@ -63,8 +63,8 @@ export async function getAtelierTiles(max = 36): Promise<AtelierTile[]> {
 export async function getAtelierWork(key: string): Promise<AtelierTile | null> {
   if (!key || key.length > 300) return null;
   if (key.startsWith("drive:")) {
-    const { driveConfig, getGuildVideos } = await import("./drive");
-    if (!driveConfig()) return null;
+    const { driveFolder, getGuildVideos } = await import("./drive");
+    if (!driveFolder()) return null;
     const id = key.slice(6);
     const v = (await getGuildVideos().catch(() => [])).flatMap((c) => c.videos).find((x) => x.id === id);
     return v ? { src: v.thumb ?? "", title: v.title, accent: "#e8412c", filename: key, description: v.description ?? undefined } : null;

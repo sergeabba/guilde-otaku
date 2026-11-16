@@ -5,7 +5,7 @@
 // plateformes où regarder la série, données JustWatch via TMDB).
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { ExternalLink, Play, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, ExternalLink, Play, X } from "lucide-react";
 import GuildeHeader from "../components/GuildeHeader";
 import WordReveal from "../components/WordReveal";
 import type { CinemaDetail, CinemaItem, Provider } from "../../lib/cinema";
@@ -47,12 +47,21 @@ export default function CinemaClient({ rows, hero: picked = null, guild = null }
       <GuildeHeader activePage="cinema" tone="dark" />
       {latest ? (
         <section className="cin-hero is-guild" style={{ "--bd": latest.thumb ? `url(${JSON.stringify(latest.thumb)})` : "none" } as React.CSSProperties}>
-          <div className="gk-wrap cin-hero-inner">
-            <span className="gk-chapter"><b>▶</b><span>GEKIJŌ · LES SÉANCES DE LA GUILDE</span></span>
-            <p className="cin-hero-kicker">Dernière séance</p>
-            <h1 className="gk-display cin-hero-title">{latest.title}</h1>
-            <p className="cin-hero-syn">{latest.description || [latest.collection, latest.createdAt ? DAY.format(new Date(latest.createdAt)) : null, duration(latest.durationMs)].filter(Boolean).join(" · ")}</p>
-            <button type="button" className="cin-play" onClick={() => setScreening(latest)}><Play size={20} aria-hidden="true" /> Regarder</button>
+          <div className="gk-wrap cin-gh">
+            <div className="cin-gh-text">
+              <span className="gk-chapter"><b>▶</b><span>GEKIJŌ · LA SALLE DE LA GUILDE</span></span>
+              <p className="cin-hero-kicker">À l&apos;affiche · {guildVideos.length} séance{guildVideos.length > 1 ? "s" : ""}</p>
+              <h1 className="gk-display cin-hero-title">{latest.title}</h1>
+              <p className="cin-hero-syn">{latest.description || [latest.collection, latest.createdAt ? DAY.format(new Date(latest.createdAt)) : null, duration(latest.durationMs)].filter(Boolean).join(" · ")}</p>
+              <button type="button" className="cin-play" onClick={() => setScreening(latest)}><Play size={20} aria-hidden="true" /> Regarder ici</button>
+            </div>
+            <button type="button" className="cin-gh-screen" onClick={() => setScreening(latest)} aria-label={`Regarder ${latest.title}`}>
+              {latest.thumb
+                // eslint-disable-next-line @next/next/no-img-element
+                ? <img src={latest.thumb} alt="" referrerPolicy="no-referrer" />
+                : <span className="cin-thumb-empty">{latest.title.slice(0, 1)}</span>}
+              <span className="cin-gh-play" aria-hidden="true"><Play size={34} fill="currentColor" /></span>
+            </button>
           </div>
         </section>
       ) : !hasGuild && hero && (
@@ -80,7 +89,7 @@ export default function CinemaClient({ rows, hero: picked = null, guild = null }
         </>}
       </main>
       {open && <Theater item={open} onClose={() => setOpen(null)} />}
-      {screening && <GuildTheater video={screening} onClose={() => setScreening(null)} />}
+      {screening && <GuildTheater video={screening} playlist={guildVideos} onPick={setScreening} onClose={() => setScreening(null)} />}
     </div>
   );
 }
@@ -198,76 +207,119 @@ const duration = (ms: number | null) => {
 };
 const DAY = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 
-/** Les vidéos de la Guilde (dossier Google Drive), une rangée par collection. */
+// Couleurs des tickets : une par séance, en boucle (chaque ticket a sa teinte).
+const TICKET_COLORS = ["#e8412c", "#c9a84c", "#3b82f6", "#22c55e", "#a855f7", "#f472b6", "#f97316", "#14b8a6"];
+
+/** Les vidéos de la Guilde : des tickets de cinéma, une section par collection (sous-dossier Drive). */
 function GuildVideos({ guild, onPlay }: { guild: Guild; onPlay: (v: GuildVideo) => void }) {
+  let n = 0;
+  const many = guild.collections.length > 1;
   return (
     <section className="cin-guild" aria-labelledby="cin-guild-title">
       <div className="gk-wrap cin-intro">
         <span className="gk-chapter"><b>✦</b><span>NOS SÉANCES</span></span>
         <h2 id="cin-guild-title" className="gk-display cin-h2"><WordReveal>Les vidéos <em>de la Guilde.</em></WordReveal></h2>
-        <p>Nos soirées, nos tournois, nos moments. Choisis une vidéo, la salle s&apos;éteint.</p>
+        <p>Nos soirées, nos tournois, nos délires. Prends ton ticket : la vidéo se lance ici, en grand.</p>
       </div>
       {guild.error && <p className="gk-wrap cin-muted" role="alert">{guild.error}</p>}
-      {/* Sans clé d'API Google : le dossier partagé s'affiche tel quel, ouvert en un clic. */}
-      {!guild.collections.length && guild.embedFolder && (
-        <div className="gk-wrap cin-folder">
-          <iframe src={`https://drive.google.com/embeddedfolderview?id=${encodeURIComponent(guild.embedFolder)}#grid`} title="Dossier des vidéos de la Guilde" loading="lazy" />
-          <a className="cin-play" href={`https://drive.google.com/drive/folders/${encodeURIComponent(guild.embedFolder)}`} target="_blank" rel="noopener noreferrer"><ExternalLink size={18} aria-hidden="true" /> Ouvrir le dossier</a>
-        </div>
-      )}
-      {!guild.error && !guild.collections.length && !guild.embedFolder && <p className="gk-wrap cin-muted">Aucune vidéo pour l&apos;instant : dépose-les dans le dossier Google Drive du Cinéma.</p>}
+      {!guild.error && !guild.collections.length && <p className="gk-wrap cin-muted">Aucune vidéo pour l&apos;instant : dépose-les dans le dossier Google Drive du Cinéma.</p>}
       {guild.collections.map((c) => (
-        <section key={c.name} className="cin-row" aria-label={c.name}>
-          <div className="gk-wrap cin-row-head"><h3>{c.name}</h3><small>{c.videos.length} vidéo{c.videos.length > 1 ? "s" : ""}</small></div>
-          <ul className="cin-strip is-wide">
-            {c.videos.map((v) => (
-              <li key={v.id}>
-                <button type="button" className="cin-card" onClick={() => onPlay(v)} aria-label={`Regarder ${v.title}`}>
-                  <span className="cin-thumb">
-                    {v.thumb
-                      // eslint-disable-next-line @next/next/no-img-element
-                      ? <img src={v.thumb} alt="" loading="lazy" referrerPolicy="no-referrer" />
-                      : <span className="cin-thumb-empty">{v.title.slice(0, 1)}</span>}
-                    {duration(v.durationMs) && <span className="cin-dur">{duration(v.durationMs)}</span>}
-                    <span className="cin-poster-play" aria-hidden="true"><Play size={22} /></span>
-                  </span>
-                  <span className="cin-card-title">{v.title}</span>
-                  {v.createdAt && <span className="cin-card-meta">{DAY.format(new Date(v.createdAt))}</span>}
-                </button>
-              </li>
-            ))}
-          </ul>
+        <section key={c.name} className="gk-wrap cin-tickets-block" aria-label={c.name}>
+          {many && <div className="cin-row-head"><h3>{c.name}</h3><small>{c.videos.length} vidéo{c.videos.length > 1 ? "s" : ""}</small></div>}
+          <ol className="cin-tickets">
+            {c.videos.map((v) => {
+              const k = n++;
+              return (
+                <li key={v.id} style={{ "--tk": TICKET_COLORS[k % TICKET_COLORS.length], "--i": k } as React.CSSProperties}>
+                  <button type="button" className="cin-ticket" onClick={() => onPlay(v)} aria-label={`Regarder ${v.title}`}>
+                    <span className="cin-ticket-shot">
+                      {v.thumb
+                        // eslint-disable-next-line @next/next/no-img-element
+                        ? <img src={v.thumb.replace(/=w\d+$/, "=w640")} alt="" loading="lazy" referrerPolicy="no-referrer" />
+                        : <span className="cin-thumb-empty">{v.title.slice(0, 1)}</span>}
+                      <span className="cin-ticket-no" aria-hidden="true">N° {String(k + 1).padStart(2, "0")}</span>
+                      <span className="cin-ticket-play" aria-hidden="true"><Play size={26} fill="currentColor" /></span>
+                      {duration(v.durationMs) && <span className="cin-dur">{duration(v.durationMs)}</span>}
+                    </span>
+                    <span className="cin-ticket-stub">
+                      <span className="cin-ticket-title">{v.title}</span>
+                      <span className="cin-ticket-meta">
+                        <span>{[v.collection, v.createdAt ? DAY.format(new Date(v.createdAt)) : null].filter(Boolean).join(" · ")}</span>
+                        <b>Entrée</b>
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
         </section>
       ))}
     </section>
   );
 }
 
-/** Salle de projection d'une vidéo de la Guilde (lecteur intégré de Google Drive). */
-function GuildTheater({ video, onClose }: { video: GuildVideo; onClose: () => void }) {
+/** Salle de projection : lecteur Google Drive sur le site, programme pour enchaîner les séances. */
+function GuildTheater({ video, playlist, onPick, onClose }: { video: GuildVideo; playlist: GuildVideo[]; onPick: (v: GuildVideo) => void; onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
   const close = useCallback(() => onClose(), [onClose]);
+  const i = playlist.findIndex((v) => v.id === video.id);
+  const step = useCallback((d: 1 | -1) => { if (playlist.length > 1) onPick(playlist[(i + d + playlist.length) % playlist.length]); }, [i, playlist, onPick]);
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     ref.current?.focus();
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+      // Flèches : seulement quand le lecteur n'a pas le focus (il gère lui-même ses touches).
+      else if (document.activeElement?.tagName !== "IFRAME" && e.key === "ArrowRight") step(1);
+      else if (document.activeElement?.tagName !== "IFRAME" && e.key === "ArrowLeft") step(-1);
+    };
     window.addEventListener("keydown", onKey);
     return () => { document.body.style.overflow = prev; window.removeEventListener("keydown", onKey); };
-  }, [close]);
+  }, [close, step]);
   return (
     <div className="cin-theater" onClick={(e) => { if (e.target === e.currentTarget) close(); }}>
       <div ref={ref} tabIndex={-1} className="cin-room" role="dialog" aria-modal="true" aria-labelledby="cin-guild-room-title">
         <button type="button" className="cin-close" onClick={close} aria-label="Quitter la salle"><X size={22} aria-hidden="true" /></button>
-        <div className="cin-screen">
+        <div className="cin-screen" key={video.id}>
           <iframe src={`https://drive.google.com/file/d/${encodeURIComponent(video.id)}/preview`} title={video.title} allow="autoplay; fullscreen; picture-in-picture" allowFullScreen />
         </div>
         <div className="cin-room-info is-single">
-          <div>
-            <h2 id="cin-guild-room-title" className="gk-display">{video.title}</h2>
-            <p className="cin-room-meta">{[video.collection, video.createdAt ? DAY.format(new Date(video.createdAt)) : null, duration(video.durationMs)].filter(Boolean).join(" · ")}</p>
-            {video.description && <p className="cin-room-syn">{video.description}</p>}
+          <div className="cin-room-now">
+            <div>
+              <p className="cin-room-meta">Séance {i + 1} sur {playlist.length}{video.collection ? ` · ${video.collection}` : ""}{duration(video.durationMs) ? ` · ${duration(video.durationMs)}` : ""}</p>
+              <h2 id="cin-guild-room-title" className="gk-display">{video.title}</h2>
+              {video.description && <p className="cin-room-syn">{video.description}</p>}
+            </div>
+            {playlist.length > 1 && (
+              <div className="cin-room-steps">
+                <button type="button" className="cin-step" onClick={() => step(-1)} aria-label="Séance précédente"><ChevronLeft size={22} aria-hidden="true" /></button>
+                <button type="button" className="cin-step" onClick={() => step(1)}>Séance suivante <ChevronRight size={20} aria-hidden="true" /></button>
+              </div>
+            )}
           </div>
+          {playlist.length > 1 && (
+            <div className="cin-program">
+              <p className="cin-where-title">Au programme</p>
+              <ol className="cin-program-list">
+                {playlist.map((v, k) => (
+                  <li key={v.id}>
+                    <button type="button" className="cin-program-item" aria-current={v.id === video.id ? "true" : undefined} onClick={() => onPick(v)} style={{ "--tk": TICKET_COLORS[k % TICKET_COLORS.length] } as React.CSSProperties}>
+                      <span className="cin-program-shot">
+                        {v.thumb
+                          // eslint-disable-next-line @next/next/no-img-element
+                          ? <img src={v.thumb.replace(/=w\d+$/, "=w320")} alt="" loading="lazy" referrerPolicy="no-referrer" />
+                          : null}
+                        <b>{String(k + 1).padStart(2, "0")}</b>
+                      </span>
+                      <span className="cin-program-title">{v.title}</span>
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -9,17 +9,16 @@ const NO_STORE = { "Cache-Control": "no-store" };
 export async function GET(req: NextRequest) {
   const denied = requireAdmin(req);
   if (denied) return denied;
-  const cfg = driveConfig();
-  if (!cfg) {
-    const folder = driveFolder();
-    return NextResponse.json({ configured: false, folderOnly: !!folder, folderUrl: folder ? `https://drive.google.com/drive/folders/${folder}` : undefined }, { headers: NO_STORE });
-  }
+  // Le lien du dossier suffit (vue publique) ; la clé d'API ajoute durées, dates et descriptions.
+  const folder = driveFolder();
+  if (!folder) return NextResponse.json({ configured: false }, { headers: NO_STORE });
+  const cfg = { folder, withKey: !!driveConfig() };
   try {
     const collections = await getGuildVideos();
     return NextResponse.json({
       configured: true,
       folderUrl: `https://drive.google.com/drive/folders/${cfg.folder}`,
-      collections: collections.map((c) => ({ name: c.name, count: c.videos.length })),
+      collections: collections.map((c) => ({ name: c.name, count: c.videos.length })), withKey: cfg.withKey,
     }, { headers: NO_STORE });
   } catch (e) {
     return NextResponse.json({ configured: true, folderUrl: `https://drive.google.com/drive/folders/${cfg.folder}`, error: e instanceof Error ? e.message : "Google Drive indisponible." }, { headers: NO_STORE });
