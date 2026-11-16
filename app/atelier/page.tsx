@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal, flushSync } from "react-dom";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight, Cpu, Download, Heart, Share2, Shuffle, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Cpu, Download, ExternalLink, Heart, Play, Share2, Shuffle, X } from "lucide-react";
 import GuildeHeader from "../components/GuildeHeader";
 import { useFavorites } from "../hooks/useFavorites";
 import { useShare } from "../hooks/useShare";
@@ -22,10 +22,21 @@ interface AtelierImage {
   universe: string;
   accent: string;
   size: string;
+  /** Vidéo de la Guilde (dossier Google Drive du Cinéma). */
+  video?: { id: string; durationMs: number | null; collection: string };
 }
 
+interface DriveVideo { id: string; title: string; description: string | null; thumb: string | null; durationMs: number | null; collection: string }
+const VIDEO_CATEGORY = "Vidéo";
+const fromDrive = (v: DriveVideo): AtelierImage => ({
+  id: null, filename: `drive:${v.id}`, url: v.thumb ?? "", title: v.title, description: v.description ?? "", prompt: "",
+  category: VIDEO_CATEGORY, universe: v.collection, accent: "#e8412c", size: "", video: { id: v.id, durationMs: v.durationMs, collection: v.collection },
+});
+const drivePlayer = (id: string) => `https://drive.google.com/file/d/${encodeURIComponent(id)}/preview`;
+const duration = (ms: number | null) => { if (!ms) return null; const s = Math.round(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
+
 // Ordre d'affichage des catégories connues ; les autres suivent, telles que saisies.
-const KNOWN_ORDER = ["Création", "Portrait", "Scène", "VFX"];
+const KNOWN_ORDER = ["Création", "Portrait", "Scène", "VFX", "Vidéo"];
 const safeColor = (c?: string) => (c && /^#[0-9a-f]{6}$/i.test(c) ? c : "#dfb75b");
 /** Identifiant stable d'une œuvre : son nom de fichier (l'id de base peut manquer). */
 const keyOf = (w: AtelierImage) => w.filename;
@@ -77,9 +88,11 @@ export default function AtelierPage() {
   const load = useCallback(() => {
     setError(false);
     setImages(null);
+    // Les vidéos Drive sont un bonus : si Drive ne répond pas, les images s'affichent quand même.
+    const videos = fetch("/api/atelier/videos").then((r) => (r.ok ? r.json() : { videos: [] })).then((d) => ((d.videos ?? []) as DriveVideo[]).map(fromDrive)).catch(() => [] as AtelierImage[]);
     fetch("/api/atelier")
       .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
-      .then((data) => { const list: AtelierImage[] = data.images ?? []; setImages(list); setFan(pick(list, 3)); })
+      .then(async (data) => { const list: AtelierImage[] = data.images ?? []; setImages([...list, ...(await videos)]); setFan(pick(list, 3)); })
       .catch(() => { setError(true); setImages([]); });
   }, []);
 
@@ -296,21 +309,31 @@ export default function AtelierPage() {
                         >
                           <Heart size={17} fill={fav ? "currentColor" : "none"} aria-hidden="true" />
                         </button>
-                        <button type="button" className="at-plate-open" onClick={() => openWork(w)} aria-label={`Agrandir ${w.title}`}>
-                          <div className="at-plate-img">
-                            <span className="at-plate-no" aria-hidden="true">Planche {String(i + 1).padStart(2, "0")}</span>
+                        <button type="button" className="at-plate-open" onClick={() => openWork(w)} aria-label={w.video ? `Regarder ${w.title}` : `Agrandir ${w.title}`}>
+                          <div className={`at-plate-img${w.video ? " is-video" : ""}`}>
+                            <span className="at-plate-no" aria-hidden="true">{w.video ? "Vidéo" : `Planche ${String(i + 1).padStart(2, "0")}`}</span>
                             {/* Les originaux pèsent plusieurs Mo : on sert une version redimensionnée.
                                 width/height ne sont qu'un cadre d'attente, l'image garde son vrai ratio. */}
-                            <Image
-                              src={w.url}
-                              alt=""
-                              width={800}
-                              height={1000}
-                              sizes={PLATE_SIZES}
-                              priority={i < cols}
-                              onLoad={(e) => { const img = e.currentTarget; img.parentElement?.setAttribute("data-loaded", ""); applyPalette(img.closest<HTMLElement>(".at-plate"), paletteOf(img, keyOf(w))); }}
-                              style={{ width: "100%", height: "auto" }}
-                            />
+                            {w.video ? (
+                              <>
+                                {w.url
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  ? <img src={w.url} alt="" loading="lazy" referrerPolicy="no-referrer" onLoad={(e) => e.currentTarget.parentElement?.setAttribute("data-loaded", "")} />
+                                  : <span className="at-video-empty" aria-hidden="true">{w.title.slice(0, 1)}</span>}
+                                <span className="at-video-badge" aria-hidden="true"><Play size={15} fill="currentColor" />{duration(w.video.durationMs) ?? "Vidéo"}</span>
+                              </>
+                            ) : (
+                              <Image
+                                src={w.url}
+                                alt=""
+                                width={800}
+                                height={1000}
+                                sizes={PLATE_SIZES}
+                                priority={i < cols}
+                                onLoad={(e) => { const img = e.currentTarget; img.parentElement?.setAttribute("data-loaded", ""); applyPalette(img.closest<HTMLElement>(".at-plate"), paletteOf(img, keyOf(w))); }}
+                                style={{ width: "100%", height: "auto" }}
+                              />
+                            )}
                           </div>
                           <div className="at-plate-cap">
                             <strong>{w.title}</strong>
@@ -360,6 +383,14 @@ function Art({ work, ratio }: { work: AtelierImage; ratio: number | null }) {
     // La visionneuse prend les couleurs de l'œuvre (fond, cadre, titre, boutons).
     applyPalette(img.closest<HTMLElement>(".at-view"), paletteOf(img, work.filename));
   };
+  if (work.video) {
+    // Lecteur officiel de Google Drive ; rien ne démarre sans appui du visiteur.
+    return (
+      <div className="at-art at-art--video" style={{ "--r": 16 / 9 } as React.CSSProperties}>
+        <iframe src={drivePlayer(work.video.id)} title={work.title} allow="fullscreen; picture-in-picture" allowFullScreen />
+      </div>
+    );
+  }
   return (
     <div className="at-art" style={{ "--r": r } as React.CSSProperties}>
       <Image src={work.url} alt="" aria-hidden="true" fill sizes={PLATE_SIZES} className="at-art-lo" onLoad={(e) => learn(e.currentTarget)} />
@@ -484,7 +515,7 @@ function Viewer({ work, ratio, neighbours, index, count, isFavorite, onToggleFav
         )}
         {/* Œuvres voisines chargées d'avance : le passage à la suivante est instantané. */}
         <div className="at-preload" aria-hidden="true">
-          {neighbours.map((n) => (
+          {neighbours.filter((n) => !n.video).map((n) => (
             <div key={n.filename}>
               <Image src={n.url} alt="" fill sizes={PLATE_SIZES} loading="eager" />
               <Image src={n.url} alt="" fill sizes={VIEW_SIZES} loading="eager" />
@@ -506,8 +537,10 @@ function Viewer({ work, ratio, neighbours, index, count, isFavorite, onToggleFav
           </div>
         )}
         <dl className="at-meta">
-          {work.universe && (<><dt>Univers</dt><dd>{work.universe}</dd></>)}
-          <dt>Fichier</dt><dd>{work.filename}</dd>
+          {work.universe && (<><dt>{work.video ? "Collection" : "Univers"}</dt><dd>{work.universe}</dd></>)}
+          {work.video
+            ? duration(work.video.durationMs) && (<><dt>Durée</dt><dd>{duration(work.video.durationMs)}</dd></>)
+            : (<><dt>Fichier</dt><dd>{work.filename}</dd></>)}
         </dl>
         <div className="at-actions">
           <button type="button" className="gk-btn gk-btn--sm" aria-pressed={isFavorite} onClick={onToggleFavorite}>
@@ -516,9 +549,15 @@ function Viewer({ work, ratio, neighbours, index, count, isFavorite, onToggleFav
           <button type="button" className="gk-btn gk-btn--ghost gk-btn--sm" onClick={onShare}>
             <Share2 size={15} aria-hidden="true" /> Partager
           </button>
-          <button type="button" className="gk-btn gk-btn--ghost gk-btn--sm" onClick={onDownload}>
-            <Download size={15} aria-hidden="true" /> Télécharger
-          </button>
+          {work.video ? (
+            <a className="gk-btn gk-btn--ghost gk-btn--sm" href={`https://drive.google.com/file/d/${encodeURIComponent(work.video.id)}/view`} target="_blank" rel="noopener noreferrer">
+              <ExternalLink size={15} aria-hidden="true" /> Ouvrir dans Drive
+            </a>
+          ) : (
+            <button type="button" className="gk-btn gk-btn--ghost gk-btn--sm" onClick={onDownload}>
+              <Download size={15} aria-hidden="true" /> Télécharger
+            </button>
+          )}
         </div>
       </div>
     </div>,
