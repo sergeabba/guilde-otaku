@@ -113,3 +113,28 @@ body.fx-ingame .mdock { display: none; }
   .mdock-pill:hover { border-color: var(--gk-gold, #e8b931); }
 }
 .mdock-txt small { font-variant-numeric: tabular-nums; }
+
+/* ─── Bulle : la musique continue pendant la navigation ───────────────────
+   Seul l'écran vidéo reste (200 × 200 minimum, règle d'intégration YouTube),
+   avec une barre de commandes ; glisser la bulle la range dans un coin. */
+.mdock-bubble-bar { display: none; }
+.mdock.is-bubble { left: auto; right: auto; top: auto; bottom: auto; touch-action: none; cursor: grab; transition: inset 280ms cubic-bezier(.2,.9,.25,1.1); }
+.mdock.is-bubble:active { cursor: grabbing; }
+.mdock.is-bubble.at-br { right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); }
+.mdock.is-bubble.at-bl { left: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); }
+.mdock.is-bubble.at-tr { right: 12px; top: calc(76px + env(safe-area-inset-top)); }
+.mdock.is-bubble.at-tl { left: 12px; top: calc(76px + env(safe-area-inset-top)); }
+@media (max-width: 899px) {
+  .mdock.is-bubble.at-br, .mdock.is-bubble.at-bl { bottom: calc(67px + 12px + env(safe-area-inset-bottom)); }
+}
+.mdock.is-bubble .mdock-card { width: 200px; display: block; box-shadow: 4px 4px 0 var(--gk-gold, #e8b931); }
+.mdock.is-bubble .mdock-head, .mdock.is-bubble .mdock-bar, .mdock.is-bubble .mdock-note, .mdock.is-bubble .mdock-error { display: none; }
+.mdock.is-bubble .mdock-video { width: 200px; height: 200px; min-height: 200px; aspect-ratio: auto; border: 0; }
+.mdock.is-bubble .mdock-spotify { width: 200px; }
+.mdock.is-bubble .mdock-bubble-bar { display: flex; justify-content: space-between; padding: 2px; background: #121016; border-top: 2px solid #f3eee2; }
+.mdock.is-bubble .mdock-bubble-bar .mdock-icon { width: 38px; height: 38px; }
+.mdock.is-bubble .mdock-card { display: flex; flex-direction: column; }
+.mdock.is-bubble .mdock-video, .mdock.is-bubble .mdock-spotify { order: 1; }
+.mdock.is-bubble .mdock-bubble-bar { order: 2; padding: 0; }
+.mdock.is-bubble .mdock-bubble-bar .mdock-icon { width: 36px; height: 40px; flex: 1 1 0; }
+.mdock.is-bubble .mdock-bubble-bar .mdock-icon { min-width: 44px; height: 44px; }

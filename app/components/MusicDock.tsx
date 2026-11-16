@@ -8,7 +8,8 @@
 // Rien ne démarre sans un appui du visiteur. La lecture continue d'une page à
 // l'autre du site (le lecteur vit dans la mise en page racine).
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, ExternalLink, Music, Pause, Play, SkipBack, SkipForward, X } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { ChevronDown, ExternalLink, Maximize2, Minimize2, Music, Pause, Play, SkipBack, SkipForward, X } from "lucide-react";
 import type { MemberTrack } from "../../lib/member-extras";
 import { PROVIDER_LABEL, PROVIDER_LIMIT, isPlayable, openUrl } from "../../lib/music";
 
@@ -59,6 +60,15 @@ export function MusicDockProvider({ children }: { children: React.ReactNode }) {
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [minimized, setMinimized] = useState(false);
+  // Bulle : le lecteur se réduit à l'écran vidéo (200 × 200, règle YouTube) et continue
+  // de jouer pendant qu'on se balade sur le site ; déplaçable, il se range dans un coin.
+  const [bubble, setBubble] = useState(false);
+  const [corner, setCorner] = useState<"br" | "bl" | "tr" | "tl">(() => {
+    try { const c = localStorage.getItem("gk-mdock-corner"); return c === "bl" || c === "tr" || c === "tl" ? c : "br"; } catch { return "br"; }
+  });
+  const drag = useRef<{ x: number; y: number; dx: number; dy: number; moved: boolean } | null>(null);
+  const pathname = usePathname();
+  const startPath = useRef<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const host = useRef<HTMLDivElement>(null);
   const player = useRef<YTPlayer | null>(null);
@@ -117,6 +127,7 @@ export function MusicDockProvider({ children }: { children: React.ReactNode }) {
   const play = useCallback((q: DockTrack[], i = 0) => {
     const list = q.filter(isPlayable);
     if (!list.length) return;
+    startPath.current = window.location.pathname; setBubble(false);
     const start = Math.max(0, list.findIndex((t) => key(t) === key(q[i] ?? list[0])));
     setError(null); setMinimized(false); setQueue(list); setIndex(start);
     setPlaying(list[start].provider === "spotify");
@@ -133,6 +144,37 @@ export function MusicDockProvider({ children }: { children: React.ReactNode }) {
     try { player.current?.pauseVideo(); } catch { /* lecteur pas prêt */ }
     dropYouTube(); setPlaying(false); setMinimized(true);
   }, [dropYouTube]);
+  // On quitte la page d'où vient la musique : le lecteur passe en bulle et continue.
+  useEffect(() => {
+    if (!current || minimized || !startPath.current || pathname === startPath.current) return;
+    void Promise.resolve().then(() => setBubble(true));
+  }, [pathname, current, minimized]);
+
+  // Glisser la bulle, puis la ranger dans le coin le plus proche (mémorisé).
+  const onDragStart = (e: React.PointerEvent) => {
+    if (!bubble || (e.target as HTMLElement).closest("button, a, iframe")) return;
+    drag.current = { x: e.clientX, y: e.clientY, dx: 0, dy: 0, moved: false };
+    try { (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); } catch { /* pointeur déjà relâché */ }
+  };
+  const onDragMove = (e: React.PointerEvent) => {
+    const d = drag.current;
+    if (!d) return;
+    d.dx = e.clientX - d.x; d.dy = e.clientY - d.y;
+    if (Math.abs(d.dx) + Math.abs(d.dy) > 6) d.moved = true;
+    (e.currentTarget as HTMLElement).style.translate = `${d.dx}px ${d.dy}px`;
+  };
+  const onDragEnd = (e: React.PointerEvent) => {
+    const d = drag.current;
+    drag.current = null;
+    const el = e.currentTarget as HTMLElement;
+    const r = el.getBoundingClientRect(); // position lâchée (avant de retirer le décalage)
+    el.style.translate = "";
+    if (!d?.moved) return;
+    const c = `${r.top + r.height / 2 < window.innerHeight / 2 ? "t" : "b"}${r.left + r.width / 2 < window.innerWidth / 2 ? "l" : "r"}` as typeof corner;
+    setCorner(c);
+    try { localStorage.setItem("gk-mdock-corner", c); } catch { /* stockage indisponible */ }
+  };
+
   const close = () => { dropYouTube(); setQueue([]); setIndex(0); setPlaying(false); setMinimized(false); setError(null); };
 
   // Signale au reste du site qu'un lecteur occupe le bas de l'écran, avec sa hauteur :
@@ -161,7 +203,12 @@ export function MusicDockProvider({ children }: { children: React.ReactNode }) {
     <Ctx.Provider value={api}>
       {children}
       {current && (
-        <aside ref={dockRef} className={`mdock${minimized ? " is-min" : ""}`} aria-label="Lecteur de musique">
+        <aside
+          ref={dockRef}
+          className={`mdock${minimized ? " is-min" : ""}${bubble && !minimized ? ` is-bubble at-${corner}` : ""}`}
+          aria-label="Lecteur de musique"
+          onPointerDown={onDragStart} onPointerMove={onDragMove} onPointerUp={onDragEnd} onPointerCancel={onDragEnd}
+        >
           {minimized ? (
             <button type="button" className="mdock-pill" onClick={() => setMinimized(false)} aria-label={`Reprendre ${label}`}>
               <Cover t={current} />
@@ -177,9 +224,19 @@ export function MusicDockProvider({ children }: { children: React.ReactNode }) {
                   <strong>{current.title || "Morceau sans titre"}</strong>
                   {current.artist && <span>{current.artist}</span>}
                 </div>
+                {current.provider === "youtube" && <button type="button" className="mdock-icon" onClick={() => setBubble(true)} aria-label="Mode bulle : continuer d'écouter en naviguant" title="Bulle (la musique continue)"><Minimize2 size={17} aria-hidden="true" /></button>}
                 <button type="button" className="mdock-icon" onClick={minimize} aria-label="Réduire le lecteur (met en pause)" title="Réduire (pause)"><ChevronDown size={18} aria-hidden="true" /></button>
                 <button type="button" className="mdock-icon" onClick={close} aria-label="Fermer le lecteur"><X size={18} aria-hidden="true" /></button>
               </div>
+              {/* Commandes de la bulle (le reste du lecteur est masqué, la vidéo reste visible). */}
+              {bubble && (
+                <div className="mdock-bubble-bar">
+                  <button type="button" className="mdock-icon" onClick={() => step(-1)} disabled={queue.length < 2} aria-label="Morceau précédent"><SkipBack size={16} aria-hidden="true" /></button>
+                  {current.provider === "youtube" && <button type="button" className="mdock-icon" onClick={toggle} aria-label={playing ? "Pause" : "Lecture"}>{playing ? <Pause size={16} aria-hidden="true" /> : <Play size={16} aria-hidden="true" />}</button>}
+                  <button type="button" className="mdock-icon" onClick={() => step(1)} disabled={queue.length < 2} aria-label="Morceau suivant"><SkipForward size={16} aria-hidden="true" /></button>
+                  <button type="button" className="mdock-icon" onClick={() => setBubble(false)} aria-label="Agrandir le lecteur"><Maximize2 size={16} aria-hidden="true" /></button>
+                </div>
+              )}
               {current.provider === "youtube" ? (
                 <div className="mdock-video" ref={host} />
               ) : (

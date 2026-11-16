@@ -18,26 +18,49 @@ export default function SongOfTheDay({ initial, today = true }: { initial: Anime
   const audio = useRef<HTMLAudioElement>(null);
   const dock = useMusicDock();
 
-  useEffect(() => () => audio.current?.pause(), []);
+  // Libère vraiment le flux (sinon iOS garde chaque extrait ouvert et bloque après 3 ou 4).
+  const release = (a: HTMLAudioElement | null) => {
+    if (!a) return;
+    a.pause();
+    a.removeAttribute("src");
+    a.load();
+  };
+  useEffect(() => { const a = audio.current; return () => release(a); }, []);
   // Le lecteur global reprend la main : l'extrait s'arrête.
   useEffect(() => { if (dock?.playing) audio.current?.pause(); }, [dock?.playing]);
+
+  /** Lance un extrait : la source n'est posée qu'au moment de jouer, une seule à la fois. */
+  async function start(url: string) {
+    const a = audio.current;
+    if (!a) return;
+    if (dock?.playing) dock.minimize();
+    if (a.getAttribute("src") !== url) { release(a); a.src = url; a.load(); }
+    try { await a.play(); setError(null); }
+    catch (e) {
+      // Lecture refusée hors d'un appui (iOS) : on attend simplement le bouton Lecture.
+      if ((e as Error).name !== "NotAllowedError") setError("Lecture impossible sur cet appareil : ouvre la version complète.");
+    }
+  }
 
   async function toggle() {
     const a = audio.current;
     if (!a || !song.preview) return;
     if (playing) { a.pause(); return; }
-    if (dock?.playing) dock.minimize();
-    try { await a.play(); setError(null); } catch { setError("Lecture impossible sur cet appareil : ouvre la version complète."); }
+    await start(song.preview);
   }
 
   async function another() {
     setLoading(true); setError(null);
-    audio.current?.pause();
+    const wasPlaying = playing;
+    release(audio.current);
+    setPlaying(false); setProgress(0);
     try {
-      const res = await fetch(`/api/anime-song?random=1&not=${song.index}`);
+      const res = await fetch(`/api/anime-song?random=1&not=${song.index}`, { cache: "no-store" });
       const data = await res.json();
       if (!res.ok || !data.song) throw new Error();
-      setSong(data.song); setIsToday(false); setProgress(0);
+      setSong(data.song); setIsToday(false);
+      // Si un extrait jouait, le suivant enchaîne (sinon, on attend l'appui).
+      if (wasPlaying && data.song.preview) void start(data.song.preview);
     } catch {
       setError("Impossible de charger un autre générique. Réessaie.");
     } finally { setLoading(false); }
@@ -75,7 +98,8 @@ export default function SongOfTheDay({ initial, today = true }: { initial: Anime
                 </div>
                 <span className="sotd-time">Extrait 30 s</span>
                 <audio
-                  ref={audio} src={song.preview} preload="none"
+                  ref={audio} preload="none"
+                  onError={() => { if (audio.current?.getAttribute("src")) { setPlaying(false); setError("Cet extrait ne se charge pas. Touche Lecture pour réessayer ou tire-en un autre."); release(audio.current); } }}
                   onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)}
                   onEnded={() => { setPlaying(false); setProgress(0); }}
                   onTimeUpdate={(e) => { const a = e.currentTarget; setProgress(a.duration ? a.currentTime / a.duration : 0); }}
