@@ -1,5 +1,6 @@
 "use client";
 
+import { portraitSeries, seriesLogoSrc } from "../../lib/series-logo";
 import { optimizedSrc } from "../../lib/img";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -128,7 +129,8 @@ export default function MemberQuickView({ member, onClose, viewMode }: { member:
             {extras.displayNameRomaji && <p className="pf-alias" lang="ja-Latn">{extras.displayNameRomaji}</p>}
             <div className="pf-rank">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={optimizedSrc(rankLogos[member.rank as Rank], 256)} alt="" width={100} height={40} />
+              {/* Logo de la série du portrait anime (sinon celui du grade). */}
+              <img src={seriesLogoSrc(member) ?? optimizedSrc(rankLogos[member.rank as Rank], 256)} alt={portraitSeries(member)?.title ?? ""} title={portraitSeries(member)?.title} width={100} height={40} className="pf-series-logo" onError={(e) => { const el = e.currentTarget; const f = optimizedSrc(rankLogos[member.rank as Rank], 256); if (f && !el.src.endsWith(f)) el.src = f; }} />
               <span className="pf-rank-tag">{member.rank}</span>
               {romaji && <RomajiLabel romaji={romaji} className="pf-rank-romaji" />}
             </div>

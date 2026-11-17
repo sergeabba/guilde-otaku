@@ -9,6 +9,8 @@ import { adminDb } from "../../lib/admin-db-client";
 import { CARD_MOTIFS, CARD_MOTIF_LABEL, EXTRAS_KEYS, hasJapanese, memberAwards, parseMemberExtras, type FocusPoint, type MemberExtras } from "../../lib/member-extras";
 import type { SupabaseMemberRow } from "../types";
 import PortraitPanel from "./PortraitPanel";
+import WorkSearch from "../components/works/WorkSearch";
+import { portraitSeries } from "../../lib/series-logo";
 import UniverseEditor from "./UniverseEditor";
 import AwardsEditor, { awardsIssue } from "./AwardsEditor";
 import { useConfirm } from "../admin-ui/ui";
@@ -78,7 +80,7 @@ export default function MemberEditor({ member, extrasSupported, onClose, onSaved
     const parsed = (parseMemberExtras(raw) ?? {}) as Record<string, unknown>;
     return EXTRAS_KEYS.filter((k) => (raw as Record<string, unknown>)[k] !== undefined && parsed[k] === undefined);
   })();
-  const UNREADABLE_LABEL: Record<string, string> = { displayNameRomaji: "surnom", favoriteAnime: "anime préférés", favoriteManga: "mangas préférés", music: "musique", awards: "palmarès", photoFocus: "cadrage réel", animeFocus: "cadrage anime", card: "style de carte" };
+  const UNREADABLE_LABEL: Record<string, string> = { displayNameRomaji: "surnom", favoriteAnime: "anime préférés", favoriteManga: "mangas préférés", music: "musique", awards: "palmarès", photoFocus: "cadrage réel", animeFocus: "cadrage anime", card: "style de carte", animeSeries: "série du portrait anime" };
 
   const errors = identityErrors(form);
   const dirty = JSON.stringify([form, extras]) !== savedSnapshot;
@@ -313,6 +315,26 @@ export default function MemberEditor({ member, extrasSupported, onClose, onSaved
                 <PortraitPanel title="Anime" kind="anime" src={row.animechar} video={row.animevideo} focus={extras.animeFocus} fallbackFocus="50% 15%"
                   onFocus={setFocus("animeFocus")} canFocus={extrasSupported} member={{ id: row.id, name: row.name }} onUploaded={onUploaded} />
               </div>
+              {extrasSupported && (() => {
+                // Série du portrait anime : son logo remplace celui du grade sur la fiche et la carte.
+                const chosen = extras.animeSeries;
+                const shown = portraitSeries({ id: row.id, extras: chosen ? { animeSeries: chosen } : undefined });
+                return (
+                  <fieldset className="am-fieldset">
+                    <legend>Série du portrait anime</legend>
+                    <p className="am-intro" style={{ margin: 0 }}>Le logo de cette série s&apos;affiche à côté du grade, sur la fiche et sur la carte. Sans série, c&apos;est le logo du grade.</p>
+                    {shown ? (
+                      <div className="am-row" style={{ alignItems: "center", gap: 12 }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={`/api/series-logo?tmdb=${shown.tmdb}`} alt="" style={{ height: 40, maxWidth: 180, objectFit: "contain", background: "#222", padding: 4 }} />
+                        <span><b>{shown.title}</b>{!chosen && <small> (proposée automatiquement d&apos;après le portrait)</small>}</span>
+                        {chosen && <button type="button" className="am-btn" onClick={() => patchExtras({ animeSeries: undefined })}>Retirer</button>}
+                      </div>
+                    ) : <p className="am-intro" style={{ margin: 0 }}>Aucune série pour l&apos;instant.</p>}
+                    <WorkSearch kind="ANIME" pickLabel="Choisir cette série" onPick={(w) => { if (/^(tv|movie):\d+$/.test(w.sourceId)) patchExtras({ animeSeries: { title: (w.titleFr || w.title).slice(0, 120), tmdb: w.sourceId } }); }} />
+                  </fieldset>
+                );
+              })()}
               {extrasSupported && (
                 <fieldset className="am-fieldset">
                   <legend>Carte téléchargeable</legend>

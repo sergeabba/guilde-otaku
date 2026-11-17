@@ -2,6 +2,7 @@
 // Rendu serveur via next/og. Les données viennent toujours de la base, à partir d'un
 // identifiant validé : aucune URL, couleur ou texte n'est lu dans la requête.
 
+import { seriesLogoSrc } from "../series-logo";
 import { ImageResponse } from "next/og";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -279,7 +280,8 @@ export async function renderMemberCard(m: Member, origin: string): Promise<Image
     loadDisplayFont(),
     portraitData(m.photo, origin, 1080),
     portraitData(m.animeChar, origin, 1080),
-    portraitData(rankLogos[m.rank as Rank], origin, 128),
+    // Logo de la série du portrait anime, sinon celui du grade.
+    (async () => (seriesLogoSrc(m) ? await portraitData(seriesLogoSrc(m)!, origin, 384) : null) ?? portraitData(rankLogos[m.rank as Rank], origin, 128))(),
     flagData(m.country, origin),
     portraitData(track?.cover, origin, 128),
     ...favs.map((w) => portraitData(w.coverUrl, origin, 384)),

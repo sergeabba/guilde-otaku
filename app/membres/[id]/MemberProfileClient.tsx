@@ -1,5 +1,6 @@
 "use client";
 
+import { portraitSeries, seriesLogoSrc } from "../../../lib/series-logo";
 import { saveImage, saveMessage } from "../../../lib/save-image";
 import { fileSlug } from "../../../lib/share";
 import { optimizedSrc } from "../../../lib/img";
@@ -220,7 +221,8 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
 
             <div className="pf-rank">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={optimizedSrc(rankLogos[member.rank as Rank], 256)} alt="" width={120} height={48} />
+              {/* Logo de la série du portrait anime (sinon celui du grade). */}
+              <img src={seriesLogoSrc(member) ?? optimizedSrc(rankLogos[member.rank as Rank], 256)} alt={portraitSeries(member)?.title ?? ""} title={portraitSeries(member)?.title} width={120} height={48} className="pf-series-logo" onError={(e) => { const el = e.currentTarget; const f = optimizedSrc(rankLogos[member.rank as Rank], 256); if (f && !el.src.endsWith(f)) el.src = f; }} />
               <span className="pf-rank-tag">{member.rank}</span>
               {romaji && <RomajiLabel romaji={romaji} className="pf-rank-romaji" />}
             </div>
