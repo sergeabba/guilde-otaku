@@ -170,3 +170,31 @@ describe("réservoir AniList et tier list", () => {
     expect(twins[0]).toMatchObject({ a: "a", b: "b", pct: 94 });
   });
 });
+
+import { playerKey, rankPlayers } from "../lib/games/store";
+describe("classement complet", () => {
+  const dev = (n: number) => `00000000-0000-4000-8000-00000000000${n}`;
+  const play = (o: Partial<{ device: string; member_id: number | null; player_name: string | null; score: number; at: string }>) => ({
+    id: 1, game: "quiz-generique" as const, device: o.device ?? dev(1), member_id: o.member_id ?? null, player_name: o.player_name ?? null,
+    score: o.score ?? 0, max_score: 1500, detail: { good: 3, rounds: 10, songs: [1, 2] }, created_at: o.at ?? "2026-11-17T10:00:00Z",
+  });
+  it("regroupe par joueur, classe par record et ne dévoile pas l'appareil", () => {
+    const rows = [
+      play({ member_id: 7, device: dev(1), score: 900, at: "2026-11-17T10:00:00Z" }),
+      play({ member_id: 7, device: dev(2), score: 1100, at: "2026-11-17T11:00:00Z" }),
+      play({ device: dev(3), player_name: "Zoro", score: 1000 }),
+      play({ device: dev(4), score: 300 }),
+    ];
+    const r = rankPlayers("quiz-generique", rows);
+    expect(r.map((x) => [x.key.slice(0, 1), x.best, x.plays])).toEqual([["m", 1100, 2], ["g", 1000, 1], ["g", 300, 1]]);
+    expect(r[0]).toMatchObject({ member_id: 7, avg: 1000, total: 2000 });
+    expect(r[1].name).toBe("Zoro");
+    expect(JSON.stringify(r)).not.toContain(dev(3));
+    expect(JSON.stringify(r)).not.toContain("songs");
+    expect(playerKey({ member_id: null, device: dev(3) })).toBe(r[1].key);
+  });
+  it("classe le défi du jour au total de points", () => {
+    const rows = [play({ device: dev(1), score: 150 }), play({ device: dev(2), score: 120 }), play({ device: dev(2), score: 110 })];
+    expect(rankPlayers("defi-jour", rows).map((x) => x.total)).toEqual([230, 150]);
+  });
+});

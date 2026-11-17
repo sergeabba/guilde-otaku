@@ -3,10 +3,12 @@
 // Nouveaux jeux : Défi du jour, L'Affiche en morceaux, Plus ou moins, Tier list.
 // Les corrigés restent côté serveur (jetons signés) ; ici, seulement l'affichage.
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, CalendarCheck, Check, Clock, Flame, Grid3x3, ListOrdered, Play, RotateCcw, Share2, Volume2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, CalendarCheck, Check, Clock, Flame, Grid3x3, ListOrdered, Play, RotateCcw, Share2, Trophy, Volume2, X } from "lucide-react";
 import { optimizedSrc } from "../../lib/img";
 import { useShare } from "../hooks/useShare";
-import { api, pushLocal, type Play as PlayRow, type PlayerApi } from "./shared";
+import { api, pushLocal, type Game, type Play as PlayRow, type PlayerApi } from "./shared";
+
+type OnRanking = (g: Game) => void;
 
 const TILE_MS = 2_000, AFFICHE_MS = 22_000, DAILY_MS = 30_000;
 const tilesAt = (ms: number) => Math.min(9, 1 + Math.floor(Math.max(0, ms) / TILE_MS));
@@ -51,7 +53,7 @@ function Choices({ choices, picked, disabled, onPick, correct }: { choices: stri
 interface Daily { kind: "generique" | "affiche" | "membre"; prompt: string; preview?: string; image?: string; order?: number[]; choices: string[]; token: string }
 interface DailyState { date: string; challenge: Daily; played: { score: number; ok: boolean; reveal: string; chosen: number | null } | null; streak: number; board: { available: boolean; best: PlayRow[] } }
 
-export function DefiJour({ player, names }: { player: PlayerApi; names: Map<number, string> }) {
+export function DefiJour({ player, names, onRanking }: { player: PlayerApi; names: Map<number, string>; onRanking: OnRanking }) {
   const [data, setData] = useState<DailyState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [phase, setPhase] = useState<"ready" | "play" | "sending" | "done">("ready");
@@ -133,7 +135,10 @@ export function DefiJour({ player, names }: { player: PlayerApi; names: Map<numb
           <p className={`jx-daily-verdict${done.ok ? " is-ok" : ""}`}>{done.ok ? <Check size={22} aria-hidden="true" /> : <X size={22} aria-hidden="true" />} {done.ok ? `Bravo ! +${done.score} points` : "Raté pour aujourd'hui"}</p>
           {done.reveal && <p className="jx-note">La réponse : <strong>{done.reveal}</strong></p>}
           <p className="jx-note">Nouveau défi demain à minuit (heure de Paris).</p>
+          <div className="jx-actions">
+          <button type="button" className="gk-btn gk-btn--ghost" onClick={() => onRanking("defi-jour")}><Trophy size={16} aria-hidden="true" /> Classement général</button>
           <button type="button" className="gk-btn gk-btn--ghost" onClick={() => share({ title: "Défi du jour · Guilde Otaku", text: `Défi du jour de la Guilde : ${done.ok ? `réussi (${done.score} pts)` : "raté"} · série de ${data.streak} jour${data.streak > 1 ? "s" : ""}. À ton tour !`, url: "/jeux" })}><Share2 size={16} aria-hidden="true" /> Partager</button>
+          </div>
         </div>
       )}
 
@@ -155,7 +160,7 @@ export function DefiJour({ player, names }: { player: PlayerApi; names: Map<numb
 interface AfficheRound { image: string; choices: string[]; order: number[] }
 interface AfficheResult { score: number; max: number; good: number; saved: boolean; correction: { title: string; cover: string | null; ok: boolean; tiles: number; points: number }[] }
 
-export function Affiche({ player }: { player: PlayerApi }) {
+export function Affiche({ player, onRanking }: { player: PlayerApi; onRanking: OnRanking }) {
   const [phase, setPhase] = useState<"intro" | "loading" | "play" | "reveal" | "sending" | "done">("intro");
   const [token, setToken] = useState("");
   const [rounds, setRounds] = useState<AfficheRound[]>([]);
@@ -233,7 +238,10 @@ export function Affiche({ player }: { player: PlayerApi }) {
               </li>
             ))}
           </ol>
-          <button type="button" className="gk-btn" onClick={start}><RotateCcw size={17} aria-hidden="true" /> Rejouer</button>
+          <div className="jx-actions">
+            <button type="button" className="gk-btn" onClick={start}><RotateCcw size={17} aria-hidden="true" /> Rejouer</button>
+            <button type="button" className="gk-btn gk-btn--ghost" onClick={() => onRanking("affiche")}><Trophy size={17} aria-hidden="true" /> Voir le classement</button>
+          </div>
         </div>
       )}
     </section>
@@ -243,7 +251,7 @@ export function Affiche({ player }: { player: PlayerApi }) {
 /* ═══ PLUS OU MOINS ══════════════════════════════════════════════════════ */
 interface PmCard { title: string; cover: string; year: number | null }
 
-export function PlusMoins({ player }: { player: PlayerApi }) {
+export function PlusMoins({ player, onRanking }: { player: PlayerApi; onRanking: OnRanking }) {
   const [phase, setPhase] = useState<"intro" | "loading" | "play" | "wait" | "shown" | "over">("intro");
   const [cards, setCards] = useState<PmCard[]>([]);
   const [scores, setScores] = useState<number[]>([]);
@@ -329,6 +337,7 @@ export function PlusMoins({ player }: { player: PlayerApi }) {
           <div className="jx-actions">
             <button type="button" className="gk-btn" onClick={start}><RotateCcw size={17} aria-hidden="true" /> Rejouer</button>
             <button type="button" className="gk-btn gk-btn--ghost" onClick={() => share({ title: "Plus ou moins · Guilde Otaku", text: `Série de ${streak} à Plus ou moins (notes AniList). Tu fais mieux ?`, url: "/jeux?jeu=plus-moins" })}><Share2 size={16} aria-hidden="true" /> Partager</button>
+            <button type="button" className="gk-btn gk-btn--ghost" onClick={() => onRanking("plus-moins")}><Trophy size={17} aria-hidden="true" /> Voir le classement</button>
           </div>
         </div>
       )}

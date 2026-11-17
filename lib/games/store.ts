@@ -1,6 +1,7 @@
 // Parties enregistrées (table game_plays) : lecture, écriture, statistiques.
 // Si la table n'existe pas encore (migration non lancée), tout renvoie « indisponible »
 // et les jeux restent jouables, avec l'historique gardé sur l'appareil. Module serveur.
+import { createHash } from "node:crypto";
 import { getServiceClient } from "../supabase-admin";
 import { NO_STATS, type MemberStats } from "./badges";
 
@@ -107,4 +108,49 @@ export async function saveTier(row: TierListRow): Promise<string | null> {
   if (!db) return "Base non configurée.";
   const { error } = await db.from("tier_lists").upsert({ ...row, updated_at: new Date().toISOString() }, { onConflict: "week,device" });
   return error ? (/tier_lists|relation|schema cache/i.test(error.message) ? "La tier list commune arrive bientôt (migration à lancer)." : "Classement non enregistré.") : null;
+}
+
+/* ── Classement complet d'un jeu : tous les joueurs, leurs parties ─────── */
+export interface PlaySummary { score: number; max: number; at: string; good?: number; rounds?: number; date?: string; ok?: boolean; a?: number; b?: number }
+export interface PlayerRank { key: string; member_id: number | null; name: string | null; plays: number; best: number; bestMax: number; avg: number; total: number; wins: number; last: string; history: PlaySummary[] }
+
+/**
+ * Identifiant public d'un joueur : le membre s'il a dit qui il est, sinon une empreinte
+ * de l'appareil (l'identifiant d'appareil lui-même n'est jamais renvoyé au navigateur).
+ */
+export const playerKey = (p: { member_id: number | null; device: string }) =>
+  p.member_id ? `m${p.member_id}` : `g${createHash("sha256").update(`guilde-joueur:${p.device}`).digest("hex").slice(0, 12)}`;
+
+/** Garde de chaque partie ce qui sert à l'affichage (pas les extraits ni les corrigés). */
+function summary(p: Play): PlaySummary {
+  const d = p.detail ?? {};
+  const num = (v: unknown) => (typeof v === "number" ? v : undefined);
+  return { score: p.score, max: p.max_score, at: p.created_at, good: num(d.good), rounds: num(d.rounds), date: typeof d.date === "string" ? d.date : undefined, ok: typeof d.ok === "boolean" ? d.ok : undefined, a: num(d.a), b: num(d.b) };
+}
+
+/** Rang par meilleur score (défi du jour : par total de points), puis par nombre de parties. */
+export function rankPlayers(game: Game, rows: Play[]): PlayerRank[] {
+  const by = new Map<string, PlayerRank>();
+  for (const p of [...rows].sort((a, b) => b.created_at.localeCompare(a.created_at))) {
+    const key = playerKey(p);
+    const r = by.get(key) ?? { key, member_id: p.member_id, name: null, plays: 0, best: -1, bestMax: 0, avg: 0, total: 0, wins: 0, last: p.created_at, history: [] };
+    r.plays++; r.total += p.score;
+    if (p.score > 0) r.wins++;
+    if (p.score > r.best) { r.best = p.score; r.bestMax = p.max_score; }
+    r.name ??= p.player_name;
+    if (r.history.length < 30) r.history.push(summary(p));
+    by.set(key, r);
+  }
+  const list = [...by.values()].map((r) => ({ ...r, avg: Math.round(r.total / r.plays) }));
+  const main = (r: PlayerRank) => (game === "defi-jour" ? r.total : r.best);
+  return list.sort((a, b) => main(b) - main(a) || b.plays - a.plays || a.last.localeCompare(b.last));
+}
+
+export async function ranking(game: Game): Promise<{ available: boolean; players: PlayerRank[]; feed: (PlaySummary & { key: string })[] }> {
+  const db = getServiceClient();
+  if (!db) return { available: false, players: [], feed: [] };
+  const { data, error } = await db.from("game_plays").select("*").eq("game", game).order("created_at", { ascending: false }).limit(3000);
+  if (error) return { available: false, players: [], feed: [] };
+  const rows = (data ?? []) as Play[];
+  return { available: true, players: rankPlayers(game, rows), feed: rows.slice(0, 15).map((p) => ({ ...summary(p), key: playerKey(p) })) };
 }

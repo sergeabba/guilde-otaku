@@ -36,6 +36,7 @@ const isTab = (t: string | null): t is Tab => MENU.some((m) => m.id === t);
 export default function JeuxClient() {
   const [tab, setTabState] = useState<Tab>("defi-jour");
   const [defi, setDefi] = useState<number | null>(null);
+  const [boardGame, setBoardGame] = useState<Game>("quiz-generique");
   // Lien direct : /jeux?jeu=affiche, ou /jeux?defi=123 (défi lancé par un ami).
   useEffect(() => {
     const sp = new URLSearchParams(window.location.search);
@@ -45,6 +46,7 @@ export default function JeuxClient() {
       else if (isTab(j)) setTabState(j);
     });
   }, []);
+  const showRanking = (g: Game) => { setBoardGame(g); setTab("classement"); };
   const setTab = (t: Tab) => {
     setTabState(t); setDefi(null);
     try { window.history.replaceState(null, "", t === "defi-jour" ? "/jeux" : `/jeux?jeu=${t}`); } catch { /* ignoré */ }
@@ -101,15 +103,15 @@ export default function JeuxClient() {
         </nav>
 
         <div id="jx-stage" className="jx-stage" />
-        {tab === "defi-jour" && <DefiJour player={player} names={names} />}
-        {tab === "quiz" && <Quiz key={`q${defi ?? ""}`} player={player} mode="generique" defi={defi} />}
-        {tab === "nostalgie" && <Quiz key="n" player={player} mode="nostalgie" defi={null} />}
-        {tab === "affiche" && <Affiche player={player} />}
-        {tab === "plus-moins" && <PlusMoins player={player} />}
+        {tab === "defi-jour" && <DefiJour player={player} names={names} onRanking={showRanking} />}
+        {tab === "quiz" && <Quiz key={`q${defi ?? ""}`} player={player} mode="generique" defi={defi} onRanking={showRanking} />}
+        {tab === "nostalgie" && <Quiz key="n" player={player} mode="nostalgie" defi={null} onRanking={showRanking} />}
+        {tab === "affiche" && <Affiche player={player} onRanking={showRanking} />}
+        {tab === "plus-moins" && <PlusMoins player={player} onRanking={showRanking} />}
         {tab === "tier" && <TierList player={player} />}
         {tab === "duel" && <Duel members={members} player={player} />}
         {tab === "badges" && <Badges me={player.me} />}
-        {tab === "classement" && <Board byId={byId} device={player.device} me={player.me} />}
+        {tab === "classement" && <Board key={boardGame} byId={byId} device={player.device} me={player.me} initial={boardGame} />}
       </main>
     </div>
   );
@@ -118,7 +120,7 @@ export default function JeuxClient() {
 
 /* ═══ QUIZ DES GÉNÉRIQUES ═══════════════════════════════════════════════ */
 interface Versus { id: number; name: string; score: number; max: number; good: number }
-function Quiz({ player, mode, defi }: { player: PlayerApi; mode: "generique" | "nostalgie"; defi: number | null }) {
+function Quiz({ player, mode, defi, onRanking }: { player: PlayerApi; mode: "generique" | "nostalgie"; defi: number | null; onRanking: (g: Game) => void }) {
   const nosta = mode === "nostalgie";
   const [rival, setRival] = useState<Versus | null>(null);
   const { share, Toast } = useShare();
@@ -267,6 +269,7 @@ function Quiz({ player, mode, defi }: { player: PlayerApi; mode: "generique" | "
           <div className="jx-actions">
             {result.id && <button type="button" className="gk-btn" onClick={challenge}><Share2 size={17} aria-hidden="true" /> Défier un ami</button>}
             <button type="button" className={result.id ? "gk-btn gk-btn--ghost" : "gk-btn"} onClick={() => { setRival(null); start(); }}><RotateCcw size={17} aria-hidden="true" /> Rejouer</button>
+            <button type="button" className="gk-btn gk-btn--ghost" onClick={() => onRanking(nosta ? "quiz-nostalgie" : "quiz-generique")}><Trophy size={17} aria-hidden="true" /> Voir le classement</button>
           </div>
           {result.id && <p className="jx-note">Le lien envoie les mêmes extraits : à ton ami de faire mieux.</p>}
         </div>
@@ -386,18 +389,48 @@ function Badges({ me }: { me: number | null }) {
 }
 
 /* ═══ CLASSEMENT ET HISTORIQUE ════════════════════════════════════════════ */
-function Board({ byId, device, me }: { byId: Map<number, Member>; device: string; me: number | null }) {
-  const [game, setGame] = useState<Game>("quiz-generique");
-  const [data, setData] = useState<{ available: boolean; best: PlayRow[]; recent: PlayRow[]; history: PlayRow[] } | null>(null);
+interface PlaySummary { score: number; max: number; at: string; good?: number; rounds?: number; date?: string; ok?: boolean; a?: number; b?: number }
+interface PlayerRank { key: string; member_id: number | null; name: string | null; image?: string | null; plays: number; best: number; bestMax: number; avg: number; total: number; wins: number; last: string; history: PlaySummary[] }
+interface BoardData { available: boolean; players: PlayerRank[]; feed: (PlaySummary & { key: string })[]; history: PlayRow[]; meKeys: string[] }
+
+/** « il y a 5 min », « hier », « 12 nov. » */
+function ago(iso: string): string {
+  const s = (Date.now() - Date.parse(iso)) / 1000;
+  if (s < 60) return "à l'instant";
+  if (s < 3600) return `il y a ${Math.floor(s / 60)} min`;
+  if (s < 86_400) return `il y a ${Math.floor(s / 3600)} h`;
+  if (s < 172_800) return "hier";
+  return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+}
+
+function Board({ byId, device, me, initial }: { byId: Map<number, Member>; device: string; me: number | null; initial: Game }) {
+  const [game, setGame] = useState<Game>(initial);
+  const [data, setData] = useState<BoardData | null>(null);
+  const [open, setOpen] = useState<string | null>(null);
   const [local] = useState<LocalPlay[]>(() => (typeof window === "undefined" ? [] : localHistory()));
   useEffect(() => {
     if (!device) return;
     let alive = true;
-    fetch(`/api/games/board?game=${game}&device=${device}${me ? `&member=${me}` : ""}`, { cache: "no-store" }).then((r) => r.json()).then((d) => { if (alive) setData(d); }).catch(() => { if (alive) setData({ available: false, best: [], recent: [], history: [] }); });
+    fetch(`/api/games/board?game=${game}&device=${device}${me ? `&member=${me}` : ""}`, { cache: "no-store" }).then((r) => r.json()).then((d) => { if (alive) { setData(d); setOpen(null); } }).catch(() => { if (alive) setData({ available: false, players: [], feed: [], history: [], meKeys: [] }); });
     return () => { alive = false; };
   }, [game, device, me]);
-  const who = (p: PlayRow) => (p.member_id && byId.get(p.member_id)?.name) || p.player_name || "Invité";
+
+  const unit = (score: number, max: number) => GAME_INFO[game].unit({ score, max });
+  const member = (r: { member_id: number | null }) => (r.member_id ? byId.get(r.member_id) : undefined);
+  const nameOf = (r: PlayerRank) => r.name ?? member(r)?.name ?? "Invité";
+  const byKey = new Map((data?.players ?? []).map((r) => [r.key, r]));
+  const isMe = (key: string) => !!data?.meKeys.includes(key);
+  const myIndex = (data?.players ?? []).findIndex((r) => isMe(r.key));
+  const detail = (p: PlaySummary) => game === "duel" ? `${byId.get(p.a ?? 0)?.name ?? "?"} × ${byId.get(p.b ?? 0)?.name ?? "?"}`
+    : game === "plus-moins" ? "bonnes réponses d'affilée"
+    : game === "defi-jour" ? `${p.date ?? ""} · ${p.ok ? "réussi" : "raté"}`
+    : p.good != null ? `${p.good} / ${p.rounds ?? "?"} bonnes réponses` : "";
+  const face = (r: PlayerRank) => {
+    const m = member(r), src = r.image ?? (m?.animeChar || m?.photo);
+    return <span className="jx-face-sm">{src ? <Image src={src} alt="" width={40} height={40} sizes="40px" /> : <b>{nameOf(r).slice(0, 1).toUpperCase()}</b>}</span>;
+  };
   const mine = data?.available ? data.history : null;
+
   return (
     <section className="jx-panel" aria-labelledby="jx-board-title">
       <div className="jx-intro is-left">
@@ -407,26 +440,68 @@ function Board({ byId, device, me }: { byId: Map<number, Member>; device: string
             <button key={g} type="button" className="gk-chip" aria-pressed={game === g} onClick={() => setGame(g)}><span>{GAME_INFO[g].label}</span></button>
           ))}
         </div>
-        {game === "defi-jour" && <p className="jx-note">Tous les défis réussis, tous jours confondus. Le classement du jour est dans l&apos;onglet Défi du jour.</p>}
       </div>
+
       {!data ? <p className="jx-note" role="status">Chargement…</p> : !data.available ? (
         <p className="jx-note">Le classement commun arrive bientôt. En attendant, ton historique est gardé sur cet appareil.</p>
       ) : (
-        <ol className="jx-board">
-          {data.best.map((p, i) => (
-            <li key={p.id ?? i} className={(me && p.member_id === me) ? "is-me" : ""}>
-              <b className="jx-rank">{i + 1}</b><span>{who(p)}</span>
-              <strong>{GAME_INFO[game].unit({ score: p.score, max: p.max_score })}</strong>
-              {game === "duel" && <small>{byId.get(Number(p.detail.a))?.name} × {byId.get(Number(p.detail.b))?.name}</small>}
-            </li>
-          ))}
-          {!data.best.length && <li className="jx-empty">Personne n&apos;a encore joué. À toi l&apos;honneur.</li>}
-        </ol>
+        <>
+          <div className="jx-board-stats">
+            <p><b>{data.players.length}</b><small>joueur{data.players.length > 1 ? "s" : ""}</small></p>
+            <p><b>{data.players.reduce((n, r) => n + r.plays, 0)}</b><small>partie{data.players.reduce((n, r) => n + r.plays, 0) > 1 ? "s" : ""}</small></p>
+            <p className="is-me"><b>{myIndex >= 0 ? `${myIndex + 1}e` : "–"}</b><small>{myIndex >= 0 ? "ta place" : "pas encore classé"}</small></p>
+          </div>
+          <p className="jx-note">{game === "defi-jour" ? "Classés par total de points, tous jours confondus." : game === "duel" ? "Classés par meilleure compatibilité trouvée." : "Classés par meilleur score."} Touche un joueur pour voir toutes ses parties.</p>
+
+          <ol className="jx-ranking">
+            {data.players.map((r, i) => {
+              const expanded = open === r.key;
+              return (
+                <li key={r.key} className={`${isMe(r.key) ? "is-me" : ""}${expanded ? " is-open" : ""}`}>
+                  <button type="button" className="jx-ranking-row" aria-expanded={expanded} aria-controls={`jx-p-${r.key}`} onClick={() => setOpen(expanded ? null : r.key)}>
+                    <b className="jx-rank">{i + 1}</b>
+                    {face(r)}
+                    <span className="jx-ranking-who">
+                      <strong>{nameOf(r)}{isMe(r.key) ? " (toi)" : ""}</strong>
+                      <small>{r.plays} partie{r.plays > 1 ? "s" : ""}{game !== "duel" && game !== "plus-moins" ? ` · moy. ${unit(r.avg, r.bestMax).split(" / ")[0]}` : ""} · {ago(r.last)}</small>
+                    </span>
+                    <span className="jx-ranking-score">
+                      <strong>{game === "defi-jour" ? `${r.total} pts` : unit(r.best, r.bestMax)}</strong>
+                      <small>{game === "defi-jour" ? `${r.wins} réussi${r.wins > 1 ? "s" : ""}` : "record"}</small>
+                    </span>
+                  </button>
+                  {expanded && (
+                    <ul id={`jx-p-${r.key}`} className="jx-history jx-ranking-plays">
+                      {r.history.map((p, k) => (
+                        <li key={k}><span>{DAY.format(new Date(p.at))}</span><strong>{unit(p.score, p.max)}</strong><small>{detail(p)}</small></li>
+                      ))}
+                      {r.plays > r.history.length && <li className="jx-empty">Et {r.plays - r.history.length} partie{r.plays - r.history.length > 1 ? "s" : ""} plus ancienne{r.plays - r.history.length > 1 ? "s" : ""}.</li>}
+                    </ul>
+                  )}
+                </li>
+              );
+            })}
+            {!data.players.length && <li className="jx-empty">Personne n&apos;a encore joué. À toi l&apos;honneur.</li>}
+          </ol>
+
+          {data.feed.length > 0 && (
+            <>
+              <h3 className="jx-h3">Dernières parties</h3>
+              <ul className="jx-feed">
+                {data.feed.map((p, i) => {
+                  const r = byKey.get(p.key);
+                  return <li key={i} className={isMe(p.key) ? "is-me" : ""}><strong>{r ? nameOf(r) : "Invité"}</strong><b>{unit(p.score, p.max)}</b><small>{detail(p)}{detail(p) ? " · " : ""}{ago(p.at)}</small></li>;
+                })}
+              </ul>
+            </>
+          )}
+        </>
       )}
+
       <h3 className="jx-h3">Mon historique</h3>
       <ul className="jx-history">
         {(mine ?? []).filter((p) => p.game === game).map((p, i) => (
-          <li key={`s${i}`}><span>{DAY.format(new Date(p.created_at))}</span><strong>{GAME_INFO[game].unit({ score: p.score, max: p.max_score })}</strong><small>{game === "duel" ? `${byId.get(Number(p.detail.a))?.name ?? "?"} × ${byId.get(Number(p.detail.b))?.name ?? "?"}` : game === "plus-moins" ? "bonnes réponses d'affilée" : game === "defi-jour" ? String(p.detail.date ?? "") : `${p.detail.good ?? "?"} bonnes réponses`}</small></li>
+          <li key={`s${i}`}><span>{DAY.format(new Date(p.created_at))}</span><strong>{unit(p.score, p.max_score)}</strong><small>{detail({ score: p.score, max: p.max_score, at: p.created_at, good: p.detail.good as number | undefined, rounds: p.detail.rounds as number | undefined, date: p.detail.date as string | undefined, ok: p.detail.ok as boolean | undefined, a: Number(p.detail.a), b: Number(p.detail.b) })}</small></li>
         ))}
         {!mine && local.filter((p) => p.game === game).map((p, i) => (
           <li key={`l${i}`}><span>{DAY.format(new Date(p.at))}</span><strong>{GAME_INFO[game].unit(p)}</strong><small>{p.label}</small></li>
