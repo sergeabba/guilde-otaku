@@ -17,7 +17,21 @@ type ShareMember = Pick<Member, "id" | "name" | "rank" | "photo" | "animeChar" |
 export default function ShareSheet({ member, open, onClose }: { member: ShareMember; open: boolean; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState<"download" | "share" | null>(null);
-  const cardBlob = useRef<Blob | null>(null);
+  // Carte 2K préparée dès l'ouverture : sur iPhone, le partage doit s'ouvrir juste après l'appui.
+  const cardJob = useRef<Promise<Blob> | null>(null);
+  const startCard = () => {
+    cardJob.current ??= fetch(memberCardUrl(member, false, true)).then((res) => {
+      if (!res.ok || !res.headers.get("content-type")?.startsWith("image/")) throw new Error("card");
+      return res.blob();
+    });
+    cardJob.current.catch(() => { cardJob.current = null; });
+    return cardJob.current;
+  };
+  const cardFor = useRef(member.id);
+  useEffect(() => {
+    if (cardFor.current !== member.id) { cardFor.current = member.id; cardJob.current = null; }
+    if (open) void startCard().catch(() => {});
+  });
   const [cardFailed, setCardFailed] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const { notify, Toast } = useShare();
@@ -49,7 +63,7 @@ export default function ShareSheet({ member, open, onClose }: { member: ShareMem
 
   const profileUrl = `${window.location.origin}${memberProfilePath(member.id)}`;
   const text = `${member.name}, ${member.rank} de la Guilde Otaku`;
-  const fileName = `carte-otaku-${fileSlug(member.name)}.png`;
+  const fileName = `carte-otaku-${fileSlug(member.name)}.jpg`;
 
   const copy = async () => {
     try {
@@ -71,14 +85,8 @@ export default function ShareSheet({ member, open, onClose }: { member: ShareMem
     setTimeout(() => setCopied(false), 2200);
   };
 
-  const fetchCard = async (): Promise<Blob> => {
-    // Carte en 2K, gardée pour les appuis suivants (partage iOS immédiat).
-    if (cardBlob.current) return cardBlob.current;
-    const res = await fetch(memberCardUrl(member, false, true));
-    if (!res.ok || !res.headers.get("content-type")?.startsWith("image/png")) throw new Error("card");
-    cardBlob.current = await res.blob();
-    return cardBlob.current;
-  };
+  const fetchCard = (): Promise<Blob> => startCard();
+
 
   const download = async () => {
     setBusy("download");
@@ -99,7 +107,8 @@ export default function ShareSheet({ member, open, onClose }: { member: ShareMem
     try {
       let shared = false;
       try {
-        const file = new File([await fetchCard()], fileName, { type: "image/png" });
+        const blob = await fetchCard();
+        const file = new File([blob], fileName, { type: blob.type || "image/jpeg" });
         if (navigator.canShare?.({ files: [file] })) {
           await navigator.share({ files: [file], title: text, text: `${text}\n${profileUrl}` });
           shared = true;

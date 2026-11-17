@@ -3,7 +3,7 @@
 import { saveImage, saveMessage } from "../../../lib/save-image";
 import { fileSlug } from "../../../lib/share";
 import { optimizedSrc } from "../../../lib/img";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal, flushSync } from "react-dom";
 import { useRouter } from "next/navigation";
 import { viewTransition, waitFor } from "../../../lib/view-transition";
@@ -106,17 +106,31 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
     setDays(Number.isFinite(d) ? d : null);
   }, [member.birthday]);
 
-  // Carte en 2K ; gardée en mémoire pour qu'un second appui ouvre tout de suite le partage iOS.
-  const cardBlob = useRef<Blob | null>(null);
+  // Carte en 2K préparée dès que le bouton apparaît à l'écran : sur iPhone, le partage
+  // (« Enregistrer l'image ») doit s'ouvrir juste après l'appui, sans attendre le serveur.
+  const cardJob = useRef<{ url: string; job: Promise<Blob> } | null>(null);
+  const cardIo = useRef<IntersectionObserver | null>(null);
+  const startCard = useCallback(() => {
+    // Une carte par adresse : passer au membre suivant prépare la sienne.
+    if (cardJob.current?.url !== cardUrl) {
+      const job = fetch(`${cardUrl}${cardUrl.includes("?") ? "&" : "?"}hd=1`).then((res) => { if (!res.ok) throw new Error(); return res.blob(); });
+      job.catch(() => { if (cardJob.current?.job === job) cardJob.current = null; });
+      cardJob.current = { url: cardUrl, job };
+    }
+    return cardJob.current.job;
+  }, [cardUrl]);
+  // Observe le bouton dès qu'il apparaît (il peut être affiché après le chargement).
+  const cardBtn = useCallback((el: HTMLButtonElement | null) => {
+    cardIo.current?.disconnect();
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    cardIo.current = new IntersectionObserver((e) => { if (e.some((x) => x.isIntersecting)) { cardIo.current?.disconnect(); void startCard().catch(() => {}); } }, { rootMargin: "300px" });
+    cardIo.current.observe(el);
+  }, [startCard]);
+  useEffect(() => () => cardIo.current?.disconnect(), []);
   const downloadCard = async () => {
     setDownloading(true);
     try {
-      if (!cardBlob.current) {
-        const res = await fetch(`${cardUrl}${cardUrl.includes("?") ? "&" : "?"}hd=1`);
-        if (!res.ok) throw new Error();
-        cardBlob.current = await res.blob();
-      }
-      const r = await saveImage(cardBlob.current, `carte-otaku-${fileSlug(member.name)}.png`);
+      const r = await saveImage(await startCard(), `carte-otaku-${fileSlug(member.name)}.jpg`);
       if (r !== "cancelled") notify(saveMessage(r, "Carte"));
     } catch {
       notify("La carte n'a pas pu être générée. Réessaie.");
@@ -240,7 +254,7 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
             {member.bio && <p className="pf-bio">{member.bio}</p>}
 
             <div className="pf-cta">
-              <button type="button" className="gk-btn" onClick={downloadCard} aria-busy={downloading}>
+              <button ref={cardBtn} type="button" className="gk-btn" onClick={downloadCard} aria-busy={downloading}>
                 <Download size={17} aria-hidden="true" /> {downloading ? "Préparation…" : "Télécharger sa carte"}
               </button>
               <button type="button" className="gk-btn gk-btn--ghost" onClick={() => setShareOpen(true)}>

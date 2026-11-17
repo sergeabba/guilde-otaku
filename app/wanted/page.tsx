@@ -132,7 +132,8 @@ async function renderPosterPng(member: Member, viewMode: ViewMode): Promise<Blob
   ctx.fillText("GUILDE OTAKU · guilde-otaku.vercel.app/wanted", px, 1420);
   ctx.textAlign = "right"; ctx.font = `900 74px ${serif}`; ctx.fillText("MARINE", px + pw, 1430);
 
-  return new Promise((res, rej) => canvas.toBlob((b) => (b ? res(b) : rej(new Error("blob"))), "image/png"));
+  // JPEG haute qualité : 5 fois plus léger qu'un PNG, donc prêt plus vite.
+  return new Promise((res, rej) => canvas.toBlob((b) => { canvas.width = canvas.height = 0; if (b) res(b); else rej(new Error("blob")); }, "image/jpeg", 0.93));
 }
 
 /** Le détail d'une prime, ligne par ligne, comme un reçu. */
@@ -255,16 +256,31 @@ export default function WantedPage() {
     stageRef.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
   };
 
-  // Affiche gardée en mémoire (par membre et portrait) : un second appui ouvre tout de suite le partage iOS.
-  const posterCache = useRef(new Map<string, Blob>());
+  // Affiches préparées à l'avance (4 au plus en mémoire) : sur iPhone, le partage
+  // (« Enregistrer l'image ») doit s'ouvrir juste après l'appui.
+  const posterCache = useRef(new Map<string, Promise<Blob>>());
+  const posterFor = useCallback((m: Member, v: ViewMode) => {
+    const k = `${m.id}-${v}`, cache = posterCache.current;
+    let job = cache.get(k);
+    if (!job) {
+      job = renderPosterPng(m, v);
+      job.catch(() => cache.delete(k));
+      cache.set(k, job);
+      while (cache.size > 4) cache.delete(cache.keys().next().value!);
+    }
+    return job;
+  }, []);
+  // L'avis affiché depuis un instant : on prépare son affiche en arrière-plan.
+  useEffect(() => {
+    if (!member) return;
+    const t = window.setTimeout(() => { void posterFor(member, viewMode).catch(() => {}); }, 900);
+    return () => window.clearTimeout(t);
+  }, [member, viewMode, posterFor]);
   const download = async () => {
     if (!member || downloading) return;
     setDownloading(true);
     try {
-      const k = `${member.id}-${viewMode}`;
-      const blob = posterCache.current.get(k) ?? await renderPosterPng(member, viewMode);
-      posterCache.current.set(k, blob);
-      const r = await saveImage(blob, `wanted-${fileSlug(member.name)}.png`);
+      const r = await saveImage(await posterFor(member, viewMode), `wanted-${fileSlug(member.name)}.jpg`);
       if (r !== "cancelled") notify(saveMessage(r, "Affiche"));
     } catch {
       notify("Portrait protégé : téléchargement impossible");
