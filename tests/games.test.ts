@@ -198,3 +198,25 @@ describe("classement complet", () => {
     expect(rankPlayers("defi-jour", rows).map((x) => x.total)).toEqual([230, 150]);
   });
 });
+
+import { applyRound, isRoomCode, livePoints, liveRanking, roomCode } from "../app/jeux/live-logic";
+describe("quiz en direct", () => {
+  it("compte les points de la manche pour chaque joueur", () => {
+    expect([livePoints(true, 0), livePoints(true, 20_000), livePoints(false, 0)]).toEqual([150, 100, 0]);
+    const r1 = applyRound({}, { a: { choice: 2, ms: 0 }, b: { choice: 1, ms: 0 }, c: { choice: 2, ms: 10_000 } }, 2);
+    expect(r1.gains).toEqual({ a: 150, b: 0, c: 125 });
+    const r2 = applyRound(r1.scores, { b: { choice: 0, ms: 20_000 } }, 0);
+    expect(r2.scores).toEqual({ a: 150, b: 100, c: 125 });
+  });
+  it("classe les joueurs, garde ceux qui sont partis", () => {
+    const peers = [{ pid: "a", name: "A", image: null }, { pid: "b", name: "B", image: null }];
+    const r = liveRanking({ a: 100, b: 250, z: 300 }, peers);
+    expect(r.map((x) => [x.pid, x.gone])).toEqual([["z", true], ["b", false], ["a", false]]);
+    expect(liveRanking({ b: 5, a: 5 }, peers).map((x) => x.pid)).toEqual(liveRanking({ a: 5, b: 5 }, [...peers].reverse()).map((x) => x.pid));
+  });
+  it("génère des codes de salle lisibles", () => {
+    for (let i = 0; i < 50; i++) expect(isRoomCode(roomCode())).toBe(true);
+    expect(isRoomCode("ABCD0")).toBe(false);
+    expect(isRoomCode("abcde")).toBe(false);
+  });
+});

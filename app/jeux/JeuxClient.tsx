@@ -6,7 +6,7 @@
 // l'historique est aussi gardé sur l'appareil (utile tant que la table n'existe pas).
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { ArrowUpDown, Award, CalendarCheck, Check, Clock, Grid3x3, Headphones, Heart, ListOrdered, Play, Radio, RotateCcw, Share2, Swords, Trophy, User } from "lucide-react";
+import { ArrowUpDown, Users, Award, CalendarCheck, Check, Clock, Grid3x3, Headphones, Heart, ListOrdered, Play, Radio, RotateCcw, Share2, Swords, Trophy, User } from "lucide-react";
 import GuildeHeader from "../components/GuildeHeader";
 import { fetchMembers } from "../utils/dataAdapter";
 import { useShare } from "../hooks/useShare";
@@ -16,12 +16,14 @@ import type { DuelResult } from "../../lib/games/duel";
 import type { QuizCorrection, QuizRound } from "../../lib/games/quiz";
 import { DAY, GAME_INFO, ROUND_MS, localHistory, pushLocal, usePlayer, type Game, type LocalPlay, type Play as PlayRow, type PlayerApi } from "./shared";
 import { Affiche, DefiJour, PlusMoins, TierList } from "./Arcade";
+import Live from "./Live";
 import "./jeux.css";
 
-type Tab = "defi-jour" | "quiz" | "nostalgie" | "affiche" | "plus-moins" | "tier" | "duel" | "badges" | "classement";
+type Tab = "defi-jour" | "direct" | "quiz" | "nostalgie" | "affiche" | "plus-moins" | "tier" | "duel" | "badges" | "classement";
 
 const MENU: { id: Tab; label: string; sub: string; Icon: typeof Award; color: string }[] = [
   { id: "defi-jour", label: "Défi du jour", sub: "Une question, une seule chance", Icon: CalendarCheck, color: "#f5a524" },
+  { id: "direct", label: "Quiz en direct", sub: "À plusieurs, en temps réel", Icon: Users, color: "#2dd4bf" },
   { id: "quiz", label: "Quiz génériques", sub: "10 extraits à reconnaître", Icon: Headphones, color: "#e8412c" },
   { id: "nostalgie", label: "Blind test Nostalgie", sub: "Club Dorothée, Récré A2", Icon: Radio, color: "#ff6b9a" },
   { id: "affiche", label: "L'Affiche en morceaux", sub: "Case par case", Icon: Grid3x3, color: "#3fa7d6" },
@@ -37,12 +39,15 @@ export default function JeuxClient() {
   const [tab, setTabState] = useState<Tab>("defi-jour");
   const [defi, setDefi] = useState<number | null>(null);
   const [boardGame, setBoardGame] = useState<Game>("quiz-generique");
+  const [salle, setSalle] = useState<string | null>(null);
   // Lien direct : /jeux?jeu=affiche, ou /jeux?defi=123 (défi lancé par un ami).
   useEffect(() => {
     const sp = new URLSearchParams(window.location.search);
     const d = Number(sp.get("defi")), j = sp.get("jeu");
     void Promise.resolve().then(() => {
-      if (Number.isInteger(d) && d > 0) { setDefi(d); setTabState("quiz"); }
+      const room = sp.get("salle");
+      if (room) { setSalle(room.toUpperCase().slice(0, 5)); setTabState("direct"); }
+      else if (Number.isInteger(d) && d > 0) { setDefi(d); setTabState("quiz"); }
       else if (isTab(j)) setTabState(j);
     });
   }, []);
@@ -104,6 +109,7 @@ export default function JeuxClient() {
 
         <div id="jx-stage" className="jx-stage" />
         {tab === "defi-jour" && <DefiJour player={player} names={names} onRanking={showRanking} />}
+        {tab === "direct" && <Live player={player} members={members} initialCode={salle} />}
         {tab === "quiz" && <Quiz key={`q${defi ?? ""}`} player={player} mode="generique" defi={defi} onRanking={showRanking} />}
         {tab === "nostalgie" && <Quiz key="n" player={player} mode="nostalgie" defi={null} onRanking={showRanking} />}
         {tab === "affiche" && <Affiche player={player} onRanking={showRanking} />}
