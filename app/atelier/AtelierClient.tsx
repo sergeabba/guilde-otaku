@@ -70,6 +70,8 @@ const decoded = (max = 260) => {
   if (!img) return Promise.resolve();
   return Promise.race([img.decode().catch(() => {}), new Promise<void>((r) => setTimeout(r, max))]);
 };
+/** Mélange de Fisher-Yates (appelé au chargement, jamais pendant le rendu). */
+const shuffled = <T,>(list: T[]) => { const a = [...list]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const pick = <T,>(list: T[], n: number) => [...list].sort(() => Math.random() - 0.5).slice(0, n);
 
 export default function AtelierClient() {
@@ -92,7 +94,8 @@ export default function AtelierClient() {
     const videos = fetch("/api/atelier/videos").then((r) => (r.ok ? r.json() : { videos: [] })).then((d) => ((d.videos ?? []) as DriveVideo[]).map(fromDrive)).catch(() => [] as AtelierImage[]);
     fetch("/api/atelier")
       .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
-      .then(async (data) => { const list: AtelierImage[] = data.images ?? []; setImages([...list, ...(await videos)]); setFan(pick(list, 3)); })
+      .then(async (data) => { const list: AtelierImage[] = data.images ?? []; // Ordre aléatoire à chaque visite (images et vidéos mêlées).
+        setImages(shuffled([...list, ...(await videos)])); setFan(pick(list, 3)); })
       .catch(() => { setError(true); setImages([]); });
   }, []);
 
