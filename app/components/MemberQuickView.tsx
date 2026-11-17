@@ -1,5 +1,6 @@
 "use client";
 
+import { optimizedSrc } from "../../lib/img";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
@@ -127,7 +128,7 @@ export default function MemberQuickView({ member, onClose, viewMode }: { member:
             {extras.displayNameRomaji && <p className="pf-alias" lang="ja-Latn">{extras.displayNameRomaji}</p>}
             <div className="pf-rank">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={rankLogos[member.rank as Rank]} alt="" width={100} height={40} />
+              <img src={optimizedSrc(rankLogos[member.rank as Rank], 256)} alt="" width={100} height={40} />
               <span className="pf-rank-tag">{member.rank}</span>
               {romaji && <RomajiLabel romaji={romaji} className="pf-rank-romaji" />}
             </div>

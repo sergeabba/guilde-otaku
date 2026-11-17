@@ -1,5 +1,6 @@
 "use client";
 
+import { optimizedSrc } from "../../../lib/img";
 import { useEffect, useRef, useState } from "react";
 import { createPortal, flushSync } from "react-dom";
 import { useRouter } from "next/navigation";
@@ -204,7 +205,7 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
 
             <div className="pf-rank">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={rankLogos[member.rank as Rank]} alt="" width={120} height={48} />
+              <img src={optimizedSrc(rankLogos[member.rank as Rank], 256)} alt="" width={120} height={48} />
               <span className="pf-rank-tag">{member.rank}</span>
               {romaji && <RomajiLabel romaji={romaji} className="pf-rank-romaji" />}
             </div>

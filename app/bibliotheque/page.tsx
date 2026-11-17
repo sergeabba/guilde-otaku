@@ -1,5 +1,6 @@
 "use client";
 
+import { optimizedSrc } from "../../lib/img";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
@@ -138,8 +139,10 @@ export default function BibliothequePage() {
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
     pendingLink.current = { fiche: p.get("fiche") ?? undefined, chronique: p.get("chronique") ?? undefined };
-    try { setAntiSpoiler(localStorage.getItem(SPOILER_KEY) === "on"); } catch {}
-    fetchOeuvres();
+    void Promise.resolve().then(() => {
+      try { setAntiSpoiler(localStorage.getItem(SPOILER_KEY) === "on"); } catch {}
+      fetchOeuvres();
+    });
   }, [fetchOeuvres]);
 
   const entries: BiblioEntry[] = useMemo(() => oeuvres.map((d) => ({
@@ -336,7 +339,7 @@ export default function BibliothequePage() {
               <span className="gk-stamp" aria-hidden="true">Tokushū</span>
             </div>
 
-            <button type="button" className={`gk-panel gk-press bb-une${une.backdrop ? " has-bd" : ""}`} onClick={() => open(une, chroniques)} style={{ "--tag": une.color, "--bd": une.backdrop ? `url(${JSON.stringify(une.backdrop)})` : "none" } as React.CSSProperties}>
+            <button type="button" className={`gk-panel gk-press bb-une${une.backdrop ? " has-bd" : ""}`} onClick={() => open(une, chroniques)} style={{ "--tag": une.color, "--bd": une.backdrop ? `url(${JSON.stringify(optimizedSrc(une.backdrop, 1080))})` : "none" } as React.CSSProperties}>
               <div className="bb-une-cover">
                 {une.cover && <OptimizedImage src={une.cover} alt="" priority />}
               </div>

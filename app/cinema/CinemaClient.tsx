@@ -3,6 +3,7 @@
 // Le Cinéma Otaku : une affiche à la une, des rangées d'animes disponibles
 // légalement en France, et une salle de projection (bande-annonce plein cadre,
 // plateformes où regarder la série, données JustWatch via TMDB).
+import { optimizedSrc } from "../../lib/img";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, ExternalLink, Maximize, Play, X } from "lucide-react";
@@ -73,7 +74,7 @@ export default function CinemaClient({ rows, hero: picked = null, guild = null }
           </div>
         </section>
       ) : !hasGuild && hero && (
-        <section className="cin-hero" style={{ "--bd": hero.backdrop ? `url(${JSON.stringify(hero.backdrop)})` : "none" } as React.CSSProperties}>
+        <section className="cin-hero" style={{ "--bd": hero.backdrop ? `url(${JSON.stringify(optimizedSrc(hero.backdrop, 1200))})` : "none" } as React.CSSProperties}>
           <div className="gk-wrap cin-hero-inner">
             <span className="gk-chapter"><b>▶</b><span>GEKIJŌ · LE CINÉMA OTAKU</span></span>
             <p className="cin-hero-kicker">À l&apos;affiche ce soir</p>

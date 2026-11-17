@@ -1,5 +1,6 @@
 "use client";
 
+import { optimizedSrc } from "../../lib/img";
 import { useState, useMemo, useEffect, useRef, useCallback, useSyncExternalStore } from "react";
 import { createPortal, flushSync } from "react-dom";
 import Image from "next/image";
@@ -413,7 +414,7 @@ export default function HomePageClient({ initialMembers, featuredFilm, atelierTi
                     style={{ "--rk": rankAccents[rank] } as React.CSSProperties}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={rankLogos[rank]} alt="" loading="lazy" />
+                    <img src={optimizedSrc(rankLogos[rank], 256)} alt="" loading="lazy" decoding="async" />
                     <strong>{rank}</strong>
                     <small aria-hidden="true">{ROMAN[i]} {rankRomaji[rank]}</small>
                     <span className="hm-rank-n">{n} {n > 1 ? "membres" : "membre"}</span>
@@ -508,7 +509,7 @@ export default function HomePageClient({ initialMembers, featuredFilm, atelierTi
                     >
                       <div className="hm-rank-head">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={rankLogos[rank as Rank]} alt="" loading="lazy" />
+                        <img src={optimizedSrc(rankLogos[rank as Rank], 256)} alt="" loading="lazy" decoding="async" />
                         <h3>{rank}</h3>
                         <span className="gk-jp" aria-hidden="true">{rankRomaji[rank as Rank]}</span>
                         <span className="gk-tag">{rankMembers.length} {rankMembers.length > 1 ? "membres" : "membre"}</span>
