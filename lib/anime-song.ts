@@ -18,10 +18,17 @@ export const SONG_COUNT = SONGS.length;
 
 /** Pochette, extrait et lien Apple Music d'un titre (iTunes Lookup, sans clé).
  *  Un échec lève une erreur : il n'est pas mis en cache, le prochain appel réessaie. */
+// Certains titres ne sont vendus que dans une boutique (ex. génériques de JoJo : Japon
+// seulement) : on essaie plusieurs pays, dans l'ordre.
+const STORES = ["US", "JP", "FR"];
 const lookupCached = unstable_cache(async (id: number) => {
-  const res = await fetch(`https://itunes.apple.com/lookup?id=${id}&country=US&entity=song`, { signal: AbortSignal.timeout(6000) });
-  if (!res.ok) throw new Error(`iTunes ${res.status}`);
-  const r = (await res.json())?.results?.[0];
+  let r: Record<string, unknown> | undefined;
+  for (const country of STORES) {
+    const res = await fetch(`https://itunes.apple.com/lookup?id=${id}&country=${country}&entity=song`, { signal: AbortSignal.timeout(6000) });
+    if (!res.ok) throw new Error(`iTunes ${res.status}`);
+    r = (await res.json())?.results?.[0];
+    if (r?.previewUrl) break;
+  }
   if (!r) throw new Error("iTunes : titre introuvable");
   const https = (u: unknown) => (typeof u === "string" && u.startsWith("https://") ? u : null);
   return {
@@ -29,7 +36,7 @@ const lookupCached = unstable_cache(async (id: number) => {
     preview: https(r.previewUrl),
     appleUrl: https(r.trackViewUrl),
   };
-}, ["itunes-lookup-v2"], { revalidate: 60 * 60 * 24 * 3 });
+}, ["itunes-lookup-v3"], { revalidate: 60 * 60 * 24 * 3 });
 
 const lookup = (id: number) => lookupCached(id).catch(() => null);
 
