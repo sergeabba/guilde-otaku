@@ -136,17 +136,23 @@ export async function POST(req: NextRequest) {
       }
 
       const buffer = Buffer.from(await file.arrayBuffer());
-      const finalName = sanitizeFilename(file.name);
+      let finalName = sanitizeFilename(file.name).replace(/_+/g, "_");
+      const put = (name: string) => adminClient.storage.from(BUCKET).upload(name, buffer, { contentType: file.type || "image/jpeg", upsert: true });
 
-      const { error: uploadError } = await adminClient.storage
-        .from(BUCKET)
-        .upload(finalName, buffer, {
-          contentType: file.type || "image/jpeg",
-          upsert: true,
-        });
+      let { error: uploadError } = await put(finalName);
+      // Refus sur ce nom précis (fichier verrouillé, nom refusé…) : nouvel essai sous un nom unique.
+      if (uploadError) {
+        const dot = finalName.lastIndexOf(".");
+        const retry = `${(dot > 0 ? finalName.slice(0, dot) : finalName).slice(0, 80)}-${Date.now().toString(36)}${dot > 0 ? finalName.slice(dot) : ".jpg"}`;
+        const second = await put(retry);
+        if (!second.error) { finalName = retry; uploadError = null; }
+        else uploadError = second.error;
+      }
 
       if (uploadError) {
-        results.push({ filename: finalName, url: "", success: false, error: "Erreur d'upload" });
+        // Raison exacte du stockage (taille, format, droits…) au lieu d'un message générique.
+        console.error("[atelier upload]", finalName, uploadError.message);
+        results.push({ filename: finalName, url: "", success: false, error: `stockage : ${uploadError.message}` });
         continue;
       }
 

@@ -17,6 +17,8 @@ const toForm = (r: SupabaseAtelierRow): Form => ({
   prompt: r.prompt ?? "", universe: r.universe ?? "Guilde Otaku", accent: r.accent ?? "#8b5cf6",
 });
 
+const shuffled = <T,>(list: T[]) => { const a = [...list]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
 // Réduit les grandes images avant l'envoi (1920 px max, JPEG pour les PNG).
 function compressImage(file: File, maxSize = 1920, quality = 0.85): Promise<Blob> {
   return new Promise((resolve) => {
@@ -52,6 +54,7 @@ export default function AdminAtelierPage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
+  const order = useRef<string[]>([]);
   const [confirm, confirmNode] = useConfirm();
   const [notify, toasts] = useToast();
 
@@ -61,7 +64,15 @@ export default function AdminAtelierPage() {
       const res = await fetch("/api/atelier");
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || `Erreur ${res.status}`);
-      setImages(data.images || []);
+      // Ordre aléatoire (comme sur le site), stable pendant la session : les nouvelles
+      // images passent en tête, les autres gardent leur place après une modification.
+      const list: SupabaseAtelierRow[] = data.images || [];
+      if (!order.current.length) order.current = shuffled(list.map((i) => i.filename));
+      const rank = new Map(order.current.map((f, k) => [f, k]));
+      const fresh = list.filter((i) => !rank.has(i.filename)).map((i) => i.filename);
+      order.current = [...fresh, ...order.current.filter((f) => list.some((i) => i.filename === f))];
+      const pos = new Map(order.current.map((f, k) => [f, k]));
+      setImages([...list].sort((a, b) => (pos.get(a.filename) ?? 0) - (pos.get(b.filename) ?? 0)));
       setDbWarning(data.db_status && data.db_status !== "connected" ? data.db_error || "Base de données indisponible" : null);
     } catch (e) {
       setLoadError(`Lecture des futilités impossible : ${e instanceof Error ? e.message : "erreur réseau"}`);
@@ -78,7 +89,10 @@ export default function AdminAtelierPage() {
     for (const [i, file] of files.entries()) {
       setProgress({ current: i + 1, total: files.length, name: file.name });
       const fd = new FormData();
-      fd.append("files", await compressImage(file), file.name.replace(/\.png$/i, ".jpg"));
+      // Très grosses images : compression plus forte (le serveur accepte 4,5 Mo par envoi).
+      const big = file.size > 4 * 1024 * 1024;
+      const blob = await compressImage(file, big ? 1600 : 1920, big ? 0.8 : 0.85);
+      fd.append("files", blob, file.name.replace(/\.png$/i, ".jpg"));
       try {
         const res = await fetch("/api/atelier", { method: "POST", headers: getAdminFormDataHeaders(), body: fd });
         const data = await res.json().catch(() => null);
