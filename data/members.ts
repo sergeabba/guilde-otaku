@@ -68,8 +68,8 @@ export const members: Member[] = [
   },
   { 
     id: 3, name: "Dr Leyna-Chloé", rank: "Monarque", birthday: "22 octobre", bio: "La Grande Dr Leyna-Chloé, également nommée la Mère du Peuple ; elle nous guidera tous à la Christmas Bowl. Charisme digne d'une reine.", photo: "/photos/leyna.jpg", animeChar: "/anime/leyna_anime.jpg", color: "#FFD700",
-    stats: { force: 75, vitesse: 82, technique: 96 },
-    special: { name: "Aura Maternelle", effect: "Restaure 50% de ses PV et paralyse l'ennemi de respect." }
+    stats: { force: 100, vitesse: 100, technique: 100 },
+    special: { name: "Ordonnance Souveraine", effect: "Rédige une ordonnance que nul n'ose refuser : sa prestance fige l'adversaire sur place, et un remède de sa pharmacie lui rend 60 % de ses PV." }
   },
   { 
     id: 4, name: "Serge \"Le Don\"", rank: "Ex Monarque", birthday: "12 mars", bio: "Vagabond, héros du Méta dans son esprit, l'un des premiers monarques de la première ère d'Otaku, toujours dévoué à la gente féminine.", photo: "/photos/serge.JPG", animeChar: "/anime/serge_anime.jpg", color: "#FFD700",
