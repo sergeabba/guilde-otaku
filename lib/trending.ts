@@ -44,7 +44,7 @@ export interface TrendingResult {
 const STATUS_FR: Record<string, string> = { RELEASING: "En cours", FINISHED: "Terminé", NOT_YET_RELEASED: "À venir", HIATUS: "En pause", CANCELLED: "Annulé" };
 const FORMAT_FR: Record<string, string> = { TV: "Série", TV_SHORT: "Série courte", MOVIE: "Film", ONA: "Web", OVA: "OVA", SPECIAL: "Spécial", MANGA: "Manga", ONE_SHOT: "One-shot", NOVEL: "Roman" };
 const MONTHS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
-const GENRE_FR: Record<string, string> = {
+export const GENRE_FR: Record<string, string> = {
   Action: "Action", Adventure: "Aventure", Comedy: "Comédie", Drama: "Drame", Ecchi: "Ecchi", Fantasy: "Fantasy", Horror: "Horreur",
   "Mahou Shoujo": "Magical girl", Mecha: "Mecha", Music: "Musique", Mystery: "Mystère", Psychological: "Psychologique", Romance: "Romance",
   "Sci-Fi": "Science-fiction", "Slice of Life": "Tranche de vie", Sports: "Sport", Supernatural: "Surnaturel", Thriller: "Thriller",

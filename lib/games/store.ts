@@ -5,7 +5,9 @@ import { createHash } from "node:crypto";
 import { getServiceClient } from "../supabase-admin";
 import { NO_STATS, type MemberStats } from "./badges";
 
-export const GAMES = ["quiz-generique", "quiz-nostalgie", "affiche", "plus-moins", "defi-jour", "duel"] as const;
+export const GAMES = ["quiz-generique", "quiz-nostalgie", "affiche", "plus-moins", "defi-jour", "devine-anime", "devine-perso", "emoji-quiz", "duel"] as const;
+/** Jeux à une partie par jour : classés au total de points. */
+export const DAILY_GAMES: readonly Game[] = ["defi-jour", "devine-anime", "devine-perso"];
 export type Game = (typeof GAMES)[number];
 export const isGame = (g: unknown): g is Game => GAMES.includes(g as Game);
 export interface Play { id: number; game: Game; device: string; member_id: number | null; player_name: string | null; score: number; max_score: number; detail: Record<string, unknown>; created_at: string }
@@ -111,7 +113,7 @@ export async function saveTier(row: TierListRow): Promise<string | null> {
 }
 
 /* ── Classement complet d'un jeu : tous les joueurs, leurs parties ─────── */
-export interface PlaySummary { score: number; max: number; at: string; good?: number; rounds?: number; date?: string; ok?: boolean; a?: number; b?: number }
+export interface PlaySummary { score: number; max: number; at: string; good?: number; rounds?: number; date?: string; ok?: boolean; a?: number; b?: number; tries?: number }
 export interface PlayerRank { key: string; member_id: number | null; name: string | null; plays: number; best: number; bestMax: number; avg: number; total: number; wins: number; last: string; history: PlaySummary[] }
 
 /**
@@ -125,7 +127,7 @@ export const playerKey = (p: { member_id: number | null; device: string }) =>
 function summary(p: Play): PlaySummary {
   const d = p.detail ?? {};
   const num = (v: unknown) => (typeof v === "number" ? v : undefined);
-  return { score: p.score, max: p.max_score, at: p.created_at, good: num(d.good), rounds: num(d.rounds), date: typeof d.date === "string" ? d.date : undefined, ok: typeof d.ok === "boolean" ? d.ok : undefined, a: num(d.a), b: num(d.b) };
+  return { score: p.score, max: p.max_score, at: p.created_at, good: num(d.good), rounds: num(d.rounds), date: typeof d.date === "string" ? d.date : undefined, ok: typeof d.ok === "boolean" ? d.ok : undefined, a: num(d.a), b: num(d.b), tries: num(d.tries) };
 }
 
 /** Rang par meilleur score (défi du jour : par total de points), puis par nombre de parties. */
@@ -142,7 +144,7 @@ export function rankPlayers(game: Game, rows: Play[]): PlayerRank[] {
     by.set(key, r);
   }
   const list = [...by.values()].map((r) => ({ ...r, avg: Math.round(r.total / r.plays) }));
-  const main = (r: PlayerRank) => (game === "defi-jour" ? r.total : r.best);
+  const main = (r: PlayerRank) => (DAILY_GAMES.includes(game) ? r.total : r.best);
   return list.sort((a, b) => main(b) - main(a) || b.plays - a.plays || a.last.localeCompare(b.last));
 }
 
@@ -153,4 +155,32 @@ export async function ranking(game: Game): Promise<{ available: boolean; players
   if (error) return { available: false, players: [], feed: [] };
   const rows = (data ?? []) as Play[];
   return { available: true, players: rankPlayers(game, rows), feed: rows.slice(0, 15).map((p) => ({ ...summary(p), key: playerKey(p) })) };
+}
+
+/** La partie du jour d'un joueur pour un jeu quotidien (appareil, ou membre s'il s'est identifié). */
+export async function todayPlay(game: Game, date: string, device: string, memberId: number | null): Promise<Play | null> {
+  const db = getServiceClient();
+  if (!db) return null;
+  const { data, error } = await db.from("game_plays").select("*").eq("game", game).order("created_at", { ascending: false }).limit(1000);
+  if (error) return null;
+  return ((data ?? []) as Play[]).find((p) => p.detail?.date === date && (p.device === device || (!!memberId && p.member_id === memberId))) ?? null;
+}
+
+/* ── Énigmes en émojis proposées par les membres (table emoji_puzzles) ── */
+export interface EmojiRow { id: number; emojis: string; answer: string; hint: string | null; status: "pending" | "approved"; member_id: number | null; player_name: string | null; created_at: string }
+
+export async function emojiRows(status?: EmojiRow["status"]): Promise<{ available: boolean; rows: EmojiRow[] }> {
+  const db = getServiceClient();
+  if (!db) return { available: false, rows: [] };
+  let q = db.from("emoji_puzzles").select("*").order("created_at", { ascending: false }).limit(1000);
+  if (status) q = q.eq("status", status);
+  const { data, error } = await q;
+  return error ? { available: false, rows: [] } : { available: true, rows: (data ?? []) as EmojiRow[] };
+}
+
+export async function addEmoji(row: Omit<EmojiRow, "id" | "created_at">): Promise<string | null> {
+  const db = getServiceClient();
+  if (!db) return "Base non configurée.";
+  const { error } = await db.from("emoji_puzzles").insert(row);
+  return error ? (/emoji_puzzles|relation|schema cache/i.test(error.message) ? "Les propositions arrivent bientôt (migration à lancer)." : "Énigme non enregistrée.") : null;
 }

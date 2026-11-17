@@ -308,3 +308,71 @@
 .jx-podium .is-2 span { height: 70px; background: #c9cdd6; }
 .jx-podium .is-3 span { height: 52px; background: #d08b4f; }
 @media (max-width: 520px) { .jx-live-board li { grid-template-columns: 30px 32px minmax(0, 1fr) auto; } .jx-live-board small { grid-column: 3; grid-row: 2; } }
+
+/* ═══ DEVINE L'ANIME / LE PERSO ═══════════════════════════════════════════ */
+.jx-dle-rules { margin: 4px 0 14px; color: #d7cfc2; line-height: 1.55; }
+.jx-key { padding: 0 5px; color: #0d0c10; font-weight: 800; }
+.jx-key.is-ok { background: #4ade80; } .jx-key.is-near { background: #fbbf24; }
+.jx-dle-left { display: grid; justify-items: center; padding: 6px 12px; border: 2.5px solid var(--gk-accent); }
+.jx-dle-left b { font: 400 1.9rem/1 var(--gk-font-display); color: var(--gk-accent); }
+.jx-dle-left small { font: 800 .7rem var(--gk-font-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--gk-dim); }
+.jx-picker { position: relative; margin-bottom: 12px; }
+.jx-picker .gk-input { width: 100%; font-size: 1.05rem; }
+.jx-picker-list { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 30; list-style: none; margin: 0; padding: 4px; background: #1d1a23; border: 2.5px solid #f6f0e6; box-shadow: 6px 6px 0 var(--gk-accent); max-height: 320px; overflow-y: auto; }
+.jx-picker-list button { width: 100%; display: grid; gap: 1px; padding: 10px; text-align: left; color: #f6f0e6; background: none; border: 0; cursor: pointer; min-height: 48px; }
+.jx-picker-list button:hover, .jx-picker-list button:focus-visible { background: rgba(246,240,228,.08); outline: none; }
+.jx-picker-list strong { font: 900 italic 1rem var(--gk-font-ui); text-transform: uppercase; }
+.jx-picker-list small { color: var(--gk-dim); font-size: .8rem; }
+.jx-dle-rows { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 10px; }
+.jx-dle-rows > li { padding: 10px; border: 2px solid rgba(246,240,228,.18); background: #18161d; animation: jx-in 300ms ease both; }
+.jx-dle-rows > li.is-win { border-color: #4ade80; box-shadow: 4px 4px 0 #4ade80; }
+.jx-dle-title { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.jx-dle-title img { width: 36px; height: 50px; object-fit: cover; border: 2px solid #0d0c10; }
+.jx-dle-title strong { font: 900 italic 1.05rem/1.1 var(--gk-font-ui); text-transform: uppercase; }
+.jx-dle-cells { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
+@media (min-width: 720px) { .jx-dle-cells { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+.jx-dle-cells > span { display: grid; gap: 2px; align-content: start; padding: 6px 7px; background: #2a2731; border: 2px solid #0d0c10; animation: jx-flip 420ms ease both; }
+.jx-dle-cells > span:nth-child(2) { animation-delay: 60ms; } .jx-dle-cells > span:nth-child(3) { animation-delay: 120ms; } .jx-dle-cells > span:nth-child(4) { animation-delay: 180ms; } .jx-dle-cells > span:nth-child(5) { animation-delay: 240ms; } .jx-dle-cells > span:nth-child(6) { animation-delay: 300ms; } .jx-dle-cells > span:nth-child(7) { animation-delay: 360ms; }
+@keyframes jx-flip { from { transform: rotateX(90deg); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .jx-dle-cells > span { animation: none; } }
+.jx-dle-cells > span.is-wide { grid-column: 1 / -1; }
+.jx-dle-cells small { font: 800 .66rem var(--gk-font-ui); letter-spacing: .08em; text-transform: uppercase; opacity: .75; }
+.jx-dle-cells b { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font: 800 .92rem/1.15 var(--gk-font-ui); overflow-wrap: anywhere; }
+.jx-dle-cells > span.is-ok { background: #4ade80; color: #0d0c10; }
+.jx-dle-cells > span.is-near { background: #fbbf24; color: #0d0c10; }
+.jx-dle-cells i { font-style: normal; padding: 1px 5px; background: rgba(0,0,0,.25); }
+.jx-dle-cells i.is-shared { background: #4ade80; color: #0d0c10; }
+.jx-dle-cells > span.is-ok i.is-shared, .jx-dle-cells > span.is-near i.is-shared { background: #0d0c10; color: #4ade80; }
+.jx-dle-end { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 14px; align-items: center; margin: 4px 0 8px; padding: 12px; border: 2.5px solid var(--gk-accent); background: #1d1a23; }
+.jx-dle-end.is-text { grid-template-columns: 1fr; }
+.jx-dle-end img { width: 120px; height: 170px; object-fit: cover; border: 2.5px solid #f6f0e6; }
+.jx-dle-answer { font: 400 clamp(1.4rem, 5vw, 2rem)/1.05 var(--gk-font-display); margin: 4px 0; }
+@media (max-width: 480px) { .jx-dle-end { grid-template-columns: 84px minmax(0, 1fr); } .jx-dle-end img { width: 84px; height: 120px; } }
+.jx-perso { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 14px; align-items: start; margin-bottom: 14px; }
+@media (max-width: 480px) { .jx-perso { grid-template-columns: 112px minmax(0, 1fr); } }
+.jx-perso-pic { aspect-ratio: 3 / 4; display: grid; place-items: center; overflow: hidden; background: repeating-linear-gradient(135deg, #1b1922 0 10px, #24212a 10px 20px); border: 3px solid #f6f0e6; box-shadow: 6px 6px 0 var(--gk-accent); }
+.jx-perso-pic img { width: 100%; height: 100%; object-fit: cover; animation: jx-in 400ms ease both; }
+.jx-perso-pic img.is-pixel { image-rendering: pixelated; }
+.jx-perso-pic span { font: 400 3.4rem var(--gk-font-display); color: var(--gk-accent); }
+.jx-perso-hints { display: grid; gap: 6px; margin: 0; }
+.jx-perso-hints > div { display: grid; gap: 1px; padding: 6px 9px; border-left: 4px solid var(--gk-accent); background: #1d1a23; animation: jx-in 320ms ease both; }
+.jx-perso-hints dt { font: 800 .7rem var(--gk-font-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--gk-dim); }
+.jx-perso-hints dd { margin: 0; font: 800 1rem/1.2 var(--gk-font-ui); }
+.jx-perso-hints > div.is-next { border-left-style: dashed; opacity: .6; }
+.jx-perso-guesses { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 6px; }
+.jx-perso-guesses li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; padding: 8px 10px; border: 2px solid rgba(246,240,228,.18); }
+.jx-perso-guesses li.is-win { border-color: #4ade80; }
+.jx-perso-guesses strong { font: 900 italic 1rem var(--gk-font-ui); text-transform: uppercase; }
+.jx-perso-guesses small { grid-column: 1; color: var(--gk-dim); font-size: .82rem; }
+.jx-perso-tags { grid-column: 2; grid-row: 1 / span 2; display: flex; flex-wrap: wrap; gap: 4px; justify-content: end; align-content: center; }
+.jx-perso-tags i { font: 800 .74rem var(--gk-font-ui); font-style: normal; text-transform: uppercase; padding: 3px 6px; background: #2a2731; }
+.jx-perso-tags i.is-ok { background: #4ade80; color: #0d0c10; }
+
+/* ═══ QUIZ DES ÉMOJIS ═════════════════════════════════════════════════════ */
+.jx-emoji-big { margin: 22px 0 8px; text-align: center; font-size: clamp(2.6rem, 12vw, 4.4rem); line-height: 1.2; letter-spacing: .08em; animation: jx-pop 420ms cubic-bezier(.3,1.6,.5,1) both; }
+.jx-emoji-hint { min-height: 40px; display: grid; justify-items: center; }
+.jx-emoji-hint p { display: inline-flex; align-items: center; gap: 6px; font: 800 1rem var(--gk-font-ui); color: var(--gk-accent); }
+.jx-emoji-cell { width: 56px; font-size: 1.05rem; line-height: 1.2; text-align: center; word-break: break-all; }
+.jx-propose-open { margin-top: 16px; }
+.jx-propose { display: grid; gap: 10px; margin-top: 18px; padding-top: 14px; border-top: 2px solid rgba(246,240,228,.15); }
+.jx-propose-emojis { font-size: 1.5rem; }

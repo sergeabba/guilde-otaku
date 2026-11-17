@@ -220,3 +220,69 @@ describe("quiz en direct", () => {
     expect(isRoomCode("abcde")).toBe(false);
   });
 });
+
+import { charHints, compareAnime, dlePoints, pickDaily, type DleAnime, type DleChar } from "../lib/games/dle-logic";
+import { buildEmoji, checkPuzzle, emojiPoints, openEmoji, scoreEmoji, type Puzzle } from "../lib/games/emoji";
+import emojiBase from "../data/emoji-quiz.json";
+
+describe("Devine l'anime / le perso", () => {
+  const A = (o: Partial<DleAnime>): DleAnime => ({ id: 1, title: "A", alt: null, cover: "c", year: 2010, format: "Série", episodes: 24, score: 80, genres: ["Action", "Drame"], studio: "MAPPA", source: "Manga", ...o });
+  it("compare un essai à l'anime mystère (flèches, proches, genres en commun)", () => {
+    const secret = A({ id: 9, year: 2015, score: 82, episodes: 12, genres: ["Action", "Fantasy"] });
+    const f = compareAnime(A({ id: 2, year: 2014, score: 90, episodes: 24, studio: "MAPPA" }), secret);
+    expect(f.ok).toBe(false);
+    expect([f.year.dir, f.year.near, f.score.dir, f.score.near, f.episodes.dir]).toEqual(["up", true, "down", false, "down"]);
+    expect([f.studio.ok, f.format.ok, f.genres.shared, f.genres.all]).toEqual([true, true, ["Action"], false]);
+    expect(compareAnime(secret, secret).ok).toBe(true);
+  });
+  it("donne le même secret à tout le monde le même jour et des points dégressifs", () => {
+    expect(pickDaily("2026-11-18", 150, "x")).toBe(pickDaily("2026-11-18", 150, "x"));
+    expect(new Set(["2026-11-18", "2026-11-19", "2026-11-20", "2026-11-21"].map((d) => pickDaily(d, 150, "x"))).size).toBeGreaterThan(1);
+    expect([dlePoints(1), dlePoints(6), dlePoints(null), dlePoints(7)]).toEqual([100, 25, 0, 0]);
+  });
+  it("dévoile un indice de plus par essai raté, sans jamais donner le nom", () => {
+    const c: DleChar = { id: 1, name: "Satoru Gojou", alt: [], image: "https://img/x.png", gender: "Homme", age: "28 ans", role: "Personnage principal", anime: "Jujutsu Kaisen", animeId: 5, year: 2020, genres: ["Action"] };
+    const img = (l: 1 | 2) => `/img?l=${l}`;
+    const h0 = charHints(c, 0, img), h3 = charHints(c, 3, img), h9 = charHints(c, 9, img);
+    expect(h0.map((h) => h.label)).toEqual(["Rôle", "Genre", "Âge"]);
+    expect(h3.some((h) => h.value === "Jujutsu Kaisen")).toBe(true);
+    expect(h3.some((h) => h.value === "/img?l=1")).toBe(true);
+    expect(JSON.stringify(h9)).not.toContain("Gojou");
+    expect(JSON.stringify(h9)).not.toContain("x.png");
+    expect(h9.at(-1)).toMatchObject({ label: "Initiale", value: "S…" });
+  });
+});
+
+describe("Quiz des émojis", () => {
+  const P: Puzzle[] = (emojiBase as { emojis: string; answer: string; hint: string }[]).map((p, i) => ({ id: `b${i}`, ...p }));
+  it("toutes les énigmes de base sont valides et les titres uniques", () => {
+    P.forEach((p) => expect(typeof checkPuzzle(p)).toBe("object"));
+    expect(new Set(P.map((p) => p.answer)).size).toBe(P.length);
+  });
+  it("garde le corrigé dans le jeton, l'indice coûte la moitié", () => {
+    const { token, rounds } = buildEmoji(P);
+    expect(rounds).toHaveLength(8);
+    expect(JSON.stringify(rounds)).not.toContain("answers");
+    const key = openEmoji(token)!;
+    rounds.forEach((r, i) => expect(r.choices[key.answers[i]]).toBeTruthy());
+    const res = scoreEmoji(key, key.answers.map((c, i) => ({ choice: c, ms: 20_000, hint: i === 0 })), P);
+    expect([res.score, res.good]).toEqual([750, 8]);
+    expect([emojiPoints(true, 0, false), emojiPoints(true, 20_000, true), emojiPoints(false, 0, false)]).toEqual([150, 50, 0]);
+  });
+  it("refuse le texte, le japonais et les énigmes trop courtes ou trop longues", () => {
+    expect(typeof checkPuzzle({ emojis: "🍥🦊", answer: "Naruto" })).toBe("object");
+    expect(checkPuzzle({ emojis: "🍥", answer: "Naruto" })).toMatch(/2 à 8/);
+    expect(checkPuzzle({ emojis: "🍥abc🦊", answer: "Naruto" })).toMatch(/2 à 8/);
+    expect(checkPuzzle({ emojis: "🍥🦊🍜🥷🍥🦊🍜🥷🍥", answer: "Naruto" })).toMatch(/2 à 8/);
+    expect(checkPuzzle({ emojis: "🍥🦊", answer: "ナルト" })).toMatch(/Titre/);
+    expect(typeof checkPuzzle({ emojis: "👨‍👩‍👧 7️⃣", answer: "Test" })).toBe("object");
+  });
+});
+
+import { isSequel } from "../lib/games/dle";
+describe("animes mystère : pas de suites", () => {
+  it("reconnaît les suites", () => {
+    for (const t of ["One-Punch Man Season 2", "Attack on Titan Season 3 Part 2", "Mob Psycho 100 II", "Naruto: Shippuden", "Demon Slayer: Kimetsu no Yaiba Entertainment District Arc", "Kaguya-sama: Love is War 2nd Season", "Attack on Titan Final Season", "Overlord II"]) expect([t, isSequel(t)]).toEqual([t, true]);
+    for (const t of ["Attack on Titan", "One Punch Man", "Mob Psycho 100", "Naruto", "Spy x Family", "Steins;Gate", "Code Geass: Lelouch of the Rebellion"]) expect([t, isSequel(t)]).toEqual([t, false]);
+  });
+});

@@ -6,7 +6,7 @@
 // l'historique est aussi gardé sur l'appareil (utile tant que la table n'existe pas).
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { ArrowUpDown, Users, Award, CalendarCheck, Check, Clock, Grid3x3, Headphones, Heart, ListOrdered, Play, Radio, RotateCcw, Share2, Swords, Trophy, User } from "lucide-react";
+import { ArrowUpDown, ScanSearch, Smile, UserSearch, Users, Award, CalendarCheck, Check, Clock, Grid3x3, Headphones, Heart, ListOrdered, Play, Radio, RotateCcw, Share2, Swords, Trophy, User } from "lucide-react";
 import GuildeHeader from "../components/GuildeHeader";
 import { fetchMembers } from "../utils/dataAdapter";
 import { useShare } from "../hooks/useShare";
@@ -17,12 +17,16 @@ import type { QuizCorrection, QuizRound } from "../../lib/games/quiz";
 import { DAY, GAME_INFO, ROUND_MS, localHistory, pushLocal, usePlayer, type Game, type LocalPlay, type Play as PlayRow, type PlayerApi } from "./shared";
 import { Affiche, DefiJour, PlusMoins, TierList } from "./Arcade";
 import Live from "./Live";
+import { DevineAnime, DevinePerso, EmojiQuiz } from "./Dle";
 import "./jeux.css";
 
-type Tab = "defi-jour" | "direct" | "quiz" | "nostalgie" | "affiche" | "plus-moins" | "tier" | "duel" | "badges" | "classement";
+type Tab = "defi-jour" | "devine-anime" | "devine-perso" | "emoji" | "direct" | "quiz" | "nostalgie" | "affiche" | "plus-moins" | "tier" | "duel" | "badges" | "classement";
 
 const MENU: { id: Tab; label: string; sub: string; Icon: typeof Award; color: string }[] = [
   { id: "defi-jour", label: "Défi du jour", sub: "Une question, une seule chance", Icon: CalendarCheck, color: "#f5a524" },
+  { id: "devine-anime", label: "Devine l'anime", sub: "6 essais, un anime par jour", Icon: ScanSearch, color: "#f472b6" },
+  { id: "devine-perso", label: "Devine le perso", sub: "Indices et portrait flouté", Icon: UserSearch, color: "#fb923c" },
+  { id: "emoji", label: "Quiz des émojis", sub: "Un anime en émojis", Icon: Smile, color: "#facc15" },
   { id: "direct", label: "Quiz en direct", sub: "À plusieurs, en temps réel", Icon: Users, color: "#2dd4bf" },
   { id: "quiz", label: "Quiz génériques", sub: "10 extraits à reconnaître", Icon: Headphones, color: "#e8412c" },
   { id: "nostalgie", label: "Blind test Nostalgie", sub: "Club Dorothée, Récré A2", Icon: Radio, color: "#ff6b9a" },
@@ -109,6 +113,9 @@ export default function JeuxClient() {
 
         <div id="jx-stage" className="jx-stage" />
         {tab === "defi-jour" && <DefiJour player={player} names={names} onRanking={showRanking} />}
+        {tab === "devine-anime" && <DevineAnime player={player} onRanking={showRanking} />}
+        {tab === "devine-perso" && <DevinePerso player={player} onRanking={showRanking} />}
+        {tab === "emoji" && <EmojiQuiz player={player} onRanking={showRanking} />}
         {tab === "direct" && <Live player={player} members={members} initialCode={salle} />}
         {tab === "quiz" && <Quiz key={`q${defi ?? ""}`} player={player} mode="generique" defi={defi} onRanking={showRanking} />}
         {tab === "nostalgie" && <Quiz key="n" player={player} mode="nostalgie" defi={null} onRanking={showRanking} />}
@@ -395,9 +402,11 @@ function Badges({ me }: { me: number | null }) {
 }
 
 /* ═══ CLASSEMENT ET HISTORIQUE ════════════════════════════════════════════ */
-interface PlaySummary { score: number; max: number; at: string; good?: number; rounds?: number; date?: string; ok?: boolean; a?: number; b?: number }
+interface PlaySummary { score: number; max: number; at: string; good?: number; rounds?: number; date?: string; ok?: boolean; a?: number; b?: number; tries?: number }
 interface PlayerRank { key: string; member_id: number | null; name: string | null; image?: string | null; plays: number; best: number; bestMax: number; avg: number; total: number; wins: number; last: string; history: PlaySummary[] }
 interface BoardData { available: boolean; players: PlayerRank[]; feed: (PlaySummary & { key: string })[]; history: PlayRow[]; meKeys: string[] }
+
+const DAILY: Game[] = ["defi-jour", "devine-anime", "devine-perso"];
 
 /** « il y a 5 min », « hier », « 12 nov. » */
 function ago(iso: string): string {
@@ -430,6 +439,7 @@ function Board({ byId, device, me, initial }: { byId: Map<number, Member>; devic
   const detail = (p: PlaySummary) => game === "duel" ? `${byId.get(p.a ?? 0)?.name ?? "?"} × ${byId.get(p.b ?? 0)?.name ?? "?"}`
     : game === "plus-moins" ? "bonnes réponses d'affilée"
     : game === "defi-jour" ? `${p.date ?? ""} · ${p.ok ? "réussi" : "raté"}`
+    : game === "devine-anime" || game === "devine-perso" ? `${p.date ?? ""} · ${p.ok ? `trouvé en ${p.tries ?? "?"} essai${(p.tries ?? 0) > 1 ? "s" : ""}` : "raté"}`
     : p.good != null ? `${p.good} / ${p.rounds ?? "?"} bonnes réponses` : "";
   const face = (r: PlayerRank) => {
     const m = member(r), src = r.image ?? (m?.animeChar || m?.photo);
@@ -457,7 +467,7 @@ function Board({ byId, device, me, initial }: { byId: Map<number, Member>; devic
             <p><b>{data.players.reduce((n, r) => n + r.plays, 0)}</b><small>partie{data.players.reduce((n, r) => n + r.plays, 0) > 1 ? "s" : ""}</small></p>
             <p className="is-me"><b>{myIndex >= 0 ? `${myIndex + 1}e` : "–"}</b><small>{myIndex >= 0 ? "ta place" : "pas encore classé"}</small></p>
           </div>
-          <p className="jx-note">{game === "defi-jour" ? "Classés par total de points, tous jours confondus." : game === "duel" ? "Classés par meilleure compatibilité trouvée." : "Classés par meilleur score."} Touche un joueur pour voir toutes ses parties.</p>
+          <p className="jx-note">{game === "defi-jour" || game === "devine-anime" || game === "devine-perso" ? "Classés par total de points, tous jours confondus." : game === "duel" ? "Classés par meilleure compatibilité trouvée." : "Classés par meilleur score."} Touche un joueur pour voir toutes ses parties.</p>
 
           <ol className="jx-ranking">
             {data.players.map((r, i) => {
@@ -472,8 +482,8 @@ function Board({ byId, device, me, initial }: { byId: Map<number, Member>; devic
                       <small>{r.plays} partie{r.plays > 1 ? "s" : ""}{game !== "duel" && game !== "plus-moins" ? ` · moy. ${unit(r.avg, r.bestMax).split(" / ")[0]}` : ""} · {ago(r.last)}</small>
                     </span>
                     <span className="jx-ranking-score">
-                      <strong>{game === "defi-jour" ? `${r.total} pts` : unit(r.best, r.bestMax)}</strong>
-                      <small>{game === "defi-jour" ? `${r.wins} réussi${r.wins > 1 ? "s" : ""}` : "record"}</small>
+                      <strong>{DAILY.includes(game) ? `${r.total} pts` : unit(r.best, r.bestMax)}</strong>
+                      <small>{DAILY.includes(game) ? `${r.wins} réussi${r.wins > 1 ? "s" : ""}` : "record"}</small>
                     </span>
                   </button>
                   {expanded && (

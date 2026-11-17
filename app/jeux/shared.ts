@@ -3,13 +3,16 @@
 // Outils communs de la page Jeux : joueur sans compte, historique local, métadonnées des jeux.
 import { useCallback, useEffect, useState } from "react";
 
-export type Game = "quiz-generique" | "quiz-nostalgie" | "affiche" | "plus-moins" | "defi-jour" | "duel";
+export type Game = "quiz-generique" | "quiz-nostalgie" | "affiche" | "plus-moins" | "defi-jour" | "devine-anime" | "devine-perso" | "emoji-quiz" | "duel";
 export interface Play { id?: number; game: Game; member_id: number | null; player_name: string | null; score: number; max_score: number; detail: Record<string, unknown>; created_at: string }
 export interface LocalPlay { game: Game; score: number; max: number; at: string; label: string }
 
 /** Nom affiché et unité du score de chaque jeu (classement, historique). */
 export const GAME_INFO: Record<Game, { label: string; unit: (p: { score: number; max: number }) => string }> = {
   "defi-jour": { label: "Défi du jour", unit: (p) => `${p.score} pts` },
+  "devine-anime": { label: "Devine l'anime", unit: (p) => `${p.score} pts` },
+  "devine-perso": { label: "Devine le perso", unit: (p) => `${p.score} pts` },
+  "emoji-quiz": { label: "Émojis", unit: (p) => `${p.score} / ${p.max}` },
   "quiz-generique": { label: "Quiz génériques", unit: (p) => `${p.score} / ${p.max}` },
   "quiz-nostalgie": { label: "Nostalgie", unit: (p) => `${p.score} / ${p.max}` },
   affiche: { label: "Affiche", unit: (p) => `${p.score} / ${p.max}` },
