@@ -21,3 +21,11 @@ describe("logo de la série du portrait anime", () => {
     }
   });
 });
+
+describe("logos imposés", () => {
+  it("Devil May Cry : lettrage des jeux pour Lony, série choisie sinon", () => {
+    expect(seriesLogoSrc({ id: 46 })).toBe("https://image.tmdb.org/t/p/w500/o9hnKyKcgroZbpT9bRIqhftxdJ6.png");
+    expect(seriesLogoSrc({ id: 46, extras: { animeSeries: { title: "Bleach", tmdb: "tv:30984" } } })).toBe("/api/series-logo?tmdb=tv:30984");
+    expect(portraitSeries({ id: 55 })?.title).toBe("Blue Lock");
+  });
+});

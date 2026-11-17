@@ -79,6 +79,14 @@
   "tmdb": "tv:220542",
   "character": "Maomao"
  },
+ "27": {
+  "title": "Blue Lock",
+  "tmdb": "tv:131041"
+ },
+ "29": {
+  "title": "Jujutsu Kaisen",
+  "tmdb": "tv:95479"
+ },
  "32": {
   "title": "Hunter x Hunter",
   "tmdb": "tv:46298",
@@ -119,6 +127,24 @@
   "tmdb": "tv:62104",
   "character": "Escanor"
  },
+ "43": {
+  "title": "Saint Seiya : The Lost Canvas",
+  "tmdb": "tv:61389"
+ },
+ "46": {
+  "title": "Devil May Cry",
+  "tmdb": "tv:235930",
+  "character": "Dante",
+  "logo": "/o9hnKyKcgroZbpT9bRIqhftxdJ6.png"
+ },
+ "47": {
+  "title": "Carole & Tuesday",
+  "tmdb": "tv:83962"
+ },
+ "48": {
+  "title": "Jujutsu Kaisen",
+  "tmdb": "tv:95479"
+ },
  "49": {
   "title": "Fire Force",
   "tmdb": "tv:88046",
@@ -134,10 +160,19 @@
   "tmdb": "tv:65930",
   "character": "Ochaco Uraraka"
  },
+ "55": {
+  "title": "Blue Lock",
+  "tmdb": "tv:131041",
+  "character": "Shoei Barou"
+ },
  "56": {
   "title": "Dr. STONE",
   "tmdb": "tv:86031",
   "character": "Senku Ishigami"
+ },
+ "58": {
+  "title": "Monster",
+  "tmdb": "tv:30981"
  },
  "60": {
   "title": "Great Teacher Onizuka",

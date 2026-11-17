@@ -4,7 +4,10 @@
 import defaults from "../data/portrait-series.json";
 import { TMDB_REF, type AnimeSeries, type MemberExtras } from "./member-extras";
 
-const DEFAULTS = defaults as Record<string, AnimeSeries & { character?: string }>;
+// `logo` : logo TMDB imposé (chemin « /xxx.png »), quand le logo choisi automatiquement
+// ne convient pas (ex. Devil May Cry : lettrage des jeux plutôt que celui de la série).
+const DEFAULTS = defaults as Record<string, AnimeSeries & { character?: string; logo?: string }>;
+const LOGO_PATH = /^\/[A-Za-z0-9]{10,40}\.(png|svg)$/;
 
 export function portraitSeries(m: { id: number; extras?: MemberExtras | null }): AnimeSeries | null {
   const s = m.extras?.animeSeries ?? DEFAULTS[String(m.id)];
@@ -14,5 +17,7 @@ export function portraitSeries(m: { id: number; extras?: MemberExtras | null }):
 /** Adresse du logo (servi par /api/series-logo), ou null si la série n'est pas connue. */
 export const seriesLogoSrc = (m: { id: number; extras?: MemberExtras | null }) => {
   const s = portraitSeries(m);
-  return s ? `/api/series-logo?tmdb=${s.tmdb}` : null;
+  if (!s) return null;
+  const forced = !m.extras?.animeSeries ? DEFAULTS[String(m.id)]?.logo : undefined;
+  return forced && LOGO_PATH.test(forced) ? `https://image.tmdb.org/t/p/w500${forced}` : `/api/series-logo?tmdb=${s.tmdb}`;
 };
