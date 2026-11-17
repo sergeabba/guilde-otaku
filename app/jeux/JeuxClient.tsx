@@ -6,7 +6,7 @@
 // l'historique est aussi gardé sur l'appareil (utile tant que la table n'existe pas).
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { Award, Check, Clock, Headphones, Heart, Play, RotateCcw, Share2, Swords, Trophy, User } from "lucide-react";
+import { ArrowUpDown, Award, CalendarCheck, Check, Clock, Grid3x3, Headphones, Heart, ListOrdered, Play, Radio, RotateCcw, Share2, Swords, Trophy, User } from "lucide-react";
 import GuildeHeader from "../components/GuildeHeader";
 import { fetchMembers } from "../utils/dataAdapter";
 import { useShare } from "../hooks/useShare";
@@ -14,53 +14,48 @@ import type { Member } from "../../data/members";
 import type { Badge } from "../../lib/games/badges";
 import type { DuelResult } from "../../lib/games/duel";
 import type { QuizCorrection, QuizRound } from "../../lib/games/quiz";
+import { DAY, GAME_INFO, ROUND_MS, localHistory, pushLocal, usePlayer, type Game, type LocalPlay, type Play as PlayRow, type PlayerApi } from "./shared";
+import { Affiche, DefiJour, PlusMoins, TierList } from "./Arcade";
 import "./jeux.css";
 
-type Tab = "quiz" | "duel" | "badges" | "classement";
-type Game = "quiz-generique" | "duel";
-interface Play { id?: number; game: Game; member_id: number | null; player_name: string | null; score: number; max_score: number; detail: Record<string, unknown>; created_at: string }
-interface LocalPlay { game: Game; score: number; max: number; at: string; label: string }
+type Tab = "defi-jour" | "quiz" | "nostalgie" | "affiche" | "plus-moins" | "tier" | "duel" | "badges" | "classement";
 
-const ROUND_MS = 20_000;
-const KEY_DEVICE = "guilde-bash-voter", KEY_ME = "guilde-bash-me", KEY_NAME = "guilde-player-name", KEY_LOCAL = "guilde-games-history";
-const read = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
-const write = (k: string, v: string | null) => { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* navigation privée */ } };
-function deviceId(): string {
-  let id = read(KEY_DEVICE);
-  if (!id || !/^[0-9a-f-]{36}$/i.test(id)) { id = crypto.randomUUID(); write(KEY_DEVICE, id); }
-  return id;
-}
-const DAY = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-
-/** Qui joue : membre choisi, sinon pseudo, sinon anonyme. */
-function usePlayer() {
-  const [me, setMe] = useState<number | null>(null);
-  const [name, setName] = useState("");
-  const [device, setDevice] = useState("");
-  useEffect(() => {
-    void Promise.resolve().then(() => {
-      setDevice(deviceId());
-      const m = Number(read(KEY_ME));
-      setMe(Number.isInteger(m) && m > 0 ? m : null);
-      setName(read(KEY_NAME) ?? "");
-    });
-  }, []);
-  const chooseMember = (id: number | null) => { setMe(id); write(KEY_ME, id ? String(id) : null); };
-  const chooseName = (n: string) => { setName(n); write(KEY_NAME, n.trim() ? n.trim().slice(0, 40) : null); };
-  const payload = useCallback(() => ({ device, memberId: me ?? undefined, name: !me && name.trim() ? name.trim() : undefined }), [device, me, name]);
-  return { me, name, device, chooseMember, chooseName, payload };
-}
-
-function localHistory(): LocalPlay[] { try { return JSON.parse(read(KEY_LOCAL) ?? "[]"); } catch { return []; } }
-function pushLocal(p: LocalPlay) { write(KEY_LOCAL, JSON.stringify([p, ...localHistory()].slice(0, 40))); }
+const MENU: { id: Tab; label: string; sub: string; Icon: typeof Award; color: string }[] = [
+  { id: "defi-jour", label: "Défi du jour", sub: "Une question, une seule chance", Icon: CalendarCheck, color: "#f5a524" },
+  { id: "quiz", label: "Quiz génériques", sub: "10 extraits à reconnaître", Icon: Headphones, color: "#e8412c" },
+  { id: "nostalgie", label: "Blind test Nostalgie", sub: "Club Dorothée, Récré A2", Icon: Radio, color: "#ff6b9a" },
+  { id: "affiche", label: "L'Affiche en morceaux", sub: "Case par case", Icon: Grid3x3, color: "#3fa7d6" },
+  { id: "plus-moins", label: "Plus ou moins", sub: "Quelle note AniList ?", Icon: ArrowUpDown, color: "#22c55e" },
+  { id: "tier", label: "Tier list", sub: "Les animes de la saison", Icon: ListOrdered, color: "#a78bfa" },
+  { id: "duel", label: "Duel de goûts", sub: "Compatibilité entre membres", Icon: Swords, color: "#ff8a3d" },
+  { id: "badges", label: "Badges", sub: "Gagnés en jouant", Icon: Award, color: "#c9a84c" },
+  { id: "classement", label: "Classement", sub: "Scores et historique", Icon: Trophy, color: "#f6f0e6" },
+];
+const isTab = (t: string | null): t is Tab => MENU.some((m) => m.id === t);
 
 export default function JeuxClient() {
-  const [tab, setTab] = useState<Tab>("quiz");
+  const [tab, setTabState] = useState<Tab>("defi-jour");
+  const [defi, setDefi] = useState<number | null>(null);
+  // Lien direct : /jeux?jeu=affiche, ou /jeux?defi=123 (défi lancé par un ami).
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    const d = Number(sp.get("defi")), j = sp.get("jeu");
+    void Promise.resolve().then(() => {
+      if (Number.isInteger(d) && d > 0) { setDefi(d); setTabState("quiz"); }
+      else if (isTab(j)) setTabState(j);
+    });
+  }, []);
+  const setTab = (t: Tab) => {
+    setTabState(t); setDefi(null);
+    try { window.history.replaceState(null, "", t === "defi-jour" ? "/jeux" : `/jeux?jeu=${t}`); } catch { /* ignoré */ }
+    document.getElementById("jx-stage")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
   const [members, setMembers] = useState<Member[]>([]);
   const player = usePlayer();
   useEffect(() => { fetchMembers().then(setMembers).catch(() => {}); }, []);
   const byId = useMemo(() => new Map(members.map((m) => [m.id, m])), [members]);
   const meMember = player.me ? byId.get(player.me) : undefined;
+  const names = useMemo(() => new Map(members.map((m) => [m.id, m.name])), [members]);
 
   return (
     <div className="gk-page tone-dark jx-page">
@@ -95,15 +90,23 @@ export default function JeuxClient() {
           <p className="jx-who-note">Ton historique reste lié à cet appareil{player.me ? " et à ta fiche" : ""}.</p>
         </section>
 
-        <div className="gk-switch jx-tabs" role="group" aria-label="Jeux">
-          {([["quiz", "Quiz génériques", Headphones], ["duel", "Duel de goûts", Swords], ["badges", "Badges", Award], ["classement", "Classement", Trophy]] as const).map(([k, label, Icon]) => (
-            <button key={k} type="button" aria-pressed={tab === k} className="gk-chip" onClick={() => setTab(k)}>
-              <Icon size={16} aria-hidden="true" /><span>{label}</span>
+        <nav className="jx-menu" aria-label="Jeux">
+          {MENU.map(({ id, label, sub, Icon, color }) => (
+            <button key={id} type="button" aria-pressed={tab === id} className="jx-tile" style={{ "--c": color } as React.CSSProperties} onClick={() => setTab(id)}>
+              <span className="jx-tile-icon" aria-hidden="true"><Icon size={20} /></span>
+              <strong>{label}</strong>
+              <small>{sub}</small>
             </button>
           ))}
-        </div>
+        </nav>
 
-        {tab === "quiz" && <Quiz player={player} />}
+        <div id="jx-stage" className="jx-stage" />
+        {tab === "defi-jour" && <DefiJour player={player} names={names} />}
+        {tab === "quiz" && <Quiz key={`q${defi ?? ""}`} player={player} mode="generique" defi={defi} />}
+        {tab === "nostalgie" && <Quiz key="n" player={player} mode="nostalgie" defi={null} />}
+        {tab === "affiche" && <Affiche player={player} />}
+        {tab === "plus-moins" && <PlusMoins player={player} />}
+        {tab === "tier" && <TierList player={player} />}
         {tab === "duel" && <Duel members={members} player={player} />}
         {tab === "badges" && <Badges me={player.me} />}
         {tab === "classement" && <Board byId={byId} device={player.device} me={player.me} />}
@@ -112,17 +115,20 @@ export default function JeuxClient() {
   );
 }
 
-type PlayerApi = ReturnType<typeof usePlayer>;
 
 /* ═══ QUIZ DES GÉNÉRIQUES ═══════════════════════════════════════════════ */
-function Quiz({ player }: { player: PlayerApi }) {
+interface Versus { id: number; name: string; score: number; max: number; good: number }
+function Quiz({ player, mode, defi }: { player: PlayerApi; mode: "generique" | "nostalgie"; defi: number | null }) {
+  const nosta = mode === "nostalgie";
+  const [rival, setRival] = useState<Versus | null>(null);
+  const { share, Toast } = useShare();
   const [phase, setPhase] = useState<"intro" | "loading" | "play" | "timeout" | "sending" | "done">("intro");
   const [token, setToken] = useState("");
   const [rounds, setRounds] = useState<QuizRound[]>([]);
   const [r, setR] = useState(0);
   const [picked, setPicked] = useState<number | null>(null);
   const [left, setLeft] = useState(ROUND_MS);
-  const [result, setResult] = useState<{ score: number; max: number; good: number; correction: QuizCorrection[]; saved: boolean } | null>(null);
+  const [result, setResult] = useState<{ score: number; max: number; good: number; correction: QuizCorrection[]; saved: boolean; id: number | null; versus: Versus | null } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const answers = useRef<{ choice: number | null; ms: number }[]>([]);
   const started = useRef(0);
@@ -140,9 +146,10 @@ function Quiz({ player }: { player: PlayerApi }) {
   async function start() {
     setPhase("loading"); setError(null); setResult(null);
     try {
-      const res = await fetch("/api/games/quiz", { cache: "no-store" });
+      const res = await fetch(defi ? `/api/games/quiz?defi=${defi}` : nosta ? "/api/games/quiz?mode=nostalgie" : "/api/games/quiz", { cache: "no-store" });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Quiz indisponible.");
+      if (d.defi) setRival(d.defi);
       answers.current = [];
       setToken(d.token); setRounds(d.rounds); setPhase("play");
       playRound(d.rounds, 0);
@@ -157,9 +164,9 @@ function Quiz({ player }: { player: PlayerApi }) {
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Correction impossible.");
       setResult(d); setPhase("done");
-      pushLocal({ game: "quiz-generique", score: d.score, max: d.max, at: new Date().toISOString(), label: `${d.good}/${d.correction.length} génériques` });
+      pushLocal({ game: nosta ? "quiz-nostalgie" : "quiz-generique", score: d.score, max: d.max, at: new Date().toISOString(), label: `${d.good}/${d.correction.length} génériques${d.versus ? ` · défi de ${d.versus.name}` : ""}` });
     } catch (e) { setError(e instanceof Error ? e.message : "Correction impossible."); setPhase("intro"); }
-  }, [token, player]);
+  }, [token, player, nosta]);
 
   const next = useCallback(() => {
     if (r + 1 >= rounds.length) { void finish(); return; }
@@ -187,14 +194,24 @@ function Quiz({ player }: { player: PlayerApi }) {
 
   useEffect(() => () => { const a = audio.current; if (a) { a.pause(); a.removeAttribute("src"); a.load(); } }, []);
 
+  const challenge = () => {
+    if (!result?.id) return;
+    const what = nosta ? "au blind test Nostalgie" : "au quiz des génériques";
+    share({ title: "Défi · Guilde Otaku", text: `J'ai fait ${result.score} points (${result.good}/${result.correction.length}) ${what} de la Guilde. Mêmes extraits pour toi : fais mieux !`, url: `/jeux?defi=${result.id}` });
+  };
+
   return (
-    <section className="jx-panel jx-quiz" aria-labelledby="jx-quiz-title">
+    <section className="jx-panel jx-quiz" aria-labelledby="jx-quiz-title" style={nosta ? { "--gk-accent": "#ff6b9a" } as React.CSSProperties : undefined}>
       <audio ref={audio} preload="auto" />
       {(phase === "intro" || phase === "loading") && (
         <div className="jx-intro">
           <span className="jx-big-icon" aria-hidden="true"><Headphones size={40} /></span>
-          <h2 id="jx-quiz-title" className="gk-display">Quiz des génériques</h2>
-          <p>10 extraits d&apos;openings et d&apos;endings. Pour chacun, trouve l&apos;anime parmi 4. 100 points par bonne réponse, jusqu&apos;à 50 de bonus si tu es rapide. 20 secondes par manche.</p>
+          <h2 id="jx-quiz-title" className="gk-display">{defi ? "Défi lancé par un ami" : nosta ? "Blind test Nostalgie" : "Quiz des génériques"}</h2>
+          {defi
+            ? <p>Mêmes extraits, mêmes propositions que la partie de ton ami. Fais mieux que lui ! 20 secondes par manche, bonus si tu es rapide.</p>
+            : nosta
+              ? <p>Les génériques français de notre enfance : Club Dorothée, Récré A2, M6 Kid. Trouve le dessin animé parmi 4. 100 points par bonne réponse, jusqu&apos;à 50 de bonus si tu es rapide.</p>
+              : <p>10 extraits d&apos;openings et d&apos;endings. Pour chacun, trouve l&apos;anime parmi 4. 100 points par bonne réponse, jusqu&apos;à 50 de bonus si tu es rapide. 20 secondes par manche.</p>}
           {error && <p className="jx-error" role="alert">{error}</p>}
           <button type="button" className="gk-btn" onClick={start} disabled={phase === "loading"}><Play size={18} aria-hidden="true" /> {phase === "loading" ? "Préparation…" : "Lancer le quiz"}</button>
           <p className="jx-note">Monte le son. Les extraits viennent d&apos;Apple Music (30 s).</p>
@@ -203,7 +220,7 @@ function Quiz({ player }: { player: PlayerApi }) {
       {(phase === "play" || phase === "timeout") && rounds[r] && (
         <div className="jx-round" key={r}>
           <div className="jx-round-head">
-            <span className="jx-round-no">Manche {r + 1} / {rounds.length}</span>
+            <span className="jx-round-no">Manche {r + 1} / {rounds.length}{rival ? ` · à battre : ${rival.score} pts (${rival.name})` : ""}</span>
             <span className="jx-timer" aria-label={`${Math.ceil(left / 1000)} secondes restantes`}><Clock size={15} aria-hidden="true" /> {Math.ceil(left / 1000)} s</span>
           </div>
           <div className="jx-timebar" aria-hidden="true"><span style={{ transform: `scaleX(${left / ROUND_MS})` }} /></div>
@@ -226,6 +243,14 @@ function Quiz({ player }: { player: PlayerApi }) {
         <div className="jx-result">
           <p className="jx-score"><b>{result.score}</b><span>/ {result.max} points</span></p>
           <p className="jx-verdict">{result.good} générique{result.good > 1 ? "s" : ""} sur {result.correction.length} · {result.good >= 9 ? "Oreille d'or" : result.good >= 6 ? "Bien joué" : result.good >= 3 ? "Peut mieux faire" : "Il va falloir réviser"}</p>
+          {result.versus && (
+            <div className="jx-versus" role="status">
+              <span><b>{result.score}</b><small>Toi</small></span>
+              <i aria-hidden="true">VS</i>
+              <span><b>{result.versus.score}</b><small>{result.versus.name}</small></span>
+              <p>{result.score > result.versus.score ? `Tu bats ${result.versus.name} !` : result.score === result.versus.score ? "Égalité parfaite." : `${result.versus.name} garde l'avantage.`}</p>
+            </div>
+          )}
           {!result.saved && <p className="jx-note">Partie gardée sur cet appareil (classement commun bientôt disponible).</p>}
           <ol className="jx-correction">
             {result.correction.map((c, i) => (
@@ -239,9 +264,14 @@ function Quiz({ player }: { player: PlayerApi }) {
               </li>
             ))}
           </ol>
-          <button type="button" className="gk-btn" onClick={start}><RotateCcw size={17} aria-hidden="true" /> Rejouer</button>
+          <div className="jx-actions">
+            {result.id && <button type="button" className="gk-btn" onClick={challenge}><Share2 size={17} aria-hidden="true" /> Défier un ami</button>}
+            <button type="button" className={result.id ? "gk-btn gk-btn--ghost" : "gk-btn"} onClick={() => { setRival(null); start(); }}><RotateCcw size={17} aria-hidden="true" /> Rejouer</button>
+          </div>
+          {result.id && <p className="jx-note">Le lien envoie les mêmes extraits : à ton ami de faire mieux.</p>}
         </div>
       )}
+      <Toast />
     </section>
   );
 }
@@ -358,7 +388,7 @@ function Badges({ me }: { me: number | null }) {
 /* ═══ CLASSEMENT ET HISTORIQUE ════════════════════════════════════════════ */
 function Board({ byId, device, me }: { byId: Map<number, Member>; device: string; me: number | null }) {
   const [game, setGame] = useState<Game>("quiz-generique");
-  const [data, setData] = useState<{ available: boolean; best: Play[]; recent: Play[]; history: Play[] } | null>(null);
+  const [data, setData] = useState<{ available: boolean; best: PlayRow[]; recent: PlayRow[]; history: PlayRow[] } | null>(null);
   const [local] = useState<LocalPlay[]>(() => (typeof window === "undefined" ? [] : localHistory()));
   useEffect(() => {
     if (!device) return;
@@ -366,16 +396,18 @@ function Board({ byId, device, me }: { byId: Map<number, Member>; device: string
     fetch(`/api/games/board?game=${game}&device=${device}${me ? `&member=${me}` : ""}`, { cache: "no-store" }).then((r) => r.json()).then((d) => { if (alive) setData(d); }).catch(() => { if (alive) setData({ available: false, best: [], recent: [], history: [] }); });
     return () => { alive = false; };
   }, [game, device, me]);
-  const who = (p: Play) => (p.member_id && byId.get(p.member_id)?.name) || p.player_name || "Invité";
+  const who = (p: PlayRow) => (p.member_id && byId.get(p.member_id)?.name) || p.player_name || "Invité";
   const mine = data?.available ? data.history : null;
   return (
     <section className="jx-panel" aria-labelledby="jx-board-title">
       <div className="jx-intro is-left">
         <h2 id="jx-board-title" className="gk-display">Classement</h2>
-        <div className="gk-chips" role="group" aria-label="Jeu">
-          <button type="button" className="gk-chip" aria-pressed={game === "quiz-generique"} onClick={() => setGame("quiz-generique")}><span>Quiz génériques</span></button>
-          <button type="button" className="gk-chip" aria-pressed={game === "duel"} onClick={() => setGame("duel")}><span>Duels</span></button>
+        <div className="gk-chips jx-board-games" role="group" aria-label="Jeu">
+          {(Object.keys(GAME_INFO) as Game[]).map((g) => (
+            <button key={g} type="button" className="gk-chip" aria-pressed={game === g} onClick={() => setGame(g)}><span>{GAME_INFO[g].label}</span></button>
+          ))}
         </div>
+        {game === "defi-jour" && <p className="jx-note">Tous les défis réussis, tous jours confondus. Le classement du jour est dans l&apos;onglet Défi du jour.</p>}
       </div>
       {!data ? <p className="jx-note" role="status">Chargement…</p> : !data.available ? (
         <p className="jx-note">Le classement commun arrive bientôt. En attendant, ton historique est gardé sur cet appareil.</p>
@@ -384,7 +416,7 @@ function Board({ byId, device, me }: { byId: Map<number, Member>; device: string
           {data.best.map((p, i) => (
             <li key={p.id ?? i} className={(me && p.member_id === me) ? "is-me" : ""}>
               <b className="jx-rank">{i + 1}</b><span>{who(p)}</span>
-              <strong>{game === "duel" ? `${p.score} %` : `${p.score} pts`}</strong>
+              <strong>{GAME_INFO[game].unit({ score: p.score, max: p.max_score })}</strong>
               {game === "duel" && <small>{byId.get(Number(p.detail.a))?.name} × {byId.get(Number(p.detail.b))?.name}</small>}
             </li>
           ))}
@@ -394,10 +426,10 @@ function Board({ byId, device, me }: { byId: Map<number, Member>; device: string
       <h3 className="jx-h3">Mon historique</h3>
       <ul className="jx-history">
         {(mine ?? []).filter((p) => p.game === game).map((p, i) => (
-          <li key={`s${i}`}><span>{DAY.format(new Date(p.created_at))}</span><strong>{game === "duel" ? `${p.score} %` : `${p.score} / ${p.max_score}`}</strong><small>{game === "duel" ? `${byId.get(Number(p.detail.a))?.name ?? "?"} × ${byId.get(Number(p.detail.b))?.name ?? "?"}` : `${p.detail.good ?? "?"} bonnes réponses`}</small></li>
+          <li key={`s${i}`}><span>{DAY.format(new Date(p.created_at))}</span><strong>{GAME_INFO[game].unit({ score: p.score, max: p.max_score })}</strong><small>{game === "duel" ? `${byId.get(Number(p.detail.a))?.name ?? "?"} × ${byId.get(Number(p.detail.b))?.name ?? "?"}` : game === "plus-moins" ? "bonnes réponses d'affilée" : game === "defi-jour" ? String(p.detail.date ?? "") : `${p.detail.good ?? "?"} bonnes réponses`}</small></li>
         ))}
         {!mine && local.filter((p) => p.game === game).map((p, i) => (
-          <li key={`l${i}`}><span>{DAY.format(new Date(p.at))}</span><strong>{game === "duel" ? `${p.score} %` : `${p.score} / ${p.max}`}</strong><small>{p.label}</small></li>
+          <li key={`l${i}`}><span>{DAY.format(new Date(p.at))}</span><strong>{GAME_INFO[game].unit(p)}</strong><small>{p.label}</small></li>
         ))}
         {((mine && !mine.some((p) => p.game === game)) || (!mine && !local.some((p) => p.game === game))) && <li className="jx-empty"><Check size={15} aria-hidden="true" /> Aucune partie pour l&apos;instant.</li>}
       </ul>

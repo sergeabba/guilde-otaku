@@ -3,8 +3,8 @@
 
 import type { MemberExtras } from "../member-extras";
 
-export interface MemberStats { quizPlays: number; quizBestPct: number; duels: number; bashVotes: number }
-export const NO_STATS: MemberStats = { quizPlays: 0, quizBestPct: 0, duels: 0, bashVotes: 0 };
+export interface MemberStats { quizPlays: number; quizBestPct: number; duels: number; bashVotes: number; nostalgiePlays: number; afficheBestPct: number; pmBest: number; dailyWins: number }
+export const NO_STATS: MemberStats = { quizPlays: 0, quizBestPct: 0, duels: 0, bashVotes: 0, nostalgiePlays: 0, afficheBestPct: 0, pmBest: 0, dailyWins: 0 };
 
 export interface Badge { id: string; label: string; romaji: string; desc: string; tier: "bronze" | "argent" | "or" }
 
@@ -29,6 +29,10 @@ const RULES: Rule[] = [
   { id: "oreille", label: "Oreille d'or", romaji: "Mimi no tatsujin", tier: "or", desc: "80 % des points ou plus à un quiz des génériques.", test: (_, s) => s.quizBestPct >= 80 },
   { id: "quizeur", label: "Habitué du quiz", romaji: "Jōren", tier: "bronze", desc: "10 quiz des génériques joués.", test: (_, s) => s.quizPlays >= 10 },
   { id: "entremetteur", label: "Entremetteur", romaji: "Nakōdo", tier: "bronze", desc: "5 duels de goûts lancés.", test: (_, s) => s.duels >= 5 },
+  { id: "dorothee", label: "Enfant du Club Dorothée", romaji: "Natsukashii", tier: "bronze", desc: "3 blind tests Nostalgie joués.", test: (_, s) => s.nostalgiePlays >= 3 },
+  { id: "lynx", label: "Œil de lynx", romaji: "Takanome", tier: "or", desc: "75 % des points ou plus à l'Affiche en morceaux.", test: (_, s) => s.afficheBestPct >= 75 },
+  { id: "flair", label: "Flair infaillible", romaji: "Chokkan", tier: "argent", desc: "Série de 10 ou plus à Plus ou moins.", test: (_, s) => s.pmBest >= 10 },
+  { id: "assidu", label: "Assidu", romaji: "Mainichi", tier: "argent", desc: "7 défis du jour réussis.", test: (_, s) => s.dailyWins >= 7 },
   { id: "voix", label: "Voix du Bash", romaji: "Koe", tier: "argent", desc: "A voté à 5 sondages du Bash ou plus.", test: (_, s) => s.bashVotes >= 5 },
 ];
 
