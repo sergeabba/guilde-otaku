@@ -14,9 +14,35 @@ const table = (name) => { try { return JSON.parse(readFileSync(new URL(`./fixtur
 createServer((req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Headers", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
   if (req.method === "OPTIONS") { res.statusCode = 204; return res.end(); }
   const u = new URL(req.url, "http://x");
   res.setHeader("Content-Type", "application/json");
+  // Stockage en mémoire (recette de l'envoi direct de l'Atelier) : rien n'est écrit sur disque.
+  const st = /^\/storage\/v1\/object\/(?:(upload\/sign)\/)?([a-z_-]+)\/?(.*)$/.exec(u.pathname);
+  if (st) {
+    globalThis.__files ??= new Map();
+    const [, sign, bucket, rawName] = st, name = decodeURIComponent(rawName), key = `${bucket}/${name}`;
+    if (sign && req.method === "POST") return res.end(JSON.stringify({ url: `/object/upload/sign/${key}?token=fake-${Date.now()}` }));
+    if (sign && req.method === "PUT") {
+      if (!u.searchParams.get("token")?.startsWith("fake-")) { res.statusCode = 400; return res.end(JSON.stringify({ message: "jeton invalide" })); }
+      const chunks = []; req.on("data", (d) => chunks.push(d)); req.on("end", () => {
+        let body = Buffer.concat(chunks), type = req.headers["content-type"];
+        // Formulaire multipart : on garde la partie fichier.
+        const bnd = /boundary=(.+)$/.exec(type ?? "")?.[1];
+        if (bnd) {
+          const parts = body.toString("latin1").split(`--${bnd}`);
+          const file = parts.find((p) => /filename=/.test(p));
+          if (file) { const i = file.indexOf("\r\n\r\n"); body = Buffer.from(file.slice(i + 4, file.length - 2), "latin1"); type = /Content-Type: (\S+)/i.exec(file)?.[1]; }
+        }
+        globalThis.__files.set(key, { body, type }); res.end(JSON.stringify({ Key: key }));
+      });
+      return;
+    }
+    if (!sign && req.method === "GET" && globalThis.__files.has(key)) { const f = globalThis.__files.get(key); res.setHeader("Content-Type", f.type || "application/octet-stream"); return res.end(f.body); }
+    if (!sign && req.method === "DELETE") { let body = ""; req.on("data", (d) => (body += d)); req.on("end", () => { for (const pfx of JSON.parse(body || "{}").prefixes ?? []) globalThis.__files.delete(`${bucket}/${pfx}`); res.end("[]"); }); return; }
+    res.statusCode = 404; return res.end(JSON.stringify({ message: "Object not found" }));
+  }
   if (u.pathname === "/rest/v1/fighters" && req.method === "GET") {
     const m = /eq\.(\d+)/.exec(u.searchParams.get("id") ?? "");
     const list = m ? rows.filter((r) => r.id === Number(m[1])) : rows;
@@ -24,9 +50,9 @@ createServer((req, res) => {
     return res.end(JSON.stringify(list));
   }
   // Actualités : tables gardées en mémoire (recette uniquement, rien n'est écrit sur disque).
-  const memTable = /^\/rest\/v1\/(news_items|news_runs|game_plays|tier_lists)$/.exec(u.pathname)?.[1];
+  const memTable = /^\/rest\/v1\/(news_items|news_runs|game_plays|tier_lists|atelier)$/.exec(u.pathname)?.[1];
   if (memTable) {
-    globalThis.__mem ??= { news_items: [], news_runs: [], game_plays: [], tier_lists: [], seq: 0 };
+    globalThis.__mem ??= { news_items: [], news_runs: [], game_plays: [], tier_lists: [], atelier: [], seq: 0 };
     const M = globalThis.__mem;
     const eqs = [...u.searchParams].filter(([k, v]) => v.startsWith("eq.") && k !== "select").map(([k, v]) => [k, v.slice(3)]);
     const match = (r) => eqs.every(([k, v]) => String(r[k]) === v);

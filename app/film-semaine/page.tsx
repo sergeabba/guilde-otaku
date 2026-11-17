@@ -136,7 +136,8 @@ export default function FilmSemainePage() {
       })
       .catch((e: Error) => { setError(e.message); setFilms([]); });
   };
-  useEffect(load, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { void Promise.resolve().then(load); }, []);
 
   const weeks = useMemo(() => {
     const map = new Map<string, FilmEntry[]>();

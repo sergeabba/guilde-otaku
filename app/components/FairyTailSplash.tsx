@@ -195,7 +195,7 @@ export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) 
         onClick={onFinish}
         aria-label="Passer l'introduction et accéder à la Guilde"
       >
-        PASSER L'INTRO <span aria-hidden="true">↗</span>
+        PASSER L&apos;INTRO <span aria-hidden="true">↗</span>
       </button>
 
       {/* ── Vidéo HD en fond ────────────────────────────────────────────── */}

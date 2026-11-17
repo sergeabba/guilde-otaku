@@ -82,7 +82,7 @@ export async function PATCH(req: NextRequest) {
       }
     }
 
-    const updates: Record<string, any> = {};
+    const updates: Record<string, unknown> = {};
     for (const key of ALLOWED_UPDATE_FIELDS) {
       if (body[key] !== undefined) updates[key] = body[key];
     }
@@ -115,7 +115,7 @@ export async function DELETE(req: NextRequest) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message ?? "Erreur serveur" }, { status: 500 });
+  } catch (e) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : "Erreur serveur" }, { status: 500 });
   }
 }

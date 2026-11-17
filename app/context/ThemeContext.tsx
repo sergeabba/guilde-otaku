@@ -22,16 +22,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const stored = localStorage.getItem("guilde-theme") as ThemeMode | null;
-    if (stored === "light" || stored === "dark") {
-      setMode(stored);
-      document.documentElement.setAttribute("data-theme", stored);
-    } else if (window.matchMedia("(prefers-color-scheme: light)").matches) {
-      setMode("light");
-      document.documentElement.setAttribute("data-theme", "light");
-    } else {
-      document.documentElement.setAttribute("data-theme", "dark");
-    }
-    setMounted(true);
+    const initial: ThemeMode = stored === "light" || stored === "dark" ? stored : window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+    // L'attribut est posé tout de suite (pas de flash) ; l'état React suit juste après.
+    document.documentElement.setAttribute("data-theme", initial);
+    void Promise.resolve().then(() => { setMode(initial); setMounted(true); });
   }, []);
 
   useEffect(() => {

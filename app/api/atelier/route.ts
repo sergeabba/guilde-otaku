@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { isAdmin, sanitizeFilename, validateImageFile } from "../../../lib/auth";
+import { isAdmin, sanitizeFilename, sniffImage, validateImageFile } from "../../../lib/auth";
 import { revalidateTag } from "next/cache";
 import { ATELIER_TAG } from "../../../lib/atelier-server";
 import { atelierTitles, titleFromFilename } from "../../../lib/atelier-title";
@@ -19,7 +19,9 @@ export const config = {
   maxDuration: 60,
 };
 
-const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
+const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif"];
+const MAX_DIRECT = 20 * 1024 * 1024;
+const EXT_BY_TYPE: Record<string, string> = { "image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp", "image/gif": ".gif", "image/avif": ".avif" };
 
 const ALLOWED_PATCH_FIELDS = ["title", "description", "prompt", "category", "universe", "accent", "size"] as const;
 
@@ -112,6 +114,44 @@ export async function POST(req: NextRequest) {
 
   if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
     return NextResponse.json({ error: "Configuration manquante" }, { status: 500 });
+  }
+
+  // Envoi direct vers le stockage (sans passer par le serveur du site, limité à 4,5 Mo par requête) :
+  // 1. { action: "sign" } : le serveur délivre un lien d'envoi temporaire pour un nom contrôlé ;
+  // 2. le navigateur envoie l'image directement à Supabase Storage ;
+  // 3. { action: "finalize" } : le serveur vérifie le contenu réel, puis enregistre la fiche.
+  if ((req.headers.get("content-type") ?? "").includes("application/json")) {
+    const body = await req.json().catch(() => null);
+    const adminClient = getAdminClient();
+    if (body?.action === "sign") {
+      const size = Number(body.size);
+      if (!Number.isFinite(size) || size <= 0 || size > MAX_DIRECT) return NextResponse.json({ error: `Fichier trop lourd (${Math.round(MAX_DIRECT / 1048576)} Mo au plus).` }, { status: 400 });
+      const base = sanitizeFilename(String(body.name ?? "")).replace(/_+/g, "_").replace(/\.[^.]*$/, "") || "creation";
+      const ext = EXT_BY_TYPE[String(body.type)];
+      if (!ext) return NextResponse.json({ error: "Format non supporté (jpg, png, webp, gif, avif)." }, { status: 400 });
+      const name = `${base.slice(0, 80)}-${Date.now().toString(36)}${ext}`;
+      const { data, error } = await adminClient.storage.from(BUCKET).createSignedUploadUrl(name);
+      if (error || !data) return NextResponse.json({ error: `stockage : ${error?.message ?? "lien d'envoi refusé"}` }, { status: 502 });
+      return NextResponse.json({ name, signedUrl: data.signedUrl });
+    }
+    if (body?.action === "finalize") {
+      const name = sanitizeFilename(String(body.name ?? ""));
+      if (!name || name !== body.name) return NextResponse.json({ error: "Nom de fichier invalide." }, { status: 400 });
+      const { data: blob, error } = await adminClient.storage.from(BUCKET).download(name);
+      if (error || !blob) return NextResponse.json({ error: `stockage : ${error?.message ?? "fichier introuvable après l'envoi"}` }, { status: 502 });
+      const head = new Uint8Array(await blob.slice(0, 16).arrayBuffer());
+      // Contenu qui n'est pas une image (ou trop lourd) : supprimé aussitôt.
+      if (!sniffImage(head) || blob.size > MAX_DIRECT) {
+        await adminClient.storage.from(BUCKET).remove([name]);
+        return NextResponse.json({ error: "Le fichier envoyé n'est pas une image valide." }, { status: 400 });
+      }
+      const title = titleFromFilename(name, await memberNames()) ?? "";
+      await adminClient.from("atelier").upsert({ filename: name, title, category: name.toLowerCase().includes("portrait") ? "Portrait" : "Création" }, { onConflict: "filename" });
+      refreshHome();
+      const { data } = adminClient.storage.from(BUCKET).getPublicUrl(name);
+      return NextResponse.json({ success: true, results: [{ filename: name, url: data.publicUrl, success: true }] });
+    }
+    return NextResponse.json({ error: "Action inconnue." }, { status: 400 });
   }
 
   try {

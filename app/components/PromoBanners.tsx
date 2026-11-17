@@ -55,7 +55,10 @@ function TiltWrapper({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function ChroniqueBanner({ isMobile, isDark, theme }: { isMobile?: boolean, isDark: boolean, theme: any }) {
+/** Couleurs du thème lues par les bannières. */
+interface BannerTheme { text: string; [key: string]: unknown }
+
+export function ChroniqueBanner({ isMobile, isDark, theme }: { isMobile?: boolean, isDark: boolean, theme: BannerTheme }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 32 }}
@@ -112,7 +115,7 @@ export function ChroniqueBanner({ isMobile, isDark, theme }: { isMobile?: boolea
   );
 }
 
-export function AtelierBanner({ isMobile, isDark, theme, accent }: { isMobile?: boolean, isDark: boolean, theme: any, accent: string }) {
+export function AtelierBanner({ isMobile, isDark, theme, accent }: { isMobile?: boolean, isDark: boolean, theme: BannerTheme, accent: string }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 32 }}
@@ -152,7 +155,7 @@ export function AtelierBanner({ isMobile, isDark, theme, accent }: { isMobile?: 
                 Les futilités de la Guilde
               </h3>
               <p style={{ fontSize: isMobile ? "14px" : "16px", color: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)", fontWeight: 500, margin: "8px 0 0 0" }}>
-                Découvre notre galerie d'Art générée par Intelligence Artificielle.
+                Découvre notre galerie d&apos;Art générée par Intelligence Artificielle.
               </p>
             </div>
           </div>

@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
 
     revalidateMembers();
     return NextResponse.json({ success: true, count: data.length, message: "Migration Supabase Fighters terminée avec succès !" });
-  } catch (err: any) {
+  } catch {
     return NextResponse.json({ success: false, error: "Erreur serveur" }, { status: 500 });
   }
 }

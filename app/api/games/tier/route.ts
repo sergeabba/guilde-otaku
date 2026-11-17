@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { unstable_cache } from "next/cache";
+import { getAiringWeek } from "../../../../lib/airing";
 import { getTrending } from "../../../../lib/trending";
 import { DEVICE, ipOf, limited, parsePlayer } from "../../../../lib/games/player";
 import { saveTier, tierRows } from "../../../../lib/games/store";
@@ -7,11 +9,26 @@ import { getPublicMembers } from "../../../../lib/members-server";
 
 const NO_STORE = { "Cache-Control": "no-store" };
 
-/** Les 12 animes les plus suivis de la saison en cours (AniList). */
-async function weekItems() {
+/**
+ * Les animes à classer cette semaine : ceux du calendrier des sorties (diffusés cette semaine
+ * sur Crunchyroll), en commençant par ceux que suivent le plus de membres, puis les plus
+ * populaires. Complété par les tendances de la saison s'il en manque. Liste figée pour la
+ * semaine (même liste pour tout le monde du lundi au dimanche).
+ */
+const weekItems = () => unstable_cache(async () => {
+  const airing = await getAiringWeek().catch(() => []);
+  const seen = new Set<number>();
+  const fromCalendar = [...airing]
+    .sort((a, b) => b.followers.length - a.followers.length || b.popularity - a.popularity)
+    .filter((e) => (seen.has(e.mediaId) ? false : (seen.add(e.mediaId), true)))
+    .slice(0, 12)
+    .map((e) => ({ id: e.mediaId, title: e.title, cover: e.cover, followers: e.followers.map((f) => f.name) }));
+  if (fromCalendar.length >= 12) return fromCalendar;
   const t = await getTrending("saison").catch(() => null);
-  return (t?.items ?? []).filter((i) => i.kind === "ANIME").slice(0, 12).map((i) => ({ id: i.id, title: i.title, cover: i.cover }));
-}
+  const extra = (t?.items ?? []).filter((i) => i.kind === "ANIME" && !seen.has(i.id)).slice(0, 12 - fromCalendar.length)
+    .map((i) => ({ id: i.id, title: i.title, cover: i.cover, followers: [] as string[] }));
+  return [...fromCalendar, ...extra];
+}, ["tier-items-v2", isoWeek()], { revalidate: 7 * 86_400 })();
 
 // Tier list de la semaine : animes à classer, classement du joueur, moyenne et « jumeaux ».
 export async function GET(req: NextRequest) {

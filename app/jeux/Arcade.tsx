@@ -350,7 +350,7 @@ export function PlusMoins({ player, onRanking }: { player: PlayerApi; onRanking:
 const TIERS = ["S", "A", "B", "C", "D"] as const;
 type Tier = (typeof TIERS)[number];
 const TIER_COLOR: Record<Tier, string> = { S: "#ff5f5f", A: "#ffa64d", B: "#ffd84d", C: "#7ddc7d", D: "#6fb4ff" };
-interface TierItem { id: number; title: string; cover: string | null }
+interface TierItem { id: number; title: string; cover: string | null; followers?: string[] }
 interface TierData { week: string; available: boolean; items: TierItem[]; mine: { id: number; tier: Tier }[] | null; voters: number; results: (TierItem & { avg: number; votes: number; tier: Tier })[]; twins: { a: string; b: string; pct: number; shared: number }[] }
 
 export function TierList({ player }: { player: PlayerApi }) {
@@ -382,7 +382,7 @@ export function TierList({ player }: { player: PlayerApi }) {
     <section className="jx-panel jx-tier" aria-labelledby="jx-tier-title" style={{ "--gk-accent": "#a78bfa" } as React.CSSProperties}>
       <div className="jx-intro is-left">
         <h2 id="jx-tier-title" className="gk-display">Tier list de la semaine</h2>
-        <p>Classe les animes les plus suivis de la saison, de S (incontournable) à D (à éviter). Ensuite, découvre la moyenne de la Guilde et qui pense comme qui. Nouvelle tier list chaque lundi.</p>
+        <p>Classe les animes qui sortent cette semaine (calendrier Crunchyroll), de S (incontournable) à D (à éviter). Ensuite, découvre la moyenne de la Guilde et qui pense comme qui. Nouvelle tier list chaque lundi.</p>
       </div>
       {!data.items.length ? <p className="jx-note">Liste des animes indisponible pour le moment (AniList ne répond pas).</p> : (
         <ul className="jx-tier-pick">
@@ -390,7 +390,7 @@ export function TierList({ player }: { player: PlayerApi }) {
             <li key={it.id} className={ranks[it.id] ? "is-set" : ""} style={ranks[it.id] ? { "--t": TIER_COLOR[ranks[it.id]] } as React.CSSProperties : undefined}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               {it.cover ? <img src={optimizedSrc(it.cover, 128)} alt="" width={48} height={68} loading="lazy" /> : <span className="jx-cover-empty" aria-hidden="true">?</span>}
-              <strong>{it.title}</strong>
+              <span className="jx-tier-name"><strong>{it.title}</strong>{!!it.followers?.length && <small>Suivi par {it.followers.slice(0, 3).join(", ")}{it.followers.length > 3 ? ` et ${it.followers.length - 3} autre${it.followers.length > 4 ? "s" : ""}` : ""}</small>}</span>
               <span className="jx-tier-btns" role="group" aria-label={`Classer ${it.title}`}>
                 {TIERS.map((t) => (
                   <button key={t} type="button" aria-pressed={ranks[it.id] === t} style={{ "--t": TIER_COLOR[t] } as React.CSSProperties}

@@ -27,7 +27,7 @@ export function useMediaQuery(query: string): boolean {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const mq = window.matchMedia(query);
-    setMatches(mq.matches);
+    void Promise.resolve().then(() => setMatches(mq.matches));
     const handler = (e: MediaQueryListEvent) => setMatches(e.matches);
     mq.addEventListener("change", handler);
     return () => mq.removeEventListener("change", handler);
@@ -81,11 +81,11 @@ export function useBreakpoint(): Breakpoint {
   }, []);
 
   useEffect(() => {
-    update();
+    const first = requestAnimationFrame(update);
     let timeout: NodeJS.Timeout;
     const handler = () => { clearTimeout(timeout); timeout = setTimeout(update, 150); };
     window.addEventListener("resize", handler, { passive: true });
-    return () => { clearTimeout(timeout); window.removeEventListener("resize", handler); };
+    return () => { cancelAnimationFrame(first); clearTimeout(timeout); window.removeEventListener("resize", handler); };
   }, [update]);
 
   return bp;

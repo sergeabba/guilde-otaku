@@ -15,7 +15,7 @@ function useAnimatedCounter(target: number, trigger: boolean, duration = 1400) {
 
   useEffect(() => {
     if (!trigger) return;
-    if (target === 0) { setValue(0); return; }
+    if (target === 0) { const id = requestAnimationFrame(() => setValue(0)); return () => cancelAnimationFrame(id); }
 
     let start: number | null = null;
     let rafId: number;

@@ -210,7 +210,7 @@ export async function fetchFromTMDB(query: string): Promise<string | null> {
       );
       json = await res.json();
       match = findBestTMDBMatch(
-        json.results?.filter((r: any) => r.media_type === "tv" || r.media_type === "movie"),
+        (json.results as TmdbHit[] | undefined)?.filter((r) => r.media_type === "tv" || r.media_type === "movie"),
         query
       );
     }
@@ -227,19 +227,22 @@ export async function fetchFromTMDB(query: string): Promise<string | null> {
   }
 }
 
+/** Champs lus dans un résultat de recherche TMDB. */
+interface TmdbHit { media_type?: string; poster_path?: string | null; name?: string; original_name?: string; title?: string; original_title?: string; genre_ids?: number[]; popularity?: number }
+
 /**
  * Trouve le meilleur résultat TMDB :
  * - Priorité aux résultats Animation (genre_id: 16)
  * - Trié par popularité décroissante
  */
-function findBestTMDBMatch(results: any[] | undefined, query: string): any | null {
+function findBestTMDBMatch(results: TmdbHit[] | undefined, query: string): TmdbHit | null {
   if (!results || results.length === 0) return null;
 
-  const withPoster = results.filter((r: any) => r.poster_path);
+  const withPoster = results.filter((r) => r.poster_path);
   if (withPoster.length === 0) return null;
 
   const scored = withPoster
-    .map((result: any) => {
+    .map((result) => {
       const titles = [
         result.name,
         result.original_name,
@@ -288,7 +291,7 @@ export async function fetchFromMangaDex(query: string): Promise<string | null> {
     if (!json.data || json.data.length === 0) return null;
 
     for (const manga of json.data) {
-      const coverRel = manga.relationships?.find((r: any) => r.type === "cover_art");
+      const coverRel = manga.relationships?.find((r: { type?: string }) => r.type === "cover_art");
       const fileName = coverRel?.attributes?.fileName;
       if (fileName) {
         const cover = `https://uploads.mangadex.org/covers/${manga.id}/${fileName}.512.jpg`;

@@ -12,6 +12,10 @@ interface VideoPlayerProps {
   className?: string;
 }
 
+/** Plein écran préfixé de Safari (iPhone, anciens Mac). */
+type WebkitDocument = Document & { webkitFullscreenElement?: Element | null; webkitExitFullscreen?: () => void };
+type WebkitElement = HTMLElement & { webkitRequestFullscreen?: () => void; webkitEnterFullscreen?: () => void };
+
 export default function VideoPlayer({
   src,
   fit = "cover",
@@ -27,7 +31,7 @@ export default function VideoPlayer({
 
   useEffect(() => {
     const handleFsChange = () => {
-      const fsEl = document.fullscreenElement || (document as any).webkitFullscreenElement;
+      const fsEl = document.fullscreenElement || (document as WebkitDocument).webkitFullscreenElement;
       setIsFullscreen(fsEl === containerRef.current);
     };
     document.addEventListener("fullscreenchange", handleFsChange);
@@ -52,16 +56,16 @@ export default function VideoPlayer({
     if (isFullscreen) {
       if (document.exitFullscreen) {
         document.exitFullscreen();
-      } else if ((document as any).webkitExitFullscreen) {
-        (document as any).webkitExitFullscreen();
+      } else if ((document as WebkitDocument).webkitExitFullscreen) {
+        (document as WebkitDocument).webkitExitFullscreen!();
       }
     } else {
       if (el.requestFullscreen) {
         el.requestFullscreen();
-      } else if ((el as any).webkitRequestFullscreen) {
-        (el as any).webkitRequestFullscreen();
-      } else if ((el as any).webkitEnterFullscreen) {
-        (el as any).webkitEnterFullscreen();
+      } else if ((el as WebkitElement).webkitRequestFullscreen) {
+        (el as WebkitElement).webkitRequestFullscreen!();
+      } else if ((el as WebkitElement).webkitEnterFullscreen) {
+        (el as WebkitElement).webkitEnterFullscreen!();
       }
     }
   }, [isFullscreen]);

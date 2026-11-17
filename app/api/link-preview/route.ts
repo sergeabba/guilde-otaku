@@ -87,7 +87,7 @@ export async function GET(req: NextRequest) {
       image: imageUrl,
       url: urlToFetch,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("[link-preview] Error:", error);
     return NextResponse.json({ error: "Failed to extract metadata" }, { status: 500 });
   }

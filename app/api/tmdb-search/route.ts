@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 
 const TMDB_KEY = process.env.TMDB_API_KEY;
 
+/** Champs lus dans un résultat de recherche TMDB (films et séries). */
+interface TmdbSearchHit {
+  id: number; title?: string; name?: string; overview?: string; poster_path?: string | null; backdrop_path?: string | null;
+  release_date?: string; first_air_date?: string; vote_average?: number; media_type?: string; original_title?: string; original_name?: string;
+}
+
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q");
   const tmdbId = req.nextUrl.searchParams.get("tmdb_id");
@@ -16,9 +22,9 @@ export async function GET(req: NextRequest) {
     );
     const data = await res.json();
     const trailer = data.videos?.results?.find(
-      (v: any) => v.type === "Trailer" && v.site === "YouTube"
+      (v: { type?: string; site?: string }) => v.type === "Trailer" && v.site === "YouTube"
     ) ?? data.videos?.results?.[0];
-    const director = data.credits?.crew?.find((c: any) => c.job === "Director");
+    const director = data.credits?.crew?.find((c: { job?: string }) => c.job === "Director");
 
     return NextResponse.json({
       id: data.id,
@@ -29,7 +35,7 @@ export async function GET(req: NextRequest) {
       release_date: data.release_date,
       runtime: data.runtime,
       vote_average: data.vote_average,
-      genres: data.genres?.map((g: any) => g.name).join(", ") ?? "",
+      genres: data.genres?.map((g: { name: string }) => g.name).join(", ") ?? "",
       trailer_key: trailer?.key ?? null,
       director: director?.name ?? null,
     });
@@ -44,7 +50,7 @@ export async function GET(req: NextRequest) {
   );
   const data = await res.json();
 
-  const results = (data.results ?? []).slice(0, 10).map((m: any) => ({
+  const results = (data.results ?? []).slice(0, 10).map((m: TmdbSearchHit) => ({
     id: m.id,
     title: m.title || m.name,
     overview: m.overview,

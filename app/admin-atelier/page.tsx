@@ -39,6 +39,51 @@ function compressImage(file: File, maxSize = 1920, quality = 0.85): Promise<Blob
   });
 }
 
+/** Image prête à l'envoi : réduite si possible, sinon l'originale (jamais une image vide). */
+async function prepare(file: File): Promise<{ blob: Blob; name: string }> {
+  const big = file.size > 4 * 1024 * 1024;
+  const blob = await compressImage(file, big ? 1600 : 1920, big ? 0.8 : 0.85);
+  // La compression peut échouer (image trop grande pour le téléphone, format exotique) :
+  // on garde alors le fichier d'origine, avec son vrai type.
+  if (!blob.size || blob === file || blob.size >= file.size) return { blob: file, name: file.name };
+  return { blob, name: file.name.replace(/\.(png|webp|avif)$/i, ".jpg") };
+}
+
+/**
+ * Envoi d'une image : directement vers le stockage (lien signé délivré par le serveur),
+ * puis vérification par le serveur. Renvoie un message d'erreur, ou null si tout va bien.
+ * Repli sur l'ancien envoi (via le serveur) si le lien signé est indisponible.
+ */
+async function sendImage(file: File): Promise<string | null> {
+  const { blob, name } = await prepare(file);
+  const type = blob.type || file.type || "image/jpeg";
+  const sign = await fetch("/api/atelier", { method: "POST", headers: getAdminHeaders(), body: JSON.stringify({ action: "sign", name, type, size: blob.size }) });
+  const s = await sign.json().catch(() => null);
+  if (sign.ok && s?.signedUrl) {
+    // Même format que l'envoi des portraits (déjà en service) : formulaire avec le fichier.
+    const form = new FormData();
+    form.append("cacheControl", "31536000");
+    form.append("", blob.type ? blob : new Blob([blob], { type }), name);
+    const put = await fetch(s.signedUrl, { method: "PUT", headers: { "x-upsert": "false", ...(ANON ? { apikey: ANON } : {}) }, body: form });
+    if (!put.ok) {
+      const t = await put.text().catch(() => "");
+      return `stockage ${put.status}${t ? ` : ${t.slice(0, 160)}` : ""}`;
+    }
+    const fin = await fetch("/api/atelier", { method: "POST", headers: getAdminHeaders(), body: JSON.stringify({ action: "finalize", name: s.name }) });
+    const f = await fin.json().catch(() => null);
+    return fin.ok && f?.success ? null : (f?.error || `erreur ${fin.status}`);
+  }
+  if (sign.status === 400) return s?.error || "fichier refusé";
+  // Repli : envoi par le serveur du site (4,5 Mo au plus).
+  if (blob.size > 4.4 * 1024 * 1024) return s?.error || "fichier trop lourd pour l'envoi de secours (4,5 Mo)";
+  const fd = new FormData();
+  fd.append("files", blob, name);
+  const res = await fetch("/api/atelier", { method: "POST", headers: getAdminFormDataHeaders(), body: fd });
+  const data = await res.json().catch(() => null);
+  return res.ok && (data?.success || data?.results?.[0]?.success) ? null : (data?.results?.[0]?.error || data?.error || `erreur ${res.status}`);
+}
+const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
 export default function AdminAtelierPage() {
   const [images, setImages] = useState<SupabaseAtelierRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,16 +133,9 @@ export default function AdminAtelierPage() {
     const failures: string[] = [];
     for (const [i, file] of files.entries()) {
       setProgress({ current: i + 1, total: files.length, name: file.name });
-      const fd = new FormData();
-      // Très grosses images : compression plus forte (le serveur accepte 4,5 Mo par envoi).
-      const big = file.size > 4 * 1024 * 1024;
-      const blob = await compressImage(file, big ? 1600 : 1920, big ? 0.8 : 0.85);
-      fd.append("files", blob, file.name.replace(/\.png$/i, ".jpg"));
       try {
-        const res = await fetch("/api/atelier", { method: "POST", headers: getAdminFormDataHeaders(), body: fd });
-        const data = await res.json().catch(() => null);
-        const ok = res.ok && (data?.success || data?.results?.[0]?.success);
-        if (!ok) failures.push(`${file.name} (${data?.results?.[0]?.error || data?.error || `erreur ${res.status}`})`);
+        const err = await sendImage(file);
+        if (err) failures.push(`${file.name} (${err})`);
       } catch {
         failures.push(`${file.name} (réseau)`);
       }

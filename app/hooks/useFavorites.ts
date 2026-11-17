@@ -15,7 +15,7 @@ export function useFavorites(scope?: string) {
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) setFavorites(new Set(JSON.parse(stored)));
+      if (stored) { const list = JSON.parse(stored); void Promise.resolve().then(() => setFavorites(new Set(list))); }
     } catch {}
   }, [STORAGE_KEY]);
 

@@ -26,7 +26,7 @@ const MENU: { id: Tab; label: string; sub: string; Icon: typeof Award; color: st
   { id: "nostalgie", label: "Blind test Nostalgie", sub: "Club Dorothée, Récré A2", Icon: Radio, color: "#ff6b9a" },
   { id: "affiche", label: "L'Affiche en morceaux", sub: "Case par case", Icon: Grid3x3, color: "#3fa7d6" },
   { id: "plus-moins", label: "Plus ou moins", sub: "Quelle note AniList ?", Icon: ArrowUpDown, color: "#22c55e" },
-  { id: "tier", label: "Tier list", sub: "Les animes de la saison", Icon: ListOrdered, color: "#a78bfa" },
+  { id: "tier", label: "Tier list", sub: "Les sorties de la semaine", Icon: ListOrdered, color: "#a78bfa" },
   { id: "duel", label: "Duel de goûts", sub: "Compatibilité entre membres", Icon: Swords, color: "#ff8a3d" },
   { id: "badges", label: "Badges", sub: "Gagnés en jouant", Icon: Award, color: "#c9a84c" },
   { id: "classement", label: "Classement", sub: "Scores et historique", Icon: Trophy, color: "#f6f0e6" },

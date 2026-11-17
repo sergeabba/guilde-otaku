@@ -7,7 +7,7 @@ const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 // Simule l'API Supabase pour le développement sans backend configuré.
 // Retourne toujours { data: [], error: null } pour toutes les opérations.
 class MockQueryBuilder {
-  private _result: { data: any[]; error: null } = { data: [], error: null };
+  private _result: { data: unknown[]; error: null } = { data: [], error: null };
 
   eq(_col: string, _val: unknown): this { return this; }
   neq(_col: string, _val: unknown): this { return this; }
@@ -25,7 +25,7 @@ class MockQueryBuilder {
   single(): Promise<{ data: null; error: null }> {
     return Promise.resolve({ data: null, error: null });
   }
-  then<T>(resolve: (v: { data: any[]; error: null }) => T): Promise<T> {
+  then<T>(resolve: (v: { data: unknown[]; error: null }) => T): Promise<T> {
     return Promise.resolve(this._result).then(resolve);
   }
 }

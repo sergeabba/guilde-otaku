@@ -102,8 +102,8 @@ export default function BirthdayBanner() {
                   fontFamily: "'Barlow Condensed', sans-serif",
                 }}
               >
-                🎂 C'est l'anniversaire de{" "}
-                <strong>{names}</strong> aujourd'hui !
+                🎂 C&apos;est l&apos;anniversaire de{" "}
+                <strong>{names}</strong> aujourd&apos;hui !
               </span>
               <span
                 style={{
