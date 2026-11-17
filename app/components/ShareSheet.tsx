@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, Copy, Download, MessageCircle, Share2, X } from "lucide-react";
 import type { Member } from "../../data/members";
-import { memberCardUrl, memberProfilePath } from "../../lib/share";
+import { fileSlug, memberCardUrl, memberProfilePath } from "../../lib/share";
+import { saveImage, saveMessage } from "../../lib/save-image";
 import { useShare } from "../hooks/useShare";
 
 type ShareMember = Pick<Member, "id" | "name" | "rank" | "photo" | "animeChar" | "badge" | "color" | "extras">;
@@ -16,6 +17,7 @@ type ShareMember = Pick<Member, "id" | "name" | "rank" | "photo" | "animeChar" |
 export default function ShareSheet({ member, open, onClose }: { member: ShareMember; open: boolean; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState<"download" | "share" | null>(null);
+  const cardBlob = useRef<Blob | null>(null);
   const [cardFailed, setCardFailed] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const { notify, Toast } = useShare();
@@ -47,7 +49,7 @@ export default function ShareSheet({ member, open, onClose }: { member: ShareMem
 
   const profileUrl = `${window.location.origin}${memberProfilePath(member.id)}`;
   const text = `${member.name}, ${member.rank} de la Guilde Otaku`;
-  const fileName = `carte-otaku-${member.id}.png`;
+  const fileName = `carte-otaku-${fileSlug(member.name)}.png`;
 
   const copy = async () => {
     try {
@@ -70,23 +72,19 @@ export default function ShareSheet({ member, open, onClose }: { member: ShareMem
   };
 
   const fetchCard = async (): Promise<Blob> => {
-    const res = await fetch(memberCardUrl(member));
+    // Carte en 2K, gardée pour les appuis suivants (partage iOS immédiat).
+    if (cardBlob.current) return cardBlob.current;
+    const res = await fetch(memberCardUrl(member, false, true));
     if (!res.ok || !res.headers.get("content-type")?.startsWith("image/png")) throw new Error("card");
-    return res.blob();
+    cardBlob.current = await res.blob();
+    return cardBlob.current;
   };
 
   const download = async () => {
     setBusy("download");
     try {
-      const blob = await fetchCard();
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-      notify("Carte téléchargée");
+      const r = await saveImage(await fetchCard(), fileName);
+      if (r !== "cancelled") notify(saveMessage(r, "Carte"));
     } catch {
       notify("La carte n'a pas pu être générée. Réessaie.");
     } finally {

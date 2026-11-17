@@ -1,5 +1,7 @@
 "use client";
 
+import { saveImage, saveMessage } from "../../../lib/save-image";
+import { fileSlug } from "../../../lib/share";
 import { optimizedSrc } from "../../../lib/img";
 import { useEffect, useRef, useState } from "react";
 import { createPortal, flushSync } from "react-dom";
@@ -104,19 +106,18 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
     setDays(Number.isFinite(d) ? d : null);
   }, [member.birthday]);
 
+  // Carte en 2K ; gardée en mémoire pour qu'un second appui ouvre tout de suite le partage iOS.
+  const cardBlob = useRef<Blob | null>(null);
   const downloadCard = async () => {
     setDownloading(true);
     try {
-      const res = await fetch(cardUrl);
-      if (!res.ok) throw new Error();
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(await res.blob());
-      a.download = `carte-otaku-${member.id}.png`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-      notify("Carte téléchargée");
+      if (!cardBlob.current) {
+        const res = await fetch(`${cardUrl}${cardUrl.includes("?") ? "&" : "?"}hd=1`);
+        if (!res.ok) throw new Error();
+        cardBlob.current = await res.blob();
+      }
+      const r = await saveImage(cardBlob.current, `carte-otaku-${fileSlug(member.name)}.png`);
+      if (r !== "cancelled") notify(saveMessage(r, "Carte"));
     } catch {
       notify("La carte n'a pas pu être générée. Réessaie.");
     } finally {

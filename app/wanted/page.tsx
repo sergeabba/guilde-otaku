@@ -14,6 +14,8 @@ import type { Member, Rank } from "../../data/members";
 import { rankAccents } from "../config/ranks";
 import { optimizedSrc } from "../../lib/img";
 import { bounty, BOUNTY_RULES, formatBounty, RANK_BOUNTY, sayBounty } from "../../lib/wanted";
+import { saveImage, saveMessage } from "../../lib/save-image";
+import { fileSlug } from "../../lib/share";
 import "./wanted.css";
 
 type ViewMode = "real" | "anime";
@@ -73,11 +75,14 @@ function Poster({ member, viewMode, eager = false }: { member: Member; viewMode:
 
 /** Dessine l'affiche sur un canvas pour la proposer en PNG (même mise en page que la page). */
 async function renderPosterPng(member: Member, viewMode: ViewMode): Promise<Blob> {
-  const W = 1000, H = 1500;
+  // Dessinée en 2K (2000 × 3000) : mêmes coordonnées, échelle 2.
+  const W = 1000, H = 1500, SCALE = 2;
   const canvas = document.createElement("canvas");
-  canvas.width = W; canvas.height = H;
+  canvas.width = W * SCALE; canvas.height = H * SCALE;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("canvas");
+  ctx.scale(SCALE, SCALE);
+  ctx.imageSmoothingQuality = "high";
   const serif = "'Times New Roman', Times, serif";
   const ink = "#4a2f1e";
 
@@ -250,17 +255,17 @@ export default function WantedPage() {
     stageRef.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
   };
 
+  // Affiche gardée en mémoire (par membre et portrait) : un second appui ouvre tout de suite le partage iOS.
+  const posterCache = useRef(new Map<string, Blob>());
   const download = async () => {
     if (!member || downloading) return;
     setDownloading(true);
     try {
-      const blob = await renderPosterPng(member, viewMode);
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `wanted-${normalize(member.name).replace(/[^a-z0-9]+/g, "-")}.png`;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-      notify("Affiche téléchargée");
+      const k = `${member.id}-${viewMode}`;
+      const blob = posterCache.current.get(k) ?? await renderPosterPng(member, viewMode);
+      posterCache.current.set(k, blob);
+      const r = await saveImage(blob, `wanted-${fileSlug(member.name)}.png`);
+      if (r !== "cancelled") notify(saveMessage(r, "Affiche"));
     } catch {
       notify("Portrait protégé : téléchargement impossible");
     } finally {

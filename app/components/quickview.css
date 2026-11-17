@@ -23,7 +23,7 @@
 .qv-id .pf-rank img { height: 34px; }
 .qv-facts { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 12px; font: 800 1rem var(--gk-font-ui); }
 .qv-facts span { display: inline-flex; align-items: center; gap: 6px; }
-.qv-bio { margin-top: 12px; font: 500 1rem/1.55 var(--gk-font-body); opacity: 0.9; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.qv-bio { margin-top: 14px; font: 500 clamp(1.14rem, 3.8vw, 1.3rem)/1.55 var(--gk-font-body); opacity: 0.95; display: -webkit-box; -webkit-line-clamp: 7; -webkit-box-orient: vertical; overflow: hidden; }
 
 .qv-block { display: grid; gap: 10px; padding-top: 16px; border-top: var(--gk-stroke) solid var(--gk-border); }
 .qv-h { font: 900 italic 1.2rem var(--gk-font-ui); text-transform: uppercase; letter-spacing: 0.04em; }

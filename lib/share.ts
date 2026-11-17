@@ -22,6 +22,8 @@ export function shareVersion(m: ShareFields): string {
 }
 
 export const memberOgUrl = (m: ShareFields) => `/api/og/member?id=${m.id}&v=${shareVersion(m)}`;
-export const memberCardUrl = (m: ShareFields, download = false) =>
-  `/api/card/member?id=${m.id}&v=${shareVersion(m)}${download ? "&download=1" : ""}`;
+export const memberCardUrl = (m: ShareFields, download = false, hd = false) =>
+  `/api/card/member?id=${m.id}&v=${shareVersion(m)}${hd ? "&hd=1" : ""}${download ? "&download=1" : ""}`;
+/** Nom de fichier lisible : « carte-otaku-craig-ryan.png ». */
+export const fileSlug = (name: string) => name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "membre";
 export const memberProfilePath = (id: number) => `/membres/${id}`;
