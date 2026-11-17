@@ -9,19 +9,20 @@ import { Check, Clock, Copy, Crown, LogOut, Play, Radio, RotateCcw, Share2, User
 import type { Member } from "../../data/members";
 import type { QuizRound } from "../../lib/games/quiz";
 import { useShare } from "../hooks/useShare";
-import { applyRound, isRoomCode, LIVE_REVEAL_MS, LIVE_ROUND_MS, liveRanking, roomCode, type LiveAnswer, type LivePeer } from "./live-logic";
+import { applyRound, isRoomCode, LIVE_LEVEL_MS, LIVE_MULT, LIVE_REVEAL_MS, liveRanking, roomCode, type LiveAnswer, type LivePeer } from "./live-logic";
 import { openRoom, type LiveTransport } from "./live-transport";
-import type { PlayerApi } from "./shared";
+import { LEVEL_LABEL, multLabel, type Level, type PlayerApi } from "./shared";
 
 type Mode = "generique" | "nostalgie";
 interface Reveal { correct: number; anime: string; title: string; artist: string; cover: string | null; gains: Record<string, number> }
-interface Snap { phase: "lobby" | "question" | "reveal" | "end"; mode: Mode; round: number; total: number; rounds: QuizRound[] | null; scores: Record<string, number>; answered: string[]; reveal: Reveal | null; seq: number }
+interface Snap { phase: "lobby" | "question" | "reveal" | "end"; mode: Mode; level?: Level; round: number; total: number; rounds: QuizRound[] | null; scores: Record<string, number>; answered: string[]; reveal: Reveal | null; seq: number }
 
-const LOBBY = (mode: Mode): Snap => ({ phase: "lobby", mode, round: 0, total: 0, rounds: null, scores: {}, answered: [], reveal: null, seq: 0 });
+const LOBBY = (mode: Mode, level: Level = "normal"): Snap => ({ phase: "lobby", mode, level, round: 0, total: 0, rounds: null, scores: {}, answered: [], reveal: null, seq: 0 });
 // Son vide : un appui sur « Créer » ou « Rejoindre » autorise ensuite la lecture sur iPhone.
 const SILENCE = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=";
 
-export default function Live({ player, members, initialCode }: { player: PlayerApi; members: Member[]; initialCode: string | null }) {
+export default function Live({ player, members, initialCode, level: pageLevel }: { player: PlayerApi; members: Member[]; initialCode: string | null; level: Level }) {
+  const [lvl, setLvl] = useState<Level>(pageLevel);
   const local = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("live") === "local";
   const [code, setCode] = useState<string | null>(null);
   const [joinInput, setJoinInput] = useState(initialCode ?? "");
@@ -32,7 +33,7 @@ export default function Live({ player, members, initialCode }: { player: PlayerA
   const [error, setError] = useState<string | null>(null);
   const [snap, setSnap] = useState<Snap>(LOBBY("generique"));
   const [mine, setMine] = useState<{ round: number; choice: number } | null>(null);
-  const [left, setLeft] = useState(LIVE_ROUND_MS);
+  const [left, setLeft] = useState(20_000);
   const [needTap, setNeedTap] = useState(false);
   const [hostGone, setHostGone] = useState(false);
   const { share, Toast } = useShare();
@@ -73,7 +74,8 @@ export default function Live({ player, members, initialCode }: { player: PlayerA
       const res = await fetch("/api/games/live", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: token.current, round }) });
       const r = await res.json();
       if (!res.ok) throw new Error(r.error || "Corrigé indisponible.");
-      const { scores, gains } = applyRound(s.scores, answers.current[round] ?? {}, r.correct);
+      const lv = s.level ?? "normal";
+      const { scores, gains } = applyRound(s.scores, answers.current[round] ?? {}, r.correct, LIVE_LEVEL_MS[lv], LIVE_MULT[lv]);
       publish({ ...s, phase: "reveal", scores, reveal: { correct: r.correct, anime: r.anime, title: r.title, artist: r.artist, cover: r.cover, gains } });
       later(() => {
         const cur = snapRef.current;
@@ -87,7 +89,7 @@ export default function Live({ player, members, initialCode }: { player: PlayerA
   const startRound = useCallback((round: number) => {
     clearTimers();
     publish({ ...snapRef.current, phase: "question", round, answered: [], reveal: null });
-    later(() => void endRound(round), LIVE_ROUND_MS + 800);
+    later(() => void endRound(round), LIVE_LEVEL_MS[snapRef.current.level ?? "normal"] + 800);
   }, [publish, endRound]);
 
   const onAnswer = useCallback((pid: string, a: { round: number; choice: number; ms: number }) => {
@@ -95,7 +97,8 @@ export default function Live({ player, members, initialCode }: { player: PlayerA
     if (s.phase !== "question" || a.round !== s.round || !Number.isInteger(a.choice)) return;
     const box = (answers.current[s.round] ??= {});
     if (box[pid]) return;
-    box[pid] = { choice: a.choice, ms: Math.max(0, Math.min(Number(a.ms) || LIVE_ROUND_MS, LIVE_ROUND_MS)) };
+    const roundMs = LIVE_LEVEL_MS[s.level ?? "normal"];
+    box[pid] = { choice: a.choice, ms: Math.max(0, Math.min(Number(a.ms) || roundMs, roundMs)) };
     const answered = Object.keys(box);
     publish({ ...s, answered });
     // Tout le monde a répondu : corrigé tout de suite.
@@ -105,7 +108,7 @@ export default function Live({ player, members, initialCode }: { player: PlayerA
   async function launch() {
     setError(null);
     try {
-      const res = await fetch(snap.mode === "nostalgie" ? "/api/games/quiz?mode=nostalgie" : "/api/games/quiz", { cache: "no-store" });
+      const res = await fetch(`/api/games/quiz?level=${snap.level ?? "normal"}${snap.mode === "nostalgie" ? "&mode=nostalgie" : ""}`, { cache: "no-store" });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Quiz indisponible.");
       token.current = d.token; answers.current = {}; ending.current = -1;
@@ -115,10 +118,10 @@ export default function Live({ player, members, initialCode }: { player: PlayerA
   }
 
   /* ── Connexion à une salle ────────────────────────────────────────────── */
-  const connect = useCallback((c: string, asHost: boolean, m: Mode) => {
+  const connect = useCallback((c: string, asHost: boolean, m: Mode, l: Level = "normal") => {
     tx.current?.close(); tx.current = null; clearTimers();
     setCode(c); setHost(asHost); setPeers([]); setOnline(false); setError(null); setHostGone(false); setMine(null);
-    const first = LOBBY(m); snapRef.current = first; setSnap(first);
+    const first = LOBBY(m, l); snapRef.current = first; setSnap(first);
     try { window.history.replaceState(null, "", `/jeux?jeu=direct&salle=${c}${local ? "&live=local" : ""}`); } catch { /* ignoré */ }
   }, [local]);
 
@@ -131,7 +134,7 @@ export default function Live({ player, members, initialCode }: { player: PlayerA
       onMessage: (type, data, from) => {
         if (type === "state" && !host) { const s = data as Snap; if (s.seq >= snapRef.current.seq || s.phase === "lobby") { snapRef.current = s; setSnap(s); } }
         if (type === "answer" && host) onAnswer(from, data as { round: number; choice: number; ms: number });
-        if (type === "moved" && !host) connect(String(data), false, snapRef.current.mode);
+        if (type === "moved" && !host) connect(String(data), false, snapRef.current.mode, snapRef.current.level);
         if (type === "hello" && host) tx.current?.send("state", snapRef.current);
       },
     }, local);
@@ -167,8 +170,16 @@ export default function Live({ player, members, initialCode }: { player: PlayerA
     // Début de partie : la question remonte en haut de l'écran.
     if (qKey === 0) document.querySelector(".jx-live")?.scrollIntoView({ behavior: "smooth", block: "start" });
     const a = audio.current, src = snapRef.current.rounds[qKey]?.preview;
-    if (a && src) { a.pause(); a.src = src; a.currentTime = 0; a.play().then(() => setNeedTap(false)).catch(() => setNeedTap(true)); }
-    const t = window.setInterval(() => setLeft(Math.max(0, LIVE_ROUND_MS - (performance.now() - started.current))), 200);
+    const rd = snapRef.current.rounds[qKey];
+    if (a && src) {
+      // Expert : 5 secondes prises au hasard dans l'extrait.
+      a.pause(); a.src = src; a.currentTime = rd.start ?? 0;
+      a.ontimeupdate = rd.clip ? () => { if (a.currentTime >= (rd.start ?? 0) + rd.clip!) a.pause(); } : null;
+      const go = () => { if (rd.start) a.currentTime = rd.start; a.play().then(() => setNeedTap(false)).catch(() => setNeedTap(true)); };
+      if (rd.start && a.readyState < 1) a.addEventListener("loadedmetadata", go, { once: true }); else go();
+    }
+    const roundMs = LIVE_LEVEL_MS[snapRef.current.level ?? "normal"];
+    const t = window.setInterval(() => setLeft(Math.max(0, roundMs - (performance.now() - started.current))), 200);
     return () => { window.clearInterval(t); a?.pause(); };
   }, [qKey]);
 
@@ -181,11 +192,11 @@ export default function Live({ player, members, initialCode }: { player: PlayerA
   }
 
   const unlock = () => { const a = audio.current; if (!a) return; a.src = SILENCE; void a.play().catch(() => {}); };
-  const create = () => { unlock(); connect(roomCode(), true, mode); };
+  const create = () => { unlock(); connect(roomCode(), true, mode, lvl); };
   const join = () => { const c = joinInput.trim().toUpperCase(); if (!isRoomCode(c)) { setError("Code de salle invalide (5 caractères)."); return; } unlock(); connect(c, false, "generique"); };
   const leave = () => { tx.current?.close(); tx.current = null; clearTimers(); setCode(null); setHost(false); setPeers([]); try { window.history.replaceState(null, "", "/jeux?jeu=direct"); } catch { /* ignoré */ } };
   // Revanche : on prévient la salle, puis l'hôte change de salle un instant après (le message part d'abord).
-  const rematch = () => { const c = roomCode(); tx.current?.send("moved", c); window.setTimeout(() => connect(c, true, snapRef.current.mode), 400); };
+  const rematch = () => { const c = roomCode(); tx.current?.send("moved", c); window.setTimeout(() => connect(c, true, snapRef.current.mode, snapRef.current.level), 400); };
   const link = code ? `/jeux?jeu=direct&salle=${code}` : "";
   const invite = () => share({ title: "Quiz en direct · Guilde Otaku", text: `Rejoins ma salle pour un quiz des génériques en direct ! Code : ${code}`, url: link });
 
@@ -211,6 +222,9 @@ export default function Live({ player, members, initialCode }: { player: PlayerA
               <div className="gk-chips" role="group" aria-label="Génériques">
                 <button type="button" className="gk-chip" aria-pressed={mode === "generique"} onClick={() => setMode("generique")}><span>Animes</span></button>
                 <button type="button" className="gk-chip" aria-pressed={mode === "nostalgie"} onClick={() => setMode("nostalgie")}><span>Nostalgie</span></button>
+              </div>
+              <div className="gk-chips" role="group" aria-label="Niveau de la salle">
+                {(["facile", "normal", "expert"] as Level[]).map((l) => <button key={l} type="button" className="gk-chip" aria-pressed={lvl === l} onClick={() => setLvl(l)}><span>{LEVEL_LABEL[l]} {multLabel(l)}</span></button>)}
               </div>
               <button type="button" className="gk-btn" onClick={create} disabled={!player.device}><Crown size={18} aria-hidden="true" /> Créer et inviter</button>
             </div>
@@ -249,7 +263,7 @@ export default function Live({ player, members, initialCode }: { player: PlayerA
                 {peers.map((p) => <li key={p.pid}>{face(p, 52)}<strong>{p.name}{p.pid === me.pid ? " (toi)" : ""}</strong>{p.host && <small><Crown size={12} aria-hidden="true" /> hôte</small>}</li>)}
               </ul>
               {host
-                ? <><button type="button" className="gk-btn" onClick={launch} disabled={!online}><Play size={18} aria-hidden="true" /> Lancer la partie ({snap.mode === "nostalgie" ? "Nostalgie" : "Animes"})</button><p className="jx-note">Attends que tout le monde soit là, puis lance. 10 extraits, 20 secondes chacun.</p></>
+                ? <><button type="button" className="gk-btn" onClick={launch} disabled={!online}><Play size={18} aria-hidden="true" /> Lancer la partie ({snap.mode === "nostalgie" ? "Nostalgie" : "Animes"}, {LEVEL_LABEL[snap.level ?? "normal"]})</button><p className="jx-note">Attends que tout le monde soit là, puis lance. 10 extraits, {LIVE_LEVEL_MS[snap.level ?? "normal"] / 1000} secondes chacun{snap.level === "expert" ? ", 5 secondes d'extrait et 6 choix pièges" : ""}.</p></>
                 : <p className="jx-note" role="status">En attente de l&apos;hôte… Monte le son.</p>}
             </div>
           )}
@@ -262,7 +276,7 @@ export default function Live({ player, members, initialCode }: { player: PlayerA
                   ? <span className="jx-timer"><Clock size={15} aria-hidden="true" /> {Math.ceil(left / 1000)} s · {snap.answered.length}/{peers.length} ont répondu</span>
                   : <span className="jx-timer">Corrigé</span>}
               </div>
-              {snap.phase === "question" && <div className="jx-timebar" aria-hidden="true"><span style={{ transform: `scaleX(${left / LIVE_ROUND_MS})` }} /></div>}
+              {snap.phase === "question" && <div className="jx-timebar" aria-hidden="true"><span style={{ transform: `scaleX(${left / LIVE_LEVEL_MS[snap.level ?? "normal"]})` }} /></div>}
               {snap.phase === "question" && (needTap
                 ? <button type="button" className="gk-btn jx-live-tap" onClick={() => { void audio.current?.play().then(() => setNeedTap(false)).catch(() => {}); }}><Volume2 size={18} aria-hidden="true" /> Activer le son</button>
                 : <div className="jx-eq" aria-hidden="true">{Array.from({ length: 9 }, (_, i) => <i key={i} style={{ "--k": i } as React.CSSProperties} />)}</div>)}
@@ -280,7 +294,7 @@ export default function Live({ player, members, initialCode }: { player: PlayerA
                   const right = snap.phase === "reveal" && snap.reveal?.correct === i;
                   return (
                     <button key={i} type="button" className={`jx-choice${right ? " is-right" : ""}${snap.phase === "reveal" && picked && !right ? " is-wrong" : ""}`} aria-pressed={picked} disabled={snap.phase !== "question" || mine?.round === snap.round} onClick={() => answer(i)}>
-                      <b>{"ABCD"[i]}</b><span>{c}</span>
+                      <b>{"ABCDEF"[i]}</b><span>{c}</span>
                     </button>
                   );
                 })}

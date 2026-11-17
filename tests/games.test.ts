@@ -286,3 +286,99 @@ describe("animes mystère : pas de suites", () => {
     for (const t of ["Attack on Titan", "One Punch Man", "Mob Psycho 100", "Naruto", "Spy x Family", "Steins;Gate", "Code Geass: Lelouch of the Rebellion"]) expect([t, isSequel(t)]).toEqual([t, false]);
   });
 });
+
+import { LEVEL_MULT, parseLevel, withMult } from "../lib/games/levels";
+import { normAnswer, sameTitle } from "../lib/games/fuzzy";
+import { buildCreateur, buildStudio, buildThemes, buildVoix, openQcm, qcmPoints, scoreQcm, themesAt } from "../lib/games/qcm";
+import { safeTags, type CatAnime, type CatChar } from "../lib/games/catalog";
+import { pmFits, buildPlusMoins as buildPm, openPlusMoins as openPm, buildAffiche as buildAff, openAffiche as openAff, scoreAffiche as scoreAff } from "../lib/games/arcade";
+import { buildQuiz as buildQ, verifyKey as verifyQ, scoreQuiz as scoreQ, traps } from "../lib/games/quiz";
+import { charHints as hints } from "../lib/games/dle-logic";
+
+describe("niveaux de difficulté", () => {
+  it("multiplie les points selon le niveau", () => {
+    expect([parseLevel("expert"), parseLevel("x"), parseLevel(undefined)]).toEqual(["expert", "normal", "normal"]);
+    expect([withMult(100, "facile"), withMult(100, "normal"), withMult(100, "expert")]).toEqual([100, 150, 200]);
+    expect(LEVEL_MULT.expert).toBe(2);
+  });
+  it("réponses tapées : accents, casse et petites fautes acceptés", () => {
+    expect(normAnswer("L'Attaque des Titans !")).toBe("l attaque des titans");
+    expect(sameTitle("attaque des titants", ["L'Attaque des Titans"])).toBe(true);
+    expect(sameTitle("frieren", ["Frieren"])).toBe(true);
+    expect(sameTitle("naruto", ["Bleach"])).toBe(false);
+    expect(sameTitle("a", ["A"])).toBe(false);
+  });
+  it("quiz : Facile = openings ; Expert = 6 choix pièges et extrait de 5 s", async () => {
+    const cat = songCatalog as { kind: string; lang?: string }[];
+    const easy = verifyQ((await buildQ(async (i) => `p${i}`, Date.now(), "generique", "facile")).token)!;
+    easy.songs.forEach((i) => expect(cat[i].kind).toBe("OP"));
+    const ex = await buildQ(async (i) => `p${i}`, Date.now(), "generique", "expert");
+    ex.rounds.forEach((r) => { expect(r.choices).toHaveLength(6); expect(r.clip).toBe(5); expect(r.start).toBeGreaterThanOrEqual(3); expect(r.start).toBeLessThanOrEqual(22); });
+    const key = verifyQ(ex.token)!;
+    const res = scoreQ(key, key.answers.map((c) => ({ choice: c, ms: 20_000 })));
+    expect([res.score, res.max]).toEqual([key.songs.length * 200, key.songs.length * 300]);
+    expect(traps({ anime: "X", year: 2000 } as never, ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"], 5)).toHaveLength(5);
+  });
+  it("affiche Expert : noir et blanc, une case toutes les 3 s, points doublés", () => {
+    const { token, rounds } = buildAff(POOL, Date.now(), Math.random, "expert");
+    expect(rounds[0]).toMatchObject({ gray: true, tileMs: 3000 });
+    const key = openAff(token)!;
+    const r = scoreAff(key, key.answers.map((c) => ({ choice: c, ms: 2999 })), POOL);
+    expect([r.score, r.max]).toEqual([1600, 1600]);
+  });
+  it("plus ou moins : écarts du niveau respectés", () => {
+    const P = POOL.map((a, i) => ({ ...a, popularity: 100_000 + i * 7_000 }));
+    expect(pmFits(P[0], { ...P[1], score: P[0].score + 9 }, "note", "facile")).toBe(true);
+    expect(pmFits(P[0], { ...P[1], score: P[0].score + 3 }, "note", "facile")).toBe(false);
+    expect(pmFits(P[0], { ...P[1], score: P[0].score + 3 }, "note", "expert")).toBe(true);
+    expect(pmFits(P[0], { ...P[1], score: P[0].score + 9 }, "note", "expert")).toBe(false);
+    const g = buildPm(P, Date.now(), Math.random, "facile");
+    const key = openPm(g.token)!;
+    const by = new Map(P.map((a) => [a.id, a]));
+    for (let i = 0; i + 1 < key.seq.length; i++) expect(Math.abs(by.get(key.seq[i])!.score - by.get(key.seq[i + 1])!.score)).toBeGreaterThanOrEqual(8);
+  });
+  it("devine le perso : Facile donne l'anime tout de suite, Expert le doubleur avant l'anime", () => {
+    const c = { id: 1, name: "Satoru Gojou", alt: [], image: "x", gender: "Homme", age: null, role: "Personnage principal", anime: "Jujutsu Kaisen", animeId: 5, year: 2020, genres: ["Action"], voice: "Yuuichi Nakamura" };
+    expect(hints(c, 0, () => "img", "facile").some((h) => h.value === "Jujutsu Kaisen")).toBe(true);
+    const ex = hints(c, 3, () => "img", "expert");
+    expect(ex.some((h) => h.value === "Yuuichi Nakamura")).toBe(true);
+    expect(ex.some((h) => h.value === "Jujutsu Kaisen")).toBe(false);
+    expect(hints(c, 4, () => "img", "expert").some((h) => h.value === "Jujutsu Kaisen")).toBe(true);
+  });
+});
+
+describe("jeux experts", () => {
+  const A = (i: number, o: Partial<CatAnime> = {}): CatAnime => ({ rank: i, id: i, title: `Anime ${i}`, alt: null, cover: `c${i}`, year: 2000 + (i % 20), format: "Série", episodes: 12, score: 70, popularity: 1000, genres: [], studio: `Studio ${i % 9}`, source: "Manga", tags: ["Magie", "École", "Voyage", "Dragons", "Guerre", `T${i % 4}`], creator: `Auteur ${i % 12}`, director: `Réal ${i % 11}`, ...o });
+  const animes = Array.from({ length: 60 }, (_, i) => A(i + 1));
+  it("garde seulement les thèmes traduits, sans spoiler", () => {
+    expect(safeTags([{ name: "Pirates", rank: 98, isMediaSpoiler: false }, { name: "Time Skip", rank: 90, isMediaSpoiler: true }, { name: "Unknown Tag", rank: 99, isMediaSpoiler: false }, { name: "Travel", rank: 40, isMediaSpoiler: false }])).toEqual(["Pirates"]);
+  });
+  it("thèmes : 5 thèmes, choix ou réponse tapée selon le niveau", () => {
+    const n = buildThemes(animes, "normal");
+    expect(n.rounds).toHaveLength(6);
+    n.rounds.forEach((r) => { expect(r.tags).toHaveLength(5); expect(r.choices).toHaveLength(6); });
+    const ex = buildThemes(animes, "expert");
+    expect(ex.rounds[0].choices).toHaveLength(0);
+    expect(ex.titles!.length).toBe(60);
+    const key = openQcm(ex.token)!;
+    const res = scoreQcm(key, key.accepted.map((t) => ({ choice: null, text: t[0].toLowerCase(), ms: 0 })));
+    expect([res.good, res.score]).toEqual([6, 6 * 200]);
+    expect([themesAt(0), themesAt(4000), themesAt(99_000)]).toEqual([1, 2, 5]);
+    expect(qcmPoints("themes", true, 16_000, "normal")).toBe(Math.round(40 * 1.5));
+  });
+  it("créateur, studio, voix : bonne réponse unique parmi les propositions", () => {
+    for (const g of [buildCreateur(animes, "expert"), buildStudio(animes, "facile")]) {
+      const key = openQcm(g.token)!;
+      g.rounds.forEach((r, i) => { expect(new Set(r.choices.map((c) => c.label)).size).toBe(r.choices.length); expect(r.choices[key.answers[i]].label).toBe(key.reveal[i].label); });
+    }
+    expect(buildCreateur(animes, "expert").rounds.some((r) => r.prompt.startsWith("Qui a réalisé"))).toBe(true);
+    const chars: CatChar[] = Array.from({ length: 40 }, (_, i) => ({ rank: i + 1, id: i, name: `Perso ${i}`, alt: [], image: "i", gender: null, age: null, role: "x", anime: `Anime ${i % 7}`, animeId: i % 7, animeRank: null, year: 2010, genres: [], voice: `Voix ${i % 15}` }));
+    const v = buildVoix(chars, "normal"), key = openQcm(v.token)!;
+    v.rounds.forEach((r, i) => {
+      const voice = r.prompt.match(/doublé par (.+) \?/)![1];
+      const right = r.choices[key.answers[i]];
+      expect(chars.find((c) => c.name === right.label)!.voice).toBe(voice);
+      r.choices.filter((_, k) => k !== key.answers[i]).forEach((c) => expect(chars.find((x) => x.name === c.label)!.voice).not.toBe(voice));
+    });
+  });
+});

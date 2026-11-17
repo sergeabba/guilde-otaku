@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAnimeSong } from "../../../../lib/anime-song";
 import { buildChallenge, buildQuiz, QUIZ_ROUNDS, scoreQuiz, verifyKey, type QuizAnswer } from "../../../../lib/games/quiz";
 import { ipOf, limited, parsePlayer } from "../../../../lib/games/player";
+import { parseLevel } from "../../../../lib/games/levels";
 import { getPlay, recordPlayId } from "../../../../lib/games/store";
 import { getPublicMembers } from "../../../../lib/members-server";
 
@@ -28,9 +29,9 @@ export async function GET(req: NextRequest) {
       const c = Number.isInteger(defi) ? await challenger(defi) : null;
       const quiz = c ? await buildChallenge(c.play.detail, defi, previewOf) : null;
       if (!c || !quiz) return NextResponse.json({ error: "Ce défi n'existe plus ou ses extraits sont indisponibles." }, { status: 404, headers: NO_STORE });
-      return NextResponse.json({ ...quiz, defi: c.info, mode: c.play.detail?.mode ?? "generique" }, { headers: NO_STORE });
+      return NextResponse.json({ ...quiz, defi: c.info, mode: c.play.detail?.mode ?? "generique", level: c.play.detail?.level ?? "normal" }, { headers: NO_STORE });
     }
-    const quiz = await buildQuiz(previewOf, Date.now(), sp.get("mode") === "nostalgie" ? "nostalgie" : "generique");
+    const quiz = await buildQuiz(previewOf, Date.now(), sp.get("mode") === "nostalgie" ? "nostalgie" : "generique", parseLevel(sp.get("level")));
     return NextResponse.json(quiz, { headers: NO_STORE });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Quiz indisponible." }, { status: 503, headers: NO_STORE });
@@ -54,7 +55,7 @@ export async function POST(req: NextRequest) {
     id = await recordPlayId({
       game: mode === "nostalgie" ? "quiz-nostalgie" : "quiz-generique", ...player, score: result.score, max_score: result.max,
       // Manches gardées pour pouvoir lancer un défi à un ami avec exactement les mêmes extraits.
-      detail: { good: result.good, rounds: key.songs.length, songs: key.songs, choices: key.choices ?? null, mode, ...(key.defi ? { defi: key.defi } : {}) },
+      detail: { good: result.good, rounds: key.songs.length, songs: key.songs, choices: key.choices ?? null, mode, level: key.level ?? "normal", ...(key.starts ? { starts: key.starts } : {}), ...(key.defi ? { defi: key.defi } : {}) },
       nonce: key.nonce,
     });
   } catch (e) {

@@ -1,12 +1,12 @@
 // Réservoir d'animes pour « L'Affiche en morceaux », « Plus ou moins » et le défi du
-// jour : les 200 séries et films les plus populaires d'AniList (sans clé), titre en
-// lettres latines, affiche et note moyenne réelles. En cache 24 h. Module serveur.
-import { unstable_cache } from "next/cache";
+// jour, tiré du catalogue AniList (lib/games/catalog.ts) : titre en lettres latines,
+// affiche, note moyenne et popularité réelles. Module serveur.
 import { hasJapanese } from "../member-extras";
+import { catalogAnimes } from "./catalog";
+import type { Level } from "./levels";
 
-export interface PoolAnime { id: number; title: string; cover: string; score: number; year: number | null }
+export interface PoolAnime { id: number; title: string; cover: string; score: number; year: number | null; popularity?: number }
 
-const QUERY = `query($p:Int){Page(page:$p,perPage:50){media(type:ANIME,sort:POPULARITY_DESC,isAdult:false,format_in:[TV,MOVIE]){id title{romaji english} averageScore seasonYear coverImage{extraLarge large}}}}`;
 interface Raw { id: number; title: { romaji?: string | null; english?: string | null }; averageScore: number | null; seasonYear: number | null; coverImage?: { extraLarge?: string | null; large?: string | null } }
 
 const latin = (s?: string | null) => (s && !hasJapanese(s) ? s.trim() : null);
@@ -26,17 +26,20 @@ export function toPool(raw: Raw[]): PoolAnime[] {
   return out;
 }
 
-export const getAnimePool = unstable_cache(async (): Promise<PoolAnime[]> => {
-  const pages = await Promise.all([1, 2, 3, 4].map(async (p) => {
-    const res = await fetch("https://graphql.anilist.co", {
-      method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({ query: QUERY, variables: { p } }), signal: AbortSignal.timeout(10_000),
-    });
-    if (!res.ok) throw new Error(`AniList ${res.status}`);
-    const d = await res.json();
-    return (d?.data?.Page?.media ?? []) as Raw[];
-  }));
-  const pool = toPool(pages.flat());
+/** Animes du catalogue entre deux rangs de popularité (note et affiche connues). */
+export async function animeRange(minRank: number, maxRank: number): Promise<PoolAnime[]> {
+  const list = (await catalogAnimes(maxRank)).filter((a) => a.rank >= minRank && a.score && a.year);
+  return list.map((a) => ({ id: a.id, title: a.title, cover: a.cover, score: a.score!, year: a.year, popularity: a.popularity }));
+}
+
+/** Les 200 plus populaires (défi du jour). */
+export async function getAnimePool(): Promise<PoolAnime[]> {
+  const pool = await animeRange(1, 200);
   if (pool.length < 40) throw new Error("Réservoir d'animes trop petit.");
   return pool;
-}, ["games-anime-pool-v1"], { revalidate: 86_400 });
+}
+
+/** Réservoir selon le niveau : Facile top 100, Normal top 300, Expert du 300e au 800e. */
+export function levelPool(level: Level): Promise<PoolAnime[]> {
+  return level === "facile" ? animeRange(1, 100) : level === "expert" ? animeRange(301, 800) : animeRange(1, 300);
+}

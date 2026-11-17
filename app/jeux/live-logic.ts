@@ -1,22 +1,25 @@
 // Règles du quiz en direct (fonctions pures, partagées par l'hôte et les tests).
 export const LIVE_ROUND_MS = 20_000;
 export const LIVE_REVEAL_MS = 6_000;
+/** Durée d'une manche et multiplicateur selon le niveau (mêmes règles que le quiz solo). */
+export const LIVE_LEVEL_MS = { facile: 30_000, normal: 20_000, expert: 20_000 } as const;
+export const LIVE_MULT = { facile: 1, normal: 1.5, expert: 2 } as const;
 
 export interface LiveAnswer { choice: number; ms: number }
 export interface LivePeer { pid: string; name: string; image: string | null; host?: boolean }
 
 /** 100 points par bonne réponse, plus jusqu'à 50 selon la rapidité (comme le quiz solo). */
-export function livePoints(ok: boolean, ms: number): number {
+export function livePoints(ok: boolean, ms: number, roundMs = LIVE_ROUND_MS, mult = 1): number {
   if (!ok) return 0;
-  const t = Math.min(Math.max(ms, 0), LIVE_ROUND_MS);
-  return 100 + Math.round(50 * (1 - t / LIVE_ROUND_MS));
+  const t = Math.min(Math.max(ms, 0), roundMs);
+  return Math.round((100 + Math.round(50 * (1 - t / roundMs))) * mult);
 }
 
 /** Ajoute les points d'une manche ; renvoie les nouveaux totaux et le gain de chacun. */
-export function applyRound(scores: Record<string, number>, answers: Record<string, LiveAnswer>, correct: number) {
+export function applyRound(scores: Record<string, number>, answers: Record<string, LiveAnswer>, correct: number, roundMs = LIVE_ROUND_MS, mult = 1) {
   const next = { ...scores }, gains: Record<string, number> = {};
   for (const [pid, a] of Object.entries(answers)) {
-    const pts = livePoints(a.choice === correct, a.ms);
+    const pts = livePoints(a.choice === correct, a.ms, roundMs, mult);
     gains[pid] = pts;
     next[pid] = (next[pid] ?? 0) + pts;
   }

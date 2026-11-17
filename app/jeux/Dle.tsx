@@ -7,7 +7,7 @@ import { ArrowDown, ArrowUp, Check, Clock, Lightbulb, Play, RotateCcw, ScanSearc
 import { optimizedSrc } from "../../lib/img";
 import type { AnimeFeedback, CharHint, Dir } from "../../lib/games/dle-logic";
 import { useShare } from "../hooks/useShare";
-import { api, pushLocal, read, write, type Game, type PlayerApi } from "./shared";
+import { api, LEVEL_LABEL, multLabel, pushLocal, read, write, type Game, type Level, type PlayerApi } from "./shared";
 
 type OnRanking = (g: Game) => void;
 const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
@@ -38,6 +38,30 @@ function Picker({ items, used, onPick, placeholder, disabled }: { items: { id: n
   );
 }
 
+/** Réponse à taper (niveau Expert) : suggestions parmi tous les titres possibles, ou saisie libre. */
+export function TypedAnswer({ titles, onSubmit, disabled, placeholder = "Tape le titre…" }: { titles: string[]; onSubmit: (text: string) => void; disabled?: boolean; placeholder?: string }) {
+  const [q, setQ] = useState("");
+  const list = useMemo(() => {
+    const n = norm(q);
+    if (n.length < 2) return [];
+    return titles.filter((t) => norm(t).includes(n)).sort((a, b) => Number(!norm(a).startsWith(n)) - Number(!norm(b).startsWith(n))).slice(0, 6);
+  }, [q, titles]);
+  const send = (t: string) => { if (!t.trim()) return; setQ(""); onSubmit(t.trim()); };
+  return (
+    <form className="jx-picker jx-typed" onSubmit={(e) => { e.preventDefault(); send(q); }}>
+      <div className="jx-typed-row">
+        <input className="gk-input" value={q} disabled={disabled} placeholder={placeholder} autoComplete="off" aria-label={placeholder} onChange={(e) => setQ(e.target.value)} />
+        <button type="submit" className="gk-btn gk-btn--sm" disabled={disabled || !q.trim()}><SendHorizontal size={16} aria-hidden="true" /> Valider</button>
+      </div>
+      {list.length > 0 && (
+        <ul className="jx-picker-list" role="listbox">
+          {list.map((t) => <li key={t} role="option" aria-selected="false"><button type="button" onClick={() => send(t)}><strong>{t}</strong></button></li>)}
+        </ul>
+      )}
+    </form>
+  );
+}
+
 /** Mémoire locale des essais du jour (pour reprendre une partie après rechargement). */
 function useDayGuesses(key: string | null) {
   const get = useCallback((): number[] => { if (!key) return []; try { return JSON.parse(read(key) ?? "[]"); } catch { return []; } }, [key]);
@@ -51,37 +75,38 @@ const arrow = (d: Dir | null, label: string) => d === "up" ? <ArrowUp size={14} 
 interface AnimeAnswer { id: number; title: string; cover: string; year: number; studio: string | null }
 interface AnimeState { date: string; tries: number; names: { id: number; title: string; alt: string | null; year: number }[]; played: { ok: boolean; score: number; feedback: AnimeFeedback[]; answer: AnimeAnswer } | null }
 
-export function DevineAnime({ player, onRanking }: { player: PlayerApi; onRanking: OnRanking }) {
+export function DevineAnime({ player, onRanking, level }: { player: PlayerApi; onRanking: OnRanking; level: Level }) {
+  const [tags, setTags] = useState<string[] | null>(null);
   const [data, setData] = useState<AnimeState | null>(null);
   const [feedback, setFeedback] = useState<AnimeFeedback[]>([]);
   const [end, setEnd] = useState<{ ok: boolean; score: number; answer: AnimeAnswer; saved?: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const memory = useDayGuesses(data ? `guilde-dle-anime-${data.date}` : null);
+  const memory = useDayGuesses(data ? `guilde-dle-anime-${level === "normal" ? "" : `${level}-`}${data.date}` : null);
   const { share, Toast } = useShare();
 
   const send = useCallback(async (ids: number[]) => {
     setBusy(true); setError(null);
     try {
-      const r = await api<{ feedback: AnimeFeedback[]; over: boolean; ok: boolean; score: number; saved: boolean; answer: AnimeAnswer | null }>("/api/games/devine-anime", { guesses: ids, ...player.payload() });
-      setFeedback(r.feedback); memory.set(ids);
+      const r = await api<{ feedback: AnimeFeedback[]; over: boolean; ok: boolean; score: number; saved: boolean; tags: string[] | null; answer: AnimeAnswer | null }>("/api/games/devine-anime", { guesses: ids, level, ...player.payload() });
+      setFeedback(r.feedback); setTags(r.tags); memory.set(ids);
       if (r.over && r.answer) {
         setEnd({ ok: r.ok, score: r.score, answer: r.answer, saved: r.saved });
         pushLocal({ game: "devine-anime", score: r.score, max: 100, at: new Date().toISOString(), label: r.ok ? `Trouvé en ${ids.length} essai${ids.length > 1 ? "s" : ""}` : "Raté" });
       }
     } catch (e) { setError(e instanceof Error ? e.message : "Essai non pris en compte."); } finally { setBusy(false); }
-  }, [player, memory]);
+  }, [player, memory, level]);
 
   useEffect(() => {
     if (!player.device) return;
     let alive = true;
-    api<AnimeState>(`/api/games/devine-anime?device=${player.device}${player.me ? `&member=${player.me}` : ""}`).then((d) => {
+    api<AnimeState>(`/api/games/devine-anime?level=${level}&device=${player.device}${player.me ? `&member=${player.me}` : ""}`).then((d) => {
       if (!alive) return;
       setData(d);
       if (d.played) { setFeedback(d.played.feedback); setEnd({ ok: d.played.ok, score: d.played.score, answer: d.played.answer }); }
     }).catch((e: Error) => alive && setError(e.message));
     return () => { alive = false; };
-  }, [player.device, player.me]);
+  }, [player.device, player.me, level]);
   // Partie commencée sur cet appareil : on reprend les essais déjà faits.
   const resumed = useRef(false);
   useEffect(() => {
@@ -112,6 +137,8 @@ export function DevineAnime({ player, onRanking }: { player: PlayerApi; onRankin
       </div>
       {!end && (
         <>
+          <p className="jx-level-note">Niveau {LEVEL_LABEL[level]} ({multLabel(level)}) : {level === "facile" ? "un anime du top 100, ses thèmes en indice dès le 3e essai." : level === "expert" ? "un anime entre le 150e et le 600e rang, en 5 essais." : "un anime du top 150, en 6 essais."} Un anime mystère différent par niveau.</p>
+          {tags && <p className="jx-tags-hint"><b>Indice : ses thèmes</b>{tags.map((t) => <span key={t}>{t}</span>)}</p>}
           <p className="jx-dle-rules">Un anime mystère par jour, parmi les plus populaires. Tape un titre : chaque essai dit ce qu&apos;il a en commun avec l&apos;anime mystère. <b className="jx-key is-ok">Vert</b> : identique. <b className="jx-key is-near">Orange</b> : proche. Flèche : l&apos;anime mystère est plus haut ou plus bas.</p>
           <Picker items={data.names.map((n) => ({ id: n.id, label: n.title, sub: `${n.year}${n.alt ? ` · ${n.alt}` : ""}`, alt: n.alt ? [n.alt] : [] }))} used={used} onPick={(id) => void send([...ids, id])} placeholder="Tape le titre d'un anime…" disabled={busy} />
         </>
@@ -166,38 +193,38 @@ interface CharVerdict { id: number; name: string; anime: string; ok: boolean; sa
 interface CharAnswer { name: string; anime: string; image: string }
 interface CharState { date: string; tries: number; names: { id: number; name: string; alt: string[]; anime: string }[]; hints: CharHint[]; played: { ok: boolean; score: number; feedback: CharVerdict[]; answer: CharAnswer } | null }
 
-export function DevinePerso({ player, onRanking }: { player: PlayerApi; onRanking: OnRanking }) {
+export function DevinePerso({ player, onRanking, level }: { player: PlayerApi; onRanking: OnRanking; level: Level }) {
   const [data, setData] = useState<CharState | null>(null);
   const [feedback, setFeedback] = useState<CharVerdict[]>([]);
   const [hints, setHints] = useState<CharHint[]>([]);
   const [end, setEnd] = useState<{ ok: boolean; score: number; answer: CharAnswer; saved?: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const memory = useDayGuesses(data ? `guilde-dle-perso-${data.date}` : null);
+  const memory = useDayGuesses(data ? `guilde-dle-perso-${level === "normal" ? "" : `${level}-`}${data.date}` : null);
   const { share, Toast } = useShare();
 
   const send = useCallback(async (ids: number[]) => {
     setBusy(true); setError(null);
     try {
-      const r = await api<{ feedback: CharVerdict[]; hints: CharHint[]; over: boolean; ok: boolean; score: number; saved: boolean; answer: CharAnswer | null }>("/api/games/devine-perso", { guesses: ids, ...player.payload() });
+      const r = await api<{ feedback: CharVerdict[]; hints: CharHint[]; over: boolean; ok: boolean; score: number; saved: boolean; answer: CharAnswer | null }>("/api/games/devine-perso", { guesses: ids, level, ...player.payload() });
       setFeedback(r.feedback); setHints(r.hints); memory.set(ids);
       if (r.over && r.answer) {
         setEnd({ ok: r.ok, score: r.score, answer: r.answer, saved: r.saved });
         pushLocal({ game: "devine-perso", score: r.score, max: 100, at: new Date().toISOString(), label: r.ok ? `Trouvé en ${ids.length} essai${ids.length > 1 ? "s" : ""}` : "Raté" });
       }
     } catch (e) { setError(e instanceof Error ? e.message : "Essai non pris en compte."); } finally { setBusy(false); }
-  }, [player, memory]);
+  }, [player, memory, level]);
 
   useEffect(() => {
     if (!player.device) return;
     let alive = true;
-    api<CharState>(`/api/games/devine-perso?device=${player.device}${player.me ? `&member=${player.me}` : ""}`).then((d) => {
+    api<CharState>(`/api/games/devine-perso?level=${level}&device=${player.device}${player.me ? `&member=${player.me}` : ""}`).then((d) => {
       if (!alive) return;
       setData(d); setHints(d.hints);
       if (d.played) { setFeedback(d.played.feedback); setEnd({ ok: d.played.ok, score: d.played.score, answer: d.played.answer }); }
     }).catch((e: Error) => alive && setError(e.message));
     return () => { alive = false; };
-  }, [player.device, player.me]);
+  }, [player.device, player.me, level]);
   const resumed = useRef(false);
   useEffect(() => {
     if (!data || data.played || resumed.current) return;
@@ -221,6 +248,7 @@ export function DevinePerso({ player, onRanking }: { player: PlayerApi; onRankin
         </div>
         <p className="jx-dle-left" aria-live="polite"><b>{end ? feedback.length : left}</b><small>{end ? "essais joués" : `essai${left > 1 ? "s" : ""} restant${left > 1 ? "s" : ""}`}</small></p>
       </div>
+      {!end && <p className="jx-level-note">Niveau {LEVEL_LABEL[level]} ({multLabel(level)}) : {level === "facile" ? "un perso du top 100, le titre de l'anime est donné tout de suite." : level === "expert" ? "un perso entre le 200e et le 600e rang ; le doubleur japonais arrive avant le titre de l'anime." : "un perso du top 120."}</p>}
       {!end && <p className="jx-dle-rules">Un personnage d&apos;anime parmi les plus aimés. Chaque essai raté dévoile un indice de plus : genres de l&apos;anime, portrait flouté, titre de l&apos;anime, initiale…</p>}
 
       <div className="jx-perso">
@@ -279,7 +307,9 @@ const EMOJI_MS = 20_000;
 interface EmojiRound { emojis: string; hint: string | null; choices: string[] }
 interface EmojiResult { score: number; max: number; good: number; saved: boolean; correction: { emojis: string; answer: string; ok: boolean; hint: boolean; points: number }[] }
 
-export function EmojiQuiz({ player, onRanking }: { player: PlayerApi; onRanking: OnRanking }) {
+export function EmojiQuiz({ player, onRanking, level }: { player: PlayerApi; onRanking: OnRanking; level: Level }) {
+  const [titles, setTitles] = useState<string[] | null>(null);
+  const [typed, setTyped] = useState<string | null>(null);
   const [phase, setPhase] = useState<"intro" | "loading" | "play" | "reveal" | "sending" | "done">("intro");
   const [token, setToken] = useState("");
   const [rounds, setRounds] = useState<EmojiRound[]>([]);
@@ -289,14 +319,14 @@ export function EmojiQuiz({ player, onRanking }: { player: PlayerApi; onRanking:
   const [left, setLeft] = useState(EMOJI_MS);
   const [result, setResult] = useState<EmojiResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const answers = useRef<{ choice: number | null; ms: number; hint: boolean }[]>([]);
+  const answers = useRef<{ choice: number | null; ms: number; hint: boolean; text?: string }[]>([]);
   const started = useRef(0);
 
   async function start() {
     setPhase("loading"); setError(null); setResult(null);
     try {
-      const d = await api<{ token: string; rounds: EmojiRound[] }>("/api/games/emoji");
-      answers.current = []; setToken(d.token); setRounds(d.rounds); setR(0); setPicked(null); setHint(false);
+      const d = await api<{ token: string; rounds: EmojiRound[]; titles: string[] | null }>(`/api/games/emoji?level=${level}`);
+      answers.current = []; setToken(d.token); setRounds(d.rounds); setTitles(d.titles); setTyped(null); setR(0); setPicked(null); setHint(false);
       started.current = performance.now(); setLeft(EMOJI_MS); setPhase("play");
     } catch (e) { setError(e instanceof Error ? e.message : "Partie indisponible."); setPhase("intro"); }
   }
@@ -308,13 +338,13 @@ export function EmojiQuiz({ player, onRanking }: { player: PlayerApi; onRanking:
       pushLocal({ game: "emoji-quiz", score: d.score, max: d.max, at: new Date().toISOString(), label: `${d.good}/${d.correction.length} énigmes` });
     } catch (e) { setError(e instanceof Error ? e.message : "Correction impossible."); setPhase("intro"); }
   }, [token, player]);
-  const answer = useCallback((choice: number | null) => {
+  const answer = useCallback((choice: number | null, text?: string) => {
     if (phase !== "play") return;
-    answers.current[r] = { choice, ms: Math.round(performance.now() - started.current), hint };
-    setPicked(choice); setPhase("reveal");
+    answers.current[r] = { choice, ms: Math.round(performance.now() - started.current), hint, ...(text ? { text } : {}) };
+    setPicked(choice); setTyped(text ?? null); setPhase("reveal");
     window.setTimeout(() => {
       if (r + 1 >= rounds.length) { void finish(); return; }
-      setR(r + 1); setPicked(null); setHint(false); started.current = performance.now(); setLeft(EMOJI_MS); setPhase("play");
+      setR(r + 1); setPicked(null); setTyped(null); setHint(false); started.current = performance.now(); setLeft(EMOJI_MS); setPhase("play");
     }, 650);
   }, [phase, r, rounds.length, finish, hint]);
   useEffect(() => {
@@ -334,7 +364,8 @@ export function EmojiQuiz({ player, onRanking }: { player: PlayerApi; onRanking:
         <div className="jx-intro">
           <span className="jx-big-icon" aria-hidden="true"><Smile size={38} /></span>
           <h2 id="jx-emoji-title" className="gk-display">Quiz des émojis</h2>
-          <p>8 animes résumés en quelques émojis. Trouve le bon titre parmi 4, en 20 secondes. 100 points par bonne réponse (50 si tu prends l&apos;indice), jusqu&apos;à 50 de bonus si tu es rapide.</p>
+          <p>8 animes résumés en quelques émojis, 20 secondes chacun. 100 points par bonne réponse (50 si tu prends l&apos;indice), jusqu&apos;à 50 de bonus si tu es rapide.</p>
+          <p className="jx-level-note">Niveau {LEVEL_LABEL[level]} ({multLabel(level)}) : {level === "facile" ? "4 titres proposés, indice gratuit." : level === "expert" ? "aucune proposition : tape le titre (les petites fautes passent)." : "4 titres proposés, l'indice coûte la moitié des points."}</p>
           {error && <p className="jx-error" role="alert">{error}</p>}
           <button type="button" className="gk-btn" onClick={start} disabled={phase === "loading"}><Play size={18} aria-hidden="true" /> {phase === "loading" ? "Préparation…" : "Lancer la partie"}</button>
         </div>
@@ -346,11 +377,13 @@ export function EmojiQuiz({ player, onRanking }: { player: PlayerApi; onRanking:
           <p className="jx-emoji-big" role="img" aria-label="Énigme en émojis">{round.emojis}</p>
           <div className="jx-emoji-hint">
             {hint && round.hint ? <p><Lightbulb size={16} aria-hidden="true" /> {round.hint}</p>
-              : round.hint && <button type="button" className="gk-btn gk-btn--sm gk-btn--ghost" disabled={phase !== "play"} onClick={() => setHint(true)}><Lightbulb size={16} aria-hidden="true" /> Indice (moitié des points)</button>}
+              : round.hint && <button type="button" className="gk-btn gk-btn--sm gk-btn--ghost" disabled={phase !== "play"} onClick={() => setHint(true)}><Lightbulb size={16} aria-hidden="true" /> {level === "facile" ? "Indice (gratuit)" : "Indice (moitié des points)"}</button>}
           </div>
-          <div className="jx-choices">
-            {round.choices.map((c, i) => <button key={i} type="button" className="jx-choice" aria-pressed={picked === i} disabled={phase !== "play"} onClick={() => answer(i)}><b>{"ABCD"[i]}</b><span>{c}</span></button>)}
-          </div>
+          {titles
+            ? <>{phase === "reveal" && typed ? <p className="jx-note" role="status">Réponse envoyée : {typed}</p> : <TypedAnswer titles={titles} disabled={phase !== "play"} onSubmit={(t) => answer(null, t)} />}</>
+            : <div className="jx-choices">
+                {round.choices.map((c, i) => <button key={i} type="button" className="jx-choice" aria-pressed={picked === i} disabled={phase !== "play"} onClick={() => answer(i)}><b>{"ABCD"[i]}</b><span>{c}</span></button>)}
+              </div>}
         </div>
       )}
       {phase === "sending" && <p className="jx-note" role="status">Correction…</p>}

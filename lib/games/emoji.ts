@@ -4,13 +4,15 @@ import { randomUUID } from "node:crypto";
 import base from "../../data/emoji-quiz.json";
 import { hasJapanese } from "../member-extras";
 import { emojiRows } from "./store";
+import { sameTitle } from "./fuzzy";
+import { LEVEL_MULT, type Level } from "./levels";
 import { seal, shuffle, unseal } from "./token";
 
 export const EMOJI_ROUNDS = 8;
 export const EMOJI_MS = 20_000;
 export interface Puzzle { id: string; emojis: string; answer: string; hint: string | null }
-export interface EmojiKey { game: "emoji"; nonce: string; exp: number; ids: string[]; answers: number[] }
-export interface EmojiAnswer { choice: number | null; ms: number; hint: boolean }
+export interface EmojiKey { game: "emoji"; nonce: string; exp: number; ids: string[]; answers: number[]; level?: Level }
+export interface EmojiAnswer { choice: number | null; ms: number; hint: boolean; text?: string }
 
 export async function allPuzzles(): Promise<Puzzle[]> {
   const builtIn: Puzzle[] = (base as { emojis: string; answer: string; hint?: string }[]).map((p, i) => ({ id: `b${i}`, emojis: p.emojis, answer: p.answer, hint: p.hint ?? null }));
@@ -18,15 +20,20 @@ export async function allPuzzles(): Promise<Puzzle[]> {
   return [...builtIn, ...rows.map((r) => ({ id: `d${r.id}`, emojis: r.emojis, answer: r.answer, hint: r.hint }))];
 }
 
-export function buildEmoji(puzzles: Puzzle[], now = Date.now(), rnd = Math.random) {
+/**
+ * Partie de 8 énigmes. Expert : aucune proposition, le titre se tape (les suggestions
+ * couvrent tous les titres du jeu, pour ne rien dévoiler).
+ */
+export function buildEmoji(puzzles: Puzzle[], now = Date.now(), rnd = Math.random, level?: Level) {
   const answers = [...new Set(puzzles.map((p) => p.answer))];
   const picked = shuffle(puzzles, rnd).filter((p, i, a) => a.findIndex((x) => x.answer === p.answer) === i).slice(0, EMOJI_ROUNDS);
+  const typed = level === "expert";
   const rounds = picked.map((p) => {
-    const choices = shuffle([p.answer, ...shuffle(answers.filter((a) => a !== p.answer), rnd).slice(0, 3)], rnd);
+    const choices = typed ? [] : shuffle([p.answer, ...shuffle(answers.filter((a) => a !== p.answer), rnd).slice(0, 3)], rnd);
     return { emojis: p.emojis, hint: p.hint, choices };
   });
-  const key: EmojiKey = { game: "emoji", nonce: randomUUID(), exp: now + 30 * 60_000, ids: picked.map((p) => p.id), answers: rounds.map((r, i) => r.choices.indexOf(picked[i].answer)) };
-  return { token: seal(key), rounds };
+  const key: EmojiKey = { game: "emoji", nonce: randomUUID(), exp: now + 30 * 60_000, ids: picked.map((p) => p.id), answers: rounds.map((r, i) => r.choices.indexOf(picked[i].answer)), ...(level ? { level } : {}) };
+  return { token: seal(key), rounds, titles: typed ? [...answers].sort((a, b) => a.localeCompare(b, "fr")) : null };
 }
 
 export const openEmoji = (t: unknown) => unseal<EmojiKey>(t, "emoji");
@@ -40,13 +47,16 @@ export function emojiPoints(ok: boolean, ms: number, hint: boolean): number {
 
 export function scoreEmoji(key: EmojiKey, answers: EmojiAnswer[], puzzles: Puzzle[]) {
   const byId = new Map(puzzles.map((p) => [p.id, p]));
+  const mult = key.level ? LEVEL_MULT[key.level] : 1;
   const correction = key.ids.map((id, r) => {
-    const a = answers[r], chosen = Number.isInteger(a?.choice) && a!.choice! >= 0 && a!.choice! < 4 ? a!.choice! : null;
-    const ok = chosen === key.answers[r];
-    const p = byId.get(id);
-    return { emojis: p?.emojis ?? "?", answer: p?.answer ?? "?", ok, hint: !!a?.hint, points: emojiPoints(ok, Number.isFinite(a?.ms) ? a!.ms : EMOJI_MS, !!a?.hint) };
+    const a = answers[r], p = byId.get(id);
+    const chosen = Number.isInteger(a?.choice) && a!.choice! >= 0 && a!.choice! < 4 ? a!.choice! : null;
+    const ok = key.level === "expert" ? !!a?.text && !!p && sameTitle(a.text, [p.answer]) : chosen === key.answers[r];
+    // Facile : l'indice ne coûte rien.
+    const hintCost = !!a?.hint && key.level !== "facile";
+    return { emojis: p?.emojis ?? "?", answer: p?.answer ?? "?", ok, hint: !!a?.hint, points: Math.round(emojiPoints(ok, Number.isFinite(a?.ms) ? a!.ms : EMOJI_MS, hintCost) * mult) };
   });
-  return { score: correction.reduce((n, c) => n + c.points, 0), max: key.ids.length * 150, good: correction.filter((c) => c.ok).length, correction };
+  return { score: correction.reduce((n, c) => n + c.points, 0), max: Math.round(key.ids.length * 150 * mult), good: correction.filter((c) => c.ok).length, correction };
 }
 
 const PICTO = /\p{Extended_Pictographic}/gu;

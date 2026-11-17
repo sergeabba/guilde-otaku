@@ -1,8 +1,11 @@
 // Jeux « à indices » du jour : Devine l'anime (6 essais) et Devine le perso.
 // Fonctions pures : tirage du jour, comparaison d'un essai, points, indices.
+import type { Level } from "./levels";
 import { seeded } from "./token";
 
 export const DLE_TRIES = 6;
+/** Expert : Devine l'anime en 5 essais seulement. */
+export const animeTries = (level: Level) => (level === "expert" ? 5 : DLE_TRIES);
 /** 100 points du premier coup, 15 de moins par essai en plus ; 0 si raté. */
 export const dlePoints = (tries: number | null) => (tries && tries >= 1 && tries <= DLE_TRIES ? 100 - (tries - 1) * 15 : 0);
 
@@ -11,7 +14,7 @@ export function pickDaily(date: string, length: number, salt: string): number {
   return Math.floor(seeded(`${salt}-${date}`)() * length);
 }
 
-export interface DleAnime { id: number; title: string; alt: string | null; cover: string; year: number; format: string; episodes: number | null; score: number; genres: string[]; studio: string | null; source: string | null }
+export interface DleAnime { id: number; title: string; alt: string | null; cover: string; year: number; format: string; episodes: number | null; score: number; genres: string[]; studio: string | null; source: string | null; tags?: string[]; rank?: number }
 export type Dir = "eq" | "up" | "down";
 export interface AnimeFeedback {
   id: number; title: string; cover: string; ok: boolean;
@@ -41,27 +44,35 @@ export function compareAnime(g: DleAnime, s: DleAnime): AnimeFeedback {
   };
 }
 
-export interface DleChar { id: number; name: string; alt: string[]; image: string; gender: string | null; age: string | null; role: string; anime: string; animeId: number; year: number | null; genres: string[] }
+export interface DleChar { id: number; name: string; alt: string[]; image: string; gender: string | null; age: string | null; role: string; anime: string; animeId: number; year: number | null; genres: string[]; voice?: string | null; rank?: number }
 export interface CharHint { label: string; value: string; kind: "text" | "image" }
 
 /**
  * Indices du perso mystère, dévoilés un par un : un de plus à chaque essai raté.
  * Le dernier palier donne l'initiale ; l'image nette n'est envoyée qu'à la fin.
  */
-export function charHints(c: DleChar, wrong: number, imageUrl: (level: 1 | 2) => string): CharHint[] {
+export function charHints(c: DleChar, wrong: number, imageUrl: (level: 1 | 2) => string, level: Level = "normal"): CharHint[] {
+  const anime: CharHint = { label: "Anime", value: c.anime, kind: "text" };
   const all: CharHint[] = [
     { label: "Rôle", value: c.role, kind: "text" },
     ...(c.gender ? [{ label: "Genre", value: c.gender, kind: "text" as const }] : []),
     ...(c.age ? [{ label: "Âge", value: c.age, kind: "text" as const }] : []),
+    // Facile : le titre de l'anime est donné tout de suite.
+    ...(level === "facile" ? [anime] : []),
   ];
-  const steps: CharHint[][] = [
-    [{ label: "Anime : genres", value: c.genres.slice(0, 3).join(", ") || "inconnus", kind: "text" }, ...(c.year ? [{ label: "Année de l'anime", value: String(c.year), kind: "text" as const }] : [])],
-    [{ label: "Portrait (très flou)", value: imageUrl(1), kind: "image" }],
-    [{ label: "Anime", value: c.anime, kind: "text" }],
-    [{ label: "Portrait (moins flou)", value: imageUrl(2), kind: "image" }],
-    [{ label: "Initiale", value: `${c.name.slice(0, 1)}…`, kind: "text" }],
-  ];
-  return [...all, ...steps.slice(0, Math.min(wrong, steps.length)).flat()];
+  const genres: CharHint[] = [{ label: "Anime : genres", value: c.genres.slice(0, 3).join(", ") || "inconnus", kind: "text" }, ...(c.year ? [{ label: "Année de l'anime", value: String(c.year), kind: "text" as const }] : [])];
+  const pix1: CharHint = { label: "Portrait (très flou)", value: imageUrl(1), kind: "image" };
+  const pix2: CharHint = { label: "Portrait (moins flou)", value: imageUrl(2), kind: "image" };
+  const voice: CharHint[] = c.voice ? [{ label: "Doubleur japonais", value: c.voice, kind: "text" }] : [];
+  const initial: CharHint = { label: "Initiale", value: `${c.name.slice(0, 1)}…`, kind: "text" };
+  // Expert : le doubleur arrive avant le titre de l'anime, donné en avant-dernier ; pas d'initiale.
+  const steps: CharHint[][] = level === "expert"
+    ? [genres, [pix1], voice.length ? voice : [pix2], [anime], [pix2]]
+    : level === "facile"
+      ? [genres, [pix1], [pix2], voice.length ? voice : [initial], [initial]]
+      : [genres, [pix1], [anime], [pix2], [initial]];
+  const out = [...all, ...steps.slice(0, Math.min(wrong, steps.length)).flat()];
+  return out.filter((h, i) => out.findIndex((x) => x.label === h.label && x.value === h.value) === i);
 }
 
 /** Recherche tolérante (accents, casse, ponctuation). */

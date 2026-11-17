@@ -2,8 +2,9 @@
 
 // Outils communs de la page Jeux : joueur sans compte, historique local, métadonnées des jeux.
 import { useCallback, useEffect, useState } from "react";
+import { LEVEL_LABEL, LEVEL_MULT, parseLevel, type Level } from "../../lib/games/levels";
 
-export type Game = "quiz-generique" | "quiz-nostalgie" | "affiche" | "plus-moins" | "defi-jour" | "devine-anime" | "devine-perso" | "emoji-quiz" | "duel";
+export type Game = "quiz-generique" | "quiz-nostalgie" | "affiche" | "plus-moins" | "defi-jour" | "devine-anime" | "devine-perso" | "emoji-quiz" | "themes" | "createur" | "studio" | "voix" | "duel";
 export interface Play { id?: number; game: Game; member_id: number | null; player_name: string | null; score: number; max_score: number; detail: Record<string, unknown>; created_at: string }
 export interface LocalPlay { game: Game; score: number; max: number; at: string; label: string }
 
@@ -13,10 +14,14 @@ export const GAME_INFO: Record<Game, { label: string; unit: (p: { score: number;
   "devine-anime": { label: "Devine l'anime", unit: (p) => `${p.score} pts` },
   "devine-perso": { label: "Devine le perso", unit: (p) => `${p.score} pts` },
   "emoji-quiz": { label: "Émojis", unit: (p) => `${p.score} / ${p.max}` },
+  themes: { label: "Thèmes", unit: (p) => `${p.score} / ${p.max}` },
+  createur: { label: "Créateurs", unit: (p) => `${p.score} / ${p.max}` },
+  studio: { label: "Studios", unit: (p) => `${p.score} / ${p.max}` },
+  voix: { label: "Voix", unit: (p) => `${p.score} / ${p.max}` },
   "quiz-generique": { label: "Quiz génériques", unit: (p) => `${p.score} / ${p.max}` },
   "quiz-nostalgie": { label: "Nostalgie", unit: (p) => `${p.score} / ${p.max}` },
   affiche: { label: "Affiche", unit: (p) => `${p.score} / ${p.max}` },
-  "plus-moins": { label: "Plus ou moins", unit: (p) => `Série de ${p.score}` },
+  "plus-moins": { label: "Plus ou moins", unit: (p) => `${p.score} pts` },
   duel: { label: "Duels", unit: (p) => `${p.score} %` },
 };
 
@@ -61,3 +66,14 @@ export async function api<T>(url: string, body?: unknown): Promise<T> {
   if (!res.ok) throw new Error(d.error || "Service indisponible, réessaie plus tard.");
   return d as T;
 }
+
+/* ── Niveau de difficulté choisi (gardé sur l'appareil) ─────────────── */
+export { LEVEL_LABEL, LEVEL_MULT, type Level };
+const KEY_LEVEL = "guilde-level";
+export function useLevel(): [Level, (l: Level) => void] {
+  const [level, setLevel] = useState<Level>("normal");
+  useEffect(() => { void Promise.resolve().then(() => setLevel(parseLevel(read(KEY_LEVEL)))); }, []);
+  return [level, (l: Level) => { setLevel(l); write(KEY_LEVEL, l); }];
+}
+/** Multiplicateur affiché : « ×1,5 ». */
+export const multLabel = (l: Level) => `×${String(LEVEL_MULT[l]).replace(".", ",")}`;

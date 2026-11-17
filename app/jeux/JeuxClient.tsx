@@ -6,7 +6,7 @@
 // l'historique est aussi gardé sur l'appareil (utile tant que la table n'existe pas).
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { ArrowUpDown, ScanSearch, Smile, UserSearch, Users, Award, CalendarCheck, Check, Clock, Grid3x3, Headphones, Heart, ListOrdered, Play, Radio, RotateCcw, Share2, Swords, Trophy, User } from "lucide-react";
+import { ArrowUpDown, Building2, Mic, PenTool, Tags, ScanSearch, Smile, UserSearch, Users, Award, CalendarCheck, Check, Clock, Grid3x3, Headphones, Heart, ListOrdered, Play, Radio, RotateCcw, Share2, Swords, Trophy, User } from "lucide-react";
 import GuildeHeader from "../components/GuildeHeader";
 import { fetchMembers } from "../utils/dataAdapter";
 import { useShare } from "../hooks/useShare";
@@ -14,19 +14,24 @@ import type { Member } from "../../data/members";
 import type { Badge } from "../../lib/games/badges";
 import type { DuelResult } from "../../lib/games/duel";
 import type { QuizCorrection, QuizRound } from "../../lib/games/quiz";
-import { DAY, GAME_INFO, ROUND_MS, localHistory, pushLocal, usePlayer, type Game, type LocalPlay, type Play as PlayRow, type PlayerApi } from "./shared";
+import { DAY, GAME_INFO, LEVEL_LABEL, localHistory, multLabel, pushLocal, useLevel, usePlayer, type Level, type Game, type LocalPlay, type Play as PlayRow, type PlayerApi } from "./shared";
 import { Affiche, DefiJour, PlusMoins, TierList } from "./Arcade";
 import Live from "./Live";
 import { DevineAnime, DevinePerso, EmojiQuiz } from "./Dle";
+import Qcm from "./Qcm";
 import "./jeux.css";
 
-type Tab = "defi-jour" | "devine-anime" | "devine-perso" | "emoji" | "direct" | "quiz" | "nostalgie" | "affiche" | "plus-moins" | "tier" | "duel" | "badges" | "classement";
+type Tab = "defi-jour" | "devine-anime" | "devine-perso" | "emoji" | "themes" | "createur" | "studio" | "voix" | "direct" | "quiz" | "nostalgie" | "affiche" | "plus-moins" | "tier" | "duel" | "badges" | "classement";
 
 const MENU: { id: Tab; label: string; sub: string; Icon: typeof Award; color: string }[] = [
   { id: "defi-jour", label: "Défi du jour", sub: "Une question, une seule chance", Icon: CalendarCheck, color: "#f5a524" },
   { id: "devine-anime", label: "Devine l'anime", sub: "6 essais, un anime par jour", Icon: ScanSearch, color: "#f472b6" },
   { id: "devine-perso", label: "Devine le perso", sub: "Indices et portrait flouté", Icon: UserSearch, color: "#fb923c" },
   { id: "emoji", label: "Quiz des émojis", sub: "Un anime en émojis", Icon: Smile, color: "#facc15" },
+  { id: "themes", label: "Devine par les thèmes", sub: "Pour experts : 5 thèmes", Icon: Tags, color: "#38bdf8" },
+  { id: "createur", label: "Qui l'a créé ?", sub: "Mangakas et réalisateurs", Icon: PenTool, color: "#c084fc" },
+  { id: "studio", label: "Le studio", sub: "MAPPA, ufotable, KyoAni…", Icon: Building2, color: "#fb7185" },
+  { id: "voix", label: "La voix", sub: "Doubleurs japonais", Icon: Mic, color: "#34d399" },
   { id: "direct", label: "Quiz en direct", sub: "À plusieurs, en temps réel", Icon: Users, color: "#2dd4bf" },
   { id: "quiz", label: "Quiz génériques", sub: "10 extraits à reconnaître", Icon: Headphones, color: "#e8412c" },
   { id: "nostalgie", label: "Blind test Nostalgie", sub: "Club Dorothée, Récré A2", Icon: Radio, color: "#ff6b9a" },
@@ -63,6 +68,7 @@ export default function JeuxClient() {
   };
   const [members, setMembers] = useState<Member[]>([]);
   const player = usePlayer();
+  const [level, setLevel] = useLevel();
   useEffect(() => { fetchMembers().then(setMembers).catch(() => {}); }, []);
   const byId = useMemo(() => new Map(members.map((m) => [m.id, m])), [members]);
   const meMember = player.me ? byId.get(player.me) : undefined;
@@ -101,6 +107,18 @@ export default function JeuxClient() {
           <p className="jx-who-note">Ton historique reste lié à cet appareil{player.me ? " et à ta fiche" : ""}.</p>
         </section>
 
+        <section className="jx-levels" aria-label="Niveau de difficulté">
+          <span className="jx-levels-label">Niveau</span>
+          <div className="jx-levels-row" role="radiogroup" aria-label="Niveau">
+            {(["facile", "normal", "expert"] as Level[]).map((l) => (
+              <button key={l} type="button" role="radio" aria-checked={level === l} className={`jx-level is-${l}`} onClick={() => setLevel(l)}>
+                <strong>{LEVEL_LABEL[l]}</strong><small>{multLabel(l)} points</small>
+              </button>
+            ))}
+          </div>
+          <p className="jx-note">{level === "facile" ? "Animes très connus, plus de temps, indices offerts." : level === "expert" ? "Animes et persos pointus, extraits courts, pièges et réponses à taper." : "Le juste milieu : les grands classiques et un peu plus."} S&apos;applique à tous les jeux, sauf le Défi du jour, la Tier list et les Duels.</p>
+        </section>
+
         <nav className="jx-menu" aria-label="Jeux">
           {MENU.map(({ id, label, sub, Icon, color }) => (
             <button key={id} type="button" aria-pressed={tab === id} className="jx-tile" style={{ "--c": color } as React.CSSProperties} onClick={() => setTab(id)}>
@@ -113,14 +131,15 @@ export default function JeuxClient() {
 
         <div id="jx-stage" className="jx-stage" />
         {tab === "defi-jour" && <DefiJour player={player} names={names} onRanking={showRanking} />}
-        {tab === "devine-anime" && <DevineAnime player={player} onRanking={showRanking} />}
-        {tab === "devine-perso" && <DevinePerso player={player} onRanking={showRanking} />}
-        {tab === "emoji" && <EmojiQuiz player={player} onRanking={showRanking} />}
-        {tab === "direct" && <Live player={player} members={members} initialCode={salle} />}
-        {tab === "quiz" && <Quiz key={`q${defi ?? ""}`} player={player} mode="generique" defi={defi} onRanking={showRanking} />}
-        {tab === "nostalgie" && <Quiz key="n" player={player} mode="nostalgie" defi={null} onRanking={showRanking} />}
-        {tab === "affiche" && <Affiche player={player} onRanking={showRanking} />}
-        {tab === "plus-moins" && <PlusMoins player={player} onRanking={showRanking} />}
+        {tab === "devine-anime" && <DevineAnime key={level} level={level} player={player} onRanking={showRanking} />}
+        {tab === "devine-perso" && <DevinePerso key={level} level={level} player={player} onRanking={showRanking} />}
+        {tab === "emoji" && <EmojiQuiz key={level} level={level} player={player} onRanking={showRanking} />}
+        {(tab === "themes" || tab === "createur" || tab === "studio" || tab === "voix") && <Qcm key={`${tab}-${level}`} kind={tab} level={level} player={player} onRanking={showRanking} />}
+        {tab === "direct" && <Live player={player} members={members} initialCode={salle} level={level} />}
+        {tab === "quiz" && <Quiz key={`q${defi ?? ""}-${level}`} level={level} player={player} mode="generique" defi={defi} onRanking={showRanking} />}
+        {tab === "nostalgie" && <Quiz key={`n-${level}`} level={level} player={player} mode="nostalgie" defi={null} onRanking={showRanking} />}
+        {tab === "affiche" && <Affiche key={level} level={level} player={player} onRanking={showRanking} />}
+        {tab === "plus-moins" && <PlusMoins key={level} level={level} player={player} onRanking={showRanking} />}
         {tab === "tier" && <TierList player={player} />}
         {tab === "duel" && <Duel members={members} player={player} />}
         {tab === "badges" && <Badges me={player.me} />}
@@ -133,8 +152,22 @@ export default function JeuxClient() {
 
 /* ═══ QUIZ DES GÉNÉRIQUES ═══════════════════════════════════════════════ */
 interface Versus { id: number; name: string; score: number; max: number; good: number }
-function Quiz({ player, mode, defi, onRanking }: { player: PlayerApi; mode: "generique" | "nostalgie"; defi: number | null; onRanking: (g: Game) => void }) {
+/** Durée d'une manche selon le niveau (mêmes valeurs que le serveur). */
+const QUIZ_MS: Record<Level, number> = { facile: 30_000, normal: 20_000, expert: 20_000 };
+
+/** Extrait d'Expert : joué de `start` à `start + clip` secondes, puis arrêté. */
+function playClip(a: HTMLAudioElement, round: QuizRound) {
+  a.pause(); a.src = round.preview; a.currentTime = round.start ?? 0;
+  a.ontimeupdate = round.clip ? () => { if (a.currentTime >= (round.start ?? 0) + round.clip!) a.pause(); } : null;
+  const go = () => { if (round.start) a.currentTime = round.start; void a.play().catch(() => {}); };
+  if (round.start && a.readyState < 1) a.addEventListener("loadedmetadata", go, { once: true }); else go();
+}
+
+function Quiz({ player, mode, defi, level: chosen, onRanking }: { player: PlayerApi; mode: "generique" | "nostalgie"; defi: number | null; level: Level; onRanking: (g: Game) => void }) {
   const nosta = mode === "nostalgie";
+  // Défi d'un ami : son niveau à lui (connu au lancement).
+  const [level, setLevel] = useState<Level>(chosen);
+  const ROUND_MS = QUIZ_MS[level];
   const [rival, setRival] = useState<Versus | null>(null);
   const { share, Toast } = useShare();
   const [phase, setPhase] = useState<"intro" | "loading" | "play" | "timeout" | "sending" | "done">("intro");
@@ -154,17 +187,17 @@ function Quiz({ player, mode, defi, onRanking }: { player: PlayerApi; mode: "gen
     const a = audio.current;
     setR(i); setPicked(null); setLeft(ROUND_MS); started.current = performance.now();
     if (!a) return;
-    a.pause(); a.src = list[i].preview; a.currentTime = 0;
-    void a.play().catch(() => {});
-  }, []);
+    playClip(a, list[i]);
+  }, [ROUND_MS]);
 
   async function start() {
     setPhase("loading"); setError(null); setResult(null);
     try {
-      const res = await fetch(defi ? `/api/games/quiz?defi=${defi}` : nosta ? "/api/games/quiz?mode=nostalgie" : "/api/games/quiz", { cache: "no-store" });
+      const res = await fetch(defi ? `/api/games/quiz?defi=${defi}` : `/api/games/quiz?level=${chosen}${nosta ? "&mode=nostalgie" : ""}`, { cache: "no-store" });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Quiz indisponible.");
       if (d.defi) setRival(d.defi);
+      if (d.level) setLevel(d.level === "facile" || d.level === "expert" ? d.level : "normal");
       answers.current = [];
       setToken(d.token); setRounds(d.rounds); setPhase("play");
       playRound(d.rounds, 0);
@@ -205,7 +238,7 @@ function Quiz({ player, mode, defi, onRanking }: { player: PlayerApi; mode: "gen
       else setLeft(l);
     }, 200);
     return () => window.clearInterval(t);
-  }, [phase, picked, r]);
+  }, [phase, picked, r, ROUND_MS]);
 
   useEffect(() => () => { const a = audio.current; if (a) { a.pause(); a.removeAttribute("src"); a.load(); } }, []);
 
@@ -222,6 +255,7 @@ function Quiz({ player, mode, defi, onRanking }: { player: PlayerApi; mode: "gen
         <div className="jx-intro">
           <span className="jx-big-icon" aria-hidden="true"><Headphones size={40} /></span>
           <h2 id="jx-quiz-title" className="gk-display">{defi ? "Défi lancé par un ami" : nosta ? "Blind test Nostalgie" : "Quiz des génériques"}</h2>
+          {!defi && <p className="jx-level-note">Niveau {LEVEL_LABEL[level]} ({multLabel(level)}) : {level === "facile" ? "openings seulement, 4 choix, 30 secondes par manche." : level === "expert" ? "5 secondes d'extrait prises au hasard, 6 choix pièges de la même époque, endings compris." : "openings et endings, 4 choix, 20 secondes par manche."}</p>}
           {defi
             ? <p>Mêmes extraits, mêmes propositions que la partie de ton ami. Fais mieux que lui ! 20 secondes par manche, bonus si tu es rapide.</p>
             : nosta
@@ -238,13 +272,14 @@ function Quiz({ player, mode, defi, onRanking }: { player: PlayerApi; mode: "gen
             <span className="jx-round-no">Manche {r + 1} / {rounds.length}{rival ? ` · à battre : ${rival.score} pts (${rival.name})` : ""}</span>
             <span className="jx-timer" aria-label={`${Math.ceil(left / 1000)} secondes restantes`}><Clock size={15} aria-hidden="true" /> {Math.ceil(left / 1000)} s</span>
           </div>
+          {rounds[r].clip && phase === "play" && <button type="button" className="gk-btn gk-btn--sm gk-btn--ghost jx-replay" onClick={() => audio.current && playClip(audio.current, rounds[r])}><RotateCcw size={15} aria-hidden="true" /> Réécouter les {rounds[r].clip} secondes</button>}
           <div className="jx-timebar" aria-hidden="true"><span style={{ transform: `scaleX(${left / ROUND_MS})` }} /></div>
           <div className="jx-eq" aria-hidden="true">{Array.from({ length: 9 }, (_, i) => <i key={i} style={{ "--k": i } as React.CSSProperties} />)}</div>
           <p className="jx-ask">Quel anime ?</p>
           <div className="jx-choices">
             {rounds[r].choices.map((c, i) => (
               <button key={i} type="button" className="jx-choice" aria-pressed={picked === i} disabled={picked !== null || phase === "timeout"} onClick={() => answer(i)}>
-                <b>{"ABCD"[i]}</b><span>{c}</span>
+                <b>{"ABCDEF"[i]}</b><span>{c}</span>
               </button>
             ))}
           </div>
@@ -402,7 +437,7 @@ function Badges({ me }: { me: number | null }) {
 }
 
 /* ═══ CLASSEMENT ET HISTORIQUE ════════════════════════════════════════════ */
-interface PlaySummary { score: number; max: number; at: string; good?: number; rounds?: number; date?: string; ok?: boolean; a?: number; b?: number; tries?: number }
+interface PlaySummary { score: number; max: number; at: string; good?: number; rounds?: number; date?: string; ok?: boolean; a?: number; b?: number; tries?: number; level?: string; streak?: number }
 interface PlayerRank { key: string; member_id: number | null; name: string | null; image?: string | null; plays: number; best: number; bestMax: number; avg: number; total: number; wins: number; last: string; history: PlaySummary[] }
 interface BoardData { available: boolean; players: PlayerRank[]; feed: (PlaySummary & { key: string })[]; history: PlayRow[]; meKeys: string[] }
 
@@ -436,8 +471,12 @@ function Board({ byId, device, me, initial }: { byId: Map<number, Member>; devic
   const byKey = new Map((data?.players ?? []).map((r) => [r.key, r]));
   const isMe = (key: string) => !!data?.meKeys.includes(key);
   const myIndex = (data?.players ?? []).findIndex((r) => isMe(r.key));
-  const detail = (p: PlaySummary) => game === "duel" ? `${byId.get(p.a ?? 0)?.name ?? "?"} × ${byId.get(p.b ?? 0)?.name ?? "?"}`
-    : game === "plus-moins" ? "bonnes réponses d'affilée"
+  const detail = (p: PlaySummary) => {
+    const base = detailBase(p);
+    return p.level && p.level in LEVEL_LABEL ? `${base}${base ? " · " : ""}${LEVEL_LABEL[p.level as Level]}` : base;
+  };
+  const detailBase = (p: PlaySummary) => game === "duel" ? `${byId.get(p.a ?? 0)?.name ?? "?"} × ${byId.get(p.b ?? 0)?.name ?? "?"}`
+    : game === "plus-moins" ? `série de ${p.streak ?? "?"}`
     : game === "defi-jour" ? `${p.date ?? ""} · ${p.ok ? "réussi" : "raté"}`
     : game === "devine-anime" || game === "devine-perso" ? `${p.date ?? ""} · ${p.ok ? `trouvé en ${p.tries ?? "?"} essai${(p.tries ?? 0) > 1 ? "s" : ""}` : "raté"}`
     : p.good != null ? `${p.good} / ${p.rounds ?? "?"} bonnes réponses` : "";
@@ -517,7 +556,7 @@ function Board({ byId, device, me, initial }: { byId: Map<number, Member>; devic
       <h3 className="jx-h3">Mon historique</h3>
       <ul className="jx-history">
         {(mine ?? []).filter((p) => p.game === game).map((p, i) => (
-          <li key={`s${i}`}><span>{DAY.format(new Date(p.created_at))}</span><strong>{unit(p.score, p.max_score)}</strong><small>{detail({ score: p.score, max: p.max_score, at: p.created_at, good: p.detail.good as number | undefined, rounds: p.detail.rounds as number | undefined, date: p.detail.date as string | undefined, ok: p.detail.ok as boolean | undefined, a: Number(p.detail.a), b: Number(p.detail.b) })}</small></li>
+          <li key={`s${i}`}><span>{DAY.format(new Date(p.created_at))}</span><strong>{unit(p.score, p.max_score)}</strong><small>{detail({ score: p.score, max: p.max_score, at: p.created_at, good: p.detail.good as number | undefined, rounds: p.detail.rounds as number | undefined, date: p.detail.date as string | undefined, ok: p.detail.ok as boolean | undefined, a: Number(p.detail.a), b: Number(p.detail.b), tries: p.detail.tries as number | undefined, level: p.detail.level as string | undefined, streak: p.detail.streak as number | undefined })}</small></li>
         ))}
         {!mine && local.filter((p) => p.game === game).map((p, i) => (
           <li key={`l${i}`}><span>{DAY.format(new Date(p.at))}</span><strong>{GAME_INFO[game].unit(p)}</strong><small>{p.label}</small></li>

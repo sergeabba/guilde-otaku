@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 import catalog from "../../data/anime-songs.json";
 import type { CatalogSong } from "../anime-song";
 import type { PoolAnime } from "./pool";
+import { LEVEL_MULT, type Level } from "./levels";
 import { seal, seeded, shuffle, unseal } from "./token";
 
 const SONGS = catalog as CatalogSong[];
@@ -14,67 +15,97 @@ const HOUR = 3_600_000;
 export const AFFICHE_ROUNDS = 8;
 export const TILE_MS = 2_000;            // une case de plus toutes les 2 s
 export const AFFICHE_MS = 9 * TILE_MS + 4_000;
-export interface AfficheRound { image: string; choices: string[]; order: number[] }
-export interface AfficheKey { game: "affiche"; nonce: string; exp: number; ids: number[]; answers: number[] }
+/** Expert : une case toutes les 3 s et affiche en noir et blanc. */
+export const LEVEL_TILE_MS: Record<Level, number> = { facile: TILE_MS, normal: TILE_MS, expert: 3_000 };
+export interface AfficheRound { image: string; choices: string[]; order: number[]; tileMs?: number; gray?: boolean }
+export interface AfficheKey { game: "affiche"; nonce: string; exp: number; ids: number[]; answers: number[]; level?: Level }
 
 /** Cases visibles après `ms` millisecondes (1 au départ, 9 au plus). */
-export const tilesAt = (ms: number) => Math.min(9, 1 + Math.floor(Math.max(0, ms) / TILE_MS));
+export const tilesAt = (ms: number, tileMs = TILE_MS) => Math.min(9, 1 + Math.floor(Math.max(0, ms) / tileMs));
 /** 100 points avec une seule case visible, 10 de moins par case dévoilée ensuite. */
-export const affichePoints = (ok: boolean, ms: number) => (ok ? 100 - (tilesAt(ms) - 1) * 10 : 0);
+export const affichePoints = (ok: boolean, ms: number, tileMs = TILE_MS) => (ok ? 100 - (tilesAt(ms, tileMs) - 1) * 10 : 0);
 
-export function buildAffiche(pool: PoolAnime[], now = Date.now(), rnd = Math.random) {
+export function buildAffiche(pool: PoolAnime[], now = Date.now(), rnd = Math.random, level?: Level) {
+  const tileMs = level ? LEVEL_TILE_MS[level] : TILE_MS;
   const picked = shuffle(pool, rnd).slice(0, AFFICHE_ROUNDS);
   const rounds: AfficheRound[] = [], answers: number[] = [];
   for (const a of picked) {
     const wrong = shuffle(pool.filter((x) => x.id !== a.id), rnd).slice(0, 3).map((x) => x.title);
     const choices = shuffle([a.title, ...wrong], rnd);
-    rounds.push({ image: a.cover, choices, order: shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8], rnd) });
+    rounds.push({ image: a.cover, choices, order: shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8], rnd), ...(level ? { tileMs, gray: level === "expert" } : {}) });
     answers.push(choices.indexOf(a.title));
   }
-  const key: AfficheKey = { game: "affiche", nonce: randomUUID(), exp: now + HOUR / 2, ids: picked.map((a) => a.id), answers };
+  const key: AfficheKey = { game: "affiche", nonce: randomUUID(), exp: now + HOUR / 2, ids: picked.map((a) => a.id), answers, ...(level ? { level } : {}) };
   return { token: seal(key), rounds };
 }
 
 export function scoreAffiche(key: AfficheKey, answers: { choice: number | null; ms: number }[], pool: PoolAnime[]) {
   const byId = new Map(pool.map((a) => [a.id, a]));
+  const mult = key.level ? LEVEL_MULT[key.level] : 1, tileMs = key.level ? LEVEL_TILE_MS[key.level] : TILE_MS;
   const correction = key.ids.map((id, r) => {
     const a = answers[r], chosen = Number.isInteger(a?.choice) && a!.choice! >= 0 && a!.choice! < 4 ? a!.choice! : null;
     const ok = chosen === key.answers[r];
     const ms = Number.isFinite(a?.ms) ? Math.max(0, a!.ms) : AFFICHE_MS;
-    return { title: byId.get(id)?.title ?? "?", cover: byId.get(id)?.cover ?? null, ok, tiles: tilesAt(ms), points: affichePoints(ok, ms) };
+    return { title: byId.get(id)?.title ?? "?", cover: byId.get(id)?.cover ?? null, ok, tiles: tilesAt(ms, tileMs), points: Math.round(affichePoints(ok, ms, tileMs) * mult) };
   });
-  return { score: correction.reduce((n, c) => n + c.points, 0), max: key.ids.length * 100, good: correction.filter((c) => c.ok).length, correction };
+  return { score: correction.reduce((n, c) => n + c.points, 0), max: Math.round(key.ids.length * 100 * mult), good: correction.filter((c) => c.ok).length, correction };
 }
 
-/* ── Plus ou moins (note AniList) ──────────────────────────────────────── */
+/* ── Plus ou moins (note AniList, popularité en Expert) ───────────────── */
 export const PM_LENGTH = 40;
-export interface PmKey { game: "plus-moins"; nonce: string; exp: number; seq: number[]; pos: number; streak: number }
+export type PmMetric = "note" | "popularite";
+export interface PmKey { game: "plus-moins"; nonce: string; exp: number; seq: number[]; pos: number; streak: number; level?: Level; metrics?: PmMetric[] }
 export interface PmCard { title: string; cover: string; year: number | null }
 
-/** Suite de 40 animes où deux voisins n'ont jamais la même note (sinon la question n'a pas de réponse). */
-export function buildPlusMoins(pool: PoolAnime[], now = Date.now(), rnd = Math.random) {
-  const seq: PoolAnime[] = [];
-  for (const a of shuffle(pool, rnd)) {
-    if (seq.length >= PM_LENGTH) break;
-    if (seq.length && seq[seq.length - 1].score === a.score) continue;
-    seq.push(a);
-  }
-  const key: PmKey = { game: "plus-moins", nonce: randomUUID(), exp: now + HOUR, seq: seq.map((a) => a.id), pos: 0, streak: 0 };
-  const cards: PmCard[] = seq.map((a) => ({ title: a.title, cover: a.cover, year: a.year }));
-  return { token: seal(key), cards, first: seq[0]?.score ?? 0 };
+const metricOf = (a: PoolAnime, m: PmMetric) => (m === "popularite" ? a.popularity ?? 0 : a.score);
+/**
+ * Le voisin suivant est-il jouable à ce niveau ?
+ * Facile : notes éloignées (8 points ou plus). Normal : notes différentes.
+ * Expert : notes très proches (5 points au plus) ou popularités proches (écart de 40 % au plus).
+ */
+export function pmFits(prev: PoolAnime, next: PoolAnime, m: PmMetric, level: Level): boolean {
+  const a = metricOf(prev, m), b = metricOf(next, m);
+  if (a === b || !a || !b) return false;
+  if (level === "facile") return Math.abs(a - b) >= 8;
+  if (level === "expert") return m === "note" ? Math.abs(a - b) <= 5 : Math.max(a, b) / Math.min(a, b) <= 1.4;
+  return true;
 }
 
-/** Une réponse : « plus » si la carte suivante a une meilleure note que la carte en cours. */
+/** Suite de 40 animes respectant les écarts du niveau (sinon la question est trop facile ou sans réponse). */
+export function buildPlusMoins(pool: PoolAnime[], now = Date.now(), rnd = Math.random, level?: Level) {
+  const lv = level ?? "normal";
+  const metrics: PmMetric[] = Array.from({ length: PM_LENGTH }, () => (lv === "expert" && rnd() < 0.5 ? "popularite" : "note"));
+  const left = shuffle(pool, rnd);
+  const seq: PoolAnime[] = left.length ? [left.shift()!] : [];
+  while (seq.length < PM_LENGTH && left.length) {
+    const m = metrics[seq.length - 1];
+    const k = left.findIndex((x) => pmFits(seq[seq.length - 1], x, m, lv));
+    if (k < 0) break;
+    seq.push(left.splice(k, 1)[0]);
+  }
+  const key: PmKey = { game: "plus-moins", nonce: randomUUID(), exp: now + HOUR, seq: seq.map((a) => a.id), pos: 0, streak: 0, ...(level ? { level, metrics: metrics.slice(0, Math.max(0, seq.length - 1)) } : {}) };
+  const cards: PmCard[] = seq.map((a) => ({ title: a.title, cover: a.cover, year: a.year }));
+  const m0 = key.metrics?.[0] ?? "note";
+  return { token: seal(key), cards, first: seq[0] ? metricOf(seq[0], m0) : 0, metrics: key.metrics ?? null };
+}
+
+/** Une réponse : « plus » si la carte suivante a une valeur plus haute que la carte en cours. */
 export function stepPlusMoins(key: PmKey, guess: "plus" | "moins", pool: PoolAnime[]) {
   const byId = new Map(pool.map((a) => [a.id, a]));
   const cur = byId.get(key.seq[key.pos]), next = byId.get(key.seq[key.pos + 1]);
   if (!cur || !next) return null;
-  const ok = guess === "plus" ? next.score > cur.score : next.score < cur.score;
+  const m = key.metrics?.[key.pos] ?? "note";
+  const ok = guess === "plus" ? metricOf(next, m) > metricOf(cur, m) : metricOf(next, m) < metricOf(cur, m);
   const streak = key.streak + (ok ? 1 : 0);
   const over = !ok || key.pos + 2 >= key.seq.length;
   const nextKey: PmKey = { ...key, pos: key.pos + 1, streak };
-  return { ok, score: next.score, streak, over, token: over ? null : seal(nextKey), nonce: key.nonce };
+  // Valeur de la carte suivante pour la question d'après (la mesure peut changer en Expert).
+  const nm = key.metrics?.[key.pos + 1] ?? "note";
+  return { ok, score: metricOf(next, m), base: metricOf(next, nm), streak, over, token: over ? null : seal(nextKey), nonce: key.nonce };
 }
+
+/** Points d'une série : 10 par bonne réponse, multipliés selon le niveau. */
+export const pmPoints = (streak: number, level?: Level) => Math.round(streak * 10 * (level ? LEVEL_MULT[level] : 1));
 
 /* ── Défi du jour ──────────────────────────────────────────────────────── */
 export type DailyKind = "generique" | "affiche" | "membre";

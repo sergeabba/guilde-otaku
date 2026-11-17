@@ -6,17 +6,17 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowDown, ArrowUp, CalendarCheck, Check, Clock, Flame, Grid3x3, ListOrdered, Play, RotateCcw, Share2, Trophy, Volume2, X } from "lucide-react";
 import { optimizedSrc } from "../../lib/img";
 import { useShare } from "../hooks/useShare";
-import { api, pushLocal, type Game, type Play as PlayRow, type PlayerApi } from "./shared";
+import { api, LEVEL_LABEL, multLabel, pushLocal, type Game, type Level, type Play as PlayRow, type PlayerApi } from "./shared";
 
 type OnRanking = (g: Game) => void;
 
-const TILE_MS = 2_000, AFFICHE_MS = 22_000, DAILY_MS = 30_000;
-const tilesAt = (ms: number) => Math.min(9, 1 + Math.floor(Math.max(0, ms) / TILE_MS));
+const TILE_MS = 2_000, DAILY_MS = 30_000;
+const tilesAt = (ms: number, tileMs = TILE_MS) => Math.min(9, 1 + Math.floor(Math.max(0, ms) / tileMs));
 
 /** Affiche cachée par 9 cases qui tombent une à une, dans un ordre tiré par le serveur. */
-function Poster({ image, order, tiles, label }: { image: string; order: number[]; tiles: number; label?: string }) {
+function Poster({ image, order, tiles, label, gray }: { image: string; order: number[]; tiles: number; label?: string; gray?: boolean }) {
   return (
-    <div className="jx-poster" role="img" aria-label={label ?? `Affiche partiellement cachée : ${tiles} case${tiles > 1 ? "s" : ""} sur 9 visibles`}>
+    <div className={`jx-poster${gray ? " is-gray" : ""}`} role="img" aria-label={label ?? `Affiche partiellement cachée : ${tiles} case${tiles > 1 ? "s" : ""} sur 9 visibles`}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={optimizedSrc(image, 640)} alt="" draggable={false} />
       <div className="jx-poster-grid" aria-hidden="true">
@@ -157,10 +157,10 @@ export function DefiJour({ player, names, onRanking }: { player: PlayerApi; name
 }
 
 /* ═══ L'AFFICHE EN MORCEAUX ══════════════════════════════════════════════ */
-interface AfficheRound { image: string; choices: string[]; order: number[] }
+interface AfficheRound { image: string; choices: string[]; order: number[]; tileMs?: number; gray?: boolean }
 interface AfficheResult { score: number; max: number; good: number; saved: boolean; correction: { title: string; cover: string | null; ok: boolean; tiles: number; points: number }[] }
 
-export function Affiche({ player, onRanking }: { player: PlayerApi; onRanking: OnRanking }) {
+export function Affiche({ player, onRanking, level }: { player: PlayerApi; onRanking: OnRanking; level: Level }) {
   const [phase, setPhase] = useState<"intro" | "loading" | "play" | "reveal" | "sending" | "done">("intro");
   const [token, setToken] = useState("");
   const [rounds, setRounds] = useState<AfficheRound[]>([]);
@@ -175,7 +175,7 @@ export function Affiche({ player, onRanking }: { player: PlayerApi; onRanking: O
   async function start() {
     setPhase("loading"); setError(null); setResult(null);
     try {
-      const d = await api<{ token: string; rounds: AfficheRound[] }>("/api/games/affiche");
+      const d = await api<{ token: string; rounds: AfficheRound[] }>(`/api/games/affiche?level=${level}`);
       d.rounds.forEach((x) => { const im = new Image(); im.src = optimizedSrc(x.image, 640)!; });
       answers.current = []; setToken(d.token); setRounds(d.rounds); setR(0); setPicked(null);
       started.current = performance.now(); setPhase("play");
@@ -199,17 +199,18 @@ export function Affiche({ player, onRanking }: { player: PlayerApi; onRanking: O
       setR(r + 1); setPicked(null); started.current = performance.now(); setPhase("play");
     }, 1100);
   }, [phase, r, rounds.length, finish]);
-  useEffect(() => { if (phase === "play" && ms >= AFFICHE_MS) void Promise.resolve().then(() => answer(null)); });
-
   const round = rounds[r];
-  const tiles = phase === "reveal" ? 9 : tilesAt(ms);
+  const tileMs = round?.tileMs ?? TILE_MS;
+  useEffect(() => { if (phase === "play" && ms >= 9 * tileMs + 4_000) void Promise.resolve().then(() => answer(null)); });
+  const tiles = phase === "reveal" ? 9 : tilesAt(ms, tileMs);
   return (
     <section className="jx-panel" aria-labelledby="jx-affiche-title" style={{ "--gk-accent": "#3fa7d6" } as React.CSSProperties}>
       {(phase === "intro" || phase === "loading") && (
         <div className="jx-intro">
           <span className="jx-big-icon" aria-hidden="true"><Grid3x3 size={38} /></span>
           <h2 id="jx-affiche-title" className="gk-display">L&apos;Affiche en morceaux</h2>
-          <p>8 affiches d&apos;animes populaires, cachées sous 9 cases. Une case tombe toutes les 2 secondes : trouve le titre le plus tôt possible. 100 points avec une seule case visible, 10 de moins par case en plus.</p>
+          <p>8 affiches d&apos;animes, cachées sous 9 cases. Une case tombe à intervalle régulier : trouve le titre le plus tôt possible. 100 points avec une seule case visible, 10 de moins par case en plus.</p>
+          <p className="jx-level-note">Niveau {LEVEL_LABEL[level]} ({multLabel(level)}) : {level === "facile" ? "les 100 animes les plus populaires, une case toutes les 2 secondes." : level === "expert" ? "animes du 300e au 800e rang, affiche en noir et blanc, une case toutes les 3 secondes." : "les 300 animes les plus populaires, une case toutes les 2 secondes."}</p>
           {error && <p className="jx-error" role="alert">{error}</p>}
           <button type="button" className="gk-btn" onClick={start} disabled={phase === "loading"}><Play size={18} aria-hidden="true" /> {phase === "loading" ? "Préparation…" : "Lancer la partie"}</button>
           <p className="jx-note">Affiches et titres : AniList.</p>
@@ -218,7 +219,7 @@ export function Affiche({ player, onRanking }: { player: PlayerApi; onRanking: O
       {(phase === "play" || phase === "reveal") && round && (
         <div className="jx-round jx-affiche" key={r}>
           <div className="jx-round-head"><span className="jx-round-no">Affiche {r + 1} / {rounds.length}</span><span className="jx-timer"><Grid3x3 size={15} aria-hidden="true" /> {tiles} / 9 · {Math.max(0, 100 - (tiles - 1) * 10)} pts</span></div>
-          <Poster image={round.image} order={round.order} tiles={tiles} />
+          <Poster image={round.image} order={round.order} tiles={tiles} gray={round.gray && phase !== "reveal"} />
           <Choices choices={round.choices} picked={picked} disabled={phase !== "play"} onPick={answer} />
         </div>
       )}
@@ -250,24 +251,30 @@ export function Affiche({ player, onRanking }: { player: PlayerApi; onRanking: O
 
 /* ═══ PLUS OU MOINS ══════════════════════════════════════════════════════ */
 interface PmCard { title: string; cover: string; year: number | null }
+type PmMetric = "note" | "popularite";
+const fmtMetric = (v: number, m: PmMetric) => (m === "popularite" ? new Intl.NumberFormat("fr-FR").format(v) : String(v));
 
-export function PlusMoins({ player, onRanking }: { player: PlayerApi; onRanking: OnRanking }) {
+export function PlusMoins({ player, onRanking, level }: { player: PlayerApi; onRanking: OnRanking; level: Level }) {
   const [phase, setPhase] = useState<"intro" | "loading" | "play" | "wait" | "shown" | "over">("intro");
   const [cards, setCards] = useState<PmCard[]>([]);
-  const [scores, setScores] = useState<number[]>([]);
+  const [metrics, setMetrics] = useState<PmMetric[] | null>(null);
+  const [cur, setCur] = useState(0);           // valeur de la carte de gauche (mesure de la question en cours)
+  const [revealB, setRevealB] = useState<number | null>(null);
   const [pos, setPos] = useState(0);
   const [token, setToken] = useState<string | null>(null);
   const [streak, setStreak] = useState(0);
+  const [points, setPoints] = useState(0);
   const [lastOk, setLastOk] = useState<boolean | null>(null);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { share, Toast } = useShare();
+  const metric: PmMetric = metrics?.[pos] ?? "note";
 
   async function start() {
     setPhase("loading"); setError(null);
     try {
-      const d = await api<{ token: string; cards: PmCard[]; first: number }>("/api/games/plus-moins");
-      setCards(d.cards); setScores([d.first]); setPos(0); setToken(d.token); setStreak(0); setLastOk(null); setSaved(false); setPhase("play");
+      const d = await api<{ token: string; cards: PmCard[]; first: number; metrics: PmMetric[] | null }>(`/api/games/plus-moins?level=${level}`);
+      setCards(d.cards); setMetrics(d.metrics); setCur(d.first); setRevealB(null); setPos(0); setToken(d.token); setStreak(0); setPoints(0); setLastOk(null); setSaved(false); setPhase("play");
     } catch (e) { setError(e instanceof Error ? e.message : "Partie indisponible."); setPhase("intro"); }
   }
   useEffect(() => { // précharge les deux affiches suivantes
@@ -278,27 +285,26 @@ export function PlusMoins({ player, onRanking }: { player: PlayerApi; onRanking:
     if (phase !== "play" || !token) return;
     setPhase("wait");
     try {
-      const d = await api<{ ok: boolean; score: number; streak: number; over: boolean; token: string | null; saved: boolean }>("/api/games/plus-moins", { token, guess: g, ...player.payload() });
-      setScores((s) => { const n = [...s]; n[pos + 1] = d.score; return n; });
-      setStreak(d.streak); setLastOk(d.ok); setToken(d.token); setPhase("shown");
+      const d = await api<{ ok: boolean; score: number; base: number; streak: number; points: number; over: boolean; token: string | null; saved: boolean }>("/api/games/plus-moins", { token, guess: g, ...player.payload() });
+      setRevealB(d.score); setStreak(d.streak); setPoints(d.points); setLastOk(d.ok); setToken(d.token); setPhase("shown");
       window.setTimeout(() => {
         if (d.over) {
           setSaved(d.saved); setPhase("over");
-          pushLocal({ game: "plus-moins", score: d.streak, max: cards.length - 1, at: new Date().toISOString(), label: `Série de ${d.streak}` });
-        } else { setPos((p) => p + 1); setLastOk(null); setPhase("play"); }
+          pushLocal({ game: "plus-moins", score: d.points, max: 0, at: new Date().toISOString(), label: `Série de ${d.streak} (${LEVEL_LABEL[level]})` });
+        } else { setPos((p) => p + 1); setCur(d.base); setRevealB(null); setLastOk(null); setPhase("play"); }
       }, 1300);
     } catch (e) { setError(e instanceof Error ? e.message : "Réponse non prise en compte."); setPhase("over"); }
   }
 
   const A = cards[pos], B = cards[pos + 1];
-  const card = (c: PmCard, score: number | undefined, side: "a" | "b") => (
+  const card = (c: PmCard, value: number | null, side: "a" | "b") => (
     <figure className={`jx-pm-card is-${side}${side === "b" && lastOk != null ? (lastOk ? " is-ok" : " is-ko") : ""}`}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={optimizedSrc(c.cover, 384)} alt="" />
       <figcaption>
         <strong>{c.title}</strong>
         {c.year && <small>{c.year}</small>}
-        <span className="jx-pm-score" aria-live="polite">{score != null ? <><b>{score}</b>/100</> : <b>?</b>}</span>
+        <span className="jx-pm-score" aria-live="polite">{value != null ? <><b>{fmtMetric(value, metric)}</b>{metric === "note" ? "/100" : " spect."}</> : <b>?</b>}</span>
       </figcaption>
     </figure>
   );
@@ -308,35 +314,36 @@ export function PlusMoins({ player, onRanking }: { player: PlayerApi; onRanking:
         <div className="jx-intro">
           <span className="jx-big-icon" aria-hidden="true"><ArrowUp size={30} /><ArrowDown size={30} /></span>
           <h2 id="jx-pm-title" className="gk-display">Plus ou moins</h2>
-          <p>Deux animes. Le second a-t-il une meilleure ou une moins bonne note que le premier ? Notes moyennes réelles des spectateurs d&apos;AniList, sur 100. Enchaîne le plus de bonnes réponses : la première erreur arrête la série.</p>
+          <p>Deux animes. Le second a-t-il une meilleure ou une moins bonne note que le premier ? Notes moyennes réelles des spectateurs d&apos;AniList, sur 100. Enchaîne le plus de bonnes réponses : la première erreur arrête la série. 10 points par bonne réponse.</p>
+          <p className="jx-level-note">Niveau {LEVEL_LABEL[level]} ({multLabel(level)}) : {level === "facile" ? "les 100 plus populaires, notes bien différentes (8 points d'écart au moins)." : level === "expert" ? "animes du 300e au 800e rang, notes très proches (5 points au plus), et parfois la popularité (nombre de spectateurs) à la place de la note." : "les 300 plus populaires."}</p>
           {error && <p className="jx-error" role="alert">{error}</p>}
           <button type="button" className="gk-btn" onClick={start} disabled={phase === "loading"}><Play size={18} aria-hidden="true" /> {phase === "loading" ? "Préparation…" : "Lancer la partie"}</button>
         </div>
       )}
       {(phase === "play" || phase === "wait" || phase === "shown") && A && B && (
         <div className="jx-pm" key={pos}>
-          <p className="jx-round-head"><span className="jx-round-no">Série : {streak}</span><span className="jx-timer">Note AniList</span></p>
+          <p className="jx-round-head"><span className="jx-round-no">Série : {streak}</span><span className={`jx-timer${metric === "popularite" ? " jx-pm-pop" : ""}`}>{metric === "popularite" ? "Popularité (spectateurs)" : "Note AniList"}</span></p>
           <div className="jx-pm-duo">
-            {card(A, scores[pos], "a")}
+            {card(A, cur, "a")}
             <div className="jx-pm-mid">
               <button type="button" className="jx-pm-btn is-up" onClick={() => guess("plus")} disabled={phase !== "play"}><ArrowUp size={22} aria-hidden="true" /> Plus</button>
               <span className="jx-vs" aria-hidden="true">VS</span>
               <button type="button" className="jx-pm-btn is-down" onClick={() => guess("moins")} disabled={phase !== "play"}><ArrowDown size={22} aria-hidden="true" /> Moins</button>
             </div>
-            {card(B, scores[pos + 1], "b")}
+            {card(B, revealB, "b")}
           </div>
-          <p className="jx-ask jx-pm-ask">{B.title} : mieux ou moins bien noté ?</p>
+          <p className="jx-ask jx-pm-ask">{B.title} : {metric === "popularite" ? "plus ou moins de spectateurs ?" : "mieux ou moins bien noté ?"}</p>
         </div>
       )}
       {phase === "over" && (
         <div className="jx-result">
-          <p className="jx-score"><b>{streak}</b><span>bonne{streak > 1 ? "s" : ""} réponse{streak > 1 ? "s" : ""} d&apos;affilée</span></p>
+          <p className="jx-score"><b>{streak}</b><span>bonne{streak > 1 ? "s" : ""} réponse{streak > 1 ? "s" : ""} d&apos;affilée · {points} pts</span></p>
           <p className="jx-verdict">{streak >= 15 ? "Flair infaillible" : streak >= 8 ? "Très fort" : streak >= 4 ? "Pas mal" : "Les notes d'AniList sont traîtres"}</p>
           {error && <p className="jx-error" role="alert">{error}</p>}
           {!saved && !error && <p className="jx-note">Série gardée sur cet appareil (classement commun bientôt disponible).</p>}
           <div className="jx-actions">
             <button type="button" className="gk-btn" onClick={start}><RotateCcw size={17} aria-hidden="true" /> Rejouer</button>
-            <button type="button" className="gk-btn gk-btn--ghost" onClick={() => share({ title: "Plus ou moins · Guilde Otaku", text: `Série de ${streak} à Plus ou moins (notes AniList). Tu fais mieux ?`, url: "/jeux?jeu=plus-moins" })}><Share2 size={16} aria-hidden="true" /> Partager</button>
+            <button type="button" className="gk-btn gk-btn--ghost" onClick={() => share({ title: "Plus ou moins · Guilde Otaku", text: `Série de ${streak} à Plus ou moins, niveau ${LEVEL_LABEL[level]} (notes AniList). Tu fais mieux ?`, url: "/jeux?jeu=plus-moins" })}><Share2 size={16} aria-hidden="true" /> Partager</button>
             <button type="button" className="gk-btn gk-btn--ghost" onClick={() => onRanking("plus-moins")}><Trophy size={17} aria-hidden="true" /> Voir le classement</button>
           </div>
         </div>

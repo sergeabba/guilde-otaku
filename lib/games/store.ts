@@ -5,7 +5,7 @@ import { createHash } from "node:crypto";
 import { getServiceClient } from "../supabase-admin";
 import { NO_STATS, type MemberStats } from "./badges";
 
-export const GAMES = ["quiz-generique", "quiz-nostalgie", "affiche", "plus-moins", "defi-jour", "devine-anime", "devine-perso", "emoji-quiz", "duel"] as const;
+export const GAMES = ["quiz-generique", "quiz-nostalgie", "affiche", "plus-moins", "defi-jour", "devine-anime", "devine-perso", "emoji-quiz", "themes", "createur", "studio", "voix", "duel"] as const;
 /** Jeux à une partie par jour : classés au total de points. */
 export const DAILY_GAMES: readonly Game[] = ["defi-jour", "devine-anime", "devine-perso"];
 export type Game = (typeof GAMES)[number];
@@ -113,7 +113,7 @@ export async function saveTier(row: TierListRow): Promise<string | null> {
 }
 
 /* ── Classement complet d'un jeu : tous les joueurs, leurs parties ─────── */
-export interface PlaySummary { score: number; max: number; at: string; good?: number; rounds?: number; date?: string; ok?: boolean; a?: number; b?: number; tries?: number }
+export interface PlaySummary { score: number; max: number; at: string; good?: number; rounds?: number; date?: string; ok?: boolean; a?: number; b?: number; tries?: number; level?: string; streak?: number }
 export interface PlayerRank { key: string; member_id: number | null; name: string | null; plays: number; best: number; bestMax: number; avg: number; total: number; wins: number; last: string; history: PlaySummary[] }
 
 /**
@@ -127,7 +127,7 @@ export const playerKey = (p: { member_id: number | null; device: string }) =>
 function summary(p: Play): PlaySummary {
   const d = p.detail ?? {};
   const num = (v: unknown) => (typeof v === "number" ? v : undefined);
-  return { score: p.score, max: p.max_score, at: p.created_at, good: num(d.good), rounds: num(d.rounds), date: typeof d.date === "string" ? d.date : undefined, ok: typeof d.ok === "boolean" ? d.ok : undefined, a: num(d.a), b: num(d.b), tries: num(d.tries) };
+  return { score: p.score, max: p.max_score, at: p.created_at, good: num(d.good), rounds: num(d.rounds), date: typeof d.date === "string" ? d.date : undefined, ok: typeof d.ok === "boolean" ? d.ok : undefined, a: num(d.a), b: num(d.b), tries: num(d.tries), level: typeof d.level === "string" ? d.level : undefined, streak: num(d.streak) };
 }
 
 /** Rang par meilleur score (défi du jour : par total de points), puis par nombre de parties. */
@@ -158,12 +158,14 @@ export async function ranking(game: Game): Promise<{ available: boolean; players
 }
 
 /** La partie du jour d'un joueur pour un jeu quotidien (appareil, ou membre s'il s'est identifié). */
-export async function todayPlay(game: Game, date: string, device: string, memberId: number | null): Promise<Play | null> {
+export async function todayPlay(game: Game, date: string, device: string, memberId: number | null, level?: string): Promise<Play | null> {
   const db = getServiceClient();
   if (!db) return null;
   const { data, error } = await db.from("game_plays").select("*").eq("game", game).order("created_at", { ascending: false }).limit(1000);
   if (error) return null;
-  return ((data ?? []) as Play[]).find((p) => p.detail?.date === date && (p.device === device || (!!memberId && p.member_id === memberId))) ?? null;
+  // Niveau absent (parties d'avant les niveaux) : compté comme Normal.
+  const sameLevel = (p: Play) => !level || (p.detail?.level ?? "normal") === level;
+  return ((data ?? []) as Play[]).find((p) => p.detail?.date === date && sameLevel(p) && (p.device === device || (!!memberId && p.member_id === memberId))) ?? null;
 }
 
 /* ── Énigmes en émojis proposées par les membres (table emoji_puzzles) ── */

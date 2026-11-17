@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import sharp from "sharp";
 import { dailyChar } from "../../../../../lib/games/dle";
 import { parisDay } from "../../../../../lib/games/arcade";
+import { parseLevel } from "../../../../../lib/games/levels";
 
 // Portrait pixelisé du perso du jour : l'image nette ne quitte jamais le serveur avant la fin.
 // Niveau 1 : 10 pixels de large ; niveau 2 : 22 pixels.
@@ -11,7 +12,7 @@ export async function GET(req: NextRequest) {
   const level = sp.get("l") === "2" ? 2 : 1;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date > parisDay()) return new NextResponse("Date invalide", { status: 400 });
   try {
-    const c = await dailyChar(date);
+    const c = await dailyChar(date, parseLevel(sp.get("v")));
     const res = await fetch(c.image, { signal: AbortSignal.timeout(10_000) });
     if (!res.ok) throw new Error(String(res.status));
     const src = Buffer.from(await res.arrayBuffer());
