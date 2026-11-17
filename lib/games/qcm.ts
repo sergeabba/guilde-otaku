@@ -21,6 +21,8 @@ export const CHAR_RANGE: Record<Level, [number, number]> = { facile: [1, 100], n
 export const QCM_MS: Record<Level, number> = { facile: 30_000, normal: 20_000, expert: 20_000 };
 /** Thèmes : un de plus toutes les 4 secondes, 5 au plus. */
 export const THEME_STEP_MS = 4_000;
+/** « Titre ? » sans doubler la ponctuation quand le titre finit déjà par ? ou ! */
+const ask = (t: string) => (/[?!]$/.test(t.trim()) ? t.trim() : `${t} ?`);
 const nChoices = (level: Level) => (level === "expert" ? 6 : level === "normal" ? 6 : 4);
 
 const pickOthers = <T,>(pool: T[], n: number, key: (x: T) => string, exclude: Set<string>, rnd: () => number) => {
@@ -69,7 +71,7 @@ export function buildCreateur(animes: CatAnime[], level: Level, now = Date.now()
     const who = (director ? a.director : a.creator)!;
     const others = pickOthers(pool, nChoices(level) - 1, (x) => (director ? x.director : x.creator)!, new Set([who]), rnd).map((x) => (director ? x.director : x.creator)!);
     const choices = shuffle([who, ...others], rnd).map((label) => ({ label }));
-    rounds.push({ prompt: director ? `Qui a réalisé ${a.title} ?` : `Qui a créé ${a.title} ?`, sub: director ? "Réalisateur de l'anime" : `Œuvre d'origine${a.source ? ` : ${a.source.toLowerCase()}` : ""}`, image: a.cover, choices });
+    rounds.push({ prompt: director ? `Qui a réalisé ${ask(a.title)}` : `Qui a créé ${ask(a.title)}`, sub: director ? "Réalisateur de l'anime" : `Œuvre d'origine${a.source ? ` : ${a.source.toLowerCase()}` : ""}`, image: a.cover, choices });
     answers.push(choices.findIndex((c) => c.label === who));
     reveal.push({ label: who, sub: a.title, image: a.cover });
   }
@@ -84,7 +86,7 @@ export function buildStudio(animes: CatAnime[], level: Level, now = Date.now(), 
   for (const a of shuffle(pool, rnd).slice(0, 8)) {
     const others = shuffle(studios.filter((s) => s !== a.studio), rnd).slice(0, nChoices(level) - 1);
     const choices = shuffle([a.studio!, ...others], rnd).map((label) => ({ label }));
-    rounds.push({ prompt: `Quel studio a produit ${a.title} ?`, sub: a.year ? String(a.year) : null, image: a.cover, choices });
+    rounds.push({ prompt: `Quel studio a produit ${ask(a.title)}`, sub: a.year ? String(a.year) : null, image: a.cover, choices });
     answers.push(choices.findIndex((c) => c.label === a.studio));
     reveal.push({ label: a.studio!, sub: a.title, image: a.cover });
   }

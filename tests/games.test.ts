@@ -382,3 +382,10 @@ describe("jeux experts", () => {
     });
   });
 });
+
+describe("questions : ponctuation", () => {
+  it("ne double pas le point d'interrogation", () => {
+    const g = buildStudio([1, 2, 3, 4, 5].map((i) => ({ rank: i, id: i, title: i === 1 ? "Love is War?" : `T${i}`, alt: null, cover: "c", year: 2020, format: "Série", episodes: 12, score: 70, popularity: 1, genres: [], studio: `S${i}`, source: null, tags: [], creator: null, director: null })), "facile");
+    g.rounds.forEach((r) => expect(r.prompt).not.toMatch(/\?\s*\?/));
+  });
+});
