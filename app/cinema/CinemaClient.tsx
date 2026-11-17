@@ -11,6 +11,7 @@ import WordReveal from "../components/WordReveal";
 import type { CinemaDetail, CinemaItem, Provider } from "../../lib/cinema";
 import type { GuildCollection, GuildVideo } from "../../lib/drive";
 import { FREE_SHOWS, ytChannelUrl, ytPlaylistEmbed, ytThumb, type FreeShow } from "../../lib/free-channels";
+import Nostalgie from "./Nostalgie";
 import "./cinema.css";
 
 type Rows = { series: CinemaItem[]; free: CinemaItem[]; films: CinemaItem[] };
@@ -39,7 +40,12 @@ export default function CinemaClient({ rows, hero: picked = null, guild = null }
     return (
       <div className="gk-page tone-dark cin-page">
         <GuildeHeader activePage="cinema" tone="dark" />
-        <main className="gk-wrap cin-main"><p className="cin-empty" role="alert">Le Cinéma est fermé pour le moment : TMDB ne répond pas ou sa clé n&apos;est pas configurée.</p></main>
+        <main className="cin-main">
+          <p className="gk-wrap cin-empty" role="alert">Le catalogue du Cinéma est indisponible pour le moment : TMDB ne répond pas ou sa clé n&apos;est pas configurée.</p>
+          <FreeShows onOpen={setFreeShow} />
+          <Nostalgie />
+        </main>
+        {freeShow && <FreeTheater show={freeShow} onClose={() => setFreeShow(null)} />}
       </div>
     );
   }
@@ -80,6 +86,7 @@ export default function CinemaClient({ rows, hero: picked = null, guild = null }
       <main className="cin-main">
         {guild && <GuildVideos guild={guild} onPlay={setScreening} />}
         <FreeShows onOpen={setFreeShow} />
+        <Nostalgie />
         {rows && <>
         <div className="gk-wrap cin-intro">
           <h2 className="gk-display cin-h2"><WordReveal>Ce soir, <em>on regarde quoi ?</em></WordReveal></h2>

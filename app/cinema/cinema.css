@@ -206,3 +206,31 @@
 .cin-season[aria-pressed="true"] { background: var(--tk); color: #0d0c10; border-color: #0d0c10; box-shadow: 4px 4px 0 #f6f0e6; }
 a.cin-step { text-decoration: none; }
 @media (prefers-reduced-motion: reduce) { .cin-free-grid > li { animation: none; } .cin-free-card { transition: none; } }
+
+/* ═══ NOSTALGIE : juke-box des génériques français ═════════════════════════ */
+.cin-nosta { padding-block: clamp(26px, 4vw, 46px); background: linear-gradient(180deg, transparent, rgba(232, 65, 44, .06) 40%, transparent); border-bottom: 2px solid rgba(246,240,228,.08); }
+.cin-nosta-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.cin-step:disabled { opacity: .5; cursor: default; }
+.cin-nosta-grid { list-style: none; margin-top: 18px; padding-bottom: 6px; display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); }
+.cin-tape > button { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 12px; align-items: center; width: 100%; padding: 8px; text-align: left; cursor: pointer; color: #f6f0e6; background: #15131a; border: 2.5px solid rgba(246,240,228,.35); transition: border-color 160ms, transform 200ms cubic-bezier(.2,.9,.25,1.2), box-shadow 200ms; }
+.cin-tape > button:hover { border-color: #f6f0e6; transform: translate(-2px, -2px); box-shadow: 5px 5px 0 #e8412c; }
+.cin-tape > button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.cin-tape.is-on > button { border-color: #f5a524; box-shadow: 5px 5px 0 #f5a524; }
+.cin-tape-cover { position: relative; width: 76px; aspect-ratio: 1; overflow: hidden; display: grid; place-items: center; background: #24212a; border: 2px solid #f6f0e6; }
+.cin-tape-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cin-tape.is-playing .cin-tape-cover img { animation: cin-tape-spin 6s linear infinite; border-radius: 50%; }
+@keyframes cin-tape-spin { to { transform: rotate(360deg); } }
+.cin-tape-play { position: absolute; right: 4px; bottom: 4px; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: #f6f0e6; color: #0d0c10; border: 2px solid #0d0c10; }
+.cin-tape-txt { display: grid; gap: 3px; min-width: 0; }
+.cin-tape-txt strong { font: 900 italic 1.02rem/1.05 var(--gk-font-ui); text-transform: uppercase; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.cin-tape-txt small { color: #b8b0a3; font-size: .84rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cin-tape-bar { display: block; height: 4px; margin-top: 4px; background: rgba(246,240,228,.15); }
+.cin-tape-bar i { display: block; height: 100%; background: #f5a524; transform-origin: left; }
+.cin-tape-skel { display: block; height: 96px; }
+@media (prefers-reduced-motion: reduce) { .cin-tape.is-playing .cin-tape-cover img { animation: none; } }
+/* Téléphone : six cassettes d'abord, le reste sur demande (liste moins longue à faire défiler). */
+.cin-nosta-more { display: none; margin-top: 14px; }
+@media (max-width: 899px) {
+  .cin-nosta-grid:not(.is-all) > li:nth-child(n+7):not(.is-on) { display: none; }
+  .cin-nosta-more { display: block; }
+}

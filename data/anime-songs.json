@@ -862,5 +862,158 @@
   "kind": "OP",
   "year": 2010,
   "itunesId": 1536260306
+ },
+ {
+  "title": "Les Chevaliers du Zodiaque",
+  "artist": "Bernard Minet",
+  "anime": "Les Chevaliers du Zodiaque",
+  "kind": "OP",
+  "year": 1988,
+  "itunesId": 408194962,
+  "lang": "fr"
+ },
+ {
+  "title": "Dragon Ball",
+  "artist": "Ariane",
+  "anime": "Dragon Ball",
+  "kind": "OP",
+  "year": 1988,
+  "itunesId": 501594878,
+  "lang": "fr"
+ },
+ {
+  "title": "Dragon Ball Z",
+  "artist": "Ariane",
+  "anime": "Dragon Ball Z",
+  "kind": "OP",
+  "year": 1991,
+  "itunesId": 979745166,
+  "lang": "fr"
+ },
+ {
+  "title": "Nicky Larson",
+  "artist": "Jean-Paul Césari",
+  "anime": "Nicky Larson",
+  "kind": "OP",
+  "year": 1990,
+  "itunesId": 979744620,
+  "lang": "fr"
+ },
+ {
+  "title": "Bioman",
+  "artist": "Bernard Minet",
+  "anime": "Bioman",
+  "kind": "OP",
+  "year": 1986,
+  "itunesId": 501595348,
+  "lang": "fr"
+ },
+ {
+  "title": "Juliette je t'aime",
+  "artist": "Bernard Minet",
+  "anime": "Juliette je t'aime",
+  "kind": "OP",
+  "year": 1988,
+  "itunesId": 501595303,
+  "lang": "fr"
+ },
+ {
+  "title": "Un collège fou fou fou",
+  "artist": "Bernard Minet",
+  "anime": "Max et Compagnie",
+  "kind": "OP",
+  "year": 1990,
+  "itunesId": 501594462,
+  "lang": "fr"
+ },
+ {
+  "title": "Sailor Moon",
+  "artist": "Bernard Minet",
+  "anime": "Sailor Moon",
+  "kind": "OP",
+  "year": 1993,
+  "itunesId": 975388785,
+  "lang": "fr"
+ },
+ {
+  "title": "La chevauchée du Capitaine Flam",
+  "artist": "Richard Simon",
+  "anime": "Capitaine Flam",
+  "kind": "OP",
+  "year": 1981,
+  "itunesId": 1556047881,
+  "lang": "fr"
+ },
+ {
+  "title": "Albator, le corsaire de l'espace",
+  "artist": "Dorothée, Patrick Simpson-Jones & Ariane",
+  "anime": "Albator",
+  "kind": "OP",
+  "year": 1980,
+  "itunesId": 984319668,
+  "lang": "fr"
+ },
+ {
+  "title": "Ulysse 31",
+  "artist": "Lionel Leroy",
+  "anime": "Ulysse 31",
+  "kind": "OP",
+  "year": 1981,
+  "itunesId": 901948611,
+  "lang": "fr"
+ },
+ {
+  "title": "Les Mystérieuses Cités d'Or",
+  "artist": "Jacques Cardona",
+  "anime": "Les Mystérieuses Cités d'Or",
+  "kind": "OP",
+  "year": 1983,
+  "itunesId": 901946087,
+  "lang": "fr"
+ },
+ {
+  "title": "Inspecteur Gadget",
+  "artist": "Jacques Cardona",
+  "anime": "Inspecteur Gadget",
+  "kind": "OP",
+  "year": 1983,
+  "itunesId": 901926605,
+  "lang": "fr"
+ },
+ {
+  "title": "Jayce et les conquérants de la lumière",
+  "artist": "Nick Carr",
+  "anime": "Jayce et les conquérants de la lumière",
+  "kind": "OP",
+  "year": 1985,
+  "itunesId": 1255591803,
+  "lang": "fr"
+ },
+ {
+  "title": "Les Maîtres de l'univers",
+  "artist": "H. Saban & S. Levy",
+  "anime": "Les Maîtres de l'univers",
+  "kind": "OP",
+  "year": 1984,
+  "itunesId": 1267260992,
+  "lang": "fr"
+ },
+ {
+  "title": "Galactik Football",
+  "artist": "Marc Tomasi & Mehdi Elmorabit",
+  "anime": "Galactik Football",
+  "kind": "OP",
+  "year": 2006,
+  "itunesId": 348033789,
+  "lang": "fr"
+ },
+ {
+  "title": "Les Schtroumpfs",
+  "artist": "Henri Seroka",
+  "anime": "Les Schtroumpfs",
+  "kind": "OP",
+  "year": 1983,
+  "itunesId": 320467227,
+  "lang": "fr"
  }
 ]

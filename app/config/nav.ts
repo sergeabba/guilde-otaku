@@ -38,3 +38,13 @@ export const NAV: NavEntry[] = [
 ];
 
 export const chapterNo = (i: number) => String(i + 1).padStart(2, "0");
+
+/** Regroupement des rubriques (en-tête et sommaire) : trois familles au lieu de onze entrées. */
+export interface NavGroup { id: string; label: string; jp: string; items: PageId[] }
+export const NAV_GROUPS: NavGroup[] = [
+  { id: "guilde", label: "La Guilde", jp: "Nakama", items: ["membres", "birthdays", "wanted", "fighters", "jeux"] },
+  { id: "culture", label: "Animes & films", jp: "Bunka", items: ["bibliotheque", "calendrier", "cinema", "film-semaine"] },
+  { id: "bonus", label: "Bonus", jp: "Omake", items: ["atelier", "bons-plans"] },
+];
+export const groupOf = (id: PageId) => NAV_GROUPS.find((g) => g.items.includes(id));
+export const navEntry = (id: PageId) => NAV.find((n) => n.id === id)!;

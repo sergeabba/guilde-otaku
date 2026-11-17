@@ -4,7 +4,7 @@
 import { unstable_cache } from "next/cache";
 import catalog from "../data/anime-songs.json";
 
-export interface CatalogSong { title: string; artist: string; anime: string; kind: "OP" | "ED"; year: number; itunesId: number }
+export interface CatalogSong { title: string; artist: string; anime: string; kind: "OP" | "ED"; year: number; itunesId: number; /** Générique français (dessins animés, Club Dorothée…) */ lang?: "fr" }
 export interface AnimeSong extends CatalogSong {
   index: number;
   cover: string | null;
@@ -67,4 +67,10 @@ export async function getAnimeSong(index: number): Promise<AnimeSong | null> {
     appleUrl: extra?.appleUrl ?? null,
     youtubeUrl: `https://www.youtube.com/results?search_query=${encodeURIComponent(`${s.anime} ${s.kind === "OP" ? "opening" : "ending"} ${s.title} ${s.artist}`)}`,
   };
+}
+
+/** Génériques français (section Nostalgie), avec pochette et extrait. */
+export async function getFrenchSongs(): Promise<AnimeSong[]> {
+  const list = await Promise.all(SONGS.map((s, i) => (s.lang === "fr" ? getAnimeSong(i) : Promise.resolve(null))));
+  return (list.filter(Boolean) as AnimeSong[]).sort((a, b) => a.year - b.year);
 }

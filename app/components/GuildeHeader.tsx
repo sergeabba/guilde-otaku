@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { BookOpen, Menu, Moon, ScrollText, Search, Sun, Swords, UsersRound, X } from "lucide-react";
+import { BookOpen, ChevronDown, Menu, Moon, ScrollText, Search, Sun, Swords, UsersRound, X } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
-import { NAV, chapterNo, type PageId } from "../config/nav";
+import { NAV_GROUPS, groupOf, navEntry, type PageId } from "../config/nav";
 
 interface GuildeHeaderProps {
   activePage: PageId;
@@ -121,14 +121,7 @@ export default function GuildeHeader({
         </div>
       </div>
 
-      <nav className="gk-nav" aria-label="Rubriques">
-        {NAV.map((l, i) => (
-          <Link key={l.id} href={l.href} aria-current={activePage === l.id ? "page" : undefined}>
-            {l.label}
-            <sup aria-hidden="true">{chapterNo(i)}</sup>
-          </Link>
-        ))}
-      </nav>
+      <GroupedNav activePage={activePage} />
 
       {activePage !== "fighters" && <nav className="gk-mobile-dock" aria-label="Navigation rapide">
         {QUICK_LINKS.map(({ id, label, href, Icon }) => (
@@ -165,21 +158,23 @@ export default function GuildeHeader({
               <X size={20} aria-hidden="true" />
             </button>
           </div>
-          <ul className="gk-menu-list">
-            {NAV.map((l, i) => (
-              <li key={l.id} style={{ "--i": i } as React.CSSProperties}>
-                <Link
-                  href={l.href}
-                  aria-current={activePage === l.id ? "page" : undefined}
-                  onClick={() => setMenuOpen(false)}
-                >
-                  <b aria-hidden="true">{chapterNo(i)}</b>
-                  <span>{l.label}</span>
-                  <i aria-hidden="true">{l.jp}</i>
-                </Link>
-              </li>
+          <div className="gk-menu-groups">
+            {NAV_GROUPS.map((g, gi) => (
+              <section key={g.id} className="gk-menu-group" style={{ "--i": gi } as React.CSSProperties} aria-label={g.label}>
+                <h2>{g.label} <i aria-hidden="true">{g.jp}</i></h2>
+                <ul>
+                  {g.items.map((id) => { const l = navEntry(id); return (
+                    <li key={id}>
+                      <Link href={l.href} aria-current={activePage === id ? "page" : undefined} onClick={() => setMenuOpen(false)}>
+                        <span>{l.label}</span>
+                        <small>{l.blurb}</small>
+                      </Link>
+                    </li>
+                  ); })}
+                </ul>
+              </section>
             ))}
-          </ul>
+          </div>
           <div className="gk-menu-foot">
             <button
               type="button"
@@ -197,5 +192,46 @@ export default function GuildeHeader({
         document.body
       )}
     </header>
+  );
+}
+
+/**
+ * Navigation ordinateur : trois familles ; chacune ouvre un panneau avec ses rubriques
+ * (survol, clic ou clavier). La famille de la page en cours est mise en avant.
+ */
+function GroupedNav({ activePage }: { activePage: PageId }) {
+  const [open, setOpen] = useState<string | null>(null);
+  const navRef = useRef<HTMLElement>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const current = groupOf(activePage)?.id;
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => { if (!navRef.current?.contains(e.target as Node)) setOpen(null); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(null); };
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("pointerdown", onDown); document.removeEventListener("keydown", onKey); };
+  }, [open]);
+  const hover = (id: string | null) => { if (timer.current) clearTimeout(timer.current); timer.current = setTimeout(() => setOpen(id), id ? 60 : 180); };
+  return (
+    <nav ref={navRef} className="gk-nav gk-nav--groups" aria-label="Rubriques" onPointerLeave={(e) => { if (e.pointerType === "mouse") hover(null); }}>
+      {NAV_GROUPS.map((g) => (
+        <div key={g.id} className={`gk-navg${current === g.id ? " is-current" : ""}${open === g.id ? " is-open" : ""}`} onPointerEnter={(e) => { if (e.pointerType === "mouse") hover(g.id); }}>
+          <button type="button" aria-expanded={open === g.id} aria-controls={`gk-navg-${g.id}`} onClick={() => setOpen((o) => (o === g.id ? null : g.id))}>
+            {g.label} <ChevronDown size={15} aria-hidden="true" />
+          </button>
+          <div id={`gk-navg-${g.id}`} className="gk-navg-panel" hidden={open !== g.id}>
+            <span className="gk-navg-jp" aria-hidden="true">{g.jp}</span>
+            {g.items.map((id) => { const l = navEntry(id); return (
+              <Link key={id} href={l.href} aria-current={activePage === id ? "page" : undefined} onClick={() => setOpen(null)}>
+                <strong>{l.label}</strong><small>{l.blurb}</small>
+              </Link>
+            ); })}
+          </div>
+        </div>
+      ))}
+      {/* Raccourci direct vers la rubrique en cours, pour savoir où l'on est. */}
+      <span className="gk-nav-here" aria-hidden="true">{navEntry(activePage)?.label}</span>
+    </nav>
   );
 }
