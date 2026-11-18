@@ -143,7 +143,7 @@ export default function JeuxClient() {
         {tab === "tier" && <TierList player={player} />}
         {tab === "duel" && <Duel members={members} player={player} />}
         {tab === "badges" && <Badges me={player.me} />}
-        {tab === "classement" && <Board key={boardGame} byId={byId} device={player.device} me={player.me} initial={boardGame} />}
+        {tab === "classement" && <Board key={boardGame} byId={byId} device={player.device} me={player.me} initial={boardGame} initialLevel={level} />}
       </main>
     </div>
   );
@@ -446,7 +446,7 @@ function Badges({ me }: { me: number | null }) {
 /* ═══ CLASSEMENT ET HISTORIQUE ════════════════════════════════════════════ */
 interface PlaySummary { score: number; max: number; at: string; good?: number; rounds?: number; date?: string; ok?: boolean; a?: number; b?: number; tries?: number; level?: string; streak?: number }
 interface PlayerRank { key: string; member_id: number | null; name: string | null; image?: string | null; plays: number; best: number; bestMax: number; avg: number; total: number; wins: number; last: string; history: PlaySummary[] }
-interface BoardData { available: boolean; players: PlayerRank[]; feed: (PlaySummary & { key: string })[]; history: PlayRow[]; meKeys: string[] }
+interface BoardData { available: boolean; leveled?: boolean; level?: Level | null; levels?: Record<Level, number>; players: PlayerRank[]; feed: (PlaySummary & { key: string })[]; history: PlayRow[]; meKeys: string[] }
 
 const DAILY: Game[] = ["defi-jour", "devine-anime", "devine-perso"];
 
@@ -460,17 +460,24 @@ function ago(iso: string): string {
   return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
 }
 
-function Board({ byId, device, me, initial }: { byId: Map<number, Member>; device: string; me: number | null; initial: Game }) {
+const BOARD_LEVELS: Level[] = ["facile", "normal", "expert"];
+const playLevel = (l: unknown): Level => (l === "facile" || l === "expert" ? l : "normal");
+
+function Board({ byId, device, me, initial, initialLevel }: { byId: Map<number, Member>; device: string; me: number | null; initial: Game; initialLevel: Level }) {
   const [game, setGame] = useState<Game>(initial);
+  // Un classement par niveau : on ne compare que des parties jouées au même niveau.
+  const [level, setLevel] = useState<Level>(initialLevel);
   const [data, setData] = useState<BoardData | null>(null);
   const [open, setOpen] = useState<string | null>(null);
   const [local] = useState<LocalPlay[]>(() => (typeof window === "undefined" ? [] : localHistory()));
   useEffect(() => {
     if (!device) return;
     let alive = true;
-    fetch(`/api/games/board?game=${game}&device=${device}${me ? `&member=${me}` : ""}`, { cache: "no-store" }).then((r) => r.json()).then((d) => { if (alive) { setData(d); setOpen(null); } }).catch(() => { if (alive) setData({ available: false, players: [], feed: [], history: [], meKeys: [] }); });
+    fetch(`/api/games/board?game=${game}&level=${level}&device=${device}${me ? `&member=${me}` : ""}`, { cache: "no-store" }).then((r) => r.json()).then((d) => { if (alive) { setData(d); setOpen(null); } }).catch(() => { if (alive) setData({ available: false, players: [], feed: [], history: [], meKeys: [] }); });
     return () => { alive = false; };
-  }, [game, device, me]);
+  }, [game, device, me, level]);
+  const leveled = game !== "duel";
+  const sameLevel = (l: unknown) => !leveled || playLevel(l) === level;
 
   const unit = (score: number, max: number) => GAME_INFO[game].unit({ score, max });
   const member = (r: { member_id: number | null }) => (r.member_id ? byId.get(r.member_id) : undefined);
@@ -504,6 +511,17 @@ function Board({ byId, device, me, initial }: { byId: Map<number, Member>; devic
         </div>
       </div>
 
+      {leveled && (
+        <div className="jx-levels-row jx-board-levels" role="group" aria-label="Niveau du classement">
+          {BOARD_LEVELS.map((l) => (
+            <button key={l} type="button" className={`jx-level is-${l}`} aria-pressed={level === l} onClick={() => setLevel(l)}>
+              <strong>{LEVEL_LABEL[l]}</strong>
+              <small>{data?.levels ? `${data.levels[l]} partie${data.levels[l] > 1 ? "s" : ""}` : multLabel(l)}</small>
+            </button>
+          ))}
+        </div>
+      )}
+
       {!data ? <p className="jx-note" role="status">Chargement…</p> : !data.available ? (
         <p className="jx-note">Le classement commun arrive bientôt. En attendant, ton historique est gardé sur cet appareil.</p>
       ) : (
@@ -513,7 +531,7 @@ function Board({ byId, device, me, initial }: { byId: Map<number, Member>; devic
             <p><b>{data.players.reduce((n, r) => n + r.plays, 0)}</b><small>partie{data.players.reduce((n, r) => n + r.plays, 0) > 1 ? "s" : ""}</small></p>
             <p className="is-me"><b>{myIndex >= 0 ? `${myIndex + 1}e` : "–"}</b><small>{myIndex >= 0 ? "ta place" : "pas encore classé"}</small></p>
           </div>
-          <p className="jx-note">{game === "defi-jour" || game === "devine-anime" || game === "devine-perso" ? "Classés par total de points, tous jours confondus." : game === "duel" ? "Classés par meilleure compatibilité trouvée." : "Classés par meilleur score."} Touche un joueur pour voir toutes ses parties.</p>
+          <p className="jx-note">{game === "defi-jour" || game === "devine-anime" || game === "devine-perso" ? "Classés par total de points, tous jours confondus." : game === "duel" ? "Classés par meilleure compatibilité trouvée." : "Classés par meilleur score."}{leveled ? ` Classement du niveau ${LEVEL_LABEL[level]} uniquement.` : ""} Touche un joueur pour voir toutes ses parties.</p>
 
           <ol className="jx-ranking">
             {data.players.map((r, i) => {
@@ -543,7 +561,7 @@ function Board({ byId, device, me, initial }: { byId: Map<number, Member>; devic
                 </li>
               );
             })}
-            {!data.players.length && <li className="jx-empty">Personne n&apos;a encore joué. À toi l&apos;honneur.</li>}
+            {!data.players.length && <li className="jx-empty">{leveled ? `Personne n'a encore joué en ${LEVEL_LABEL[level]}. À toi l'honneur.` : "Personne n'a encore joué. À toi l'honneur."}</li>}
           </ol>
 
           {data.feed.length > 0 && (
@@ -560,15 +578,15 @@ function Board({ byId, device, me, initial }: { byId: Map<number, Member>; devic
         </>
       )}
 
-      <h3 className="jx-h3">Mon historique</h3>
+      <h3 className="jx-h3">Mon historique{leveled ? ` · ${LEVEL_LABEL[level]}` : ""}</h3>
       <ul className="jx-history">
-        {(mine ?? []).filter((p) => p.game === game).map((p, i) => (
+        {(mine ?? []).filter((p) => p.game === game && sameLevel(p.detail.level)).map((p, i) => (
           <li key={`s${i}`}><span>{DAY.format(new Date(p.created_at))}</span><strong>{unit(p.score, p.max_score)}</strong><small>{detail({ score: p.score, max: p.max_score, at: p.created_at, good: p.detail.good as number | undefined, rounds: p.detail.rounds as number | undefined, date: p.detail.date as string | undefined, ok: p.detail.ok as boolean | undefined, a: Number(p.detail.a), b: Number(p.detail.b), tries: p.detail.tries as number | undefined, level: p.detail.level as string | undefined, streak: p.detail.streak as number | undefined })}</small></li>
         ))}
         {!mine && local.filter((p) => p.game === game).map((p, i) => (
           <li key={`l${i}`}><span>{DAY.format(new Date(p.at))}</span><strong>{GAME_INFO[game].unit(p)}</strong><small>{p.label}</small></li>
         ))}
-        {((mine && !mine.some((p) => p.game === game)) || (!mine && !local.some((p) => p.game === game))) && <li className="jx-empty"><Check size={15} aria-hidden="true" /> Aucune partie pour l&apos;instant.</li>}
+        {((mine && !mine.some((p) => p.game === game && sameLevel(p.detail.level))) || (!mine && !local.some((p) => p.game === game))) && <li className="jx-empty"><Check size={15} aria-hidden="true" /> Aucune partie pour l&apos;instant.</li>}
       </ul>
     </section>
   );

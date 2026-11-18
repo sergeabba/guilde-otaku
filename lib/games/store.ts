@@ -148,13 +148,31 @@ export function rankPlayers(game: Game, rows: Play[]): PlayerRank[] {
   return list.sort((a, b) => main(b) - main(a) || b.plays - a.plays || a.last.localeCompare(b.last));
 }
 
-export async function ranking(game: Game): Promise<{ available: boolean; players: PlayerRank[]; feed: (PlaySummary & { key: string })[] }> {
+/** Jeux sans niveau de difficulté : un seul classement. */
+export const UNLEVELED_GAMES: readonly Game[] = ["duel"];
+/** Niveau d'une partie ; les parties d'avant les niveaux comptent comme Normal. */
+export const levelOfPlay = (p: Pick<Play, "detail">): "facile" | "normal" | "expert" => {
+  const l = p.detail?.level;
+  return l === "facile" || l === "expert" ? l : "normal";
+};
+
+type LevelCounts = Record<"facile" | "normal" | "expert", number>;
+/** Classement d'un jeu, séparé par niveau (Facile, Normal, Expert) quand le jeu en a. */
+export function boardOf(game: Game, rows: Play[], level?: "facile" | "normal" | "expert" | null) {
+  const leveled = !UNLEVELED_GAMES.includes(game);
+  const levels: LevelCounts = { facile: 0, normal: 0, expert: 0 };
+  if (leveled) for (const p of rows) levels[levelOfPlay(p)]++;
+  const kept = leveled && level ? rows.filter((p) => levelOfPlay(p) === level) : rows;
+  return { leveled, level: leveled ? level ?? null : null, levels, players: rankPlayers(game, kept), feed: kept.slice(0, 15).map((p) => ({ ...summary(p), key: playerKey(p) })) };
+}
+
+export async function ranking(game: Game, level?: "facile" | "normal" | "expert" | null) {
+  const empty = { available: false, ...boardOf(game, [], level) };
   const db = getServiceClient();
-  if (!db) return { available: false, players: [], feed: [] };
+  if (!db) return empty;
   const { data, error } = await db.from("game_plays").select("*").eq("game", game).order("created_at", { ascending: false }).limit(3000);
-  if (error) return { available: false, players: [], feed: [] };
-  const rows = (data ?? []) as Play[];
-  return { available: true, players: rankPlayers(game, rows), feed: rows.slice(0, 15).map((p) => ({ ...summary(p), key: playerKey(p) })) };
+  if (error) return empty;
+  return { available: true, ...boardOf(game, (data ?? []) as Play[], level) };
 }
 
 /** La partie du jour d'un joueur pour un jeu quotidien (appareil, ou membre s'il s'est identifié). */

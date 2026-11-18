@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { parseLevel } from "../../../../lib/games/levels";
 import { DEVICE } from "../../../../lib/games/player";
 import { history, isGame, playerKey, ranking } from "../../../../lib/games/store";
 import { getPublicMembers } from "../../../../lib/members-server";
@@ -6,7 +7,7 @@ import { getPublicMembers } from "../../../../lib/members-server";
 const NO_STORE = { "Cache-Control": "no-store" };
 
 // Classement complet d'un jeu (tous les joueurs, leurs parties, dernières parties) et,
-// si ?device= est donné, l'historique de ce joueur et sa clé publique (pour le repérer).
+// ?level= : classement de ce niveau seulement (Facile, Normal ou Expert). Si ?device= est donné, l'historique de ce joueur et sa clé publique (pour le repérer).
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
   const g = sp.get("game");
@@ -15,7 +16,7 @@ export async function GET(req: NextRequest) {
   const m = Number(sp.get("member"));
   const member = Number.isInteger(m) && m > 0 ? m : null;
   const ok = DEVICE.test(device);
-  const [board, mine, members] = await Promise.all([ranking(game), ok ? history(device, member) : Promise.resolve([]), getPublicMembers().catch(() => [])]);
+  const [board, mine, members] = await Promise.all([ranking(game, sp.has("level") ? parseLevel(sp.get("level")) : null), ok ? history(device, member) : Promise.resolve([]), getPublicMembers().catch(() => [])]);
   // Nom et portrait résolus ici, à partir de la même base que les parties.
   const byId = new Map(members.map((x) => [x.id, x]));
   const players = board.players.map((r) => {

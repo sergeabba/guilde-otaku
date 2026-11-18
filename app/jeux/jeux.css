@@ -385,8 +385,8 @@
 .jx-level strong { font: 900 italic 1.1rem var(--gk-font-ui); text-transform: uppercase; }
 .jx-level small { font: 700 .76rem var(--gk-font-ui); color: var(--gk-dim); }
 .jx-level.is-facile { --lv: #4ade80; } .jx-level.is-normal { --lv: #f5a524; } .jx-level.is-expert { --lv: #e8412c; }
-.jx-level[aria-checked="true"] { border-color: var(--lv); background: color-mix(in srgb, var(--lv) 16%, #17151c); box-shadow: 4px 4px 0 var(--lv); transform: translate(-1px, -1px); }
-.jx-level[aria-checked="true"] small { color: var(--lv); }
+.jx-level[aria-checked="true"], .jx-level[aria-pressed="true"] { border-color: var(--lv); background: color-mix(in srgb, var(--lv) 16%, #17151c); box-shadow: 4px 4px 0 var(--lv); transform: translate(-1px, -1px); }
+.jx-level[aria-checked="true"] small, .jx-level[aria-pressed="true"] small { color: var(--lv); }
 .jx-level:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
 .jx-level-note { font: 800 .9rem var(--gk-font-ui); color: var(--gk-accent); }
 .jx-replay { margin: 10px auto 0; display: flex; }
@@ -416,3 +416,4 @@
 .jx-howto li > b { display: grid; place-items: center; width: 30px; height: 30px; font: 900 .95rem var(--gk-font-ui); background: var(--gk-accent); color: #0d0c10; }
 .jx-start { min-width: 200px; justify-content: center; }
 .jx-dle-intro .jx-level-note { margin-top: 14px; }
+.jx-board-levels { margin: 4px 0 16px; }

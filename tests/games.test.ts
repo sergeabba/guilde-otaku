@@ -447,3 +447,17 @@ describe("indices sans rang", () => {
     expect(animeHints(a, 3, "expert")[0].value.split(", ")).toHaveLength(2);
   });
 });
+
+import { boardOf, type Play as StorePlay } from "../lib/games/store";
+describe("classement par niveau", () => {
+  const P = (id: number, member: number, score: number, level?: string): StorePlay => ({ id, game: "quiz-generique", device: `d${member}`, member_id: member, player_name: null, score, max_score: 1500, detail: level ? { level } : {}, created_at: `2026-11-1${id}T10:00:00Z` });
+  const rows = [P(1, 1, 900, "expert"), P(2, 2, 1200, "facile"), P(3, 3, 700), P(4, 1, 400, "normal")];
+  it("ne compare que les parties du même niveau (sans niveau = Normal)", () => {
+    expect(boardOf("quiz-generique", rows, "expert").players.map((r) => r.member_id)).toEqual([1]);
+    expect(boardOf("quiz-generique", rows, "normal").players.map((r) => [r.member_id, r.best])).toEqual([[3, 700], [1, 400]]);
+    expect(boardOf("quiz-generique", rows, "facile").levels).toEqual({ facile: 1, normal: 2, expert: 1 });
+  });
+  it("le duel garde un seul classement", () => {
+    expect(boardOf("duel", rows, "expert").players).toHaveLength(3);
+  });
+});
