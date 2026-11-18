@@ -249,7 +249,7 @@ describe("Devine l'anime / le perso", () => {
     expect(h3.some((h) => h.value === "/img?l=1")).toBe(true);
     expect(JSON.stringify(h9)).not.toContain("Gojou");
     expect(JSON.stringify(h9)).not.toContain("x.png");
-    expect(h9.at(-1)).toMatchObject({ label: "Initiale", value: "S…" });
+    expect(h9.at(-1)).toMatchObject({ label: "Son nom", value: "S····· G···· (6, 5 lettres)" });
   });
 });
 
@@ -337,13 +337,14 @@ describe("niveaux de difficulté", () => {
     const by = new Map(P.map((a) => [a.id, a]));
     for (let i = 0; i + 1 < key.seq.length; i++) expect(Math.abs(by.get(key.seq[i])!.score - by.get(key.seq[i + 1])!.score)).toBeGreaterThanOrEqual(8);
   });
-  it("devine le perso : Facile donne l'anime tout de suite, Expert le doubleur avant l'anime", () => {
+  it("devine le perso : Facile donne l'anime tout de suite, Expert le doubleur avant, l'anime en dernier", () => {
     const c = { id: 1, name: "Satoru Gojou", alt: [], image: "x", gender: "Homme", age: null, role: "Personnage principal", anime: "Jujutsu Kaisen", animeId: 5, year: 2020, genres: ["Action"], voice: "Yuuichi Nakamura" };
     expect(hints(c, 0, () => "img", "facile").some((h) => h.value === "Jujutsu Kaisen")).toBe(true);
     const ex = hints(c, 3, () => "img", "expert");
     expect(ex.some((h) => h.value === "Yuuichi Nakamura")).toBe(true);
     expect(ex.some((h) => h.value === "Jujutsu Kaisen")).toBe(false);
-    expect(hints(c, 4, () => "img", "expert").some((h) => h.value === "Jujutsu Kaisen")).toBe(true);
+    expect(hints(c, 4, () => "img", "expert").some((h) => h.value === "Jujutsu Kaisen")).toBe(false);
+    expect(hints(c, 5, () => "img", "expert").some((h) => h.value === "Jujutsu Kaisen")).toBe(true);
   });
 });
 
@@ -387,5 +388,62 @@ describe("questions : ponctuation", () => {
   it("ne double pas le point d'interrogation", () => {
     const g = buildStudio([1, 2, 3, 4, 5].map((i) => ({ rank: i, id: i, title: i === 1 ? "Love is War?" : `T${i}`, alt: null, cover: "c", year: 2020, format: "Série", episodes: 12, score: 70, popularity: 1, genres: [], studio: `S${i}`, source: null, tags: [], creator: null, director: null })), "facile");
     g.rounds.forEach((r) => expect(r.prompt).not.toMatch(/\?\s*\?/));
+  });
+});
+
+import { animeHints, nameShape, titleShape } from "../lib/games/dle-logic";
+import { distinctDecoys, songsOfTags, songTag } from "../lib/games/quiz";
+import type { CatalogSong } from "../lib/anime-song";
+describe("blind test : pas de répétition ni de déduction", () => {
+  const songs = songCatalog as CatalogSong[];
+  it("le catalogue a grossi, sans doublon d'extrait", () => {
+    expect(songs.length).toBeGreaterThanOrEqual(160);
+    expect(songs.filter((s) => s.lang === "fr").length).toBeGreaterThanOrEqual(35);
+    expect(new Set(songs.map((s) => s.itunesId)).size).toBe(songs.length);
+  });
+  it("une bonne réponse n'est jamais un leurre, et les leurres ne se répètent pas", () => {
+    const jp = songs.filter((s) => s.lang !== "fr");
+    const animes = [...new Set(jp.map((s) => s.anime))];
+    const picked = [...new Map(jp.map((s) => [s.anime, s])).values()].slice(0, 10);
+    for (const near of [false, true]) {
+      const d = distinctDecoys(picked, animes, near ? 5 : 3, near);
+      const answers = new Set(picked.map((s) => s.anime));
+      const flat = d.flat();
+      expect(flat.some((a) => answers.has(a))).toBe(false);
+      expect(new Set(flat).size).toBe(flat.length);
+      d.forEach((x) => expect(x).toHaveLength(near ? 5 : 3));
+    }
+  });
+  it("nostalgie : même avec peu d'animes, aucune réponse servie en leurre", () => {
+    const fr = songs.filter((s) => s.lang === "fr");
+    const animes = [...new Set(fr.map((s) => s.anime))];
+    const picked = [...new Map(fr.map((s) => [s.anime, s])).values()].slice(0, 10);
+    const d = distinctDecoys(picked, animes, 3);
+    const answers = new Set(picked.map((s) => s.anime));
+    expect(d.flat().some((a) => answers.has(a))).toBe(false);
+    d.forEach((x) => expect(new Set(x).size).toBe(3));
+  });
+  it("les titres déjà entendus passent en dernier", async () => {
+    process.env.GAME_SECRET ||= "test-secret";
+    const fr = songs.map((s, i) => ({ s, i })).filter((x) => x.s.lang === "fr").map((x) => x.i);
+    const recent = fr.slice(0, 20);
+    expect(songsOfTags(recent.map(songTag)).sort()).toEqual([...recent].sort());
+    const { token } = await buildQuiz(async () => "https://x/p.m4a", Date.now(), "nostalgie", "normal", recent);
+    const key = verifyKey(token)!;
+    expect(key.songs.filter((i) => recent.includes(i)).length).toBe(0);
+  });
+});
+describe("indices sans rang", () => {
+  it("forme du nom et du titre", () => {
+    expect(nameShape("Monkey D. Luffy")).toBe("M····· D. L···· (6, 1, 5 lettres)");
+    expect(titleShape("Fullmetal Alchemist: Brotherhood")).toBe("Commence par « F », 3 mots");
+  });
+  it("Devine l'anime : thèmes puis forme du titre, selon le niveau", () => {
+    const a = { id: 1, title: "Steins;Gate", alt: null, cover: "", year: 2011, format: "Série", episodes: 24, score: 90, genres: [], studio: null, source: null, tags: ["Voyage dans le temps", "Complot", "Scientifique", "Otaku"] };
+    expect(animeHints(a, 0, "facile")).toEqual([]);
+    expect(animeHints(a, 1, "facile")[0].label).toBe("Ses thèmes");
+    expect(animeHints(a, 1, "normal")).toEqual([]);
+    expect(animeHints(a, 4, "normal").map((h) => h.label)).toEqual(["Ses thèmes", "Son titre"]);
+    expect(animeHints(a, 3, "expert")[0].value.split(", ")).toHaveLength(2);
   });
 });

@@ -16,22 +16,22 @@ export const QCM_INFO: Record<QcmKind, { title: string; intro: string; levels: R
   themes: {
     title: "Devine par les thèmes", color: "#38bdf8", Icon: Tags, unit: "animes",
     intro: "6 animes à reconnaître à partir de leurs thèmes (jamais de spoiler). Un thème de plus toutes les 4 secondes : 100 points avec un seul thème, 15 de moins par thème en plus.",
-    levels: { facile: "les 100 animes les plus populaires, 4 titres proposés.", normal: "les 300 plus populaires, 6 titres proposés, pièges aux thèmes proches.", expert: "animes du 300e au 800e rang, titre à taper (les petites fautes passent)." },
+    levels: { facile: "des animes très connus, 4 titres proposés.", normal: "des animes connus, 6 titres proposés, pièges aux thèmes proches.", expert: "des animes moins connus, titre à taper (les petites fautes passent)." },
   },
   createur: {
     title: "Qui l'a créé ?", color: "#c084fc", Icon: PenTool, unit: "réponses",
     intro: "8 animes : retrouve l'auteur de l'œuvre d'origine (mangaka, romancier…). 100 points par bonne réponse, jusqu'à 50 de bonus si tu es rapide.",
-    levels: { facile: "les 100 plus populaires, 4 noms proposés, 30 secondes.", normal: "les 300 plus populaires, 6 noms proposés.", expert: "animes du 300e au 800e rang, et une question sur deux porte sur le réalisateur." },
+    levels: { facile: "des animes très connus, 4 noms proposés, 30 secondes.", normal: "des animes connus, 6 noms proposés.", expert: "des animes moins connus, et une question sur deux porte sur le réalisateur." },
   },
   studio: {
     title: "Le studio", color: "#fb7185", Icon: Building2, unit: "studios",
     intro: "8 animes : quel studio d'animation les a produits ? MAPPA, ufotable, Kyoto Animation, Madhouse… 100 points par bonne réponse, jusqu'à 50 de bonus si tu es rapide.",
-    levels: { facile: "les 100 plus populaires, 4 studios proposés, 30 secondes.", normal: "les 300 plus populaires, 6 studios proposés.", expert: "animes du 300e au 800e rang, 6 studios proposés." },
+    levels: { facile: "des animes très connus, 4 studios proposés, 30 secondes.", normal: "des animes connus, 6 studios proposés.", expert: "des animes moins connus, 6 studios proposés." },
   },
   voix: {
     title: "La voix", color: "#34d399", Icon: Mic, unit: "voix",
     intro: "8 doubleurs japonais (seiyū) : quel personnage interprètent-ils ? 100 points par bonne réponse, jusqu'à 50 de bonus si tu es rapide.",
-    levels: { facile: "les 100 persos les plus aimés, 4 propositions, 30 secondes.", normal: "les 300 persos les plus aimés, 6 propositions.", expert: "persos du 300e au 600e rang, 6 propositions." },
+    levels: { facile: "des persos très connus, 4 propositions, 30 secondes.", normal: "des persos connus, 6 propositions.", expert: "des persos moins connus, 6 propositions." },
   },
 };
 

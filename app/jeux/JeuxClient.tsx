@@ -193,12 +193,19 @@ function Quiz({ player, mode, defi, level: chosen, onRanking }: { player: Player
   async function start() {
     setPhase("loading"); setError(null); setResult(null);
     try {
-      const res = await fetch(defi ? `/api/games/quiz?defi=${defi}` : `/api/games/quiz?level=${chosen}${nosta ? "&mode=nostalgie" : ""}`, { cache: "no-store" });
+      const recentKey = `gk-quiz-recent-${nosta ? "fr" : "jp"}`;
+      let recent: string[] = [];
+      try { recent = JSON.parse(localStorage.getItem(recentKey) || "[]"); } catch { /* stockage indisponible */ }
+      if (!Array.isArray(recent)) recent = [];
+      const res = await fetch(defi ? `/api/games/quiz?defi=${defi}` : `/api/games/quiz?level=${chosen}${nosta ? "&mode=nostalgie" : ""}${recent.length ? `&recent=${recent.join(",")}` : ""}`, { cache: "no-store" });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Quiz indisponible.");
       if (d.defi) setRival(d.defi);
       if (d.level) setLevel(d.level === "facile" || d.level === "expert" ? d.level : "normal");
       answers.current = [];
+      // Les titres entendus passent en fin de file aux prochaines parties.
+      const ids = (d.rounds as QuizRound[]).map((x) => x.id).filter((x): x is string => typeof x === "string");
+      if (ids.length) try { localStorage.setItem(recentKey, JSON.stringify([...ids, ...recent.filter((x) => !ids.includes(x))].slice(0, nosta ? 30 : 60))); } catch { /* stockage indisponible */ }
       setToken(d.token); setRounds(d.rounds); setPhase("play");
       playRound(d.rounds, 0);
     } catch (e) { setError(e instanceof Error ? e.message : "Quiz indisponible."); setPhase("intro"); }

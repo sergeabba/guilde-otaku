@@ -9,6 +9,9 @@ function secret(): string {
 }
 const mac = (body: string) => createHmac("sha256", secret()).update(body).digest("base64url");
 
+/** Étiquette courte et opaque d'une valeur (ne révèle rien au navigateur). */
+export const tag = (v: string) => mac(`tag:${v}`).slice(0, 8);
+
 export function seal(obj: object): string {
   const body = Buffer.from(JSON.stringify(obj)).toString("base64url");
   return `${body}.${mac(body)}`;

@@ -75,8 +75,26 @@ const arrow = (d: Dir | null, label: string) => d === "up" ? <ArrowUp size={14} 
 interface AnimeAnswer { id: number; title: string; cover: string; year: number; studio: string | null }
 interface AnimeState { date: string; tries: number; names: { id: number; title: string; alt: string | null; year: number }[]; played: { ok: boolean; score: number; feedback: AnimeFeedback[]; answer: AnimeAnswer } | null }
 
+/** Écran d'accueil d'un jeu du jour : comment jouer, puis « Commencer ». */
+function DleIntro({ title, Icon, date, steps, note, onStart }: { title: string; Icon: typeof ScanSearch; date: string; steps: React.ReactNode[]; note: string; onStart: () => void }) {
+  return (
+    <div className="jx-dle-intro">
+      <div className="jx-daily-head">
+        <div>
+          <p className="jx-daily-date"><Icon size={16} aria-hidden="true" /> {frDate(date)}</p>
+          <h2 className="gk-display">{title}</h2>
+        </div>
+      </div>
+      <p className="jx-level-note">{note}</p>
+      <ol className="jx-howto">{steps.map((st, i) => <li key={i}><b aria-hidden="true">{i + 1}</b><span>{st}</span></li>)}</ol>
+      <button type="button" className="gk-btn jx-start" onClick={onStart}><Play size={18} aria-hidden="true" /> Commencer</button>
+    </div>
+  );
+}
+
 export function DevineAnime({ player, onRanking, level }: { player: PlayerApi; onRanking: OnRanking; level: Level }) {
-  const [tags, setTags] = useState<string[] | null>(null);
+  const [hints, setHints] = useState<{ label: string; value: string }[]>([]);
+  const [started, setStarted] = useState(false);
   const [data, setData] = useState<AnimeState | null>(null);
   const [feedback, setFeedback] = useState<AnimeFeedback[]>([]);
   const [end, setEnd] = useState<{ ok: boolean; score: number; answer: AnimeAnswer; saved?: boolean } | null>(null);
@@ -88,8 +106,8 @@ export function DevineAnime({ player, onRanking, level }: { player: PlayerApi; o
   const send = useCallback(async (ids: number[]) => {
     setBusy(true); setError(null);
     try {
-      const r = await api<{ feedback: AnimeFeedback[]; over: boolean; ok: boolean; score: number; saved: boolean; tags: string[] | null; answer: AnimeAnswer | null }>("/api/games/devine-anime", { guesses: ids, level, ...player.payload() });
-      setFeedback(r.feedback); setTags(r.tags); memory.set(ids);
+      const r = await api<{ feedback: AnimeFeedback[]; over: boolean; ok: boolean; score: number; saved: boolean; hints?: { label: string; value: string }[]; answer: AnimeAnswer | null }>("/api/games/devine-anime", { guesses: ids, level, ...player.payload() });
+      setFeedback(r.feedback); setHints(r.hints ?? []); memory.set(ids);
       if (r.over && r.answer) {
         setEnd({ ok: r.ok, score: r.score, answer: r.answer, saved: r.saved });
         pushLocal({ game: "devine-anime", score: r.score, max: 100, at: new Date().toISOString(), label: r.ok ? `Trouvé en ${ids.length} essai${ids.length > 1 ? "s" : ""}` : "Raté" });
@@ -113,10 +131,23 @@ export function DevineAnime({ player, onRanking, level }: { player: PlayerApi; o
     if (!data || data.played || resumed.current) return;
     resumed.current = true;
     const saved = memory.get();
-    if (saved.length) void Promise.resolve().then(() => send(saved));
+    if (saved.length) void Promise.resolve().then(() => { setStarted(true); return send(saved); });
   }, [data, memory, send]);
 
   if (!data) return <section className="jx-panel"><p className={error ? "jx-error" : "jx-note"} role="status">{error ?? "Préparation de l'anime mystère…"}</p></section>;
+  if (!started && !end && !feedback.length) return (
+    <section className="jx-panel jx-dle" aria-label="Devine l'anime" style={{ "--gk-accent": "#f472b6" } as React.CSSProperties}>
+      <DleIntro title="Devine l'anime" Icon={ScanSearch} date={data.date} onStart={() => setStarted(true)}
+        note={`Niveau ${LEVEL_LABEL[level]} (${multLabel(level)}) : ${level === "facile" ? "un anime très connu, indices dès le 2e essai." : level === "expert" ? "un anime moins connu, en 5 essais, indices tardifs." : "un anime connu, en 6 essais."} Un anime mystère par jour et par niveau, le même pour tout le monde.`}
+        steps={[
+          <>Tape le titre de <b>n&apos;importe quel anime</b> et choisis-le dans la liste. C&apos;est ton premier essai, même au hasard.</>,
+          <>Chaque essai se compare à l&apos;anime mystère : <b className="jx-key is-ok">vert</b> identique, <b className="jx-key is-near">orange</b> proche, une flèche dit si l&apos;année, la note ou le nombre d&apos;épisodes est plus haut ou plus bas.</>,
+          <>Après quelques ratés, des indices arrivent : ses thèmes, puis l&apos;initiale de son titre.</>,
+          <>Trouve-le en {data.tries} essais au plus : moins tu en utilises, plus tu marques.</>,
+        ]} />
+      {error && <p className="jx-error" role="alert">{error}</p>}
+    </section>
+  );
   const ids = feedback.map((f) => f.id);
   const used = new Set(ids);
   const left = data.tries - feedback.length;
@@ -137,9 +168,8 @@ export function DevineAnime({ player, onRanking, level }: { player: PlayerApi; o
       </div>
       {!end && (
         <>
-          <p className="jx-level-note">Niveau {LEVEL_LABEL[level]} ({multLabel(level)}) : {level === "facile" ? "un anime du top 100, ses thèmes en indice dès le 3e essai." : level === "expert" ? "un anime entre le 150e et le 600e rang, en 5 essais." : "un anime du top 150, en 6 essais."} Un anime mystère différent par niveau.</p>
-          {tags && <p className="jx-tags-hint"><b>Indice : ses thèmes</b>{tags.map((t) => <span key={t}>{t}</span>)}</p>}
-          <p className="jx-dle-rules">Un anime mystère par jour, parmi les plus populaires. Tape un titre : chaque essai dit ce qu&apos;il a en commun avec l&apos;anime mystère. <b className="jx-key is-ok">Vert</b> : identique. <b className="jx-key is-near">Orange</b> : proche. Flèche : l&apos;anime mystère est plus haut ou plus bas.</p>
+          {hints.map((h) => <p key={h.label} className="jx-tags-hint"><b>Indice : {h.label.toLowerCase()}</b>{h.label === "Ses thèmes" ? h.value.split(", ").map((t) => <span key={t}>{t}</span>) : <span>{h.value}</span>}</p>)}
+          <p className="jx-dle-rules">{feedback.length ? <><b className="jx-key is-ok">Vert</b> : identique. <b className="jx-key is-near">Orange</b> : proche. Flèche : l&apos;anime mystère est plus haut ou plus bas.</> : <>Tape le titre d&apos;un anime pour faire ton premier essai, même au hasard : la comparaison te guidera.</>}</p>
           <Picker items={data.names.map((n) => ({ id: n.id, label: n.title, sub: `${n.year}${n.alt ? ` · ${n.alt}` : ""}`, alt: n.alt ? [n.alt] : [] }))} used={used} onPick={(id) => void send([...ids, id])} placeholder="Tape le titre d'un anime…" disabled={busy} />
         </>
       )}
@@ -182,7 +212,7 @@ export function DevineAnime({ player, onRanking, level }: { player: PlayerApi; o
           </li>
         ))}
       </ol>
-      <p className="jx-note">Données : AniList (300 animes les plus populaires).</p>
+      <p className="jx-note">Données : AniList.</p>
       <Toast />
     </section>
   );
@@ -197,6 +227,7 @@ export function DevinePerso({ player, onRanking, level }: { player: PlayerApi; o
   const [data, setData] = useState<CharState | null>(null);
   const [feedback, setFeedback] = useState<CharVerdict[]>([]);
   const [hints, setHints] = useState<CharHint[]>([]);
+  const [started, setStarted] = useState(false);
   const [end, setEnd] = useState<{ ok: boolean; score: number; answer: CharAnswer; saved?: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -230,10 +261,23 @@ export function DevinePerso({ player, onRanking, level }: { player: PlayerApi; o
     if (!data || data.played || resumed.current) return;
     resumed.current = true;
     const saved = memory.get();
-    if (saved.length) void Promise.resolve().then(() => send(saved));
+    if (saved.length) void Promise.resolve().then(() => { setStarted(true); return send(saved); });
   }, [data, memory, send]);
 
   if (!data) return <section className="jx-panel"><p className={error ? "jx-error" : "jx-note"} role="status">{error ?? "Préparation du perso mystère…"}</p></section>;
+  if (!started && !end && !feedback.length) return (
+    <section className="jx-panel jx-dle" aria-label="Devine le perso" style={{ "--gk-accent": "#fb923c" } as React.CSSProperties}>
+      <DleIntro title="Devine le perso" Icon={UserSearch} date={data.date} onStart={() => setStarted(true)}
+        note={`Niveau ${LEVEL_LABEL[level]} (${multLabel(level)}) : ${level === "facile" ? "un perso très connu, le titre de son anime est donné d'entrée." : level === "expert" ? "un perso moins connu, le titre de son anime n'arrive qu'au dernier indice." : "un perso connu."} Un perso mystère par jour et par niveau, le même pour tout le monde.`}
+        steps={[
+          <>Tu pars de quelques infos : son rôle, son genre, parfois son âge.</>,
+          <>Tape le nom d&apos;<b>un personnage</b> et choisis-le dans la liste. Chaque essai dit s&apos;il vient du même anime et s&apos;il a le même genre.</>,
+          <>Chaque essai raté dévoile un indice : genres, studio et thèmes de son anime, portrait flouté, doubleur, puis les initiales de son nom.</>,
+          <>Trouve-le en {data.tries} essais au plus : moins tu en utilises, plus tu marques.</>,
+        ]} />
+      {error && <p className="jx-error" role="alert">{error}</p>}
+    </section>
+  );
   const ids = feedback.map((f) => f.id);
   const left = data.tries - feedback.length;
   const textHints = hints.filter((h) => h.kind === "text");
@@ -248,8 +292,7 @@ export function DevinePerso({ player, onRanking, level }: { player: PlayerApi; o
         </div>
         <p className="jx-dle-left" aria-live="polite"><b>{end ? feedback.length : left}</b><small>{end ? "essais joués" : `essai${left > 1 ? "s" : ""} restant${left > 1 ? "s" : ""}`}</small></p>
       </div>
-      {!end && <p className="jx-level-note">Niveau {LEVEL_LABEL[level]} ({multLabel(level)}) : {level === "facile" ? "un perso du top 100, le titre de l'anime est donné tout de suite." : level === "expert" ? "un perso entre le 200e et le 600e rang ; le doubleur japonais arrive avant le titre de l'anime." : "un perso du top 120."}</p>}
-      {!end && <p className="jx-dle-rules">Un personnage d&apos;anime parmi les plus aimés. Chaque essai raté dévoile un indice de plus : genres de l&apos;anime, portrait flouté, titre de l&apos;anime, initiale…</p>}
+      {!end && <p className="jx-dle-rules">{feedback.length ? "Chaque essai raté dévoile un indice de plus." : "Tape le nom d'un personnage pour faire ton premier essai : un raté te donne un nouvel indice."}</p>}
 
       <div className="jx-perso">
         <div className="jx-perso-pic">
@@ -296,7 +339,7 @@ export function DevinePerso({ player, onRanking, level }: { player: PlayerApi; o
           </li>
         ))}
       </ol>
-      <p className="jx-note">Données : AniList (200 personnages préférés des spectateurs).</p>
+      <p className="jx-note">Données : AniList.</p>
       <Toast />
     </section>
   );

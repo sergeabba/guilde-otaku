@@ -1015,5 +1015,339 @@
   "year": 1983,
   "itunesId": 320467227,
   "lang": "fr"
+ },
+ {
+  "title": "Akeboshi",
+  "artist": "LiSA",
+  "anime": "Demon Slayer",
+  "kind": "OP",
+  "year": 2021,
+  "itunesId": 1592056601
+ },
+ {
+  "title": "VIVID VICE",
+  "artist": "Who-ya Extended",
+  "anime": "Jujutsu Kaisen",
+  "kind": "OP",
+  "year": 2021,
+  "itunesId": 1546061848
+ },
+ {
+  "title": "Red Swan",
+  "artist": "YOSHIKI",
+  "anime": "L'Attaque des Titans",
+  "kind": "OP",
+  "year": 2018,
+  "itunesId": 1436825394
+ },
+ {
+  "title": "GO!!!",
+  "artist": "FLOW",
+  "anime": "Naruto",
+  "kind": "OP",
+  "year": 2004,
+  "itunesId": 1538160317
+ },
+ {
+  "title": "Share The World",
+  "artist": "TVXQ!",
+  "anime": "One Piece",
+  "kind": "OP",
+  "year": 2009,
+  "itunesId": 1892301881
+ },
+ {
+  "title": "Hard Knock Days",
+  "artist": "GENERATIONS from EXILE TRIBE",
+  "anime": "One Piece",
+  "kind": "OP",
+  "year": 2014,
+  "itunesId": 1024336457
+ },
+ {
+  "title": "Melissa",
+  "artist": "Porno Graffitti",
+  "anime": "Fullmetal Alchemist",
+  "kind": "OP",
+  "year": 2003,
+  "itunesId": 1434040776
+ },
+ {
+  "title": "Rewrite",
+  "artist": "Asian Kung-Fu Generation",
+  "anime": "Fullmetal Alchemist",
+  "kind": "OP",
+  "year": 2004,
+  "itunesId": 1536364096
+ },
+ {
+  "title": "THE DAY",
+  "artist": "Porno Graffitti",
+  "anime": "My Hero Academia",
+  "kind": "OP",
+  "year": 2016,
+  "itunesId": 1119496702
+ },
+ {
+  "title": "Make my Story",
+  "artist": "Lenny code fiction",
+  "anime": "My Hero Academia",
+  "kind": "OP",
+  "year": 2018,
+  "itunesId": 1422126913
+ },
+ {
+  "title": "ADAMAS",
+  "artist": "LiSA",
+  "anime": "Sword Art Online",
+  "kind": "OP",
+  "year": 2018,
+  "itunesId": 1537901887
+ },
+ {
+  "title": "A Cruel Angel's Thesis",
+  "artist": "Yoko Takahashi",
+  "anime": "Neon Genesis Evangelion",
+  "kind": "OP",
+  "year": 1995,
+  "itunesId": 1500836562
+ },
+ {
+  "title": "Change the World",
+  "artist": "V6",
+  "anime": "Inuyasha",
+  "kind": "OP",
+  "year": 2000,
+  "itunesId": 1849085807
+ },
+ {
+  "title": "Hohoemi no Bakudan",
+  "artist": "Mawatari Matsuko",
+  "anime": "Yu Yu Hakusho",
+  "kind": "OP",
+  "year": 1992,
+  "itunesId": 1457287222
+ },
+ {
+  "title": "DRIVER'S HIGH",
+  "artist": "L'Arc-en-Ciel",
+  "anime": "Great Teacher Onizuka",
+  "kind": "OP",
+  "year": 1999,
+  "itunesId": 1536357607
+ },
+ {
+  "title": "Skyreach",
+  "artist": "Sora Amamiya",
+  "anime": "Akame ga Kill!",
+  "kind": "OP",
+  "year": 2014,
+  "itunesId": 1537334827
+ },
+ {
+  "title": "RISE",
+  "artist": "MADKID",
+  "anime": "The Rising of the Shield Hero",
+  "kind": "OP",
+  "year": 2019,
+  "itunesId": 1447344522
+ },
+ {
+  "title": "Goldorak",
+  "artist": "Noam",
+  "anime": "Goldorak",
+  "kind": "OP",
+  "year": 1978,
+  "itunesId": 857666473,
+  "lang": "fr"
+ },
+ {
+  "title": "Candy",
+  "artist": "Dorothée",
+  "anime": "Candy",
+  "kind": "OP",
+  "year": 1979,
+  "itunesId": 984319301,
+  "lang": "fr"
+ },
+ {
+  "title": "Ranma",
+  "artist": "Bernard Minet",
+  "anime": "Ranma ½",
+  "kind": "OP",
+  "year": 1991,
+  "itunesId": 408194971,
+  "lang": "fr"
+ },
+ {
+  "title": "Jeanne et Serge",
+  "artist": "Bernard Minet",
+  "anime": "Jeanne et Serge",
+  "kind": "OP",
+  "year": 1987,
+  "itunesId": 1498055291,
+  "lang": "fr"
+ },
+ {
+  "title": "Clémentine",
+  "artist": "Dorothée",
+  "anime": "Clémentine",
+  "kind": "OP",
+  "year": 1985,
+  "itunesId": 1476777346,
+  "lang": "fr"
+ },
+ {
+  "title": "Robotech",
+  "artist": "Bernard Minet",
+  "anime": "Robotech",
+  "kind": "OP",
+  "year": 1986,
+  "itunesId": 1444618721,
+  "lang": "fr"
+ },
+ {
+  "title": "Flashman",
+  "artist": "Bernard Minet",
+  "anime": "Flashman",
+  "kind": "OP",
+  "year": 1987,
+  "itunesId": 975349166,
+  "lang": "fr"
+ },
+ {
+  "title": "Jaspion",
+  "artist": "Bernard Minet",
+  "anime": "Jaspion",
+  "kind": "OP",
+  "year": 1988,
+  "itunesId": 1444618736,
+  "lang": "fr"
+ },
+ {
+  "title": "Les attaquantes",
+  "artist": "Bernard Minet",
+  "anime": "Jeu, set et match !",
+  "kind": "OP",
+  "year": 1988,
+  "itunesId": 975349157,
+  "lang": "fr"
+ },
+ {
+  "title": "Conan, l'aventurier",
+  "artist": "Bernard Minet",
+  "anime": "Conan l'aventurier",
+  "kind": "OP",
+  "year": 1993,
+  "itunesId": 975388787,
+  "lang": "fr"
+ },
+ {
+  "title": "Denver le dernier Dinosaure",
+  "artist": "Bernard Minet",
+  "anime": "Denver, le dernier dinosaure",
+  "kind": "OP",
+  "year": 1988,
+  "itunesId": 1498054828,
+  "lang": "fr"
+ },
+ {
+  "title": "Fly",
+  "artist": "Bernard Minet",
+  "anime": "Fly",
+  "kind": "OP",
+  "year": 1991,
+  "itunesId": 975388788,
+  "lang": "fr"
+ },
+ {
+  "title": "Ken le survivant",
+  "artist": "Bernard Minet",
+  "anime": "Ken le Survivant",
+  "kind": "OP",
+  "year": 1988,
+  "itunesId": 1498055301,
+  "lang": "fr"
+ },
+ {
+  "title": "Giraya",
+  "artist": "Bernard Minet",
+  "anime": "Giraya",
+  "kind": "OP",
+  "year": 1989,
+  "itunesId": 1444618801,
+  "lang": "fr"
+ },
+ {
+  "title": "Les samouraïs de l'éternel",
+  "artist": "Bernard Minet",
+  "anime": "Les Samouraïs de l'éternel",
+  "kind": "OP",
+  "year": 1990,
+  "itunesId": 1444618887,
+  "lang": "fr"
+ },
+ {
+  "title": "Dragon Ball GT",
+  "artist": "Bernard Minet",
+  "anime": "Dragon Ball GT",
+  "kind": "OP",
+  "year": 1998,
+  "itunesId": 1444619145,
+  "lang": "fr"
+ },
+ {
+  "title": "L'école des champions",
+  "artist": "Bernard Minet",
+  "anime": "L'École des champions",
+  "kind": "OP",
+  "year": 1989,
+  "itunesId": 968205771,
+  "lang": "fr"
+ },
+ {
+  "title": "Dancougar",
+  "artist": "Jean-Paul Césari",
+  "anime": "Dancougar",
+  "kind": "OP",
+  "year": 1988,
+  "itunesId": 979745169,
+  "lang": "fr"
+ },
+ {
+  "title": "Metalder",
+  "artist": "Jean-Paul Césari",
+  "anime": "Metalder",
+  "kind": "OP",
+  "year": 1989,
+  "itunesId": 378283621,
+  "lang": "fr"
+ },
+ {
+  "title": "Bang Bang Lucky Luke",
+  "artist": "Jacques Cardona",
+  "anime": "Lucky Luke",
+  "kind": "OP",
+  "year": 1984,
+  "itunesId": 947057222,
+  "lang": "fr"
+ },
+ {
+  "title": "Bomber X",
+  "artist": "Le Groupe Apollo & Lionel Leroy",
+  "anime": "Bomber X",
+  "kind": "OP",
+  "year": 1983,
+  "itunesId": 1250958920,
+  "lang": "fr"
+ },
+ {
+  "title": "Les Popples",
+  "artist": "Noam",
+  "anime": "Les Popples",
+  "kind": "OP",
+  "year": 1987,
+  "itunesId": 947057281,
+  "lang": "fr"
  }
 ]

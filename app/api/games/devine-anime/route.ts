@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dailyAnime, getDleAnimes } from "../../../../lib/games/dle";
-import { animeTries, compareAnime, dlePoints } from "../../../../lib/games/dle-logic";
+import { animeHints, animeTries, compareAnime, dlePoints } from "../../../../lib/games/dle-logic";
 import { parisDay } from "../../../../lib/games/arcade";
 import { parseLevel, withMult, type Level } from "../../../../lib/games/levels";
 import { DEVICE, ipOf, limited, parsePlayer } from "../../../../lib/games/player";
@@ -15,8 +15,6 @@ async function load(date: string, level: Level) {
   const [list, secret] = await Promise.all([getDleAnimes(), dailyAnime(date, level)]);
   return { list, secret, byId: new Map(list.map((a) => [a.id, a])) };
 }
-/** Facile : les thèmes de l'anime mystère, à partir du 3e essai. */
-const tagHint = (level: Level, guesses: number, tags?: string[]) => (level === "facile" && guesses >= 2 && tags?.length ? tags.slice(0, 5) : null);
 
 // Devine l'anime du jour (un par niveau) : chaque essai dit ce qu'il a en commun avec l'anime mystère.
 export async function GET(req: NextRequest) {
@@ -64,5 +62,5 @@ export async function POST(req: NextRequest) {
     score = withMult(dlePoints(tries), level);
     saved = await recordPlay({ game: "devine-anime", ...player, score, max_score: withMult(100, level), detail: { date, level, ok: found >= 0, tries, guesses: ids }, nonce: nonceOf(level, date, player.device) }).catch(() => false);
   }
-  return NextResponse.json({ feedback, over, ok: found >= 0, score, saved, tags: over ? null : tagHint(level, ids.length, secret.tags), answer: over ? secret : null }, { headers: NO_STORE });
+  return NextResponse.json({ feedback, over, ok: found >= 0, score, saved, hints: over ? [] : animeHints(secret, feedback.filter((f) => !f.ok).length, level), answer: over ? secret : null }, { headers: NO_STORE });
 }

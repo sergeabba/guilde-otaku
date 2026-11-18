@@ -6,7 +6,7 @@ import { randomUUID } from "node:crypto";
 import catalog from "../../data/anime-songs.json";
 import type { CatalogSong } from "../anime-song";
 import { LEVEL_MULT, type Level } from "./levels";
-import { seal, shuffle, unseal } from "./token";
+import { seal, shuffle, tag, unseal } from "./token";
 
 export const QUIZ_ROUNDS = 10;
 export const ROUND_MS = 20_000;
@@ -17,7 +17,7 @@ const POINTS = 100, SPEED_BONUS = 50;
 const SONGS = catalog as CatalogSong[];
 
 export type QuizMode = "generique" | "nostalgie";
-export interface QuizRound { preview: string; choices: string[]; start?: number; clip?: number }
+export interface QuizRound { preview: string; choices: string[]; start?: number; clip?: number; id?: string }
 export interface QuizKey { v: 1; nonce: string; exp: number; songs: number[]; answers: number[]; mode?: QuizMode; choices?: string[][]; defi?: number; level?: Level; starts?: number[] }
 export interface QuizAnswer { choice: number | null; ms: number }
 export interface QuizCorrection { anime: string; title: string; artist: string; kind: "OP" | "ED"; cover: string | null; correct: number; chosen: number | null; ok: boolean; points: number }
@@ -34,13 +34,18 @@ const inMode = (mode: QuizMode) => (s: CatalogSong) => (mode === "nostalgie" ? s
  * Tire les questions. `previewOf` donne l'extrait d'un titre (null : titre écarté).
  * Les trois mauvaises réponses sont d'autres animes du catalogue.
  */
-export async function buildQuiz(previewOf: (i: number) => Promise<string | null>, now = Date.now(), mode: QuizMode = "generique", level?: Level): Promise<{ token: string; rounds: QuizRound[] }> {
+export async function buildQuiz(previewOf: (i: number) => Promise<string | null>, now = Date.now(), mode: QuizMode = "generique", level?: Level, recent: number[] = []): Promise<{ token: string; rounds: QuizRound[] }> {
   // Facile : openings seulement. Normal et Expert : openings et endings.
   const ok = (s: CatalogSong) => inMode(mode)(s) && (level !== "facile" || s.kind === "OP");
   const animes = [...new Set(SONGS.filter(inMode(mode)).map((s) => s.anime))];
+  // Les titres (et leurs animes) des dernières parties passent en dernier.
+  const seen = new Set(recent.filter((i) => Number.isInteger(i) && SONGS[i]));
+  const seenAnime = new Set([...seen].map((i) => SONGS[i].anime));
+  const all = SONGS.map((_, k) => k).filter((k) => ok(SONGS[k]));
+  const order = [...shuffle(all.filter((k) => !seen.has(k) && !seenAnime.has(SONGS[k].anime))), ...shuffle(all.filter((k) => !seen.has(k) && seenAnime.has(SONGS[k].anime))), ...shuffle(all.filter((k) => seen.has(k)))];
   const picked: { i: number; preview: string }[] = [];
   const usedAnime = new Set<string>();
-  for (const i of shuffle(SONGS.map((_, k) => k).filter((k) => ok(SONGS[k])))) {
+  for (const i of order) {
     if (picked.length >= QUIZ_ROUNDS) break;
     if (usedAnime.has(SONGS[i].anime)) continue;
     const preview = await previewOf(i);
@@ -50,17 +55,46 @@ export async function buildQuiz(previewOf: (i: number) => Promise<string | null>
   }
   if (picked.length < 5) throw new Error("Extraits indisponibles pour le moment.");
   const rounds: QuizRound[] = [], answers: number[] = [], starts: number[] = [];
-  for (const { i, preview } of picked) {
-    const wrong = level === "expert" ? traps(SONGS[i], animes, 5) : shuffle(animes.filter((a) => a !== SONGS[i].anime)).slice(0, 3);
-    const choices = shuffle([SONGS[i].anime, ...wrong]);
+  // Une bonne réponse n'apparaît jamais comme leurre, et un leurre ne revient pas
+  // d'une manche à l'autre tant qu'il reste des animes neufs : rien à déduire.
+  const decoys = distinctDecoys(picked.map((p) => SONGS[p.i]), animes, level === "expert" ? 5 : 3, level === "expert");
+  picked.forEach(({ i, preview }, r) => {
+    const choices = shuffle([SONGS[i].anime, ...decoys[r]]);
     // Expert : 5 secondes prises entre la 3e et la 22e seconde de l'extrait de 30 s.
     const start = level === "expert" ? 3 + Math.floor(Math.random() * 20) : undefined;
-    rounds.push(start === undefined ? { preview, choices } : { preview, choices, start, clip: EXPERT_CLIP_S });
+    const id = songTag(i);
+    rounds.push(start === undefined ? { preview, choices, id } : { preview, choices, start, clip: EXPERT_CLIP_S, id });
     answers.push(choices.indexOf(SONGS[i].anime));
     if (start !== undefined) starts.push(start);
-  }
+  });
   const key: QuizKey = { v: 1, nonce: randomUUID(), exp: now + 30 * 60_000, songs: picked.map((p) => p.i), answers, mode, choices: rounds.map((r) => r.choices), ...(level ? { level } : {}), ...(starts.length ? { starts } : {}) };
   return { token: signKey(key), rounds };
+}
+
+/**
+ * Leurres de chaque manche : jamais une bonne réponse de la partie, et sans répétition
+ * entre manches tant que le catalogue le permet. `near` : de la même époque (Expert).
+ */
+export function distinctDecoys(songs: CatalogSong[], animes: string[], n: number, near = false, rnd = Math.random): string[][] {
+  const answers = new Set(songs.map((s) => s.anime));
+  const used = new Set<string>();
+  return songs.map((song) => {
+    const free = animes.filter((a) => !answers.has(a));
+    const fresh = free.filter((a) => !used.has(a));
+    const ranked = (list: string[]) => (near ? traps(song, list, list.length) : shuffle(list, rnd));
+    const out = ranked(fresh).slice(0, n);
+    if (out.length < n) out.push(...ranked(free.filter((a) => !out.includes(a))).slice(0, n - out.length));
+    out.forEach((a) => used.add(a));
+    return out;
+  });
+}
+
+/** Étiquette opaque d'un titre : le navigateur la garde pour ne pas réentendre les mêmes. */
+export const songTag = (i: number) => tag(`song:${i}`);
+/** Titres correspondant aux étiquettes envoyées par le navigateur (inconnues ignorées). */
+export function songsOfTags(tags: string[]): number[] {
+  const want = new Set(tags.slice(0, 80));
+  return want.size ? SONGS.map((_, i) => i).filter((i) => want.has(songTag(i))) : [];
 }
 
 /** Année du premier générique de chaque anime du catalogue. */
@@ -70,7 +104,8 @@ for (const s of SONGS) if (!YEAR.has(s.anime) || s.year < YEAR.get(s.anime)!) YE
 /** Propositions pièges : les animes dont les génériques sont de la même époque. */
 export function traps(song: CatalogSong, animes: string[], n: number): string[] {
   const near = animes.filter((a) => a !== song.anime).map((a) => ({ a, d: Math.abs((YEAR.get(a) ?? 0) - song.year) + Math.random() * 2 })).sort((x, y) => x.d - y.d);
-  return shuffle(near.slice(0, n + 4).map((x) => x.a)).slice(0, n);
+  // Les n plus proches, mélangés ; au-delà, le reste dans l'ordre de proximité.
+  return [...shuffle(near.slice(0, n + 4).map((x) => x.a)), ...near.slice(n + 4).map((x) => x.a)].slice(0, n);
 }
 
 /**

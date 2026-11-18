@@ -14,15 +14,17 @@ export async function getDleAnimes(): Promise<DleAnime[]> {
 
 /** Les 600 personnages préférés des spectateurs d'AniList, rattachés à un anime. */
 export async function getDleChars(): Promise<DleChar[]> {
-  const list = await catalogChars(600);
+  const [list, animes] = await Promise.all([catalogChars(600), catalogAnimes(800).catch(() => [])]);
   if (list.length < 80) throw new Error("Liste de personnages incomplète.");
-  return list.map((c) => ({ id: c.id, name: c.name, alt: c.alt, image: c.image, gender: c.gender, age: c.age, role: c.role, anime: c.anime, animeId: c.animeId, year: c.year, genres: c.genres, voice: c.voice, rank: c.rank }));
+  // Studio et thèmes de l'anime du perso, quand il fait partie du catalogue (indices).
+  const byAnime = new Map(animes.map((a) => [a.id, a]));
+  return list.map((c) => ({ id: c.id, name: c.name, alt: c.alt, image: c.image, gender: c.gender, age: c.age, role: c.role, anime: c.anime, animeId: c.animeId, year: c.year, genres: c.genres, voice: c.voice, rank: c.rank, studio: byAnime.get(c.animeId)?.studio ?? null, themes: byAnime.get(c.animeId)?.tags ?? [] }));
 }
 
 /** Titre de suite : « Season 2 », « 2nd Season », « Part 2 », « II », « Shippuden »… */
 export const isSequel = (t: string) => /\b(season|saison|part|cour)\s*\d|\b\d+(st|nd|rd|th)\s+season|\s(ii|iii|iv|2|3|4)$|\s(ii|iii|iv|2|3|4)[:\s]|shippuu?den|final season|the movie|: .*arc\b/i.test(t);
 
-/** Plages de rangs des secrets du jour selon le niveau. */
+/** Plages de popularité des secrets du jour selon le niveau (jamais affichées aux joueurs). */
 const ANIME_RANGE: Record<Level, [number, number]> = { facile: [1, 100], normal: [1, 150], expert: [151, 600] };
 const CHAR_RANGE: Record<Level, [number, number]> = { facile: [1, 100], normal: [1, 120], expert: [201, 600] };
 
@@ -37,4 +39,4 @@ export const dailyChar = (date: string, level: Level = "normal") => unstable_cac
   const [lo, hi] = CHAR_RANGE[level];
   const list = (await getDleChars()).filter((c) => (c.rank ?? 0) >= lo && (c.rank ?? 0) <= hi);
   return list[pickDaily(date, list.length, level === "normal" ? "devine-perso" : `devine-perso-${level}`)];
-}, level === "normal" ? ["dle-char-day-v1", date] : ["dle-char-day-v2", level, date], { revalidate: 3 * 86_400 })();
+}, level === "normal" ? ["dle-char-day-v3", date] : ["dle-char-day-v4", level, date], { revalidate: 3 * 86_400 })();

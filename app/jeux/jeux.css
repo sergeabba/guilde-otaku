@@ -409,3 +409,10 @@
 .jx-choice span small { display: block; font: 700 .75rem var(--gk-font-ui); text-transform: none; opacity: .7; }
 .jx-qcm-faces .jx-choice img { width: 44px; height: 60px; object-fit: cover; border: 2px solid #0d0c10; flex: none; }
 @media (max-width: 420px) { .jx-qcm-q.has-img { grid-template-columns: 84px minmax(0, 1fr); } .jx-qcm-q img { width: 84px; height: 120px; } }
+
+/* Écran d'accueil des jeux du jour (Devine l'anime, Devine le perso) */
+.jx-howto { list-style: none; margin: 14px 0 18px; padding: 0; display: grid; gap: 10px; }
+.jx-howto li { display: grid; grid-template-columns: 30px 1fr; gap: 10px; align-items: start; font: 500 1rem/1.5 var(--gk-font-body, inherit); }
+.jx-howto li > b { display: grid; place-items: center; width: 30px; height: 30px; font: 900 .95rem var(--gk-font-ui); background: var(--gk-accent); color: #0d0c10; }
+.jx-start { min-width: 200px; justify-content: center; }
+.jx-dle-intro .jx-level-note { margin-top: 14px; }

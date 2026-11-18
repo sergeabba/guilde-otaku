@@ -210,7 +210,7 @@ export function Affiche({ player, onRanking, level }: { player: PlayerApi; onRan
           <span className="jx-big-icon" aria-hidden="true"><Grid3x3 size={38} /></span>
           <h2 id="jx-affiche-title" className="gk-display">L&apos;Affiche en morceaux</h2>
           <p>8 affiches d&apos;animes, cachées sous 9 cases. Une case tombe à intervalle régulier : trouve le titre le plus tôt possible. 100 points avec une seule case visible, 10 de moins par case en plus.</p>
-          <p className="jx-level-note">Niveau {LEVEL_LABEL[level]} ({multLabel(level)}) : {level === "facile" ? "les 100 animes les plus populaires, une case toutes les 2 secondes." : level === "expert" ? "animes du 300e au 800e rang, affiche en noir et blanc, une case toutes les 3 secondes." : "les 300 animes les plus populaires, une case toutes les 2 secondes."}</p>
+          <p className="jx-level-note">Niveau {LEVEL_LABEL[level]} ({multLabel(level)}) : {level === "facile" ? "des animes très connus, une case toutes les 2 secondes." : level === "expert" ? "des animes moins connus, affiche en noir et blanc, une case toutes les 3 secondes." : "des animes connus, une case toutes les 2 secondes."}</p>
           {error && <p className="jx-error" role="alert">{error}</p>}
           <button type="button" className="gk-btn" onClick={start} disabled={phase === "loading"}><Play size={18} aria-hidden="true" /> {phase === "loading" ? "Préparation…" : "Lancer la partie"}</button>
           <p className="jx-note">Affiches et titres : AniList.</p>
@@ -315,7 +315,7 @@ export function PlusMoins({ player, onRanking, level }: { player: PlayerApi; onR
           <span className="jx-big-icon" aria-hidden="true"><ArrowUp size={30} /><ArrowDown size={30} /></span>
           <h2 id="jx-pm-title" className="gk-display">Plus ou moins</h2>
           <p>Deux animes. Le second a-t-il une meilleure ou une moins bonne note que le premier ? Notes moyennes réelles des spectateurs d&apos;AniList, sur 100. Enchaîne le plus de bonnes réponses : la première erreur arrête la série. 10 points par bonne réponse.</p>
-          <p className="jx-level-note">Niveau {LEVEL_LABEL[level]} ({multLabel(level)}) : {level === "facile" ? "les 100 plus populaires, notes bien différentes (8 points d'écart au moins)." : level === "expert" ? "animes du 300e au 800e rang, notes très proches (5 points au plus), et parfois la popularité (nombre de spectateurs) à la place de la note." : "les 300 plus populaires."}</p>
+          <p className="jx-level-note">Niveau {LEVEL_LABEL[level]} ({multLabel(level)}) : {level === "facile" ? "des animes très connus, notes bien différentes (8 points d'écart au moins)." : level === "expert" ? "des animes moins connus, notes très proches (5 points au plus), et parfois la popularité (nombre de spectateurs) à la place de la note." : "des animes connus."}</p>
           {error && <p className="jx-error" role="alert">{error}</p>}
           <button type="button" className="gk-btn" onClick={start} disabled={phase === "loading"}><Play size={18} aria-hidden="true" /> {phase === "loading" ? "Préparation…" : "Lancer la partie"}</button>
         </div>
