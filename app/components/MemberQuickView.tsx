@@ -3,6 +3,7 @@
 import { portraitSeries, seriesLogoSrc } from "../../lib/series-logo";
 import { optimizedSrc } from "../../lib/img";
 import { useEffect, useRef, useState } from "react";
+import { useBackClose } from "../hooks/useBackClose";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
@@ -60,6 +61,7 @@ export default function MemberQuickView({ member, onClose, viewMode }: { member:
   // La fiche complète est préchargée dès l'ouverture : le passage est instantané.
   useEffect(() => { if (member) router.prefetch(`/membres/${member.id}`); }, [member, router]);
 
+  useBackClose(!!member, onClose);
   useEffect(() => {
     if (!member) return;
     const previous = document.activeElement as HTMLElement | null;

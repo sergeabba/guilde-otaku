@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { markNavigation, useBackClose } from "../hooks/useBackClose";
 import { useRouter } from "next/navigation";
 import { BookOpen, CalendarDays, CornerDownLeft, ExternalLink, Film, Heart, Music, Palette, Search, Tag, X } from "lucide-react";
 import songs from "../../data/anime-songs.json";
@@ -169,6 +170,8 @@ export default function CommandPalette() {
     restoreRef.current?.focus?.();
   }, []);
 
+  useBackClose(open, close);
+
   // Ouverture : Ctrl/Cmd+K ou évènement "guilde:search"
   useEffect(() => {
     const show = () => {
@@ -224,7 +227,7 @@ export default function CommandPalette() {
   const go = useCallback((it: Item) => {
     close();
     if (it.external) window.open(it.href, "_blank", "noopener,noreferrer");
-    else router.push(it.href);
+    else { markNavigation(); router.push(it.href); }
   }, [close, router]);
 
   if (!open) return null;

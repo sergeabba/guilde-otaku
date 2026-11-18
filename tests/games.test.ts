@@ -488,3 +488,15 @@ describe("La voix : extraits des seiyū", () => {
     expect(pickVoiceClip(list, "梶裕貴", "エレン・イェーガー")).toBeNull();
   });
 });
+import { fromDeezer } from "../lib/games/voice-clip";
+describe("La voix : seconde source Deezer", () => {
+  it("lit la réponse de Deezer et trouve la chanson dans le rôle", () => {
+    const list = fromDeezer([
+      { type: "track", title: "Song", preview: "https://cdnt-preview.dzcdn.net/a.mp3", artist: { name: "五条悟(CV:中村悠一)" } },
+      { type: "album", title: "Album", preview: "https://x/b.mp3", artist: { name: "中村悠一" } },
+      { type: "track", title: "Sans aperçu", preview: "", artist: { name: "中村悠一" } },
+    ]);
+    expect(list).toHaveLength(1);
+    expect(pickVoiceClip(list, "中村悠一", "五条悟")).toEqual({ url: "https://cdnt-preview.dzcdn.net/a.mp3", inRole: true });
+  });
+});

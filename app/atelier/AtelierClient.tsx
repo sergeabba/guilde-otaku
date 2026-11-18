@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useBackClose } from "../hooks/useBackClose";
 import { createPortal, flushSync } from "react-dom";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, Cpu, Download, ExternalLink, Heart, Play, Share2, Shuffle, X } from "lucide-react";
@@ -436,6 +437,7 @@ function Viewer({ work, ratio, neighbours, index, count, isFavorite, onToggleFav
     return () => { document.body.style.overflow = prevOverflow; previous?.focus?.({ preventScroll: true }); };
   }, []);
 
+  useBackClose(true, onClose);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();

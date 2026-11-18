@@ -770,3 +770,11 @@ body.modal-open .gk-top { display: none; }
 .gk-menu-group { padding-inline: var(--gk-gutter); }
 .gk-menu-group h2 { margin: 0 0 4px; }
 .gk-menu-group a { padding-left: 10px; }
+
+/* ── Confort Android ─────────────────────────────────────────────────────────
+   Pas d'agrandissement automatique du texte (Chrome Android), pas de « tirer pour
+   rafraîchir » ni de défilement de la page derrière une fenêtre ouverte, et appui
+   sans délai sur les boutons. */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+.qv-back, .sh-back, .cin-theater, .gk-cmd-backdrop, .am-dialog-back { overscroll-behavior: contain; }
+a, button, [role="button"], label, summary { touch-action: manipulation; }

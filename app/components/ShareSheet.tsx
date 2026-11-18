@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useBackClose } from "../hooks/useBackClose";
 import { createPortal } from "react-dom";
 import { Check, Copy, Download, MessageCircle, Share2, X } from "lucide-react";
 import type { Member } from "../../data/members";
@@ -36,6 +37,7 @@ export default function ShareSheet({ member, open, onClose }: { member: ShareMem
   const ref = useRef<HTMLDivElement>(null);
   const { notify, Toast } = useShare();
 
+  useBackClose(open, onClose);
   useEffect(() => {
     if (!open) return;
     const previous = document.activeElement as HTMLElement | null;

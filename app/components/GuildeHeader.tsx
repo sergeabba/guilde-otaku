@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useBackClose } from "../hooks/useBackClose";
 import { createPortal } from "react-dom";
 import { BookOpen, ChevronDown, Menu, Moon, ScrollText, Search, Sun, Swords, UsersRound, X } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
@@ -50,6 +51,8 @@ export default function GuildeHeader({
     setMenuOpen(false);
     burgerRef.current?.focus();
   }, []);
+
+  useBackClose(menuOpen, () => setMenuOpen(false));
 
   // Menu mobile : verrou du scroll, Échap, piège de focus
   useEffect(() => {

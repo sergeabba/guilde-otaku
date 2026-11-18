@@ -5,6 +5,7 @@
 // plateformes où regarder la série, données JustWatch via TMDB).
 import { optimizedSrc } from "../../lib/img";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useBackClose } from "../hooks/useBackClose";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, ExternalLink, Maximize, Play, X } from "lucide-react";
 import GuildeHeader from "../components/GuildeHeader";
@@ -160,6 +161,7 @@ function Theater({ item, onClose }: { item: CinemaItem; onClose: () => void }) {
     return () => { alive = false; };
   }, [item]);
 
+  useBackClose(true, close);
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -289,6 +291,7 @@ function GuildTheater({ video, playlist, onPick, onClose }: { video: GuildVideo;
     } catch { /* refusé : le bouton plein écran du lecteur Drive reste disponible */ }
   }, []);
   const step = useCallback((d: 1 | -1) => { if (playlist.length > 1) onPick(playlist[(i + d + playlist.length) % playlist.length]); }, [i, playlist, onPick]);
+  useBackClose(true, close);
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -394,6 +397,7 @@ function FreeTheater({ show, onClose }: { show: FreeShow; onClose: () => void })
   const screenRef = useRef<HTMLDivElement>(null);
   const close = useCallback(() => onClose(), [onClose]);
   const [canFull] = useState(() => typeof document !== "undefined" && !!document.fullscreenEnabled);
+  useBackClose(true, close);
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";

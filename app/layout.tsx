@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { cookies, headers } from "next/headers";
 // Polices auto-hébergées (public/fonts) : le build ne dépend plus de Google Fonts.
 import "./styles/fonts.css";
@@ -19,7 +19,21 @@ import SplashWrapper from "./components/SplashWrapper";
 import { ThemeProvider } from "./context/ThemeContext";
 import { MusicDockProvider } from "./components/MusicDock";
 
+// Android : barre du navigateur aux couleurs du site, clavier qui redimensionne la page
+// (les champs restent visibles).
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  interactiveWidget: "resizes-content",
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#0f0e13" },
+    { media: "(prefers-color-scheme: light)", color: "#f4efe4" },
+  ],
+};
+
 export const metadata: Metadata = {
+  icons: { icon: [{ url: "/icon-192.png", sizes: "192x192", type: "image/png" }], apple: [{ url: "/apple-icon-180.png", sizes: "180x180" }] },
+  appleWebApp: { capable: true, title: "Guilde", statusBarStyle: "black" },
   metadataBase: new URL('https://guilde-otaku.vercel.app'), 
   title: "Guilde Otaku",
   description: "Le trombinoscope légendaire de la Guilde Otaku — Membres, combats, bibliothèque et plus encore.",

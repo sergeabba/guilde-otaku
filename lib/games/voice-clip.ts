@@ -7,11 +7,11 @@ import { unstable_cache } from "next/cache";
 export interface ItunesTrack { artistName?: string; trackName?: string; previewUrl?: string; kind?: string }
 export interface VoiceClip { url: string; inRole: boolean }
 
-/** Sans espaces ni ponctuation japonaise : « 梶 裕貴 » et « 梶裕貴 » se valent. */
-const squash = (s: string) => s.normalize("NFKC").replace(/[\s・·.=＝()（）\[\]【】:：]/g, "").toLowerCase();
+/** Sans espaces ni ponctuation japonaise : « Kaji Yuuki » écrit avec ou sans espace se vaut. */
+const squash = (s: string) => s.normalize("NFKC").replace(/[\s\u30FB·.=\uFF1D()\uFF08\uFF09\[\]\u3010\u3011:\uFF1A]/g, "").toLowerCase();
 /** Plusieurs interprètes (duo, groupe) : on écarte, la voix ne serait pas isolée. */
-const isGroup = (artist: string) => /[、,&×＆/]|feat|with|\bx\b/i.test(artist) || (artist.match(/CV/gi)?.length ?? 0) > 1;
-const NOT_VOICE = /instrumental|off ?vocal|karaoke|カラオケ|オリジナル・カラオケ|inst\.|bgm/i;
+const isGroup = (artist: string) => /[\u3001,&×\uFF06/]|feat|with|\bx\b/i.test(artist) || (artist.match(/CV/gi)?.length ?? 0) > 1;
+const NOT_VOICE = /instrumental|off ?vocal|karaoke|\u30AB\u30E9\u30AA\u30B1|\u30AA\u30EA\u30B8\u30CA\u30EB\u30FB\u30AB\u30E9\u30AA\u30B1|inst\.|bgm/i;
 
 /**
  * Meilleur extrait parmi des résultats iTunes : 1) chanson dans le rôle du personnage,
@@ -22,7 +22,7 @@ export function pickVoiceClip(results: ItunesTrack[], voiceNative: string, charN
   if (va.length < 2) return null;
   const ch = charNative ? squash(charNative) : "";
   // Le personnage est souvent crédité par son seul prénom ou nom : un des deux suffit.
-  const chParts = charNative ? charNative.split(/[\s・·]+/).map(squash).filter((x) => x.length >= 2) : [];
+  const chParts = charNative ? charNative.split(/[\s\u30FB·]+/).map(squash).filter((x) => x.length >= 2) : [];
   let self: VoiceClip | null = null, other: VoiceClip | null = null;
   for (const r of results) {
     const a = r.artistName ?? "", url = r.previewUrl;
@@ -48,11 +48,41 @@ const tracksOf = (voiceNative: string, term = voiceNative) => unstable_cache(asy
     .slice(0, 80).map((r) => ({ artistName: r.artistName, trackName: r.trackName, previewUrl: r.previewUrl }));
 }, ["voice-tracks-v1", voiceNative, term], { revalidate: 30 * 86_400 })();
 
-/** Extrait de voix d'un personnage, ou null s'il n'y en a pas (ou si iTunes ne répond pas). */
+/**
+ * Seconde source : l'API publique de Deezer (sans clé, aperçus de 30 s). Elle a d'autres
+ * chansons de personnage et des pistes de drama CD. Réponse : { data: [{ title, preview, artist: { name } }] }.
+ */
+export interface DeezerTrack { title?: string; preview?: string; type?: string; artist?: { name?: string } }
+export const fromDeezer = (data: DeezerTrack[]): ItunesTrack[] =>
+  data.filter((t) => (!t.type || t.type === "track") && t.preview && t.artist?.name).map((t) => ({ artistName: t.artist!.name, trackName: t.title, previewUrl: t.preview }));
+
+const deezerOf = (voiceNative: string, term: string) => unstable_cache(async (): Promise<ItunesTrack[]> => {
+  const res = await fetch(`https://api.deezer.com/search?${new URLSearchParams({ q: term, limit: "100" })}`, { signal: AbortSignal.timeout(5_000) });
+  if (!res.ok) throw new Error(`Deezer ${res.status}`);
+  const body = (await res.json()) as { data?: DeezerTrack[]; error?: unknown };
+  if (body.error || !Array.isArray(body.data)) throw new Error("Deezer indisponible");
+  const va = squash(voiceNative);
+  return fromDeezer(body.data).filter((r) => squash(r.artistName!).includes(va) && !isGroup(r.artistName!)).slice(0, 80);
+}, ["voice-deezer-v1", voiceNative, term], { revalidate: 30 * 86_400 })();
+
+/** Extrait de voix d'un personnage, ou null s'il n'y en a pas (ou si les deux sources se taisent). */
 export async function voiceClip(voiceNative: string, charNative: string | null): Promise<VoiceClip | null> {
   let best: VoiceClip | null = null;
   try { best = pickVoiceClip(await tracksOf(voiceNative), voiceNative, charNative); } catch { /* iTunes indisponible */ }
   if (best?.inRole || !charNative) return best;
-  // Pas de chanson dans le rôle parmi ses titres les plus connus : on cherche le personnage lui-même.
-  try { return pickVoiceClip(await tracksOf(voiceNative, `${charNative} ${voiceNative}`), voiceNative, charNative) ?? best; } catch { return best; }
+  // Pas de chanson dans le rôle parmi ses titres les plus connus : on cherche le personnage
+  // lui-même, sur iTunes puis sur Deezer ; à défaut, Deezer peut au moins donner sa voix.
+  const tries: (() => Promise<ItunesTrack[]>)[] = [
+    () => tracksOf(voiceNative, `${charNative} ${voiceNative}`),
+    () => deezerOf(voiceNative, `${charNative} ${voiceNative}`),
+    ...(best ? [] : [() => deezerOf(voiceNative, voiceNative)]),
+  ];
+  for (const get of tries) {
+    try {
+      const clip = pickVoiceClip(await get(), voiceNative, charNative);
+      if (clip?.inRole) return clip;
+      best ??= clip;
+    } catch { /* source indisponible : on passe à la suivante */ }
+  }
+  return best;
 }

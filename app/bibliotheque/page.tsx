@@ -2,6 +2,7 @@
 
 import { optimizedSrc } from "../../lib/img";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useBackClose } from "../hooks/useBackClose";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { WeeklyRatingsLoader } from "../components/WeeklyRatings";
@@ -639,6 +640,7 @@ function Reader({ item, list, all, antiSpoiler, isFavorite, onToggleFavorite, on
     return [...same, ...others].slice(0, 4);
   }, [all, item]);
 
+  useBackClose(true, onClose);
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
     const prevOverflow = document.body.style.overflow;

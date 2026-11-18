@@ -5,6 +5,7 @@ import { saveImage, saveMessage } from "../../../lib/save-image";
 import { fileSlug } from "../../../lib/share";
 import { optimizedSrc } from "../../../lib/img";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useBackClose } from "../../hooks/useBackClose";
 import { createPortal, flushSync } from "react-dom";
 import { useRouter } from "next/navigation";
 import { viewTransition, waitFor } from "../../../lib/view-transition";
@@ -434,6 +435,7 @@ function WorkSheet({ work, chronique, onClose }: { work: FavoriteWork; chronique
   const trailer = useWorkTrailer(work);
   const ref = useRef<HTMLDivElement>(null);
   const [coverFailed, setCoverFailed] = useState(false);
+  useBackClose(true, onClose);
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
     ref.current?.querySelector<HTMLElement>("button")?.focus();

@@ -25,7 +25,7 @@ media{id title{romaji english native} bannerImage popularity isAdult format}}}}`
 
 interface Raw { episode: number; media: { id: number; title: { romaji?: string; english?: string; native?: string }; bannerImage?: string | null; popularity?: number; isAdult?: boolean; format?: string } }
 
-const compact = (s?: string) => (s ?? "").replace(/[\s　・:：!！?？~〜「」『』()（）]/g, "");
+const compact = (s?: string) => (s ?? "").replace(/[\s\u3000\u30FB:\uFF1A!\uFF01?\uFF1F~\u301C\u300C\u300D\u300E\u300F()\uFF08\uFF09]/g, "");
 
 /** « Saison 3 » d'après le titre AniList (« Season 3 », « 3rd Season », « Part 2 »…). */
 export function seasonLabel(...titles: (string | undefined)[]): string | null {

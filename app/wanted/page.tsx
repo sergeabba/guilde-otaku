@@ -4,6 +4,7 @@
 // membre est calculée à partir de sa fiche (lib/wanted.ts) et le calcul est expliqué
 // en tête de page ; chaque affiche détaille ses propres lignes.
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useBackClose } from "../hooks/useBackClose";
 import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, Download, Maximize2, Pause, Play, Search, Share2, Sword, User, Volume2, VolumeX, X } from "lucide-react";
 import GuildeHeader from "../components/GuildeHeader";
@@ -166,6 +167,7 @@ export default function WantedPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isAutoPlay, setIsAutoPlay] = useState(false);
   const [lightbox, setLightbox] = useState(false);
+  useBackClose(lightbox, () => setLightbox(false));
   const [downloading, setDownloading] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const stageRef = useRef<HTMLDivElement>(null);

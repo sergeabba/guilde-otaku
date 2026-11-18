@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useBackClose } from "../hooks/useBackClose";
 import { createPortal } from "react-dom";
 import { Calendar, ChevronDown, Clock, Eye, Play, Search, Share2, Star, Trophy, X } from "lucide-react";
 import GuildeHeader from "../components/GuildeHeader";
@@ -86,6 +87,7 @@ function FilmCard({ film, onClick }: { film: FilmEntry; onClick: () => void }) {
 /** Calque modal générique : Échap, clic extérieur, verrou du défilement, focus. */
 function Overlay({ label, onClose, children }: { label: string; onClose: () => void; children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
+  useBackClose(true, onClose);
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
     const prevOverflow = document.body.style.overflow;
