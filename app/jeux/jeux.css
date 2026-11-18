@@ -417,3 +417,7 @@
 .jx-start { min-width: 200px; justify-content: center; }
 .jx-dle-intro .jx-level-note { margin-top: 14px; }
 .jx-board-levels { margin: 4px 0 16px; }
+
+/* La voix : bouton d'écoute de l'extrait */
+.jx-voice { margin-top: 10px; display: inline-grid; grid-template-columns: auto 1fr; column-gap: 8px; align-items: center; text-align: left; }
+.jx-voice small { grid-column: 2; font: 600 .74rem var(--gk-font-ui); text-transform: none; letter-spacing: 0; color: var(--gk-dim); }

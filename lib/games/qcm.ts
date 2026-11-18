@@ -11,7 +11,7 @@ export type QcmKind = (typeof QCM_KINDS)[number];
 export const isQcmKind = (k: unknown): k is QcmKind => QCM_KINDS.includes(k as QcmKind);
 
 export interface QcmChoice { label: string; sub?: string | null; image?: string | null }
-export interface QcmRound { prompt: string; sub?: string | null; image?: string | null; tags?: string[]; choices: QcmChoice[] }
+export interface QcmRound { prompt: string; sub?: string | null; image?: string | null; tags?: string[]; choices: QcmChoice[]; audio?: string; audioNote?: string }
 export interface QcmKey { game: "qcm"; kind: QcmKind; nonce: string; exp: number; level: Level; answers: number[]; accepted: string[][]; reveal: { label: string; sub?: string | null; image?: string | null }[] }
 export interface QcmAnswer { choice: number | null; text?: string; ms: number }
 
@@ -95,18 +95,22 @@ export function buildStudio(animes: CatAnime[], level: Level, now = Date.now(), 
 }
 
 /** La voix : quel personnage ce doubleur japonais interprète-t-il ? */
-export function buildVoix(chars: CatChar[], level: Level, now = Date.now(), rnd = Math.random) {
+export function buildVoix(chars: CatChar[], level: Level, now = Date.now(), rnd = Math.random, clips?: Map<number, { url: string; inRole: boolean }>) {
   const pool = chars.filter((c) => c.voice);
   const rounds: QcmRound[] = [], answers: number[] = [], reveal: QcmKey["reveal"] = [];
   const usedVoices = new Set<string>();
-  for (const c of shuffle(pool, rnd)) {
+  // Les persos dont on a un extrait de voix passent en premier.
+  const order = shuffle(pool, rnd);
+  const ranked = clips ? [...order.filter((c) => clips.has(c.id)), ...order.filter((c) => !clips.has(c.id))] : order;
+  for (const c of ranked) {
     if (rounds.length >= 8) break;
     if (usedVoices.has(c.voice!)) continue;
     usedVoices.add(c.voice!);
     // Les autres propositions ne doivent pas être doublées par la même personne.
     const others = pickOthers(pool.filter((x) => x.voice !== c.voice), nChoices(level) - 1, (x) => x.name, new Set([c.name]), rnd);
     const choices = shuffle([c, ...others], rnd).map((x) => ({ label: x.name, sub: x.anime, image: x.image }));
-    rounds.push({ prompt: `Quel personnage est doublé par ${c.voice} ?`, sub: "Doublage japonais", choices });
+    const clip = clips?.get(c.id);
+    rounds.push({ prompt: `Quel personnage est doublé par ${c.voice} ?`, sub: "Doublage japonais", choices, ...(clip ? { audio: clip.url, audioNote: clip.inRole ? "Sa voix dans le rôle (chanson du personnage)" : "Sa voix (chanson du doubleur)" } : {}) });
     answers.push(choices.findIndex((x) => x.label === c.name));
     reveal.push({ label: c.name, sub: `${c.anime} · ${c.voice}`, image: c.image });
   }

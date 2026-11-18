@@ -473,3 +473,18 @@ describe("classement par niveau", () => {
     expect(boardOf("duel", rows, "expert").players).toHaveLength(3);
   });
 });
+
+import { pickVoiceClip } from "../lib/games/voice-clip";
+describe("La voix : extraits des seiyū", () => {
+  const T = (artistName: string, trackName = "Song") => ({ artistName, trackName, previewUrl: `https://a/${encodeURIComponent(artistName)}.m4a` });
+  it("préfère la chanson du personnage, puis celle du doubleur, puis un autre rôle", () => {
+    const list = [T("グレイ(CV:中村悠一)"), T("中村悠一"), T("五条悟(CV:中村悠一)")];
+    expect(pickVoiceClip(list, "中村悠一", "五条 悟")).toMatchObject({ inRole: true, url: list[2].previewUrl });
+    expect(pickVoiceClip(list, "中村悠一", "真田龍")).toMatchObject({ inRole: false, url: list[1].previewUrl });
+    expect(pickVoiceClip([list[0]], "中村悠一", null)).toMatchObject({ inRole: false });
+  });
+  it("écarte duos, groupes, versions instrumentales et autres artistes", () => {
+    const list = [T("エレン・イェーガー(CV:梶裕貴)、ミカサ(CV:石川由依)"), T("杉田智和 & 梶裕貴"), T("梶裕貴", "Blue Velvet (Instrumental)"), T("花澤香菜")];
+    expect(pickVoiceClip(list, "梶裕貴", "エレン・イェーガー")).toBeNull();
+  });
+});

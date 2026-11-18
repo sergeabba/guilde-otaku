@@ -3,7 +3,7 @@
 // Jeux experts à questions : Devine par les thèmes, Qui l'a créé ?, Le studio, La voix.
 // Un seul composant ; le serveur fournit les questions et garde le corrigé.
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Building2, Clock, Mic, PenTool, Play, RotateCcw, Tags, Trophy } from "lucide-react";
+import { Building2, Clock, Mic, PenTool, Play, RotateCcw, Tags, Trophy, Volume2 } from "lucide-react";
 import { optimizedSrc } from "../../lib/img";
 import type { QcmKind, QcmRound } from "../../lib/games/qcm";
 import { TypedAnswer } from "./Dle";
@@ -30,8 +30,8 @@ export const QCM_INFO: Record<QcmKind, { title: string; intro: string; levels: R
   },
   voix: {
     title: "La voix", color: "#34d399", Icon: Mic, unit: "voix",
-    intro: "8 doubleurs japonais (seiyū) : quel personnage interprètent-ils ? 100 points par bonne réponse, jusqu'à 50 de bonus si tu es rapide.",
-    levels: { facile: "des persos très connus, 4 propositions, 30 secondes.", normal: "des persos connus, 6 propositions.", expert: "des persos moins connus, 6 propositions." },
+    intro: "8 doubleurs japonais (seiyū) : quel personnage interprètent-ils ? Écoute un extrait de leur voix (souvent une chanson chantée dans le rôle), puis choisis. 100 points par bonne réponse, jusqu'à 50 de bonus si tu es rapide.",
+    levels: { facile: "des persos très connus, 4 propositions, 40 secondes.", normal: "des persos connus, 6 propositions, 30 secondes.", expert: "des persos moins connus, 6 propositions, 30 secondes." },
   },
 };
 
@@ -39,7 +39,20 @@ interface Result { score: number; max: number; good: number; saved: boolean; cor
 
 export default function Qcm({ kind, level, player, onRanking }: { kind: QcmKind; level: Level; player: PlayerApi; onRanking: (g: Game) => void }) {
   const info = QCM_INFO[kind];
-  const roundMs = kind === "themes" ? THEME_STEP_MS * 5 + 6_000 : MS[level];
+  // La voix : 10 secondes de plus pour écouter l'extrait (le bonus de rapidité reste calculé pareil).
+  const roundMs = kind === "themes" ? THEME_STEP_MS * 5 + 6_000 : kind === "voix" ? MS[level] + 10_000 : MS[level];
+  // Un seul lecteur pour toute la partie (iPhone : débloqué par l'appui sur « Lancer la partie »).
+  const audio = useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const playVoice = useCallback((url?: string) => {
+    const a = audio.current;
+    if (!a) return;
+    a.pause(); // « onPause » remet le bouton à « Écouter ».
+    if (!url) return;
+    if (a.src !== url) a.src = url;
+    a.currentTime = 0;
+    a.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+  }, []);
   const [phase, setPhase] = useState<"intro" | "loading" | "play" | "reveal" | "sending" | "done">("intro");
   const [token, setToken] = useState("");
   const [rounds, setRounds] = useState<QcmRound[]>([]);
@@ -55,6 +68,8 @@ export default function Qcm({ kind, level, player, onRanking }: { kind: QcmKind;
 
   async function start() {
     setPhase("loading"); setError(null); setResult(null);
+    // Débloque le son sur iPhone pendant l'appui (lecture silencieuse immédiate).
+    if (kind === "voix" && audio.current) { audio.current.muted = true; audio.current.play().catch(() => {}).finally(() => { if (audio.current) { audio.current.pause(); audio.current.muted = false; } }); }
     try {
       const d = await api<{ token: string; rounds: QcmRound[]; titles?: string[] | null }>(`/api/games/qcm?kind=${kind}&level=${level}`);
       d.rounds.forEach((x) => { if (x.image) { const im = new Image(); im.src = optimizedSrc(x.image, 384)!; } });
@@ -90,10 +105,18 @@ export default function Qcm({ kind, level, player, onRanking }: { kind: QcmKind;
   }, [phase, answer, roundMs]);
 
   const round = rounds[r];
+  // Nouvelle question : on lance son extrait de voix ; fin de partie : on coupe.
+  useEffect(() => {
+    if (kind !== "voix") return;
+    if (phase === "play") playVoice(rounds[r]?.audio);
+    else if (phase !== "reveal") playVoice(undefined);
+  }, [kind, phase, r, rounds, playVoice]);
+  useEffect(() => () => audio.current?.pause(), []);
   const shown = kind === "themes" ? Math.min(5, 1 + Math.floor(ms / THEME_STEP_MS)) : 0;
   const Icon = info.Icon;
   return (
     <section className="jx-panel jx-qcm" aria-labelledby={`jx-${kind}-title`} style={{ "--gk-accent": info.color } as React.CSSProperties}>
+      {kind === "voix" && <audio ref={audio} preload="none" onEnded={() => setPlaying(false)} onPause={() => setPlaying(false)} />}
       {(phase === "intro" || phase === "loading") && (
         <div className="jx-intro">
           <span className="jx-big-icon" aria-hidden="true"><Icon size={38} /></span>
@@ -118,6 +141,12 @@ export default function Qcm({ kind, level, player, onRanking }: { kind: QcmKind;
             <div>
               <p className="jx-qcm-prompt">{round.prompt}</p>
               {round.sub && <p className="jx-note">{round.sub}</p>}
+              {round.audio && (
+                <button type="button" className="gk-btn gk-btn--sm gk-btn--ghost jx-voice" onClick={() => playVoice(round.audio)}>
+                  {playing ? <RotateCcw size={15} aria-hidden="true" /> : <Volume2 size={15} aria-hidden="true" />} {playing ? "Réécouter" : "Écouter sa voix"}
+                  {round.audioNote && <small>{round.audioNote}</small>}
+                </button>
+              )}
               {round.tags && (
                 <ul className="jx-qcm-tags" aria-label="Thèmes de l'anime">
                   {round.tags.map((t, i) => <li key={t} className={i < shown || phase === "reveal" ? "is-on" : ""}>{i < shown || phase === "reveal" ? t : "?"}</li>)}

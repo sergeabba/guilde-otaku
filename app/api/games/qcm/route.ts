@@ -4,9 +4,23 @@ import { parseLevel } from "../../../../lib/games/levels";
 import { ipOf, limited, parsePlayer } from "../../../../lib/games/player";
 import { ANIME_RANGE, buildCreateur, buildStudio, buildThemes, buildVoix, CHAR_RANGE, isQcmKind, openQcm, scoreQcm, type QcmAnswer } from "../../../../lib/games/qcm";
 import { recordPlay } from "../../../../lib/games/store";
+import { shuffle } from "../../../../lib/games/token";
+import { voiceClip } from "../../../../lib/games/voice-clip";
 
 const NO_STORE = { "Cache-Control": "no-store" };
 const fail = (error: string, status = 400) => NextResponse.json({ error }, { status, headers: NO_STORE });
+
+/** Extraits de voix pour une douzaine de persos tirés au hasard (doubleurs différents). */
+async function clipsFor(chars: Awaited<ReturnType<typeof catalogChars>>) {
+  const seen = new Set<string>(), pick: typeof chars = [];
+  for (const c of shuffle(chars.filter((x) => x.voice && x.voiceNative))) {
+    if (seen.has(c.voiceNative!)) continue;
+    seen.add(c.voiceNative!); pick.push(c);
+    if (pick.length >= 12) break;
+  }
+  const found = await Promise.all(pick.map(async (c) => [c.id, await voiceClip(c.voiceNative!, c.native ?? null)] as const));
+  return new Map(found.filter((x): x is readonly [number, { url: string; inRole: boolean }] => !!x[1]));
+}
 
 // Jeux experts : ?kind=themes|createur|studio|voix&level=facile|normal|expert.
 export async function GET(req: NextRequest) {
@@ -18,7 +32,7 @@ export async function GET(req: NextRequest) {
     if (kind === "voix") {
       const [lo, hi] = CHAR_RANGE[level];
       const chars = (await catalogChars(hi)).filter((c) => c.rank >= lo);
-      return NextResponse.json(buildVoix(chars, level), { headers: NO_STORE });
+      return NextResponse.json(buildVoix(chars, level, Date.now(), Math.random, await clipsFor(chars)), { headers: NO_STORE });
     }
     const [lo, hi] = ANIME_RANGE[level];
     const animes = (await catalogAnimes(hi)).filter((a) => a.rank >= lo);
