@@ -242,11 +242,11 @@ describe("Devine l'anime / le perso", () => {
   });
   it("dévoile un indice de plus par essai raté, sans jamais donner le nom", () => {
     const c: DleChar = { id: 1, name: "Satoru Gojou", alt: [], image: "https://img/x.png", gender: "Homme", age: "28 ans", role: "Personnage principal", anime: "Jujutsu Kaisen", animeId: 5, year: 2020, genres: ["Action"] };
-    const img = (l: 1 | 2) => `/img?l=${l}`;
+    const img = (l: 1 | 2 | 3) => `/img?l=${l}`;
     const h0 = charHints(c, 0, img), h3 = charHints(c, 3, img), h9 = charHints(c, 9, img);
-    expect(h0.map((h) => h.label)).toEqual(["Rôle", "Genre", "Âge"]);
+    expect(h0.map((h) => h.label)).toEqual(["Rôle", "Genre", "Âge", "Son anime : genres", "Son anime : année"]);
     expect(h3.some((h) => h.value === "Jujutsu Kaisen")).toBe(true);
-    expect(h3.some((h) => h.value === "/img?l=1")).toBe(true);
+    expect(h3.some((h) => h.value === "/img?l=2")).toBe(true);
     expect(JSON.stringify(h9)).not.toContain("Gojou");
     expect(JSON.stringify(h9)).not.toContain("x.png");
     expect(h9.at(-1)).toMatchObject({ label: "Son nom", value: "S····· G···· (6, 5 lettres)" });
@@ -337,14 +337,13 @@ describe("niveaux de difficulté", () => {
     const by = new Map(P.map((a) => [a.id, a]));
     for (let i = 0; i + 1 < key.seq.length; i++) expect(Math.abs(by.get(key.seq[i])!.score - by.get(key.seq[i + 1])!.score)).toBeGreaterThanOrEqual(8);
   });
-  it("devine le perso : Facile donne l'anime tout de suite, Expert le doubleur avant, l'anime en dernier", () => {
+  it("devine le perso : Facile donne l'anime tout de suite, Expert le doubleur avant l'anime", () => {
     const c = { id: 1, name: "Satoru Gojou", alt: [], image: "x", gender: "Homme", age: null, role: "Personnage principal", anime: "Jujutsu Kaisen", animeId: 5, year: 2020, genres: ["Action"], voice: "Yuuichi Nakamura" };
     expect(hints(c, 0, () => "img", "facile").some((h) => h.value === "Jujutsu Kaisen")).toBe(true);
     const ex = hints(c, 3, () => "img", "expert");
     expect(ex.some((h) => h.value === "Yuuichi Nakamura")).toBe(true);
     expect(ex.some((h) => h.value === "Jujutsu Kaisen")).toBe(false);
-    expect(hints(c, 4, () => "img", "expert").some((h) => h.value === "Jujutsu Kaisen")).toBe(false);
-    expect(hints(c, 5, () => "img", "expert").some((h) => h.value === "Jujutsu Kaisen")).toBe(true);
+    expect(hints(c, 4, () => "img", "expert").some((h) => h.value === "Jujutsu Kaisen")).toBe(true);
   });
 });
 
@@ -391,7 +390,7 @@ describe("questions : ponctuation", () => {
   });
 });
 
-import { animeHints, nameShape, titleShape } from "../lib/games/dle-logic";
+import { animeHints, compareChar, nameShape, titleShape } from "../lib/games/dle-logic";
 import { distinctDecoys, songsOfTags, songTag } from "../lib/games/quiz";
 import type { CatalogSong } from "../lib/anime-song";
 describe("blind test : pas de répétition ni de déduction", () => {
@@ -442,13 +441,26 @@ describe("indices sans rang", () => {
     const a = { id: 1, title: "Steins;Gate", alt: null, cover: "", year: 2011, format: "Série", episodes: 24, score: 90, genres: [], studio: null, source: null, tags: ["Voyage dans le temps", "Complot", "Scientifique", "Otaku"] };
     expect(animeHints(a, 0, "facile")).toEqual([]);
     expect(animeHints(a, 1, "facile")[0].label).toBe("Ses thèmes");
-    expect(animeHints(a, 1, "normal")).toEqual([]);
-    expect(animeHints(a, 4, "normal").map((h) => h.label)).toEqual(["Ses thèmes", "Son titre"]);
-    expect(animeHints(a, 3, "expert")[0].value.split(", ")).toHaveLength(2);
+    expect(animeHints(a, 1, "expert")).toEqual([]);
+    expect(animeHints(a, 1, "normal").map((h) => h.label)).toEqual(["Ses thèmes"]);
+    expect(animeHints(a, 3, "normal").map((h) => h.label)).toEqual(["Ses thèmes", "Son titre"]);
+    expect(animeHints(a, 2, "expert")[0].value.split(", ")).toHaveLength(3);
   });
 });
 
 import { boardOf, type Play as StorePlay } from "../lib/games/store";
+describe("Devine le perso : comparaison case par case", () => {
+  it("compare anime, genre, rôle, studio, année et genres", () => {
+    const base = { alt: [], image: "i", age: null, voice: null };
+    const s = { ...base, id: 1, name: "Itadori Yuuji", gender: "Homme", role: "Personnage principal", anime: "Jujutsu Kaisen", animeId: 5, year: 2020, genres: ["Action", "Surnaturel"], studio: "MAPPA" };
+    const g = { ...base, id: 2, name: "Eren Yeager", gender: "Homme", role: "Personnage principal", anime: "L'Attaque des Titans", animeId: 9, year: 2013, genres: ["Action", "Drame"], studio: "Wit Studio" };
+    const v = compareChar(g, s);
+    expect([v.ok, v.sameAnime, v.sameGender, v.sameRole, v.sameStudio]).toEqual([false, false, true, true, false]);
+    expect(v.year).toEqual({ value: 2013, dir: "up", near: false });
+    expect(v.genres.shared).toEqual(["Action"]);
+    expect(compareChar(s, s).ok).toBe(true);
+  });
+});
 describe("classement par niveau", () => {
   const P = (id: number, member: number, score: number, level?: string): StorePlay => ({ id, game: "quiz-generique", device: `d${member}`, member_id: member, player_name: null, score, max_score: 1500, detail: level ? { level } : {}, created_at: `2026-11-1${id}T10:00:00Z` });
   const rows = [P(1, 1, 900, "expert"), P(2, 2, 1200, "facile"), P(3, 3, 700), P(4, 1, 400, "normal")];

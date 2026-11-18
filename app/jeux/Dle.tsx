@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDown, ArrowUp, Check, Clock, Lightbulb, Play, RotateCcw, ScanSearch, SendHorizontal, Share2, Smile, Trophy, UserSearch, X } from "lucide-react";
 import { optimizedSrc } from "../../lib/img";
-import type { AnimeFeedback, CharHint, Dir } from "../../lib/games/dle-logic";
+import type { AnimeFeedback, CharHint, CharVerdict, Dir } from "../../lib/games/dle-logic";
 import { useShare } from "../hooks/useShare";
 import { api, LEVEL_LABEL, multLabel, pushLocal, read, write, type Game, type Level, type PlayerApi } from "./shared";
 
@@ -14,15 +14,18 @@ const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,
 const frDate = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
 
 /** Champ de recherche avec suggestions (tolérant aux accents et à la ponctuation). */
-function Picker({ items, used, onPick, placeholder, disabled }: { items: { id: number; label: string; sub?: string; alt?: string[] }[]; used: Set<number>; onPick: (id: number) => void; placeholder: string; disabled?: boolean }) {
+function Picker({ items, used, onPick, placeholder, disabled, also }: { items: { id: number; label: string; sub?: string; alt?: string[] }[]; used: Set<number>; onPick: (id: number) => void; placeholder: string; disabled?: boolean; also?: (it: { sub?: string }) => string | undefined }) {
   const [q, setQ] = useState("");
   const list = useMemo(() => {
     const n = norm(q);
     if (n.length < 2) return [];
-    return items.filter((it) => !used.has(it.id) && [it.label, ...(it.alt ?? [])].some((t) => norm(t).includes(n)))
-      .sort((a, b) => Number(!norm(a.label).startsWith(n)) - Number(!norm(b.label).startsWith(n)))
-      .slice(0, 7);
-  }, [q, items, used]);
+    // `also` : recherche aussi par l'anime du perso (taper « Naruto » liste ses personnages).
+    const byName = (it: (typeof items)[number]) => [it.label, ...(it.alt ?? [])].some((t) => norm(t).includes(n));
+    const byAlso = (it: (typeof items)[number]) => !!also && norm(also(it) ?? "").includes(n);
+    return items.filter((it) => !used.has(it.id) && (byName(it) || byAlso(it)))
+      .sort((a, b) => Number(!byName(a)) - Number(!byName(b)) || Number(!norm(a.label).startsWith(n)) - Number(!norm(b.label).startsWith(n)))
+      .slice(0, also ? 12 : 7);
+  }, [q, items, used, also]);
   const pick = (id: number) => { setQ(""); onPick(id); };
   return (
     <div className="jx-picker">
@@ -219,7 +222,7 @@ export function DevineAnime({ player, onRanking, level }: { player: PlayerApi; o
 }
 
 /* ═══ DEVINE LE PERSO ════════════════════════════════════════════════════ */
-interface CharVerdict { id: number; name: string; anime: string; ok: boolean; sameAnime: boolean; sameGender: boolean }
+const animeOf = (it: { sub?: string }) => it.sub;
 interface CharAnswer { name: string; anime: string; image: string }
 interface CharState { date: string; tries: number; names: { id: number; name: string; alt: string[]; anime: string }[]; hints: CharHint[]; played: { ok: boolean; score: number; feedback: CharVerdict[]; answer: CharAnswer } | null }
 
@@ -268,11 +271,12 @@ export function DevinePerso({ player, onRanking, level }: { player: PlayerApi; o
   if (!started && !end && !feedback.length) return (
     <section className="jx-panel jx-dle" aria-label="Devine le perso" style={{ "--gk-accent": "#fb923c" } as React.CSSProperties}>
       <DleIntro title="Devine le perso" Icon={UserSearch} date={data.date} onStart={() => setStarted(true)}
-        note={`Niveau ${LEVEL_LABEL[level]} (${multLabel(level)}) : ${level === "facile" ? "un perso très connu, le titre de son anime est donné d'entrée." : level === "expert" ? "un perso moins connu, le titre de son anime n'arrive qu'au dernier indice." : "un perso connu."} Un perso mystère par jour et par niveau, le même pour tout le monde.`}
+        note={`Niveau ${LEVEL_LABEL[level]} (${multLabel(level)}) : ${level === "facile" ? "un perso très connu, le titre de son anime est donné d'entrée." : level === "expert" ? "un perso moins connu, le titre de son anime n'arrive qu'au 4e raté." : "un perso connu."} Un perso mystère par jour et par niveau, le même pour tout le monde.`}
         steps={[
-          <>Tu pars de quelques infos : son rôle, son genre, parfois son âge.</>,
-          <>Tape le nom d&apos;<b>un personnage</b> et choisis-le dans la liste. Chaque essai dit s&apos;il vient du même anime et s&apos;il a le même genre.</>,
-          <>Chaque essai raté dévoile un indice : genres, studio et thèmes de son anime, portrait flouté, doubleur, puis les initiales de son nom.</>,
+          <>Tu pars de quelques infos : son rôle, son genre, son âge{level === "expert" ? "" : ", les genres et l'année de son anime"}.</>,
+          <>Tape le nom d&apos;<b>un personnage</b>, ou le <b>titre d&apos;un anime</b> pour voir ses personnages, puis choisis-en un.</>,
+          <>Chaque essai se compare au perso mystère : même anime, genre, rôle, studio, année de l&apos;anime (flèche plus récent ou plus ancien), genres en commun.</>,
+          <>Chaque raté dévoile un indice : portrait de moins en moins flou, studio, thèmes, titre de l&apos;anime, doubleur, puis les initiales de son nom.</>,
           <>Trouve-le en {data.tries} essais au plus : moins tu en utilises, plus tu marques.</>,
         ]} />
       {error && <p className="jx-error" role="alert">{error}</p>}
@@ -292,7 +296,7 @@ export function DevinePerso({ player, onRanking, level }: { player: PlayerApi; o
         </div>
         <p className="jx-dle-left" aria-live="polite"><b>{end ? feedback.length : left}</b><small>{end ? "essais joués" : `essai${left > 1 ? "s" : ""} restant${left > 1 ? "s" : ""}`}</small></p>
       </div>
-      {!end && <p className="jx-dle-rules">{feedback.length ? "Chaque essai raté dévoile un indice de plus." : "Tape le nom d'un personnage pour faire ton premier essai : un raté te donne un nouvel indice."}</p>}
+      {!end && <p className="jx-dle-rules">{feedback.length ? "Vert : identique. Orange : proche. Flèche : l'anime du perso mystère est plus récent ou plus ancien. Chaque raté dévoile un indice." : "Tape le nom d'un perso, ou le titre d'un anime pour voir ses personnages. Chaque essai se compare au perso mystère, et chaque raté dévoile un indice."}</p>}
 
       <div className="jx-perso">
         <div className="jx-perso-pic">
@@ -310,7 +314,7 @@ export function DevinePerso({ player, onRanking, level }: { player: PlayerApi; o
         </dl>
       </div>
 
-      {!end && <Picker items={data.names.map((n) => ({ id: n.id, label: n.name, sub: n.anime, alt: n.alt }))} used={new Set(ids)} onPick={(id) => void send([...ids, id])} placeholder="Tape le nom d'un personnage…" disabled={busy} />}
+      {!end && <Picker items={data.names.map((n) => ({ id: n.id, label: n.name, sub: n.anime, alt: n.alt }))} used={new Set(ids)} onPick={(id) => void send([...ids, id])} placeholder="Nom d'un perso, ou titre d'un anime…" disabled={busy} also={animeOf} />}
       {error && <p className="jx-error" role="alert">{error}</p>}
 
       {end && (
@@ -326,16 +330,22 @@ export function DevinePerso({ player, onRanking, level }: { player: PlayerApi; o
         </div>
       )}
 
-      <ol className="jx-perso-guesses">
+      <ol className="jx-dle-rows" reversed>
         {[...feedback].reverse().map((f) => (
           <li key={f.id} className={f.ok ? "is-win" : ""}>
-            <strong>{f.name}</strong><small>{f.anime}</small>
-            <span className="jx-perso-tags">
-              {f.ok ? <i className="is-ok">C&apos;est lui !</i> : <>
-                <i className={f.sameAnime ? "is-ok" : ""}>{f.sameAnime ? "Même anime" : "Autre anime"}</i>
-                <i className={f.sameGender ? "is-ok" : ""}>{f.sameGender ? "Même genre" : "Autre genre"}</i>
-              </>}
-            </span>
+            <div className="jx-dle-title">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              {f.image && <img src={optimizedSrc(f.image, 96)} alt="" width={36} height={50} loading="lazy" />}
+              <strong>{f.name}</strong>
+            </div>
+            <div className="jx-dle-cells">
+              <span className={`is-wide ${f.sameAnime ? "is-ok" : ""}`}><small>Anime</small><b>{f.anime}</b></span>
+              <span className={f.sameGender ? "is-ok" : ""}><small>Genre</small><b>{f.gender ?? "?"}</b></span>
+              <span className={f.sameRole ? "is-ok" : ""}><small>Rôle</small><b>{f.role.replace("Personnage ", "")}</b></span>
+              <span className={f.year ? (f.year.dir === "eq" ? "is-ok" : f.year.near ? "is-near" : "") : ""}><small>Année de l&apos;anime</small><b>{f.year ? <>{f.year.value} {arrow(f.year.dir, "récent")}</> : "?"}</b></span>
+              <span className={f.sameStudio ? "is-ok" : ""}><small>Studio</small><b>{f.studio ?? "?"}</b></span>
+              <span className={`is-wide ${f.sameAnime ? "is-ok" : f.genres.shared.length ? "is-near" : ""}`}><small>Genres de l&apos;anime</small><b>{f.genres.value.map((g) => <i key={g} className={f.genres.shared.includes(g) ? "is-shared" : ""}>{g}</i>)}</b></span>
+            </div>
           </li>
         ))}
       </ol>

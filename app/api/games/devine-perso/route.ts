@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dailyChar, getDleChars } from "../../../../lib/games/dle";
-import { charHints, dlePoints, DLE_TRIES, type DleChar } from "../../../../lib/games/dle-logic";
+import { charHints, compareChar, dlePoints, DLE_TRIES, type DleChar } from "../../../../lib/games/dle-logic";
 import { parisDay } from "../../../../lib/games/arcade";
 import { parseLevel, withMult, type Level } from "../../../../lib/games/levels";
 import { DEVICE, ipOf, limited, parsePlayer } from "../../../../lib/games/player";
@@ -8,9 +8,9 @@ import { recordPlay, todayPlay } from "../../../../lib/games/store";
 
 const NO_STORE = { "Cache-Control": "no-store" };
 const fail = (error: string, status = 400) => NextResponse.json({ error }, { status, headers: NO_STORE });
-const imageOf = (date: string, lv: Level) => (level: 1 | 2) => `/api/games/devine-perso/image?d=${date}&l=${level}${lv === "normal" ? "" : `&v=${lv}`}`;
+const imageOf = (date: string, lv: Level) => (level: 1 | 2 | 3) => `/api/games/devine-perso/image?d=${date}&l=${level}&px=2${lv === "normal" ? "" : `&v=${lv}`}`;
 const nonceOf = (level: Level, date: string, device: string) => (level === "normal" ? `devine-perso:${date}:${device}` : `devine-perso:${level}:${date}:${device}`);
-const verdict = (g: DleChar, s: DleChar) => ({ id: g.id, name: g.name, anime: g.anime, ok: g.id === s.id, sameAnime: g.animeId === s.animeId, sameGender: !!g.gender && g.gender === s.gender });
+const verdict = compareChar;
 const reveal = (s: DleChar) => ({ name: s.name, anime: s.anime, image: s.image });
 
 async function load(date: string, level: Level) {

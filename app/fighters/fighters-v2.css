@@ -204,3 +204,9 @@ body.fx-ingame .gk-footer, body.fx-ingame .gk-backtop, body.fx-ingame [class*="b
 
 /* Le bandeau global ne doit pas recouvrir les écrans de jeu plein écran. */
 body.fx-ingame .guilde-birthday-banner { display: none; }
+
+/* Écrans de jeu au-dessus de tout le reste du site (bouton « haut de page », barre
+   mobile, lecteur flottant), et page figée derrière : rien ne capte les appuis. */
+.fxs, .fx-vs, .fx-fight { z-index: 1000; }
+body.fx-ingame .gk-top, body.fx-ingame .gk-mobile-dock, body.fx-ingame .hm-float, body.fx-ingame .gk-skip { display: none !important; }
+html:has(body.fx-ingame), body.fx-ingame { overflow: hidden; overscroll-behavior: none; }

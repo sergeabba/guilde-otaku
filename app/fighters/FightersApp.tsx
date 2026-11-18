@@ -177,21 +177,21 @@ function SelectScreen({ roster, mode, versus, reduced, onBack, onReady }: {
   const [teams, setTeams] = useState<[RosterMember[], RosterMember[]]>([[], []]);
   const [cursors, setCursors] = useState<[number, number]>([0, Math.max(0, roster.length - 1)]);
   const [orders, setOrders] = useState<[number[], number[]]>([[], []]);
+  // Ordre de passage : celui des choix, sauf si le joueur demande à le changer.
+  const [customOrder, setCustomOrder] = useState<[boolean, boolean]>([false, false]);
   const [orderCur, setOrderCur] = useState<[number, number]>([0, 0]);
   const [rank, setRank] = useState<string>("Tous");
   const [q, setQ] = useState("");
   const [rolling, setRolling] = useState(false);
   const [geo, setGeo] = useState({ t: 64, cols: 8 });
   const gridRef = useRef<HTMLDivElement>(null);
-  /** Toucher : un premier appui montre le membre, un second le choisit. */
-  const armed = useRef<number | null>(null);
-  const lastPointer = useRef<string>("mouse");
 
   const list = useMemo(() => roster.filter((m) => (rank === "Tous" || m.rank === rank) && m.name.toLowerCase().includes(q.trim().toLowerCase())), [roster, rank, q]);
   const ranks = useMemo(() => RANK_FILTER_ORDER.filter((r) => roster.some((m) => m.rank === r)), [roster]);
   const full = (side: 0 | 1) => teams[side].length >= size;
   const picked = full(0) && full(1);
-  const ordered = (side: 0 | 1) => size === 1 || orders[side].length >= size;
+  const ordered = (side: 0 | 1) => size === 1 || !customOrder[side] || orders[side].length >= size;
+  const ord = (side: 0 | 1) => (customOrder[side] ? orders[side] : teams[side].map((_, i) => i));
   const phase: Phase = !picked || rolling ? "pick" : ordered(0) && ordered(1) ? "ready" : "order";
   /** Camp qui répond à la souris et au toucher : J1, puis J2 en local. */
   const pointerSide: 0 | 1 | null = !full(0) ? 0 : !isAi && !full(1) ? 1 : null;
@@ -226,7 +226,7 @@ function SelectScreen({ roster, mode, versus, reduced, onBack, onReady }: {
   }, [size]);
 
   const undoFor = useCallback((side: 0 | 1) => {
-    setOrders([[], []]);
+    setOrders([[], []]); setCustomOrder([false, false]);
     setTeams((t) => {
       const next: [RosterMember[], RosterMember[]] = [[...t[0]], [...t[1]]];
       if (isAi) { next[1] = []; next[0].pop(); }
@@ -264,14 +264,6 @@ function SelectScreen({ roster, mode, versus, reduced, onBack, onReady }: {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAi, teams, size]);
 
-  // Ordre de passage tiré au sort pour l'IA.
-  useEffect(() => {
-    if (phase !== "order" || !isAi || ordered(1)) return;
-    const idx = Array.from({ length: size }, (_, i) => i).sort(() => Math.random() - 0.5);
-    setOrders((o) => [o[0], idx]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, isAi, size]);
-
   const assignOrder = (side: 0 | 1, i: number) => setOrders((o) => {
     if (o[side].includes(i) || o[side].length >= size) return o;
     const next: [number[], number[]] = [[...o[0]], [...o[1]]];
@@ -279,8 +271,11 @@ function SelectScreen({ roster, mode, versus, reduced, onBack, onReady }: {
     if (next[side].length === size - 1) next[side].push([...Array(size).keys()].find((k) => !next[side].includes(k))!);
     return next;
   });
-  const resetOrder = (side: 0 | 1) => setOrders((o) => (side === 0 ? [[], o[1]] : [o[0], []]));
-  const finalTeams = (): [RosterMember[], RosterMember[]] => [0, 1].map((s) => (size === 1 ? teams[s] : orders[s].map((i) => teams[s][i]))) as [RosterMember[], RosterMember[]];
+  const resetOrder = (side: 0 | 1) => {
+    setOrders((o) => (side === 0 ? [[], o[1]] : [o[0], []]));
+    setCustomOrder((c) => (side === 0 ? [true, c[1]] : [c[0], true]));
+  };
+  const finalTeams = (): [RosterMember[], RosterMember[]] => ([0, 1] as const).map((s) => (size === 1 ? teams[s] : ord(s).map((i) => teams[s][i]))) as [RosterMember[], RosterMember[]];
 
   // Clavier : J1 ZQSD/WASD + U ou J (choisir) + K (annuler) ; J2 flèches + Entrée / pavé 4 (choisir) + pavé 1 (annuler).
   useEffect(() => {
@@ -320,7 +315,7 @@ function SelectScreen({ roster, mode, versus, reduced, onBack, onReady }: {
     for (const side of [0, 1] as const) gridRef.current?.querySelector<HTMLElement>(`[data-i="${cursors[side]}"]`)?.scrollIntoView({ block: "nearest", inline: "nearest" });
   }, [cursors]);
 
-  const focusOf = (side: 0 | 1) => (phase === "pick" && !full(side) ? at(side) : teams[side][phase === "order" ? orderCur[side] : orders[side][0] ?? 0] ?? at(side));
+  const focusOf = (side: 0 | 1) => (phase === "pick" && !full(side) ? at(side) : teams[side][phase === "order" ? orderCur[side] : ord(side)[0] ?? 0] ?? at(side));
   const statusOf = (side: 0 | 1) => {
     if (phase === "pick") return full(side) ? "Équipe prête" : side === 1 && isAi ? (full(0) ? "L'IA choisit…" : "Attend J1") : `Choix ${teams[side].length + 1} sur ${size}`;
     if (phase === "order") return ordered(side) ? "Ordre fixé" : "Ordre de passage";
@@ -337,7 +332,7 @@ function SelectScreen({ roster, mode, versus, reduced, onBack, onReady }: {
         <p className="fxs-mode">{mode === "team" ? "Équipes 3 contre 3" : "Duel 1 contre 1"} · {isAi ? "contre l'IA" : "2 joueurs"}</p>
       </header>
 
-      <BigPortrait side={0} label={labels[0]} m={focusOf(0)} team={teams[0]} size={size} order={orders[0]} active={pointerSide === 0 || phase !== "pick"} status={statusOf(0)} />
+      <BigPortrait side={0} label={labels[0]} m={focusOf(0)} team={teams[0]} size={size} order={ord(0)} active={pointerSide === 0 || phase !== "pick"} status={statusOf(0)} />
 
       <div className="fxs-center">
         {phase === "pick" && (
@@ -361,14 +356,11 @@ function SelectScreen({ roster, mode, versus, reduced, onBack, onReady }: {
                         style={{ "--fx-c": accentOf(m) } as React.CSSProperties}
                         aria-label={`${m.name}, ${m.rank}${hasSprite(m) ? ", sprite personnalisé" : ""}${by.length ? `, choisi par ${by.map((b) => labels[b]).join(" et ")}` : ""}`}
                         onPointerEnter={(e) => { if (e.pointerType === "mouse" && pointerSide !== null) setCursors((c) => { const n: [number, number] = [...c]; n[pointerSide] = i; return n; }); }}
-                        onPointerDown={(e) => { lastPointer.current = e.pointerType; }}
                         onClick={() => {
                           if (pointerSide === null) return;
-                          // Souris ou clavier : le clic choisit. Toucher : premier appui = aperçu, second = choix.
-                          const touch = lastPointer.current !== "mouse";
-                          if (!touch || armed.current === i) { armed.current = null; pickFor(pointerSide, m); return; }
-                          armed.current = i;
+                          // Un appui (ou un clic) choisit directement : « Annuler » le retire.
                           setCursors((c) => { const n: [number, number] = [...c]; n[pointerSide] = i; return n; });
+                          pickFor(pointerSide, m);
                         }}
                       >
                         <span className="fxs-hx-frame"><span className="fxs-hx-img"><Portrait m={m} /></span></span>
@@ -390,10 +382,10 @@ function SelectScreen({ roster, mode, versus, reduced, onBack, onReady }: {
           <div className="fxs-order">
             {([0, 1] as const).map((side) => (
               <div key={side} className={`fxs-order-side fxs-order-side--${side}`}>
-                <p className="fxs-order-h"><span className={`fx-player fx-player--${side}`}>{labels[side]}</span>{size > 1 ? (ordered(side) ? " ordre fixé" : side === 1 && isAi ? " tirage…" : " touche tes combattants dans l'ordre") : ""}</p>
+                <p className="fxs-order-h"><span className={`fx-player fx-player--${side}`}>{labels[side]}</span>{size > 1 ? (ordered(side) ? " ordre de passage" : " touche tes combattants dans l'ordre") : ""}</p>
                 <div className="fxs-order-cards">
                   {teams[side].map((m, i) => {
-                    const pos = size === 1 ? 0 : orders[side].indexOf(i);
+                    const pos = size === 1 ? 0 : ord(side).indexOf(i);
                     const can = phase === "order" && !(isAi && side === 1) && pos < 0;
                     return (
                       <button key={m.id} type="button" className={`fxs-card${pos >= 0 ? " is-set" : ""}${phase === "order" && orderCur[side] === i ? " is-cur" : ""}`} disabled={!can}
@@ -406,18 +398,18 @@ function SelectScreen({ roster, mode, versus, reduced, onBack, onReady }: {
                     );
                   })}
                 </div>
-                {size > 1 && phase === "order" && !(isAi && side === 1) && orders[side].length > 0 && <button type="button" className="fx-ghost" onClick={() => resetOrder(side)}><Undo2 size={16} aria-hidden="true" /> Refaire l&apos;ordre</button>}
+                {size > 1 && !(isAi && side === 1) && (phase === "ready" || orders[side].length > 0) && <button type="button" className="fx-ghost" onClick={() => resetOrder(side)}><Undo2 size={16} aria-hidden="true" /> {phase === "ready" ? "Changer l'ordre" : "Refaire l'ordre"}</button>}
               </div>
             ))}
           </div>
         )}
       </div>
 
-      <BigPortrait side={1} label={labels[1]} m={focusOf(1)} team={teams[1]} size={size} order={orders[1]} active={pointerSide === 1 || (isAi && rolling)} status={statusOf(1)} />
+      <BigPortrait side={1} label={labels[1]} m={focusOf(1)} team={teams[1]} size={size} order={ord(1)} active={pointerSide === 1 || (isAi && rolling)} status={statusOf(1)} />
 
       <footer className="fxs-bar">
         <p className="fxs-help" aria-live="polite">
-          {phase === "pick" ? (pointerSide === null ? (rolling ? "L'IA choisit son équipe…" : "") : `${labels[pointerSide]} : touche un portrait, puis touche-le à nouveau (ou « Choisir »).`)
+          {phase === "pick" ? (pointerSide === null ? (rolling ? "L'IA choisit son équipe…" : "") : `${labels[pointerSide]} : touche ${size > 1 ? `tes ${size} combattants, dans l'ordre de passage` : "ton combattant"}.`)
             : phase === "order" ? "Choisis qui combat en premier, en deuxième, puis en troisième." : "Tout est prêt. Lance le combat !"}
         </p>
         <div className="fxs-actions">
@@ -432,7 +424,7 @@ function SelectScreen({ roster, mode, versus, reduced, onBack, onReady }: {
               )}
             </>
           )}
-          {phase !== "pick" && <button type="button" className="fx-ghost" onClick={() => { setOrders([[], []]); undoFor(isAi ? 0 : 1); }}><Undo2 size={16} aria-hidden="true" /> Modifier les équipes</button>}
+          {phase !== "pick" && <button type="button" className="fx-ghost" onClick={() => undoFor(isAi ? 0 : 1)}><Undo2 size={16} aria-hidden="true" /> Modifier les équipes</button>}
           {phase === "ready" && <button type="button" className="fx-cta fx-cta--sm" onClick={() => onReady(...finalTeams())} autoFocus><Swords size={18} aria-hidden="true" /> Lancer le combat</button>}
         </div>
       </footer>

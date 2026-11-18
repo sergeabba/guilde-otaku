@@ -5,18 +5,18 @@ import { parisDay } from "../../../../../lib/games/arcade";
 import { parseLevel } from "../../../../../lib/games/levels";
 
 // Portrait pixelisé du perso du jour : l'image nette ne quitte jamais le serveur avant la fin.
-// Niveau 1 : 10 pixels de large ; niveau 2 : 22 pixels.
+// Niveau 1 : 16 pixels de large ; niveau 2 : 30 ; niveau 3 : 56 (presque net).
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
   const date = sp.get("d") ?? "";
-  const level = sp.get("l") === "2" ? 2 : 1;
+  const level = sp.get("l") === "3" ? 3 : sp.get("l") === "2" ? 2 : 1;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date > parisDay()) return new NextResponse("Date invalide", { status: 400 });
   try {
     const c = await dailyChar(date, parseLevel(sp.get("v")));
     const res = await fetch(c.image, { signal: AbortSignal.timeout(10_000) });
     if (!res.ok) throw new Error(String(res.status));
     const src = Buffer.from(await res.arrayBuffer());
-    const small = await sharp(src).resize({ width: level === 1 ? 10 : 22 }).png().toBuffer();
+    const small = await sharp(src).resize({ width: level === 1 ? 16 : level === 2 ? 30 : 56 }).png().toBuffer();
     const out = await sharp(small).resize({ width: 300, kernel: "nearest" }).png().toBuffer();
     return new NextResponse(new Uint8Array(out), { headers: { "Content-Type": "image/png", "Cache-Control": "public, max-age=3600, s-maxage=86400" } });
   } catch {

@@ -55,33 +55,44 @@ export function nameShape(name: string): string {
   return `${shape} (${lengths.join(", ")} lettre${lengths.length === 1 && lengths[0] < 2 ? "" : "s"})`;
 }
 
+/** Ce qu'un essai a en commun avec le perso mystère (comme Devine l'anime, case par case). */
+export function compareChar(g: DleChar, s: DleChar) {
+  const shared = g.genres.filter((x) => s.genres.includes(x));
+  return {
+    id: g.id, name: g.name, anime: g.anime, image: g.image, ok: g.id === s.id,
+    sameAnime: g.animeId === s.animeId,
+    sameGender: !!g.gender && g.gender === s.gender,
+    gender: g.gender,
+    sameRole: g.role === s.role, role: g.role,
+    year: g.year != null && s.year != null ? { value: g.year, dir: dir(g.year, s.year), near: Math.abs(g.year - s.year) <= 2 } : null,
+    genres: { value: g.genres.slice(0, 3), shared: shared.slice(0, 3) },
+    sameStudio: !!g.studio && g.studio === s.studio, studio: g.studio ?? null,
+  };
+}
+export type CharVerdict = ReturnType<typeof compareChar>;
+
 /**
- * Indices du perso mystère, dévoilés un par un : un de plus à chaque essai raté.
- * Ils vont du plus vague (genres, studio, thèmes de son anime) au plus précis
- * (titre de l'anime, initiales). L'image nette n'est envoyée qu'à la fin.
+ * Indices du perso mystère : une base dès le départ, puis un indice de plus à chaque essai
+ * raté, du plus vague (studio, thèmes) au plus précis (portrait presque net, initiales).
+ * L'image nette n'est envoyée qu'à la fin.
  */
-export function charHints(c: DleChar, wrong: number, imageUrl: (level: 1 | 2) => string, level: Level = "normal"): CharHint[] {
+export function charHints(c: DleChar, wrong: number, imageUrl: (level: 1 | 2 | 3) => string, level: Level = "normal"): CharHint[] {
   const t = (label: string, value: string | null | undefined): CharHint[] => (value ? [{ label, value, kind: "text" }] : []);
   const anime = t("Anime", c.anime);
-  const all: CharHint[] = [
-    ...t("Rôle", c.role), ...t("Genre", c.gender), ...t("Âge", c.age),
-    // Facile : le titre de l'anime est donné tout de suite.
-    ...(level === "facile" ? anime : []),
-  ];
+  const base = [...t("Rôle", c.role), ...t("Genre", c.gender), ...t("Âge", c.age)];
   const genres = [...t("Son anime : genres", c.genres.slice(0, 3).join(", ")), ...t("Son anime : année", c.year ? String(c.year) : null)];
   const studio = t("Son anime : studio", c.studio);
   const themes = t("Son anime : thèmes", (c.themes ?? []).slice(0, level === "expert" ? 2 : 3).join(", "));
-  const pix1: CharHint = { label: "Portrait (très flou)", value: imageUrl(1), kind: "image" };
-  const pix2: CharHint = { label: "Portrait (moins flou)", value: imageUrl(2), kind: "image" };
+  const pix = (n: 1 | 2 | 3, label: string): CharHint => ({ label, value: imageUrl(n), kind: "image" });
+  const pix1 = pix(1, "Portrait (très flou)"), pix2 = pix(2, "Portrait (flou)"), pix3 = pix(3, "Portrait (presque net)");
   const voice = t("Doubleur japonais", c.voice);
   const shape = t("Son nom", nameShape(c.name));
-  const or = (a: CharHint[], b: CharHint[]) => (a.length ? a : b);
-  const steps: CharHint[][] = level === "expert"
-    ? [genres, [pix1, ...studio], or(voice, themes), or(themes, [pix2]), anime]
-    : level === "facile"
-      ? [[...genres, ...studio, ...themes], [pix1], [pix2, ...voice], shape, shape]
-      : [[...genres, ...studio], [pix1, ...themes], anime, [pix2, ...voice], shape];
-  const out = [...all, ...steps.slice(0, Math.min(wrong, steps.length)).flat()];
+  const [start, steps]: [CharHint[], CharHint[][]] = level === "facile"
+    ? [[...base, ...anime, ...genres, pix1], [[pix2, ...studio, ...themes], [...voice, pix3], shape, shape, shape]]
+    : level === "expert"
+      ? [base, [[...genres, ...studio, ...themes], [pix1], voice.length ? voice : [pix2], [...anime, pix2], [pix3, ...shape]]]
+      : [[...base, ...genres], [[pix1, ...studio, ...themes], anime, [pix2, ...voice], [pix3], shape]];
+  const out = [...start, ...steps.slice(0, Math.min(wrong, steps.length)).flat()];
   return out.filter((h, i) => out.findIndex((x) => x.label === h.label && x.value === h.value) === i);
 }
 
@@ -94,10 +105,10 @@ export function titleShape(title: string): string {
 }
 /**
  * Indices de Devine l'anime, en plus des comparaisons : ses thèmes, puis la forme de son titre.
- * Facile : thèmes dès le 1er raté ; Normal : au 2e ; Expert : au 3e (2 thèmes seulement).
+ * Facile : thèmes dès le 1er raté, titre au 2e ; Normal : 1er et 3e ; Expert : 2e et 4e.
  */
 export function animeHints(a: DleAnime, wrong: number, level: Level = "normal"): AnimeHint[] {
-  const [themesAt, titleAt, n] = level === "facile" ? [1, 3, 5] : level === "expert" ? [3, 4, 2] : [2, 4, 3];
+  const [themesAt, titleAt, n] = level === "facile" ? [1, 2, 5] : level === "expert" ? [2, 4, 3] : [1, 3, 4];
   const out: AnimeHint[] = [];
   if (wrong >= themesAt && a.tags?.length) out.push({ label: "Ses thèmes", value: a.tags.slice(0, n).join(", ") });
   if (wrong >= titleAt) out.push({ label: "Son titre", value: titleShape(a.title) });

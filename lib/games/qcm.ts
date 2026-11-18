@@ -48,7 +48,8 @@ export function buildThemes(animes: CatAnime[], level: Level, now = Date.now(), 
     const near = pool.filter((x) => x.id !== a.id && x.tags.some((t) => tags.includes(t)));
     const others = pickOthers(near.length >= 5 ? near : pool, nChoices(level) - 1, (x) => x.title, new Set([a.title]), rnd);
     const choices = typed ? [] : shuffle([a, ...others], rnd).map((x) => ({ label: x.title }));
-    rounds.push({ prompt: "Quel anime ?", tags, choices });
+    // Facile et Normal : l'année et le format en plus des thèmes (Expert : thèmes seuls).
+    rounds.push({ prompt: "Quel anime ?", sub: typed ? null : [a.year, a.format].filter(Boolean).join(" · ") || null, tags, choices });
     answers.push(typed ? -1 : choices.findIndex((c) => c.label === a.title));
     accepted.push([a.title, a.alt].filter((x): x is string => !!x));
     reveal.push({ label: a.title, sub: a.year ? String(a.year) : null, image: a.cover });
