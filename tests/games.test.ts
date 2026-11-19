@@ -119,6 +119,9 @@ describe("Plus ou moins", () => {
 });
 
 describe("Défi du jour", () => {
+  // Dates fixes : l'horloge est figée au 17 novembre 2026, sinon les jetons de ces jours-là expirent.
+  beforeAll(() => { jest.spyOn(Date, "now").mockReturnValue(Date.parse("2026-11-17T12:00:00Z")); });
+  afterAll(() => { jest.restoreAllMocks(); });
   const members = [1, 2, 3, 4, 5].map((id) => ({ id, name: `M${id}`, favorites: [`Commun`, `Seul ${id}`] }));
   it("pose la même question à tout le monde le même jour", async () => {
     const a = await buildDaily("2026-11-17", POOL, members, async (i) => `p${i}`);

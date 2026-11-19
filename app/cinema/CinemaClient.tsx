@@ -14,6 +14,7 @@ import type { CinemaDetail, CinemaItem, Provider } from "../../lib/cinema";
 import type { GuildCollection, GuildVideo } from "../../lib/drive";
 import { FREE_SHOWS, ytChannelUrl, ytPlaylistEmbed, ytThumb, type FreeShow } from "../../lib/free-channels";
 import Nostalgie from "./Nostalgie";
+import Generiques from "./Generiques";
 import "./cinema.css";
 
 type Rows = { series: CinemaItem[]; free: CinemaItem[]; films: CinemaItem[] };
@@ -44,6 +45,7 @@ export default function CinemaClient({ rows, hero: picked = null, guild = null }
         <GuildeHeader activePage="cinema" tone="dark" />
         <main className="cin-main">
           <p className="gk-wrap cin-empty" role="alert">Le catalogue du Cinéma est indisponible pour le moment : TMDB ne répond pas ou sa clé n&apos;est pas configurée.</p>
+          <Generiques />
           <FreeShows onOpen={setFreeShow} />
           <Nostalgie />
         </main>
@@ -87,6 +89,7 @@ export default function CinemaClient({ rows, hero: picked = null, guild = null }
       )}
       <main className="cin-main">
         {guild && <GuildVideos guild={guild} onPlay={setScreening} />}
+        <Generiques />
         <FreeShows onOpen={setFreeShow} />
         <Nostalgie />
         {rows && <>
