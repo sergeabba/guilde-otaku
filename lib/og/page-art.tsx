@@ -9,7 +9,7 @@ import { GOLD, INK, OG_SIZE, PAPER, loadDisplayFont, loadFonts, portraitData } f
 export const PAGE_IDS = ["accueil", "bibliotheque", "atelier", "calendrier", "cinema", "fighters", "anniversaires", "wanted", "bons-plans", "jeux"] as const;
 export type PageId = (typeof PAGE_IDS)[number];
 
-interface Art {
+export interface Art {
   kicker: string;          // rōmaji · rubrique
   title: string;
   sub: string;
@@ -76,7 +76,11 @@ async function artFor(page: PageId): Promise<Art> {
 const hexA = (hex: string, a: number) => `${hex}${Math.round(a * 255).toString(16).padStart(2, "0")}`;
 
 export async function renderPageOg(page: PageId, origin: string): Promise<ImageResponse> {
-  const art = await artFor(page);
+  return renderArtOg(await artFor(page), origin);
+}
+
+/** Même mise en page pour un contenu fourni (ex. le vote du film). */
+export async function renderArtOg(art: Art, origin: string): Promise<ImageResponse> {
   const [fonts, display, bd, ...imgs] = await Promise.all([
     loadFonts(), loadDisplayFont(),
     art.backdrop ? portraitData(art.backdrop, origin, 1200) : Promise.resolve(null),

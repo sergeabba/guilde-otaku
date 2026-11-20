@@ -9,6 +9,7 @@ import { ArrowDown, Search, Sword, User, X } from "lucide-react";
 import { Rank, Member, RANK_FILTER_ORDER } from "../../data/members";
 import MemberCard from "./MemberCard";
 import MemberQuickView from "./MemberQuickView";
+import FilmPoll from "./FilmPoll";
 import GuildeHeader from "./GuildeHeader";
 import ChapterStory from "./ChapterStory";
 import WordReveal from "./WordReveal";
@@ -271,6 +272,9 @@ export default function HomePageClient({ initialMembers, featuredFilm, atelierTi
           <AtelierWall tiles={atelierTiles} />
 
           <hr className="gk-rule" />
+
+          {/* ── VOTE DU FILM (seulement pendant un vote ou juste après) ─── */}
+          <FilmPoll compact frame="gk-wrap hm-section hm-vote" />
 
           {/* ── SOMMAIRE + À LA UNE ────────────────────────────────────── */}
           <section className="gk-wrap hm-section" aria-labelledby="hm-toc-title" data-gk-motion="reveal">

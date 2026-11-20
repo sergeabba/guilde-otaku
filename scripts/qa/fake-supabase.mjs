@@ -50,9 +50,9 @@ createServer((req, res) => {
     return res.end(JSON.stringify(list));
   }
   // Actualités : tables gardées en mémoire (recette uniquement, rien n'est écrit sur disque).
-  const memTable = /^\/rest\/v1\/(news_items|news_runs|game_plays|tier_lists|atelier|emoji_puzzles)$/.exec(u.pathname)?.[1];
+  const memTable = /^\/rest\/v1\/(news_items|news_runs|game_plays|tier_lists|atelier|emoji_puzzles|film_polls|film_poll_votes)$/.exec(u.pathname)?.[1];
   if (memTable) {
-    globalThis.__mem ??= { news_items: [], news_runs: [], game_plays: [], tier_lists: [], atelier: [], emoji_puzzles: [], seq: 0 };
+    globalThis.__mem ??= { news_items: [], news_runs: [], game_plays: [], tier_lists: [], atelier: [], emoji_puzzles: [], film_polls: [], film_poll_votes: [], seq: 0 };
     const M = globalThis.__mem;
     const eqs = [...u.searchParams].filter(([k, v]) => v.startsWith("eq.") && k !== "select").map(([k, v]) => [k, v.slice(3)]);
     const match = (r) => eqs.every(([k, v]) => String(r[k]) === v);
@@ -72,6 +72,10 @@ createServer((req, res) => {
           if (memTable === "news_items" && M.news_items.some((x) => x.source_url === row.source_url)) continue;
           // Upsert de la tier list : une ligne par (semaine, appareil).
           if (memTable === "tier_lists") { const old = M.tier_lists.find((x) => x.week === row.week && x.device === row.device); if (old) { Object.assign(old, row); added.push(old); continue; } }
+          // Votes de films : un vote par (sondage, appareil) ; adresse de sondage unique.
+          if (memTable === "film_poll_votes") { const old = M.film_poll_votes.find((x) => String(x.poll_id) === String(row.poll_id) && x.voter === row.voter); if (old) { Object.assign(old, row); added.push(old); continue; } }
+          if (memTable === "film_polls" && M.film_polls.some((x) => x.slug === row.slug)) { res.statusCode = 409; return res.end(JSON.stringify({ message: "duplicate key value violates unique constraint" })); }
+          if (memTable === "film_polls") { const full = { ...row, id: ++M.seq, created_at: new Date().toISOString() }; M.film_polls.push(full); added.push(full); continue; }
           if (memTable === "game_plays" && row.nonce && M.game_plays.some((x) => x.nonce === row.nonce)) { res.statusCode = 409; return res.end(JSON.stringify({ message: "duplicate key value violates unique constraint" })); }
           const full = memTable === "emoji_puzzles" ? { status: "pending", ...row, id: ++M.seq, created_at: new Date().toISOString() } : memTable === "game_plays" ? { ...row, id: ++M.seq, created_at: new Date().toISOString() } : memTable === "news_items" ? { status: "pending", edited_title: null, edited_excerpt: null, reviewed_at: null, created_at: new Date().toISOString(), ...row, id: ++M.seq } : { ...row, id: ++M.seq };
           M[memTable].push(full); added.push(full);
