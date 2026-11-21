@@ -96,3 +96,5 @@
 @media (prefers-reduced-motion: no-preference) { .fx-continue-count { animation: fx-beat 1s ease-out infinite; } }
 @keyframes fx-beat { 0% { transform: scale(1.25); } 30% { transform: scale(1); } }
 .fx-over-line { max-width: 40ch; font: 700 clamp(1rem, 3vw, 1.3rem)/1.4 var(--fx-body); }
+.fx-sound { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 10px; }
+.fx-sound .fx-ghost[aria-pressed="false"] { opacity: .6; text-decoration: line-through; }

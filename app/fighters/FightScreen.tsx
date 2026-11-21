@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Pause, Play, RotateCcw, Users, Home, Keyboard } from "lucide-react";
 import { createMatch, step, NO_INPUT, MAX_HP, MAX_METER, FPS, STAGE_W, STAGE_H, type Input, type MatchOptions, type MatchState, type MatchEvent } from "../../lib/fighters/engine";
 import { STAGES, type Stage } from "../../lib/fighters/stages";
+import { FightAudio, audioPrefs, saveAudioPrefs, type AudioPrefs } from "../../lib/fighters/audio";
 import { aiInput, makeRng, newAiMemory, type AiLevel } from "../../lib/fighters/ai";
 import { ArenaRenderer, lookFor, type Look } from "../../lib/fighters/render";
 import type { Mode, RosterMember, Versus } from "./FightersApp";
@@ -119,7 +120,16 @@ export default function FightScreen({ teams, mode, versus, level, labels, reduce
   const byId = useRef(new Map([...teams[0], ...teams[1]].map((m) => [m.id, m])));
   const looks = useRef<[Look, Look]>([lookFor(teams[0][0].id, teams[0][0].color), lookFor(teams[1][0].id, teams[1][0].color)]);
 
-  const setPause = useCallback((p: boolean) => { pausedRef.current = p; setPaused(p); }, []);
+  // Son : bruitages, annonceur et musique de l'arène (réglables dans la pause).
+  const audio = useRef<FightAudio | null>(null);
+  const [sound, setSound] = useState<AudioPrefs>(() => (typeof window === "undefined" ? { sfx: true, music: true, voice: true } : audioPrefs()));
+  const toggleSound = (k: keyof AudioPrefs) => setSound((p) => {
+    const n = { ...p, [k]: !p[k] };
+    saveAudioPrefs(n);
+    if (audio.current) { audio.current.prefs = n; if (k === "music") { if (n.music) audio.current.startMusic(stage.id); else audio.current.stopMusic(); } }
+    return n;
+  });
+  const setPause = useCallback((p: boolean) => { pausedRef.current = p; setPaused(p); audio.current?.duck(p); }, []);
 
   // Annonces façon MUGEN : manche, « Combat ! », K.-O., double K.-O., parfait, premier coup.
   const firstHit = useRef(false);
@@ -159,6 +169,10 @@ export default function FightScreen({ teams, mode, versus, level, labels, reduce
     const canvas = canvasRef.current!;
     const ctx = canvas.getContext("2d")!;
     const renderer = new ArenaRenderer(ctx, () => looks.current, reduced, stage);
+    const sfx = new FightAudio(audioPrefs());
+    audio.current = sfx;
+    sfx.startMusic(stage.id);
+    sfx.onEvents(s.events, s);
     const rng = makeRng(Date.now() & 0xffff);
     const mem = newAiMemory(), mem0 = newAiMemory();
     let finished = false;
@@ -187,6 +201,7 @@ export default function FightScreen({ teams, mode, versus, level, labels, reduce
         step(s, p1, p2);
         if (s.events.length) {
           renderer.onEvents(s.events, s);
+          sfx.onEvents(s.events, s);
           announce(s.events, s);
           if (s.events.some((e) => e.type === "next" || e.type === "roundStart")) {
             looks.current = [lookFor(s.fighters[0].profile.id, byId.current.get(s.fighters[0].profile.id)?.color ?? "#c9a84c"),
@@ -206,7 +221,7 @@ export default function FightScreen({ teams, mode, versus, level, labels, reduce
     raf = requestAnimationFrame(loop);
     const onVis = () => { if (document.hidden && s.phase === "fight") setPause(true); };
     document.addEventListener("visibilitychange", onVis);
-    return () => { cancelAnimationFrame(raf); document.removeEventListener("visibilitychange", onVis); window.removeEventListener("resize", fit); };
+    return () => { cancelAnimationFrame(raf); document.removeEventListener("visibilitychange", onVis); window.removeEventListener("resize", fit); sfx.close(); audio.current = null; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, teams, versus, level, reduced, announce, setPause]);
 
@@ -298,6 +313,11 @@ export default function FightScreen({ teams, mode, versus, level, labels, reduce
                 <button type="button" className="fx-ghost" onClick={onRoster}><Users size={16} aria-hidden="true" /> Retour au roster</button>
                 <button type="button" className="fx-ghost" onClick={onHome}><Home size={16} aria-hidden="true" /> Accueil Fighters</button>
                 <button type="button" className="fx-ghost" onClick={() => setShowKeys((v) => !v)} aria-expanded={showKeys}><Keyboard size={16} aria-hidden="true" /> Commandes</button>
+              </div>
+              <div className="fx-sound" role="group" aria-label="Son">
+                <button type="button" className="fx-ghost" aria-pressed={sound.music} onClick={() => toggleSound("music")}>Musique : {sound.music ? "oui" : "non"}</button>
+                <button type="button" className="fx-ghost" aria-pressed={sound.sfx} onClick={() => toggleSound("sfx")}>Bruitages : {sound.sfx ? "oui" : "non"}</button>
+                <button type="button" className="fx-ghost" aria-pressed={sound.voice} onClick={() => toggleSound("voice")}>Annonceur : {sound.voice ? "oui" : "non"}</button>
               </div>
               {showKeys && (
                 <dl className="fx-keys">

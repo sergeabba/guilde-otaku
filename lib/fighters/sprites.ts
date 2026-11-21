@@ -53,12 +53,70 @@ function phased(a: A, t: number, startup: number, active: number, recovery: numb
   return a.frames[idx[k]];
 }
 
+// ─── Entrées en scène et poses de victoire, propres à chaque combattant ─────
+// Chorégraphies composées à partir des animations de la planche (comme les « intros »
+// et « win poses » des jeux MUGEN). Chaque membre a la sienne, fixée par son numéro.
+interface Step { anim: string; hold?: number; air?: number }
+const INTROS: Step[][] = [
+  [{ anim: "intro" }],                                                                     // salut d'origine
+  [{ anim: "s_lp" }, { anim: "s_hp" }, { anim: "s_lp" }, { anim: "s_hk" }, { anim: "guard", hold: 30 }], // échauffement
+  [{ anim: "crouch", hold: 18 }, { anim: "special", hold: 28 }, { anim: "guard", hold: 30 }],          // concentration
+  [{ anim: "jump", air: 46 }, { anim: "crouch", hold: 10 }, { anim: "intro" }],             // arrivée d'un bond
+  [{ anim: "s_hk" }, { anim: "s_hk" }, { anim: "intro" }],                                  // coups de pied d'intimidation
+];
+const WINS: Step[][] = [
+  [{ anim: "win" }],                                                                       // pose d'origine
+  [{ anim: "super", hold: 999 }],                                                          // pose de la super, figée
+  [{ anim: "jump", air: 40 }, { anim: "crouch", hold: 8 }],                                // bonds de joie
+  [{ anim: "s_lp" }, { anim: "s_hp" }, { anim: "s_hk" }, { anim: "guard", hold: 26 }],     // enchaînement dans le vide
+  [{ anim: "special", hold: 40 }, { anim: "win" }],                                        // charge puis pose
+];
+const pick = <T,>(list: T[], id: number, salt: number) => list[Math.abs((id * 2654435761 + salt) | 0) % list.length];
+
+/** Image et hauteur (sauts) d'une chorégraphie au temps t ; `loop` pour les poses de victoire. */
+function choreo(meta: SheetMeta, steps: Step[], t: number, loop: boolean): { frame: number; lift: number } {
+  const parts = steps.filter((st) => meta.anims[st.anim]).map((st) => {
+    const a = meta.anims[st.anim];
+    const dur = (a.dur ?? a.frames.map(() => 8)).map((d) => Math.min(d, 40));
+    const len = st.air ?? (st.hold ? Math.max(st.hold, dur.reduce((n, d) => n + d, 0)) : dur.reduce((n, d) => n + d, 0));
+    return { st, a, dur, len };
+  });
+  if (!parts.length) return { frame: meta.anims.idle.frames[0], lift: 0 };
+  const total = parts.reduce((n, p) => n + p.len, 0);
+  let k = loop ? t % total : Math.min(t, total - 1);
+  for (const p of parts) {
+    if (k < p.len) {
+      if (p.st.air) {
+        // Saut : montée puis descente (parabole), images de saut selon la vitesse.
+        const u = k / p.len, lift = Math.round(4 * u * (1 - u) * 44);
+        const fr = p.a.frames;
+        return { frame: fr[Math.min(fr.length - 1, u < 0.1 ? 0 : u < 0.5 ? 1 : u < 0.85 ? 2 : 3)], lift };
+      }
+      let q = k;
+      for (let i = 0; i < p.dur.length; i++) { if (q < p.dur[i]) return { frame: p.a.frames[i], lift: 0 }; q -= p.dur[i]; }
+      return { frame: p.a.frames[p.a.frames.length - 1], lift: 0 };
+    }
+    k -= p.len;
+  }
+  const last = parts[parts.length - 1].a.frames;
+  return { frame: last[last.length - 1], lift: 0 };
+}
+const introOf = (f: Fighter) => pick(INTROS, f.profile.id, 7);
+const winOf = (f: Fighter) => pick(WINS, f.profile.id, 13);
+
+/** Hauteur à ajouter au dessin (bonds des entrées et des victoires). */
+export function poseLift(f: Fighter, meta: SheetMeta, clock: number): number {
+  if (f.state === "ready") return choreo(meta, introOf(f), f.t, false).lift;
+  if (f.state === "win") return choreo(meta, winOf(f), clock, true).lift;
+  return 0;
+}
+
 /** Numéro d'image de la planche pour l'état courant du combattant. */
 export function frameFor(f: Fighter, meta: SheetMeta, clock: number): number {
   const an = meta.anims;
   const air = f.y < -1;
   switch (f.state) {
-    case "ready": return animationFrame(an.intro, f.t);
+    case "ready": return choreo(meta, introOf(f), f.t, false).frame;
     case "idle": return animationFrame(an.idle, clock);
     case "walk": return animationFrame(an.walk, clock);
     case "guard": return Math.abs(f.vx) > 0.1 ? animationFrame(an.walkback, clock) : animationFrame(an.guard, 0);
@@ -82,7 +140,7 @@ export function frameFor(f: Fighter, meta: SheetMeta, clock: number): number {
     case "dizzy": return animationFrame(an.dizzy, clock);
     case "dodge": return animationFrame(an.dodge, f.t);
     case "ko": return air ? an.ko.frames[0] : an.ko.frames[an.ko.frames.length - 1];
-    case "win": return animationFrame(an.win, clock);
+    case "win": return choreo(meta, winOf(f), clock, true).frame;
   }
   return an.idle.frames[0];
 }

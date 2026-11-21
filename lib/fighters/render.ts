@@ -3,7 +3,7 @@
 // deux silhouettes « prototypes » articulées, teintées avec la couleur du membre,
 // et un décor de dojo au crépuscule.
 import { STAGES, type Stage } from "./stages";
-import { sheetOf, frameFor, drawSprite } from "./sprites";
+import { sheetOf, frameFor, drawSprite, poseLift } from "./sprites";
 import { FLOOR, STAGE_H, STAGE_W, type Fighter, type MatchEvent, type MatchState } from "./engine";
 
 type Vec = [number, number];
@@ -271,7 +271,7 @@ export class ArenaRenderer {
       const sw = Math.max(12, 30 + f.y * 0.25);
       c.fillRect(Math.round(f.x - sw / 2), FLOOR, Math.round(sw), 3);
       const sheet = sheetOf(f);
-      if (sheet?.ready) drawSprite(c, sheet, frameFor(f, sheet.meta, s.frame), f.x, FLOOR + f.y, f.facing, flash);
+      if (sheet?.ready) drawSprite(c, sheet, frameFor(f, sheet.meta, s.frame), f.x, FLOOR + f.y - poseLift(f, sheet.meta, s.frame), f.facing, flash);
       else this.drawProvisional(c, f, looks[f.side], s.frame, flash);
       if (this.reviveUntil[f.side] > s.frame) this.drawRevive(c, f, s.frame);
     }
