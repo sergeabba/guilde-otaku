@@ -33,6 +33,7 @@ export default function MemberCard({ member, index, viewMode, onClick }: {
       role="button"
       tabIndex={0}
       data-member-id={member.id}
+      data-rank={member.rank}
       onClick={(e) => onClick(e.currentTarget)}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(e.currentTarget); }
@@ -58,6 +59,7 @@ export default function MemberCard({ member, index, viewMode, onClick }: {
         )}
       </div>
       <div className="mc-tone" aria-hidden="true" />
+      <span className="mc-holo" aria-hidden="true" />
 
       <span className="mc-rank">{member.rank}</span>
       <span className="mc-no" aria-hidden="true">{String(member.id).padStart(2, "0")}</span>

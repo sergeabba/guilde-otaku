@@ -9,6 +9,7 @@ import { ArrowRight, Check, Clock, Crown, Play, Share2, Users } from "lucide-rea
 import { optimizedSrc } from "../../lib/img";
 import { isOpen, timeLeft, type FilmPoll as Poll, type PollTally } from "../../lib/film-poll-logic";
 import { useShare } from "../hooks/useShare";
+import { playOk } from "../../lib/fx";
 import "./film-poll.css";
 
 interface State { poll: Poll | null; open?: boolean; now?: number; tally?: PollTally; mine?: number | null }
@@ -59,6 +60,7 @@ export default function FilmPoll({ slug, compact = false, initial, frame }: { sl
       const r = await fetch("/api/film-polls", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug: s.poll.slug, voter: voterId(), choice, memberId: memberId() }) });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Vote non enregistré.");
+      if (choice !== null) playOk();
       setS(d);
     } catch (e) { setError(e instanceof Error ? e.message : "Vote non enregistré."); } finally { setBusy(null); }
   }, [s]);

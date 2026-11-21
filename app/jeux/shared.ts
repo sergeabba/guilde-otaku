@@ -3,6 +3,7 @@
 // Outils communs de la page Jeux : joueur sans compte, historique local, métadonnées des jeux.
 import { useCallback, useEffect, useState } from "react";
 import { LEVEL_LABEL, LEVEL_MULT, parseLevel, type Level } from "../../lib/games/levels";
+import { celebrate, playOk } from "../../lib/fx";
 
 export type Game = "quiz-generique" | "quiz-nostalgie" | "affiche" | "plus-moins" | "defi-jour" | "devine-anime" | "devine-perso" | "emoji-quiz" | "themes" | "createur" | "studio" | "voix" | "generiques" | "duel";
 export interface Play { id?: number; game: Game; member_id: number | null; player_name: string | null; score: number; max_score: number; detail: Record<string, unknown>; created_at: string }
@@ -58,7 +59,13 @@ export function usePlayer() {
 export type PlayerApi = ReturnType<typeof usePlayer>;
 
 export function localHistory(): LocalPlay[] { try { return JSON.parse(read(KEY_LOCAL) ?? "[]"); } catch { return []; } }
-export function pushLocal(p: LocalPlay) { write(KEY_LOCAL, JSON.stringify([p, ...localHistory()].slice(0, 40))); }
+export function pushLocal(p: LocalPlay) {
+  write(KEY_LOCAL, JSON.stringify([p, ...localHistory()].slice(0, 40)));
+  // Fin de partie : tampon « Victoire » et pétales à partir de 60 % des points, sinon un simple son.
+  const ratio = p.max > 0 ? p.score / p.max : 0;
+  if (ratio >= 0.6) celebrate({ title: ratio >= 0.9 ? "Parfait" : "Victoire", sub: `${p.score} points`, big: ratio >= 0.9 });
+  else if (p.score > 0) playOk();
+}
 
 /** Requête JSON des jeux : renvoie les données ou lève le message d'erreur du serveur. */
 export async function api<T>(url: string, body?: unknown): Promise<T> {

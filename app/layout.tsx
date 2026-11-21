@@ -16,6 +16,9 @@ import RouteTransitions from "./components/RouteTransitions";
 import MotionSettings from "./components/MotionSettings";
 import CommandPalette from "./components/CommandPalette";
 import SplashWrapper from "./components/SplashWrapper";
+import Ambiance from "./components/Ambiance";
+import Celebrate from "./components/Celebrate";
+import "./styles/ambiance.css";
 import { ThemeProvider } from "./context/ThemeContext";
 import { MusicDockProvider } from "./components/MusicDock";
 
@@ -93,6 +96,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <BackToTop />
           <MotionDirector />
           <RouteTransitions />
+          <Ambiance />
+          <Celebrate />
           </MusicDockProvider>
           </MotionSettings>
         </ThemeProvider>

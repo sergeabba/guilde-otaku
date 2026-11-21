@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useBackClose } from "../hooks/useBackClose";
 import { createPortal } from "react-dom";
-import { BookOpen, ChevronDown, Menu, Moon, ScrollText, Search, Sun, Swords, UsersRound, X } from "lucide-react";
+import { ChevronDown, Menu, Moon, Search, Sun, X } from "lucide-react";
+import { IconBiblio, IconFighters, IconGuilde, IconSommaire, IconWanted } from "./GuildeIcons";
 import { useTheme } from "../context/ThemeContext";
 import { NAV_GROUPS, groupOf, navEntry, type PageId } from "../config/nav";
 
@@ -21,10 +22,10 @@ interface GuildeHeaderProps {
 }
 
 const QUICK_LINKS = [
-  { id: "membres", label: "La Guilde", href: "/", Icon: UsersRound },
-  { id: "wanted", label: "Wanted", href: "/wanted", Icon: ScrollText },
-  { id: "fighters", label: "Fighters", href: "/fighters", Icon: Swords },
-  { id: "bibliotheque", label: "Biblio", href: "/bibliotheque", Icon: BookOpen },
+  { id: "membres", label: "La Guilde", href: "/", Icon: IconGuilde },
+  { id: "wanted", label: "Wanted", href: "/wanted", Icon: IconWanted },
+  { id: "fighters", label: "Fighters", href: "/fighters", Icon: IconFighters },
+  { id: "bibliotheque", label: "Biblio", href: "/bibliotheque", Icon: IconBiblio },
 ] as const;
 
 export function openSearch() {
@@ -140,7 +141,7 @@ export default function GuildeHeader({
           aria-controls="gk-chapter-menu"
           aria-label="Ouvrir les autres chapitres"
         >
-          <Menu aria-hidden="true" />
+          <IconSommaire />
           <span>Sommaire</span>
         </button>
       </nav>}

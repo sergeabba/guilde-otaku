@@ -1,16 +1,14 @@
+// Chargement d'une page : l'emblème de la Guilde se dessine d'un coup de pinceau,
+// entouré de traits de vitesse. Sans mouvement avec « réduire les animations ».
 export default function Loading() {
   return (
-    <div className="gk-page" role="status" aria-label="Chargement de la page">
-      <div className="gk-wrap" style={{ paddingBlock: "clamp(28px, 6vw, 72px)" }}>
-        <div className="gk-skel" style={{ width: 160, height: 30 }} />
-        <div className="gk-skel" style={{ width: "min(720px, 90%)", height: "clamp(70px, 14vw, 150px)", marginTop: 18 }} />
-        <div className="gk-skel" style={{ width: "min(460px, 70%)", height: 22, marginTop: 18 }} />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 220px), 1fr))", gap: 20, marginTop: 44 }}>
-          {Array.from({ length: 8 }, (_, i) => (
-            <div key={i} className="gk-skel" style={{ aspectRatio: "3 / 4" }} />
-          ))}
-        </div>
+    <div className="gk-page gk-loading" role="status" aria-label="Chargement de la page">
+      <div className="gk-loading-mark" aria-hidden="true">
+        <span className="gk-loading-burst" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/emblem.png" alt="" width={120} height={120} />
       </div>
+      <p className="gk-loading-text" aria-hidden="true">Chargement</p>
     </div>
   );
 }

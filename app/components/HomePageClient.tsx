@@ -10,6 +10,7 @@ import { Rank, Member, RANK_FILTER_ORDER } from "../../data/members";
 import MemberCard from "./MemberCard";
 import MemberQuickView from "./MemberQuickView";
 import FilmPoll from "./FilmPoll";
+import CoverFx from "./CoverFx";
 import GuildeHeader from "./GuildeHeader";
 import ChapterStory from "./ChapterStory";
 import WordReveal from "./WordReveal";
@@ -205,6 +206,7 @@ export default function HomePageClient({ initialMembers, featuredFilm, atelierTi
           {/* ── COUVERTURE ─────────────────────────────────────────────── */}
           <section className="gk-wrap hm-cover" aria-labelledby="hm-title">
             <div className="gk-speed hm-cover-speed" aria-hidden="true" />
+            <CoverFx />
 
             <div className="hm-cover-copy gk-reveal">
               <p className="gk-chapter"><b>01</b><span>LE REGISTRE DES MEMBRES</span></p>

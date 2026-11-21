@@ -1,7 +1,7 @@
 "use client";
 
 // Transition entre les pages : la nouvelle page arrive par une coupe en biais
-// (planche de manga), l'ancienne recule. Navigation native de Next (router.push),
+// (planche de manga), l'ancienne recule, et une bande d'encre traverse l'écran. Navigation native de Next (router.push),
 // enveloppée dans une transition de vue ; aucune attente imposée (450 ms au plus),
 // absente si le navigateur ne la gère pas ou si le visiteur demande moins d'animations.
 import { useEffect, useLayoutEffect, useRef } from "react";
@@ -28,9 +28,16 @@ export default function RouteTransitions() {
       if (!canViewTransition()) return;
       e.preventDefault();
       e.stopPropagation();
+      // Bande d'encre et traits de vitesse : capturés dans l'image de départ, puis retirés.
+      const swoosh = document.createElement("div");
+      swoosh.className = "gk-swoosh";
+      swoosh.setAttribute("aria-hidden", "true");
+      document.body.appendChild(swoosh);
+      window.setTimeout(() => swoosh.remove(), 1500);
       viewTransition({
         kind: "route",
         update: () => new Promise<void>((resolve) => {
+          swoosh.remove();
           const timer = setTimeout(resolve, 450);
           arrived.current = () => { clearTimeout(timer); resolve(); };
           router.push(url.pathname + url.search + url.hash);

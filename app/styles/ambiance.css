@@ -1,0 +1,110 @@
+/* ═══ AMBIANCE (Ambiance.tsx, Celebrate.tsx, CoverFx.tsx) ═══════════════════════
+   Cartes qui s'inclinent avec reflet holographique selon le grade, encrage des titres
+   et des images au défilement, teinte selon l'heure, célébrations, balayage de page.
+   Tout ce qui bouge est coupé avec « réduire les animations ». */
+
+/* ── Cartes de membres : inclinaison et reflet ─────────────────────────────── */
+.mc-holo { position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: 0; mix-blend-mode: color-dodge; transition: opacity 300ms;
+  background:
+    radial-gradient(circle at calc(50% + var(--tx, 0) * 45%) calc(50% + var(--ty, 0) * 45%), rgba(255,255,255,.55), transparent 42%),
+    linear-gradient(calc(115deg + var(--tx, 0) * 30deg), transparent 30%, color-mix(in srgb, var(--rk, #c9a84c) 70%, #fff) 48%, transparent 62%); }
+/* Fondateur : or ; Monarque : arc-en-ciel ; les autres grades : leur couleur. */
+.mc[data-rank="Fondateur"] .mc-holo { background:
+    radial-gradient(circle at calc(50% + var(--tx, 0) * 45%) calc(50% + var(--ty, 0) * 45%), rgba(255,248,214,.7), transparent 45%),
+    repeating-linear-gradient(calc(120deg + var(--tx, 0) * 40deg), transparent 0 10%, rgba(255,215,0,.55) 16%, transparent 24%); }
+.mc[data-rank="Monarque"] .mc-holo, .mc[data-rank="Ex Monarque"] .mc-holo { background:
+    radial-gradient(circle at calc(50% + var(--tx, 0) * 45%) calc(50% + var(--ty, 0) * 45%), rgba(255,255,255,.5), transparent 40%),
+    linear-gradient(calc(125deg + var(--tx, 0) * 50deg), #ff4d6d55, #ffd16655 20%, #06d6a055 40%, #4cc9f055 60%, #b388ff55 80%, #ff4d6d55); }
+@media (prefers-reduced-motion: no-preference) {
+  :root .mc.is-tilt { transform: translate(-3px, -3px) perspective(900px) rotateX(calc(var(--ty, 0) * -8deg)) rotateY(calc(var(--tx, 0) * 10deg)); transition: transform 90ms linear, box-shadow var(--gk-fast) var(--gk-ease); }
+  :root .mc.is-tilt .mc-holo { opacity: .85; }
+  /* Téléphone Android : l'inclinaison de l'appareil anime toutes les cartes. */
+  html[data-gyro="on"] .mc { --tx: var(--gyro-x); --ty: var(--gyro-y); transform: perspective(900px) rotateX(calc(var(--gyro-y) * -6deg)) rotateY(calc(var(--gyro-x) * 8deg)); transition: transform 120ms linear; }
+  html[data-gyro="on"] .mc .mc-holo { opacity: calc(.25 + (var(--gyro-x) * var(--gyro-x) + var(--gyro-y) * var(--gyro-y)) * .6); }
+  :root .pf-panel.is-tilt { transform: perspective(1000px) rotateX(calc(var(--ty, 0) * -5deg)) rotateY(calc(var(--tx, 0) * 6deg)); transition: transform 90ms linear; }
+  :root .fp-poster.is-tilt { transform: perspective(700px) rotateX(calc(var(--ty, 0) * -8deg)) rotateY(calc(var(--tx, 0) * 10deg)) scale(1.03); transition: transform 90ms linear; }
+}
+
+/* ── Encrage au défilement : titres tracés, images du croquis à la couleur ─── */
+@media (prefers-reduced-motion: no-preference) {
+  [data-gk-motion].gk-motion-pending :is(h2, h3).gk-display { clip-path: inset(-10% 100% -10% 0); }
+  [data-gk-motion].gk-motion-visible :is(h2, h3).gk-display { clip-path: inset(-10% -2% -10% 0); transition: clip-path 760ms cubic-bezier(.65, 0, .25, 1) 80ms; }
+  [data-gk-motion].gk-motion-pending img { filter: grayscale(1) contrast(1.7) brightness(1.12); }
+  [data-gk-motion].gk-motion-visible img { filter: none; transition: filter 1100ms ease-out 200ms; }
+}
+
+/* ── Teinte selon le moment de la journée (très légère, jamais sur les écrans de jeu) */
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: 70vh; z-index: 0; pointer-events: none; opacity: 0; transition: opacity 1.2s;
+  background: radial-gradient(120% 70% at 50% -10%, var(--gk-ambient, transparent), transparent 70%); }
+html[data-daypart="matin"] body::before { --gk-ambient: rgba(255, 214, 150, .10); opacity: 1; }
+html[data-daypart="soir"] body::before { --gk-ambient: rgba(255, 110, 70, .12); opacity: 1; }
+html[data-daypart="nuit"] body::before { --gk-ambient: rgba(90, 110, 255, .10); opacity: 1; }
+body.fx-ingame::before { display: none; }
+
+/* ── Célébrations ─────────────────────────────────────────────────────────── */
+.gk-confetti { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 13500; pointer-events: none; }
+.gk-stamp { position: fixed; left: 50%; top: 42%; z-index: 13600; display: grid; justify-items: center; gap: 4px; padding: 14px 28px 12px; pointer-events: none;
+  color: #d7332b; border: 6px solid #d7332b; outline: 2px solid #d7332b; outline-offset: 4px; background: rgba(255, 250, 240, .9);
+  transform: translate(-50%, -50%) rotate(-8deg); font-family: var(--gk-font-display); text-transform: uppercase; box-shadow: 0 10px 40px rgba(0,0,0,.35); }
+.gk-stamp b { font-size: clamp(2.2rem, 9vw, 4.4rem); line-height: .9; letter-spacing: .04em; }
+.gk-stamp small { font: 800 clamp(.8rem, 2.6vw, 1rem) var(--gk-font-ui); letter-spacing: .1em; color: #0d0c10; }
+.gk-stamp.is-big b { font-size: clamp(2.6rem, 11vw, 5.4rem); }
+@media (prefers-reduced-motion: no-preference) {
+  .gk-stamp { animation: gk-stamp-in 420ms cubic-bezier(.2, 1.6, .4, 1) both, gk-stamp-out 300ms ease-in 1600ms both; }
+  .gk-stamp.is-big { animation: gk-stamp-in 460ms cubic-bezier(.2, 1.6, .4, 1) both, gk-stamp-out 320ms ease-in 2300ms both; }
+}
+@keyframes gk-stamp-in { from { transform: translate(-50%, -50%) rotate(-20deg) scale(2.6); opacity: 0; } 60% { opacity: 1; } }
+@keyframes gk-stamp-out { to { transform: translate(-50%, -50%) rotate(-8deg) scale(.9); opacity: 0; } }
+
+/* ── Changement de page : bande d'encre et traits de vitesse qui balaient l'écran ── */
+/* Posée hors écran à droite (aucun flash) ; la transition de vue la fait traverser. */
+.gk-swoosh { position: fixed; inset: 0; z-index: 99990; pointer-events: none; view-transition-name: gk-swoosh; transform: translateX(105%);
+  background:
+    linear-gradient(105deg, transparent 0 38%, #0d0c10 38% 46%, #d7332b 46% 49%, #0d0c10 49% 57%, transparent 57%); }
+.gk-swoosh::after { content: ""; position: absolute; inset: 0;
+  background: repeating-linear-gradient(15deg, transparent 0 34px, rgba(246, 240, 230, .5) 34px 36px, transparent 36px 90px);
+  -webkit-mask-image: linear-gradient(105deg, transparent 22%, #000 36%, #000 58%, transparent 72%); mask-image: linear-gradient(105deg, transparent 22%, #000 36%, #000 58%, transparent 72%); }
+::view-transition-group(gk-swoosh) { animation: none; }
+::view-transition-old(gk-swoosh) { animation: 460ms cubic-bezier(.7, 0, .2, 1) both gk-swoosh-run; }
+::view-transition-new(gk-swoosh) { display: none; }
+@keyframes gk-swoosh-run { from { transform: translateX(0); } to { transform: translateX(-200%); } }
+@media (prefers-reduced-motion: reduce) { .gk-swoosh { display: none; } }
+
+/* ── Couverture de l'accueil : fond vivant ────────────────────────────────── */
+.hm-cover-fx { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+.hm-cover > :not(.hm-cover-fx):not(.hm-cover-speed) { position: relative; z-index: 1; }
+
+/* ── Chargement : l'emblème se dessine ────────────────────────────────────── */
+.gk-loading { min-height: 70vh; display: grid; place-content: center; justify-items: center; gap: 18px; }
+.gk-loading-mark { position: relative; width: 168px; height: 168px; display: grid; place-items: center; }
+.gk-loading-mark img { position: relative; width: 120px; height: 120px; filter: drop-shadow(5px 5px 0 var(--gk-text));
+  -webkit-mask-image: linear-gradient(115deg, #000 45%, transparent 55%); mask-image: linear-gradient(115deg, #000 45%, transparent 55%);
+  -webkit-mask-size: 260% 100%; mask-size: 260% 100%; -webkit-mask-position: 100% 0; mask-position: 100% 0; }
+.gk-loading-burst { position: absolute; inset: 0; border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, var(--gk-text) 0 2deg, transparent 2deg 14deg);
+  -webkit-mask-image: radial-gradient(circle, transparent 52%, #000 54%, #000 68%, transparent 70%); mask-image: radial-gradient(circle, transparent 52%, #000 54%, #000 68%, transparent 70%); opacity: .25; }
+.gk-loading-text { font: 900 italic 1rem var(--gk-font-ui); letter-spacing: .3em; text-transform: uppercase; color: var(--gk-dim); }
+@media (prefers-reduced-motion: no-preference) {
+  .gk-loading-mark img { animation: gk-ink-draw 1.1s cubic-bezier(.65, 0, .25, 1) .15s both, gk-ink-breathe 1.6s ease-in-out 1.3s infinite; }
+  .gk-loading-burst { animation: gk-burst-spin 8s linear infinite; }
+  .gk-loading-text { animation: gk-ink-blink 1.2s steps(2, jump-none) infinite; }
+}
+@media (prefers-reduced-motion: reduce) { .gk-loading-mark img { -webkit-mask-position: 0 0; mask-position: 0 0; } }
+@keyframes gk-ink-draw { to { -webkit-mask-position: 0 0; mask-position: 0 0; } }
+@keyframes gk-ink-breathe { 50% { transform: scale(1.05) rotate(-2deg); } }
+@keyframes gk-burst-spin { to { transform: rotate(360deg); } }
+@keyframes gk-ink-blink { 50% { opacity: .35; } }
+
+/* ── Icônes de la Guilde : touche d'accent et petit saut à l'appui ─────────── */
+.gk-mobile-dock .gi-fill { fill: var(--gk-accent, #c9a84c); }
+.gk-mobile-dock .gi-accent { stroke: var(--gk-accent, #c9a84c); }
+.gk-mobile-dock svg { overflow: visible; }
+@media (prefers-reduced-motion: no-preference) {
+  .gk-mobile-dock a[aria-current="page"] svg { animation: gk-icon-pop 420ms cubic-bezier(.2, 1.6, .4, 1) both; }
+  .gk-mobile-dock a:active svg, .gk-mobile-dock button:active svg { transform: scale(.86) rotate(-6deg); transition: transform 80ms; }
+}
+@keyframes gk-icon-pop { from { transform: scale(.6) rotate(-12deg); } }
+
+/* Tuiles des jeux : icône en tampon d'encre, penchée, qui se redresse au survol. */
+.jx-tile-icon { transform: rotate(-6deg); box-shadow: 3px 3px 0 #0d0c10; clip-path: polygon(6% 0, 100% 4%, 94% 100%, 0 96%); transition: transform 200ms cubic-bezier(.2, 1.6, .4, 1); }
+.jx-tile:hover .jx-tile-icon, .jx-tile:focus-visible .jx-tile-icon, .jx-tile[aria-current="true"] .jx-tile-icon { transform: rotate(4deg) scale(1.12); }
