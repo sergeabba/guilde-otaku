@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { LEVEL_LABEL, LEVEL_MULT, parseLevel, type Level } from "../../lib/games/levels";
 
-export type Game = "quiz-generique" | "quiz-nostalgie" | "affiche" | "plus-moins" | "defi-jour" | "devine-anime" | "devine-perso" | "emoji-quiz" | "themes" | "createur" | "studio" | "voix" | "duel";
+export type Game = "quiz-generique" | "quiz-nostalgie" | "affiche" | "plus-moins" | "defi-jour" | "devine-anime" | "devine-perso" | "emoji-quiz" | "themes" | "createur" | "studio" | "voix" | "generiques" | "duel";
 export interface Play { id?: number; game: Game; member_id: number | null; player_name: string | null; score: number; max_score: number; detail: Record<string, unknown>; created_at: string }
 export interface LocalPlay { game: Game; score: number; max: number; at: string; label: string }
 
@@ -18,6 +18,7 @@ export const GAME_INFO: Record<Game, { label: string; unit: (p: { score: number;
   createur: { label: "Créateurs", unit: (p) => `${p.score} / ${p.max}` },
   studio: { label: "Studios", unit: (p) => `${p.score} / ${p.max}` },
   voix: { label: "Voix", unit: (p) => `${p.score} / ${p.max}` },
+  generiques: { label: "Génériques vidéo", unit: (p) => `${p.score} / ${p.max}` },
   "quiz-generique": { label: "Quiz génériques", unit: (p) => `${p.score} / ${p.max}` },
   "quiz-nostalgie": { label: "Nostalgie", unit: (p) => `${p.score} / ${p.max}` },
   affiche: { label: "Affiche", unit: (p) => `${p.score} / ${p.max}` },

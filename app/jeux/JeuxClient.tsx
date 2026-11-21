@@ -6,7 +6,7 @@
 // l'historique est aussi gardé sur l'appareil (utile tant que la table n'existe pas).
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { ArrowUpDown, Building2, Mic, PenTool, Tags, ScanSearch, Smile, UserSearch, Users, Award, CalendarCheck, Check, Clock, Grid3x3, Headphones, Heart, ListOrdered, Play, Radio, RotateCcw, Share2, Swords, Trophy, User } from "lucide-react";
+import { ArrowUpDown, Award, Building2, CalendarCheck, Check, Clock, Film, Grid3x3, Headphones, Heart, ListOrdered, Mic, PenTool, Play, Radio, RotateCcw, ScanSearch, Share2, Smile, Swords, Tags, Trophy, User, UserSearch, Users } from "lucide-react";
 import GuildeHeader from "../components/GuildeHeader";
 import { fetchMembers } from "../utils/dataAdapter";
 import { useShare } from "../hooks/useShare";
@@ -19,9 +19,10 @@ import { Affiche, DefiJour, PlusMoins, TierList } from "./Arcade";
 import Live from "./Live";
 import { DevineAnime, DevinePerso, EmojiQuiz } from "./Dle";
 import Qcm from "./Qcm";
+import Clips from "./Clips";
 import "./jeux.css";
 
-type Tab = "defi-jour" | "devine-anime" | "devine-perso" | "emoji" | "themes" | "createur" | "studio" | "voix" | "direct" | "quiz" | "nostalgie" | "affiche" | "plus-moins" | "tier" | "duel" | "badges" | "classement";
+type Tab = "defi-jour" | "devine-anime" | "devine-perso" | "emoji" | "themes" | "createur" | "studio" | "voix" | "generiques" | "direct" | "quiz" | "nostalgie" | "affiche" | "plus-moins" | "tier" | "duel" | "badges" | "classement";
 
 const MENU: { id: Tab; label: string; sub: string; Icon: typeof Award; color: string }[] = [
   { id: "defi-jour", label: "Défi du jour", sub: "Une question, une seule chance", Icon: CalendarCheck, color: "#f5a524" },
@@ -35,6 +36,7 @@ const MENU: { id: Tab; label: string; sub: string; Icon: typeof Award; color: st
   { id: "direct", label: "Quiz en direct", sub: "À plusieurs, en temps réel", Icon: Users, color: "#2dd4bf" },
   { id: "quiz", label: "Quiz génériques", sub: "10 extraits à reconnaître", Icon: Headphones, color: "#e8412c" },
   { id: "nostalgie", label: "Blind test Nostalgie", sub: "Club Dorothée, Récré A2", Icon: Radio, color: "#ff6b9a" },
+  { id: "generiques", label: "Blind test vidéo", sub: "Génériques floutés", Icon: Film, color: "#f43f5e" },
   { id: "affiche", label: "L'Affiche en morceaux", sub: "Case par case", Icon: Grid3x3, color: "#3fa7d6" },
   { id: "plus-moins", label: "Plus ou moins", sub: "Quelle note AniList ?", Icon: ArrowUpDown, color: "#22c55e" },
   { id: "tier", label: "Tier list", sub: "Les sorties de la semaine", Icon: ListOrdered, color: "#a78bfa" },
@@ -134,6 +136,7 @@ export default function JeuxClient() {
         {tab === "devine-anime" && <DevineAnime key={level} level={level} player={player} onRanking={showRanking} />}
         {tab === "devine-perso" && <DevinePerso key={level} level={level} player={player} onRanking={showRanking} />}
         {tab === "emoji" && <EmojiQuiz key={level} level={level} player={player} onRanking={showRanking} />}
+        {tab === "generiques" && <Clips key={`clips-${level}`} level={level} player={player} onRanking={showRanking} />}
         {(tab === "themes" || tab === "createur" || tab === "studio" || tab === "voix") && <Qcm key={`${tab}-${level}`} kind={tab} level={level} player={player} onRanking={showRanking} />}
         {tab === "direct" && <Live player={player} members={members} initialCode={salle} level={level} />}
         {tab === "quiz" && <Quiz key={`q${defi ?? ""}-${level}`} level={level} player={player} mode="generique" defi={defi} onRanking={showRanking} />}

@@ -503,3 +503,39 @@ describe("La voix : seconde source Deezer", () => {
     expect(pickVoiceClip(list, "中村悠一", "五条悟")).toEqual({ url: "https://cdnt-preview.dzcdn.net/a.mp3", inRole: true });
   });
 });
+
+import { buildClips, openClips, scoreClips, clipPoints } from "../lib/games/clips";
+import { blurAt } from "../lib/games/clips-config";
+describe("Blind test vidéo (génériques officiels)", () => {
+  process.env.GAME_SECRET ||= "test-secret";
+  it("8 séries différentes, la bonne réponse jamais en leurre, 6 choix en Expert", () => {
+    for (const level of ["facile", "expert"] as const) {
+      const { token, rounds } = buildClips(level);
+      const key = openClips(token)!;
+      expect(rounds).toHaveLength(8);
+      const answers = rounds.map((r, i) => r.choices[key.answers[i]]);
+      expect(new Set(answers).size).toBe(8);
+      rounds.forEach((r, i) => {
+        expect(r.choices).toHaveLength(level === "expert" ? 6 : 4);
+        expect(r.choices.filter((c) => answers.includes(c))).toEqual([answers[i]]);
+        expect(r.start).toBeGreaterThanOrEqual(6);
+      });
+    }
+  });
+  it("compte plus de points quand on répond tôt, et rien si c'est faux", () => {
+    expect(clipPoints(true, 0, "normal")).toBe(300);
+    expect(clipPoints(true, 30_000, "normal")).toBe(150);
+    expect(clipPoints(false, 0, "expert")).toBe(0);
+    const { token } = buildClips("facile");
+    const key = openClips(token)!;
+    const res = scoreClips(key, key.answers.map((a) => ({ choice: a, ms: 15_000 })));
+    expect(res.good).toBe(8);
+    expect(res.score).toBe(8 * 150);
+    expect(res.max).toBe(1600);
+  });
+  it("le flou diminue jusqu'à zéro", () => {
+    expect(blurAt("normal", 0)).toBe(24);
+    expect(blurAt("normal", 10_000)).toBe(12);
+    expect(blurAt("normal", 25_000)).toBe(0);
+  });
+});

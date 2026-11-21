@@ -5,7 +5,7 @@ import { createHash } from "node:crypto";
 import { getServiceClient } from "../supabase-admin";
 import { NO_STATS, type MemberStats } from "./badges";
 
-export const GAMES = ["quiz-generique", "quiz-nostalgie", "affiche", "plus-moins", "defi-jour", "devine-anime", "devine-perso", "emoji-quiz", "themes", "createur", "studio", "voix", "duel"] as const;
+export const GAMES = ["quiz-generique", "quiz-nostalgie", "affiche", "plus-moins", "defi-jour", "devine-anime", "devine-perso", "emoji-quiz", "themes", "createur", "studio", "voix", "generiques", "duel"] as const;
 /** Jeux à une partie par jour : classés au total de points. */
 export const DAILY_GAMES: readonly Game[] = ["defi-jour", "devine-anime", "devine-perso"];
 export type Game = (typeof GAMES)[number];
