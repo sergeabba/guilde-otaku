@@ -551,5 +551,6 @@ describe("profil vivant : records aux jeux", () => {
     ]);
     expect(r.map((x) => x.game)).toEqual(["quiz-generique", "voix"]);
     expect(r[0]).toMatchObject({ plays: 2, best: 900, pct: 60, level: "Normal", last: "2026-11-21T10:00:00Z" });
+    expect(gameRecords([{ game: "plus-moins", score: 80, max_score: 780, created_at: "2026-11-19T10:00:00Z" }])[0]).toMatchObject({ best: 80, pct: -1 });
   });
 });

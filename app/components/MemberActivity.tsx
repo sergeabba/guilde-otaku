@@ -48,9 +48,9 @@ export default function MemberActivity({ id, firstName, head }: { id: number; fi
                   <li key={r.game} style={{ "--pct": `${r.pct}%` } as React.CSSProperties}>
                     <Link href={`/jeux?jeu=${TAB[r.game] ?? r.game}`}>
                       <span className="pf-rec-game">{r.label}</span>
-                      <b className="pf-rec-score">{r.best}<small> / {r.bestMax}</small></b>
-                      <span className="pf-rec-bar" aria-hidden="true"><i /></span>
-                      <small className="pf-rec-meta">{[`${r.pct} %`, r.level, `${r.plays} partie${r.plays > 1 ? "s" : ""}`].filter(Boolean).join(" · ")}</small>
+                      <b className="pf-rec-score">{r.best}{r.pct >= 0 && <small> / {r.bestMax}</small>}</b>
+                      {r.pct >= 0 && <span className="pf-rec-bar" aria-hidden="true"><i /></span>}
+                      <small className="pf-rec-meta">{[r.pct >= 0 ? `${r.pct} %` : "record", r.level, `${r.plays} partie${r.plays > 1 ? "s" : ""}`].filter(Boolean).join(" · ")}</small>
                     </Link>
                   </li>
                 ))}

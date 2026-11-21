@@ -19,11 +19,14 @@ export interface MemberActivity { available: boolean; plays: number; records: Ga
 export const EMPTY_ACTIVITY: MemberActivity = { available: false, plays: 0, records: [], films: [], bash: { watch: 0, skip: 0 }, last: null };
 
 /** Meilleure partie par jeu : le meilleur pourcentage du maximum (comparable entre niveaux). */
+/** Jeux sans plafond de points (série, compatibilité) : record brut, sans pourcentage. */
+const OPEN_SCORE = new Set(["plus-moins", "duel"]);
+
 export function gameRecords(rows: { game: string; score: number; max_score: number; created_at: string; detail?: Record<string, unknown> | null }[]): GameRecord[] {
   const by = new Map<string, GameRecord>();
   for (const r of rows) {
     if (!GAME_LABELS[r.game]) continue;
-    const pct = r.max_score > 0 ? Math.round((100 * r.score) / r.max_score) : 0;
+    const pct = OPEN_SCORE.has(r.game) ? -1 : r.max_score > 0 ? Math.round((100 * r.score) / r.max_score) : 0;
     const cur = by.get(r.game);
     const level = typeof r.detail?.level === "string" ? LEVEL_LABEL[r.detail.level as string] ?? null : null;
     if (!cur) { by.set(r.game, { game: r.game, label: GAME_LABELS[r.game], plays: 1, best: r.score, bestMax: r.max_score, pct, level, last: r.created_at }); continue; }
