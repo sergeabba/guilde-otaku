@@ -2,13 +2,17 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { ArrowLeft, Bot, Dices, Search, Swords, Undo2, Users } from "lucide-react";
+import { ArrowLeft, Dices, Home, RotateCcw, Search, Swords, Undo2 } from "lucide-react";
 import GuildeHeader from "../components/GuildeHeader";
 import { RANK_FILTER_ORDER, type Rank } from "../../data/members";
 import { rankAccents, rankRomaji } from "../config/ranks";
 import type { AiLevel } from "../../lib/fighters/ai";
 import { CUSTOM_IDS } from "../../lib/fighters/characters";
 import FighterPreview from "./FighterPreview";
+import { STAGES, type Stage } from "../../lib/fighters/stages";
+import { MAX_HP } from "../../lib/fighters/engine";
+import { celebrate } from "../../lib/fx";
+import type { MatchResult } from "./FightScreen";
 import { useMusicDock } from "../components/MusicDock";
 
 const FightScreen = dynamic(() => import("./FightScreen"), { ssr: false });
@@ -30,7 +34,6 @@ export interface RosterMember {
 
 export type Mode = "team" | "duel";
 export type Versus = "ia" | "local";
-type Screen = "title" | "select" | "vs" | "fight";
 
 const teamSize = (m: Mode) => (m === "team" ? 3 : 1);
 const accentOf = (r: RosterMember) => rankAccents[r.rank as Rank] ?? r.color ?? "#c9a84c";
@@ -58,14 +61,60 @@ function Portrait({ m, kind = "anime", className = "" }: { m: RosterMember; kind
   return <img className={className} src={src} alt="" loading="lazy" decoding="async" style={{ objectPosition: pos }} onError={() => setBroken(src)} />;
 }
 
-// ─── Écran titre ──────────────────────────────────────────────────────────────
-function TitleScreen({ roster, mode, setMode, versus, setVersus, level, setLevel, onStart }: {
-  roster: RosterMember[]; mode: Mode; setMode: (m: Mode) => void; versus: Versus; setVersus: (v: Versus) => void;
+// ─── Écran titre (façon MUGEN) ───────────────────────────────────────────────
+// « Appuie sur Entrée », puis menu vertical des modes : flèches + Entrée au clavier,
+// ou toucher. Le mode surligné est décrit en bas, comme dans les jeux de combat.
+export type GameMode = "arcade" | "versus" | "equipes" | "survie" | "entrainement" | "spectateur";
+export const MODES: { id: GameMode; label: string; desc: string }[] = [
+  { id: "arcade", label: "Arcade", desc: "Un combattant contre six adversaires de la Guilde, l'un après l'autre. Perds, et tu peux continuer." },
+  { id: "versus", label: "Versus", desc: "Duel en deux manches gagnantes, contre l'IA ou à deux sur le même clavier." },
+  { id: "equipes", label: "Équipes 3 contre 3", desc: "Élimination : le vainqueur reste en piste, avec la vie qu'il lui reste." },
+  { id: "survie", label: "Survie", desc: "Une manche par adversaire, la vie se garde d'un combat à l'autre. Jusqu'où iras-tu ?" },
+  { id: "entrainement", label: "Entraînement", desc: "Sans chrono ni K.-O., jauges pleines : répète tes coups spéciaux et tes combos." },
+  { id: "spectateur", label: "Spectateur", desc: "Deux IA s'affrontent : choisis ton champion et regarde." },
+];
+const LEVELS: AiLevel[] = ["facile", "normal", "difficile"];
+
+function TitleScreen({ roster, game, setGame, versus, setVersus, level, setLevel, onStart }: {
+  roster: RosterMember[]; game: GameMode; setGame: (m: GameMode) => void; versus: Versus; setVersus: (v: Versus) => void;
   level: AiLevel; setLevel: (l: AiLevel) => void; onStart: () => void;
 }) {
   const strip = useMemo(() => roster.filter((m) => m.anime || m.photo).slice(0, 18), [roster]);
+  const [stage, setStage] = useState<"press" | "menu" | "who">("press");
+  const items = [...MODES.map((m) => m.id), "options"] as const;
+  const [cur, setCur] = useState(Math.max(0, items.indexOf(game)));
+  const [whoCur, setWhoCur] = useState(versus === "local" ? 1 : 0);
+  const choose = useCallback((i: number) => {
+    const id = items[i];
+    if (id === "options") { setLevel(LEVELS[(LEVELS.indexOf(level) + 1) % LEVELS.length]); return; }
+    setGame(id);
+    if (id === "versus" || id === "equipes") { setStage("who"); return; }
+    setVersus("ia"); onStart();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [level, onStart, setGame, setLevel, setVersus]);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (stage === "press") { if (["Enter", "Space", "NumpadEnter", "KeyJ", "KeyU"].includes(e.code)) { e.preventDefault(); setStage("menu"); } return; }
+      if (stage === "who") {
+        if (e.code === "ArrowUp" || e.code === "ArrowDown" || e.code === "KeyW" || e.code === "KeyS") { e.preventDefault(); setWhoCur((c) => 1 - c); }
+        else if (e.code === "Enter" || e.code === "Space" || e.code === "KeyJ") { e.preventDefault(); setVersus(whoCur ? "local" : "ia"); onStart(); }
+        else if (e.code === "Escape" || e.code === "KeyK") setStage("menu");
+        return;
+      }
+      if (e.code === "ArrowDown" || e.code === "KeyS") { e.preventDefault(); setCur((c) => (c + 1) % items.length); }
+      else if (e.code === "ArrowUp" || e.code === "KeyW") { e.preventDefault(); setCur((c) => (c + items.length - 1) % items.length); }
+      else if ((e.code === "ArrowLeft" || e.code === "ArrowRight") && items[cur] === "options") { e.preventDefault(); const d = e.code === "ArrowLeft" ? -1 : 1; setLevel(LEVELS[(LEVELS.indexOf(level) + d + LEVELS.length) % LEVELS.length]); }
+      else if (e.code === "Enter" || e.code === "Space" || e.code === "KeyJ") { e.preventDefault(); choose(cur); }
+      else if (e.code === "Escape") setStage("press");
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stage, cur, whoCur, level, choose, onStart, setLevel, setVersus]);
+
+  const desc = items[cur] === "options" ? `Niveau de l'IA : ${level}. Flèches gauche et droite (ou toucher) pour changer.` : MODES.find((m) => m.id === items[cur])?.desc;
   return (
-    <section className="fx-title" aria-labelledby="fx-title-h">
+    <section className="fx-title is-mugen" aria-labelledby="fx-title-h" onClick={() => stage === "press" && setStage("menu")}>
       <div className="fx-title-strips" aria-hidden="true">
         {[0, 1, 2].map((row) => (
           <div key={row} className={`fx-strip fx-strip--${row}`}>
@@ -79,30 +128,160 @@ function TitleScreen({ roster, mode, setMode, versus, setVersus, level, setLevel
       <div className="fx-title-inner">
         <p className="fx-kicker">Chapitre IV · L&apos;arène</p>
         <h1 id="fx-title-h" className="fx-logo"><span>GUILDE</span><span>FIGHTERS</span></h1>
-        <p className="fx-tagline">Compose ton équipe de nakama, puis affronte la Guilde dans un vrai combat 2D.</p>
-
-        <div className="fx-setup">
-          <fieldset className="fx-choice">
-            <legend>Format</legend>
-            <button type="button" aria-pressed={mode === "team"} onClick={() => setMode("team")}><Users size={18} aria-hidden="true" /> Équipes 3 contre 3<small>Élimination : le vainqueur reste</small></button>
-            <button type="button" aria-pressed={mode === "duel"} onClick={() => setMode("duel")}><Swords size={18} aria-hidden="true" /> Duel 1 contre 1<small>Deux manches gagnantes</small></button>
-          </fieldset>
-          <fieldset className="fx-choice">
-            <legend>Adversaire</legend>
-            <button type="button" aria-pressed={versus === "ia"} onClick={() => setVersus("ia")}><Bot size={18} aria-hidden="true" /> Contre l&apos;IA<small>Ordinateur, niveau réglable</small></button>
-            <button type="button" aria-pressed={versus === "local"} onClick={() => setVersus("local")}><Users size={18} aria-hidden="true" /> 2 joueurs<small>Même clavier, sur ordinateur</small></button>
-          </fieldset>
-          {versus === "ia" && (
-            <fieldset className="fx-choice fx-choice--small">
-              <legend>Niveau de l&apos;IA</legend>
-              {(["facile", "normal", "difficile"] as AiLevel[]).map((l) => (
-                <button key={l} type="button" aria-pressed={level === l} onClick={() => setLevel(l)}>{l[0].toUpperCase() + l.slice(1)}</button>
+        {stage === "press" && (
+          <button type="button" className="fx-press" onClick={(e) => { e.stopPropagation(); setStage("menu"); }}>Appuie sur Entrée</button>
+        )}
+        {stage === "menu" && (
+          <nav className="fx-menu" aria-label="Modes de jeu">
+            <ul role="listbox" aria-label="Mode de jeu" aria-activedescendant={`fx-mode-${items[cur]}`}>
+              {items.map((id, i) => (
+                <li key={id} id={`fx-mode-${id}`} role="option" aria-selected={cur === i}>
+                  <button type="button" className={cur === i ? "is-cur" : ""} onMouseEnter={() => setCur(i)} onFocus={() => setCur(i)} onClick={() => { setCur(i); choose(i); }}>
+                    {id === "options" ? <>Options <em>IA : {level}</em></> : MODES.find((m) => m.id === id)!.label}
+                  </button>
+                </li>
               ))}
-            </fieldset>
-          )}
-        </div>
-        <button type="button" className="fx-cta" onClick={onStart}>Choisir les combattants</button>
-        <p className="fx-proto">Personnages en pixel art inspirés des photos de la Guilde. Combat à quatre boutons, garde haute et basse, combos et jauge de super. Les interprétations visuelles restent à valider par les membres.</p>
+            </ul>
+            <p className="fx-menu-desc" aria-live="polite">{desc}</p>
+          </nav>
+        )}
+        {stage === "who" && (
+          <nav className="fx-menu" aria-label="Adversaire">
+            <ul role="listbox" aria-label="Adversaire">
+              {["Contre l'IA", "2 joueurs (même clavier)"].map((label, i) => (
+                <li key={label} role="option" aria-selected={whoCur === i}>
+                  <button type="button" className={whoCur === i ? "is-cur" : ""} onMouseEnter={() => setWhoCur(i)} onClick={() => { setVersus(i ? "local" : "ia"); onStart(); }}>{label}</button>
+                </li>
+              ))}
+              <li><button type="button" className="fx-menu-back" onClick={() => setStage("menu")}>Retour</button></li>
+            </ul>
+            <p className="fx-menu-desc">{MODES.find((m) => m.id === game)?.label} : {whoCur ? "J1 à gauche (ZQSD + UIJK), J2 à droite (flèches + pavé numérique)." : `l'ordinateur, niveau ${level}.`}</p>
+          </nav>
+        )}
+        <p className="fx-proto">Personnages en pixel art inspirés des photos de la Guilde. Combat à quatre boutons, garde haute et basse, combos et jauge de super.</p>
+      </div>
+    </section>
+  );
+}
+
+// ─── Choix de l'arène ────────────────────────────────────────────────────────
+function StageThumb({ stage }: { stage: Stage }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => { const c = ref.current?.getContext("2d"); if (c) stage.paint(c); }, [stage]);
+  return <canvas ref={ref} width={384} height={216} className="fx-stage-thumb" aria-hidden="true" />;
+}
+
+function StageScreen({ onPick, onBack }: { onPick: (s: Stage) => void; onBack: () => void }) {
+  const [cur, setCur] = useState(0);
+  const all = STAGES.length + 1; // + « Au hasard »
+  const pick = useCallback((i: number) => onPick(i >= STAGES.length ? STAGES[Math.floor(Math.random() * STAGES.length)] : STAGES[i]), [onPick]);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (["ArrowRight", "KeyD", "ArrowDown", "KeyS"].includes(e.code)) { e.preventDefault(); setCur((c) => (c + 1) % all); }
+      else if (["ArrowLeft", "KeyA", "ArrowUp", "KeyW"].includes(e.code)) { e.preventDefault(); setCur((c) => (c + all - 1) % all); }
+      else if (["Enter", "Space", "KeyJ", "NumpadEnter"].includes(e.code)) { e.preventDefault(); pick(cur); }
+      else if (e.code === "Escape" || e.code === "KeyK") onBack();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [cur, all, pick, onBack]);
+  const shown = cur < STAGES.length ? STAGES[cur] : null;
+  return (
+    <section className="fx-stagesel" aria-labelledby="fx-stage-h">
+      <header className="fxs-top">
+        <button type="button" className="fx-ghost fxs-back" onClick={onBack}><ArrowLeft size={16} aria-hidden="true" /> Combattants</button>
+        <h1 id="fx-stage-h" className="fxs-title">Choisis l&apos;arène</h1>
+      </header>
+      <div className="fx-stage-big">
+        {shown ? <StageThumb key={shown.id} stage={shown} /> : <span className="fx-stage-random" aria-hidden="true">?</span>}
+        <p className="fx-stage-name"><b>{shown ? shown.name : "Au hasard"}</b><small>{shown ? shown.romaji : "Une arène tirée au sort"}</small></p>
+      </div>
+      <ul className="fx-stage-list" role="listbox" aria-label="Arènes">
+        {[...STAGES, null].map((st, i) => (
+          <li key={st?.id ?? "random"} role="option" aria-selected={cur === i}>
+            <button type="button" className={cur === i ? "is-cur" : ""} onMouseEnter={() => setCur(i)} onFocus={() => setCur(i)} onClick={() => (cur === i ? pick(i) : setCur(i))}>
+              {st ? <StageThumb stage={st} /> : <span className="fx-stage-random is-small" aria-hidden="true">?</span>}
+              <span>{st ? st.name : "Au hasard"}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+      <footer className="fxs-bar">
+        <p className="fxs-help">Touche une arène, puis touche-la à nouveau (ou Entrée) pour la choisir.</p>
+        <div className="fxs-actions"><button type="button" className="fx-cta fx-cta--sm" onClick={() => pick(cur)}><Swords size={18} aria-hidden="true" /> Combattre ici</button></div>
+      </footer>
+    </section>
+  );
+}
+
+// ─── Victoire, continuer, fin de partie ──────────────────────────────────────
+/** Citation de victoire : la première phrase de la bio du membre (donnée réelle, jamais inventée). */
+const quoteOf = (m: RosterMember) => {
+  const first = m.bio.split(/(?<=[.!?…])\s/)[0]?.trim();
+  return first && first.length > 8 ? first : m.special?.effect || null;
+};
+
+function WinScreen({ winner, loser, line, next, onNext }: { winner: RosterMember; loser: RosterMember | null; line: string; next: string; onNext: () => void }) {
+  useEffect(() => {
+    const t = window.setTimeout(onNext, 7000);
+    const onKey = (e: KeyboardEvent) => { if (["Enter", "Space", "KeyJ", "NumpadEnter"].includes(e.code)) { e.preventDefault(); onNext(); } };
+    window.addEventListener("keydown", onKey);
+    return () => { window.clearTimeout(t); window.removeEventListener("keydown", onKey); };
+  }, [onNext]);
+  const quote = quoteOf(winner);
+  return (
+    <section className="fx-win" aria-labelledby="fx-win-h" style={{ "--fx-c": accentOf(winner) } as React.CSSProperties}>
+      <div className="fx-win-art"><Portrait m={winner} /></div>
+      <div className="fx-win-text">
+        <p className="fx-kicker">Victoire</p>
+        <h1 id="fx-win-h" className="fx-win-name">{winner.name}</h1>
+        {quote && <blockquote className="fx-win-quote">« {quote} »</blockquote>}
+        <p className="fx-muted">{line}{loser ? ` · ${loser.name} est vaincu` : ""}</p>
+        <button type="button" className="fx-cta fx-cta--sm" onClick={onNext} autoFocus>{next}</button>
+      </div>
+    </section>
+  );
+}
+
+function ContinueScreen({ player, onYes, onNo }: { player: RosterMember; onYes: () => void; onNo: () => void }) {
+  const [n, setN] = useState(9);
+  useEffect(() => {
+    if (n < 0) { onNo(); return; }
+    const t = window.setTimeout(() => setN((x) => x - 1), 1000);
+    return () => window.clearTimeout(t);
+  }, [n, onNo]);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (["Enter", "Space", "KeyJ", "NumpadEnter"].includes(e.code)) { e.preventDefault(); onYes(); }
+      else if (e.code === "Escape" || e.code === "KeyK") onNo();
+      else setN((x) => Math.max(0, x - 1)); // une autre touche accélère le décompte
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onYes, onNo]);
+  return (
+    <section className="fx-continue" aria-labelledby="fx-cont-h">
+      <div className="fx-continue-art"><Portrait m={player} /></div>
+      <h1 id="fx-cont-h" className="fx-continue-title">Continuer ?</h1>
+      <p className="fx-continue-count" aria-live="assertive">{Math.max(0, n)}</p>
+      <div className="fx-overlay-actions">
+        <button type="button" className="fx-cta fx-cta--sm" onClick={onYes} autoFocus><RotateCcw size={16} aria-hidden="true" /> Continuer</button>
+        <button type="button" className="fx-ghost" onClick={onNo}>Abandonner</button>
+      </div>
+    </section>
+  );
+}
+
+function OverScreen({ title, line, player, best, onAgain, onMenu }: { title: string; line: string; player: RosterMember | null; best?: string; onAgain: () => void; onMenu: () => void }) {
+  return (
+    <section className="fx-over" aria-labelledby="fx-over-h">
+      {player && <div className="fx-continue-art"><Portrait m={player} /></div>}
+      <h1 id="fx-over-h" className="fx-continue-title">{title}</h1>
+      <p className="fx-over-line">{line}</p>
+      {best && <p className="fx-muted">{best}</p>}
+      <div className="fx-overlay-actions">
+        <button type="button" className="fx-cta fx-cta--sm" onClick={onAgain} autoFocus><RotateCcw size={16} aria-hidden="true" /> Rejouer</button>
+        <button type="button" className="fx-ghost" onClick={onMenu}><Home size={16} aria-hidden="true" /> Menu principal</button>
       </div>
     </section>
   );
@@ -462,19 +641,33 @@ function VsScreen({ teams, labels, onDone, reduced }: { teams: [RosterMember[], 
 }
 
 // ─── Application ──────────────────────────────────────────────────────────────
+type Flow = "title" | "select" | "stage" | "vs" | "fight" | "result" | "continue" | "over";
+const ARCADE_LENGTH = 6;
+const SURVIE_KEY = "guilde-fighters-survie-record";
+const shuffled = <T,>(a: T[]) => { const x = [...a]; for (let i = x.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [x[i], x[j]] = [x[j], x[i]]; } return x; };
+
 export default function FightersApp({ roster }: { roster: RosterMember[] }) {
-  const [screen, setScreen] = useState<Screen>("select");
-  const [mode, setMode] = useState<Mode>("team");
+  const [screen, setScreen] = useState<Flow>("title");
+  const [game, setGame] = useState<GameMode>("arcade");
   const [versus, setVersus] = useState<Versus>("ia");
   const [level, setLevel] = useState<AiLevel>("normal");
   const [teams, setTeams] = useState<[RosterMember[], RosterMember[]]>([[], []]);
+  const [stage, setStage] = useState<Stage>(STAGES[0]);
   const [matchKey, setMatchKey] = useState(0);
+  // Échelle d'adversaires (Arcade, Survie) et état de la partie en cours.
+  const [ladder, setLadder] = useState<RosterMember[]>([]);
+  const [step, setStep] = useState(0);
+  const [p1Hp, setP1Hp] = useState(MAX_HP);
+  const [lastResult, setLastResult] = useState<MatchResult | null>(null);
+  const [over, setOver] = useState<{ title: string; line: string; best?: string } | null>(null);
   const reduced = useReducedMotion();
-  const labels: [string, string] = ["J1", versus === "ia" ? "IA" : "J2"];
+  const mode: Mode = game === "equipes" ? "team" : "duel";
+  const human2 = (game === "versus" || game === "equipes") && versus === "local";
+  const labels: [string, string] = game === "spectateur" ? ["IA 1", "IA 2"] : ["J1", human2 ? "J2" : "IA"];
   const toFight = useCallback(() => setScreen("fight"), []);
 
   useEffect(() => { window.scrollTo({ top: 0 }); }, [screen]);
-  const ingame = screen === "select" || screen === "vs" || screen === "fight";
+  const ingame = screen !== "title";
   // Le lecteur de musique flottant se réduit (en pause) pendant les écrans plein jeu.
   const dock = useMusicDock();
   const dockMinimize = dock?.minimize;
@@ -485,6 +678,53 @@ export default function FightersApp({ roster }: { roster: RosterMember[] }) {
     return () => document.body.classList.remove("fx-ingame");
   }, [ingame]);
 
+  const ladderGame = game === "arcade" || game === "survie";
+  const opponent = ladderGame ? ladder[step] : null;
+  const fightTeams: [RosterMember[], RosterMember[]] = opponent ? [teams[0], [opponent]] : teams;
+
+  const onReady = useCallback((t1: RosterMember[], t2: RosterMember[]) => {
+    setTeams([t1, t2]);
+    if (game === "arcade" || game === "survie") {
+      const others = shuffled(roster.filter((m) => m.id !== t1[0].id && m.id !== t2[0].id));
+      setLadder(game === "arcade" ? [t2[0], ...others].slice(0, ARCADE_LENGTH) : [t2[0], ...others]);
+      setStep(0); setP1Hp(MAX_HP);
+    }
+    setScreen("stage");
+  }, [game, roster]);
+
+  const finish = useCallback((r: MatchResult) => {
+    setLastResult(r);
+    if (game === "arcade") {
+      if (r.winner === 0) {
+        if (step + 1 >= ladder.length) {
+          celebrate({ title: "Arcade terminée", sub: `${teams[0][0].name} a vaincu la Guilde`, big: true });
+          setOver({ title: "Arcade terminée !", line: `${teams[0][0].name} a battu ${ladder.length} adversaires de la Guilde.` });
+          setScreen("over");
+        } else setScreen("result");
+      } else setScreen("continue");
+    } else if (game === "survie") {
+      if (r.winner === 0) {
+        // La vie se garde, avec un petit regain entre deux combats.
+        setP1Hp(Math.min(MAX_HP, Math.max(1, r.hp[0]) + 150));
+        setScreen("result");
+      } else {
+        const wins = step;
+        let record = wins;
+        try { record = Math.max(wins, Number(localStorage.getItem(SURVIE_KEY)) || 0); localStorage.setItem(SURVIE_KEY, String(record)); } catch { /* stockage indisponible */ }
+        setOver({ title: "Fin de la survie", line: `${teams[0][0].name} : ${wins} victoire${wins > 1 ? "s" : ""} d'affilée.`, best: `Record sur cet appareil : ${record} victoire${record > 1 ? "s" : ""}.` });
+        setScreen("over");
+      }
+    }
+  }, [game, step, ladder.length, teams]);
+
+  const nextFight = useCallback(() => {
+    setStep((x) => x + 1);
+    // Arène suivante de la liste, pour varier les décors.
+    setStage((st) => STAGES[(STAGES.indexOf(st) + 1) % STAGES.length]);
+    setMatchKey((k) => k + 1);
+    setScreen("vs");
+  }, []);
+
   if (roster.length < 2) {
     return (
       <div className="fx-root">
@@ -494,20 +734,37 @@ export default function FightersApp({ roster }: { roster: RosterMember[] }) {
     );
   }
 
+  const caption = game === "arcade" ? `Arcade ${step + 1} / ${ladder.length}` : game === "survie" ? `Survie · ${step} victoire${step > 1 ? "s" : ""}` : game === "entrainement" ? "Entraînement" : game === "spectateur" ? "Spectateur" : undefined;
+
   return (
     <div className={`fx-root${ingame ? " is-ingame" : ""}`}>
       {!ingame && <GuildeHeader activePage="fighters" accentColor="#ffd700" tone="dark" />}
       {screen === "title" && (
-        <TitleScreen roster={roster} mode={mode} setMode={setMode} versus={versus} setVersus={setVersus} level={level} setLevel={setLevel} onStart={() => setScreen("select")} />
+        <TitleScreen roster={roster} game={game} setGame={setGame} versus={versus} setVersus={setVersus} level={level} setLevel={setLevel} onStart={() => setScreen("select")} />
       )}
       {screen === "select" && (
-        <SelectScreen key={`${mode}-${versus}`} roster={roster} mode={mode} versus={versus} reduced={reduced} onBack={() => setScreen("title")}
-          onReady={(t1, t2) => { setTeams([t1, t2]); setScreen("vs"); }} />
+        <SelectScreen key={`${game}-${versus}`} roster={roster} mode={mode} versus={human2 ? "local" : "ia"} reduced={reduced} onBack={() => setScreen("title")} onReady={onReady} />
       )}
-      {screen === "vs" && <VsScreen teams={teams} labels={labels} onDone={toFight} reduced={reduced} />}
+      {screen === "stage" && <StageScreen onBack={() => setScreen("select")} onPick={(st) => { setStage(st); setMatchKey((k) => k + 1); setScreen("vs"); }} />}
+      {screen === "vs" && <VsScreen teams={fightTeams} labels={labels} onDone={toFight} reduced={reduced} />}
       {screen === "fight" && (
-        <FightScreen key={matchKey} teams={teams} mode={mode} versus={versus} level={level} labels={labels} reduced={reduced}
+        <FightScreen key={matchKey} teams={fightTeams} mode={mode} versus={human2 ? "local" : "ia"} level={level} labels={labels} reduced={reduced}
+          stage={stage} cpuP1={game === "spectateur"} caption={caption}
+          opts={game === "entrainement" ? { training: true } : game === "survie" ? { firstTo: 1, startHp: [p1Hp, MAX_HP] } : {}}
+          onFinish={ladderGame ? finish : undefined}
           onRematch={() => setMatchKey((k) => k + 1)} onRoster={() => setScreen("select")} onHome={() => setScreen("title")} />
+      )}
+      {screen === "result" && opponent && (
+        <WinScreen winner={teams[0][0]} loser={opponent} next={game === "arcade" ? `Adversaire suivant (${step + 2} / ${ladder.length})` : "Adversaire suivant"}
+          line={[lastResult ? `Combo max : ${lastResult.bestCombo[0]} coups` : null, game === "survie" ? `Vie : ${Math.round((Math.min(MAX_HP, p1Hp) / MAX_HP) * 100)} %` : null].filter(Boolean).join(" · ")}
+          onNext={nextFight} />
+      )}
+      {screen === "continue" && teams[0][0] && (
+        <ContinueScreen player={teams[0][0]} onYes={() => { setMatchKey((k) => k + 1); setScreen("vs"); }}
+          onNo={() => { setOver({ title: "Fin de partie", line: `${teams[0][0].name} s'arrête au combat ${step + 1} sur ${ladder.length}.` }); setScreen("over"); }} />
+      )}
+      {screen === "over" && over && (
+        <OverScreen title={over.title} line={over.line} best={over.best} player={teams[0][0] ?? null} onAgain={() => setScreen("select")} onMenu={() => setScreen("title")} />
       )}
     </div>
   );

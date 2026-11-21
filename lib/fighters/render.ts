@@ -2,6 +2,7 @@
 // sans lissage. Tous les visuels sont originaux et générés ici (aucune image externe) :
 // deux silhouettes « prototypes » articulées, teintées avec la couleur du membre,
 // et un décor de dojo au crépuscule.
+import { STAGES, type Stage } from "./stages";
 import { sheetOf, frameFor, drawSprite } from "./sprites";
 import { FLOOR, STAGE_H, STAGE_W, type Fighter, type MatchEvent, type MatchState } from "./engine";
 
@@ -189,56 +190,8 @@ export function drawFighter(ctx: CanvasRenderingContext2D, f: Fighter, look: Loo
 }
 
 // ─── Décor original : dojo de la Guilde au crépuscule ────────────────────────
-export function paintStage(ctx: CanvasRenderingContext2D) {
-  const sky = ["#2a1442", "#3d1a52", "#5b2259", "#83305b", "#b4475a", "#e2685a", "#f39a5c", "#fbc276"];
-  const band = 112 / sky.length;
-  sky.forEach((c, i) => { ctx.fillStyle = c; ctx.fillRect(0, Math.round(i * band), STAGE_W, Math.ceil(band) + 1); });
-  // Tramage entre les bandes (pixel art).
-  for (let i = 1; i < sky.length; i++) {
-    ctx.fillStyle = sky[i];
-    const y = Math.round(i * band) - 1;
-    for (let x = (i % 2); x < STAGE_W; x += 2) ctx.fillRect(x, y, 1, 1);
-  }
-  // Soleil.
-  ctx.fillStyle = "#ffe3a0";
-  for (let r = 18; r > 0; r--) { const w = Math.round(Math.sqrt(18 * 18 - r * r) * 2); ctx.fillRect(292 - w / 2, 92 - r, w, 1); }
-  // Montagnes lointaines.
-  ctx.fillStyle = "#4a1f55";
-  for (let x = 0; x < STAGE_W; x++) { const h = 22 + Math.round(Math.sin(x / 23) * 8 + Math.sin(x / 9) * 3); ctx.fillRect(x, 112 - h, 1, h); }
-  ctx.fillStyle = "#32173f";
-  for (let x = 0; x < STAGE_W; x++) { const h = 12 + Math.round(Math.sin(x / 17 + 2) * 6); ctx.fillRect(x, 120 - h, 1, h); }
-  // Mur du dojo : poutres et panneaux.
-  ctx.fillStyle = "#3b2230"; ctx.fillRect(0, 112, STAGE_W, 50);
-  ctx.fillStyle = "#4d2d3c";
-  for (let x = 0; x < STAGE_W; x += 32) ctx.fillRect(x + 2, 116, 28, 40);
-  ctx.fillStyle = "#24131d";
-  for (let x = 0; x < STAGE_W; x += 32) ctx.fillRect(x, 112, 3, 50);
-  ctx.fillRect(0, 112, STAGE_W, 4); ctx.fillRect(0, 158, STAGE_W, 4);
-  // Lanternes.
-  for (const lx of [48, 176, 304]) {
-    ctx.fillStyle = "#24131d"; ctx.fillRect(lx + 4, 116, 1, 6);
-    ctx.fillStyle = "#e85b3a"; ctx.fillRect(lx, 122, 9, 11);
-    ctx.fillStyle = "#ffb15c"; ctx.fillRect(lx + 2, 124, 5, 7);
-    ctx.fillStyle = "#24131d"; ctx.fillRect(lx, 122, 9, 1); ctx.fillRect(lx, 132, 9, 1);
-  }
-  // Bannière de la Guilde.
-  ctx.fillStyle = "#c9a84c"; ctx.fillRect(150, 136, 84, 16);
-  ctx.fillStyle = "#24131d"; ctx.fillRect(150, 136, 84, 1); ctx.fillRect(150, 151, 84, 1);
-  ctx.font = "bold 9px monospace"; ctx.textAlign = "center"; ctx.fillStyle = "#24131d";
-  ctx.fillText("GUILDE OTAKU", 192, 147);
-  // Public en silhouettes.
-  ctx.fillStyle = "#1d1018";
-  for (let x = 0; x < STAGE_W; x += 7) { const h = 4 + ((x * 13) % 5); ctx.fillRect(x, 162 - h, 6, h + 4); ctx.fillRect(x + 1, 158 - h - 4, 4, 4); }
-  // Sol : parquet en perspective.
-  const floor = ["#7a4a2c", "#6c4127", "#5f3922", "#53311d"];
-  for (let y = 166; y < STAGE_H; y++) { ctx.fillStyle = floor[Math.floor((y - 166) / 6) % floor.length]; ctx.fillRect(0, y, STAGE_W, 1); }
-  ctx.fillStyle = "#43271a";
-  for (let i = -12; i <= 12; i++) { for (let y = 166; y < STAGE_H; y += 2) { const x = STAGE_W / 2 + i * 16 * (1 + (y - 166) / 40); ctx.fillRect(Math.round(x), y, 1, 2); } }
-  ctx.fillStyle = "#9a6a42"; ctx.fillRect(0, 166, STAGE_W, 1);
-  // Cercle du tatami central.
-  ctx.fillStyle = "rgba(201,168,76,0.35)";
-  for (let x = 120; x < 264; x += 2) ctx.fillRect(x, FLOOR + 6, 1, 1);
-}
+/** Décor par défaut (dojo) ; les autres arènes sont dans stages.ts. */
+export function paintStage(ctx: CanvasRenderingContext2D, stage: Stage = STAGES[0]) { stage.paint(ctx); }
 
 // ─── Effets ──────────────────────────────────────────────────────────────────
 interface Spark { x: number; y: number; t: number; heavy: boolean; blocked: boolean; color: string }
@@ -248,10 +201,10 @@ export class ArenaRenderer {
   private sparks: Spark[] = [];
   private shake = 0;
   private flashUntil: [number, number] = [0, 0];
-  constructor(private ctx: CanvasRenderingContext2D, private looks: () => [Look, Look], private reducedMotion: boolean) {
+  constructor(private ctx: CanvasRenderingContext2D, private looks: () => [Look, Look], private reducedMotion: boolean, private arena: Stage = STAGES[0]) {
     this.stage = document.createElement("canvas");
     this.stage.width = STAGE_W; this.stage.height = STAGE_H;
-    paintStage(this.stage.getContext("2d")!);
+    paintStage(this.stage.getContext("2d")!, arena);
   }
 
   onEvents(events: MatchEvent[], s: MatchState) {
@@ -307,6 +260,7 @@ export class ArenaRenderer {
     c.save();
     c.translate(Math.round(sx - this.camX), 0);
     c.drawImage(this.stage, 0, 0);
+    if (!this.reducedMotion) this.arena.animate?.(c, s.frame);
     const looks = this.looks();
     // Le combattant qui attaque est dessiné devant.
     const order = [...s.fighters].sort((a, b) => (a.state === "attack" ? 1 : 0) - (b.state === "attack" ? 1 : 0));

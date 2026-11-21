@@ -86,8 +86,19 @@ export type MatchEvent =
 
 export type Phase = "intro" | "fight" | "roundEnd" | "matchEnd";
 
+/** Variantes de match (modes Survie et Entraînement). */
+export interface MatchOptions {
+  /** Manches gagnantes nécessaires en duel (2 par défaut ; 1 en Survie). */
+  firstTo?: 1 | 2;
+  /** Vie de départ de chaque camp (Survie : la vie se garde d'un combat à l'autre). */
+  startHp?: [number, number];
+  /** Entraînement : pas de chrono, pas de K.-O., vie qui remonte, jauges pleines. */
+  training?: boolean;
+}
+
 export interface MatchState {
   mode: "duel" | "team";
+  opts: MatchOptions;
   teams: [FighterProfile[], FighterProfile[]];
   active: [number, number];
   wins: [number, number];
@@ -126,13 +137,13 @@ function spawn(profile: FighterProfile, side: 0 | 1, hp = MAX_HP, meter = 0, rev
   };
 }
 
-export function createMatch(mode: "duel" | "team", team1: FighterProfile[], team2: FighterProfile[]): MatchState {
+export function createMatch(mode: "duel" | "team", team1: FighterProfile[], team2: FighterProfile[], opts: MatchOptions = {}): MatchState {
   if (!team1.length || !team2.length) throw new Error("Chaque camp doit avoir au moins un combattant");
   const t1 = mode === "duel" ? team1.slice(0, 1) : team1.slice(0, 3);
   const t2 = mode === "duel" ? team2.slice(0, 1) : team2.slice(0, 3);
   return {
-    mode, teams: [t1, t2], active: [0, 0], wins: [0, 0], round: 1, phase: "intro", phaseT: 0, timer: ROUND_FRAMES,
-    fighters: [spawn(t1[0], 0), spawn(t2[0], 1)], projectiles: [], winner: null, frame: 0,
+    mode, opts, teams: [t1, t2], active: [0, 0], wins: [0, 0], round: 1, phase: "intro", phaseT: 0, timer: ROUND_FRAMES,
+    fighters: [spawn(t1[0], 0, clamp(Math.round(opts.startHp?.[0] ?? MAX_HP), 1, MAX_HP)), spawn(t2[0], 1, clamp(Math.round(opts.startHp?.[1] ?? MAX_HP), 1, MAX_HP))], projectiles: [], winner: null, frame: 0,
     events: [{ type: "roundStart", round: 1 }], lastLoser: [], hitstop: 0,
   };
 }
@@ -460,7 +471,8 @@ function nextRound(s: MatchState) {
   if (s.mode === "duel") {
     for (const side of [0, 1] as const) if (!losers.includes(side)) s.wins[side] += 1;
     if (losers.length === 2) { s.wins[0] += 1; s.wins[1] += 1; }
-    const w0 = s.wins[0] >= 2, w1 = s.wins[1] >= 2;
+    const need = s.opts.firstTo ?? 2;
+    const w0 = s.wins[0] >= need, w1 = s.wins[1] >= need;
     if (w0 || w1) return finish(s, w0 && w1 ? null : w0 ? 0 : 1);
     s.round += 1;
     s.fighters = [spawn(s.teams[0][0], 0, MAX_HP, s.fighters[0].meter), spawn(s.teams[1][0], 1, MAX_HP, s.fighters[1].meter)];
@@ -525,6 +537,15 @@ export function step(s: MatchState, in0: Input, in1: Input): MatchState {
     update(s, b, a, in1);
     separate(a, b);
     updateProjectiles(s);
+    if (s.opts.training) {
+      // Entraînement : jauges pleines, vie qui remonte hors des coups, jamais de K.-O.
+      for (const f of s.fighters) {
+        f.meter = MAX_METER;
+        if (f.hp <= 0) f.hp = MAX_HP;
+        else if (f.hp < MAX_HP && (f.state === "idle" || f.state === "walk" || f.state === "crouch")) f.hp = Math.min(MAX_HP, f.hp + 8);
+      }
+      return s;
+    }
     s.timer -= 1;
     for (const f of s.fighters) if (f.hp <= 0 && f.state !== "down") handleRevive(s, f);
     const ko = s.fighters.filter((f) => f.hp <= 0).map((f) => f.side);

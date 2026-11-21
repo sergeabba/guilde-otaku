@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pause, Play, RotateCcw, Users, Home, Keyboard } from "lucide-react";
-import { createMatch, step, NO_INPUT, MAX_HP, MAX_METER, FPS, STAGE_W, STAGE_H, type Input, type MatchState, type MatchEvent } from "../../lib/fighters/engine";
+import { createMatch, step, NO_INPUT, MAX_HP, MAX_METER, FPS, STAGE_W, STAGE_H, type Input, type MatchOptions, type MatchState, type MatchEvent } from "../../lib/fighters/engine";
+import { STAGES, type Stage } from "../../lib/fighters/stages";
 import { aiInput, makeRng, newAiMemory, type AiLevel } from "../../lib/fighters/ai";
 import { ArenaRenderer, lookFor, type Look } from "../../lib/fighters/render";
 import type { Mode, RosterMember, Versus } from "./FightersApp";
@@ -14,6 +15,9 @@ const KEYS: [Record<string, keyof Input>, Record<string, keyof Input>] = [
     Numpad4: "lp", Numpad5: "hp", Numpad1: "lk", Numpad2: "hk", Numpad6: "special", Numpad3: "super", Numpad0: "dodge",
     Digit7: "lp", Digit8: "hp", Digit9: "lk", Digit0: "hk", Minus: "special", Equal: "super", Period: "dodge" },
 ];
+
+/** Fin de match transmise à l'application (Arcade, Survie : échelle d'adversaires). */
+export interface MatchResult { winner: 0 | 1 | null; hp: [number, number]; bestCombo: [number, number] }
 
 interface Hud {
   hp: [number, number]; names: [string, string]; ids: [number, number]; timer: number; round: number;
@@ -88,9 +92,15 @@ function TouchStick({ onDir }: { onDir: (d: { left: boolean; right: boolean; up:
   );
 }
 
-export default function FightScreen({ teams, mode, versus, level, labels, reduced, onRematch, onRoster, onHome }: {
+export default function FightScreen({ teams, mode, versus, level, labels, reduced, onRematch, onRoster, onHome, stage = STAGES[0], opts = {}, cpuP1 = false, onFinish, caption }: {
   teams: [RosterMember[], RosterMember[]]; mode: Mode; versus: Versus; level: AiLevel; labels: [string, string]; reduced: boolean;
   onRematch: () => void; onRoster: () => void; onHome: () => void;
+  /** Arène choisie, variantes de match, IA aux deux commandes (Spectateur). */
+  stage?: Stage; opts?: MatchOptions; cpuP1?: boolean;
+  /** Si présent, la fin du match revient à l'application (pas d'écran de fin ici). */
+  onFinish?: (r: MatchResult) => void;
+  /** Mention sous le chrono (« Arcade 3/6 », « Survie : 4 victoires »…). */
+  caption?: string;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stateRef = useRef<MatchState | null>(null);
@@ -102,26 +112,39 @@ export default function FightScreen({ teams, mode, versus, level, labels, reduce
   const [paused, setPaused] = useState(false);
   const [showKeys, setShowKeys] = useState(false);
   const [hud, setHud] = useState<Hud | null>(null);
-  const [banner, setBanner] = useState<{ text: string; sub?: string; id: number } | null>(null);
-  const [combo, setCombo] = useState<{ side: 0 | 1; n: number; id: number } | null>(null);
+  const [banner, setBanner] = useState<{ text: string; sub?: string; id: number; kind?: "round" | "fight" | "ko" } | null>(null);
+  const [combo, setCombo] = useState<{ side: 0 | 1; n: number; dmg: number; id: number } | null>(null);
+  const [first, setFirst] = useState<{ side: 0 | 1; id: number } | null>(null);
   const keyLabel = useKeyLabels();
   const byId = useRef(new Map([...teams[0], ...teams[1]].map((m) => [m.id, m])));
   const looks = useRef<[Look, Look]>([lookFor(teams[0][0].id, teams[0][0].color), lookFor(teams[1][0].id, teams[1][0].color)]);
 
   const setPause = useCallback((p: boolean) => { pausedRef.current = p; setPaused(p); }, []);
 
+  // Annonces façon MUGEN : manche, « Combat ! », K.-O., double K.-O., parfait, premier coup.
+  const firstHit = useRef(false);
+  const comboDmg = useRef(0);
   const announce = useCallback((events: MatchEvent[], s: MatchState) => {
+    const kos = events.filter((e) => e.type === "ko").length;
     for (const e of events) {
       const id = s.frame;
-      if (e.type === "roundStart") setBanner({ text: mode === "team" ? `Combat ${e.round}` : `Manche ${e.round}`, sub: `${s.fighters[0].profile.name} contre ${s.fighters[1].profile.name}`, id });
-      if (e.type === "fight") setBanner({ text: "Combat !", id });
-      if (e.type === "ko") setBanner({ text: "K.-O. !", sub: `${s.fighters[e.side].profile.name} est à terre`, id });
+      if (e.type === "roundStart") { firstHit.current = false; setBanner({ text: s.opts.training ? "Entraînement" : mode === "team" ? `Combat ${e.round}` : `Manche ${e.round}`, sub: `${s.fighters[0].profile.name} contre ${s.fighters[1].profile.name}`, id, kind: "round" }); }
+      if (e.type === "fight") setBanner({ text: "Combat !", id, kind: "fight" });
+      if (e.type === "ko") {
+        const other = s.fighters[e.side === 0 ? 1 : 0];
+        if (kos >= 2) setBanner({ text: "Double K.-O.", id, kind: "ko" });
+        else setBanner({ text: other.hp >= MAX_HP ? "Parfait !" : "K.-O. !", sub: `${s.fighters[e.side].profile.name} est à terre`, id, kind: "ko" });
+      }
       if (e.type === "timeOver") setBanner({ text: "Temps écoulé", id });
       if (e.type === "special") setBanner({ text: e.name, sub: e.super ? "Super" : "Attaque spéciale", id });
       if (e.type === "revive") setBanner({ text: e.name, sub: `${s.fighters[e.side].profile.name} se relève`, id });
       if (e.type === "dizzy") setBanner({ text: "Étourdi !", sub: s.fighters[e.side].profile.name, id });
       if (e.type === "throw") setBanner({ text: "Projection", id });
-      if (e.type === "hit" && !e.blocked && e.combo >= 2) setCombo({ side: e.side === 0 ? 1 : 0, n: e.combo, id });
+      if (e.type === "hit" && !e.blocked) {
+        comboDmg.current = e.combo >= 2 ? comboDmg.current + e.dmg : e.dmg;
+        if (e.combo >= 2) setCombo({ side: e.side === 0 ? 1 : 0, n: e.combo, dmg: Math.round((comboDmg.current / MAX_HP) * 100), id });
+        if (!firstHit.current && s.phase === "fight" && !s.opts.training) { firstHit.current = true; setFirst({ side: e.side === 0 ? 1 : 0, id }); }
+      }
       if (e.type === "matchEnd") setBanner(null);
     }
   }, [mode]);
@@ -129,15 +152,16 @@ export default function FightScreen({ teams, mode, versus, level, labels, reduce
   // Boucle de jeu : pas fixe de 1/60 s, rendu à chaque image.
   useEffect(() => {
     const toProfile = (m: RosterMember) => ({ id: m.id, name: m.name, stats: m.stats ?? { force: 50, vitesse: 50, technique: 50 }, specialName: m.special?.name ?? "Onde de la Guilde" });
-    const s = createMatch(mode, teams[0].map(toProfile), teams[1].map(toProfile));
+    const s = createMatch(mode, teams[0].map(toProfile), teams[1].map(toProfile), opts);
     stateRef.current = s;
     // Accès de test en développement uniquement (vérifications automatisées).
     if (process.env.NODE_ENV === "development") (window as unknown as { __fxState?: MatchState }).__fxState = s;
     const canvas = canvasRef.current!;
     const ctx = canvas.getContext("2d")!;
-    const renderer = new ArenaRenderer(ctx, () => looks.current, reduced);
+    const renderer = new ArenaRenderer(ctx, () => looks.current, reduced, stage);
     const rng = makeRng(Date.now() & 0xffff);
-    const mem = newAiMemory();
+    const mem = newAiMemory(), mem0 = newAiMemory();
+    let finished = false;
     announce(s.events, s);
     setHud(snapshot(s));
 
@@ -156,8 +180,9 @@ export default function FightScreen({ teams, mode, versus, level, labels, reduce
       acc += dt;
       let steps = 0;
       while (acc >= 1000 / FPS && steps < 5) {
-        const p1: Input = { ...inputs.current[0] };
+        let p1: Input = { ...inputs.current[0] };
         for (const k of Object.keys(p1) as (keyof Input)[]) p1[k] = p1[k] || touch.current[k];
+        if (cpuP1) p1 = aiInput(s, 0, mem0, rng, level);
         const p2 = versus === "ia" ? aiInput(s, 1, mem, rng, level) : inputs.current[1];
         step(s, p1, p2);
         if (s.events.length) {
@@ -172,11 +197,17 @@ export default function FightScreen({ teams, mode, versus, level, labels, reduce
       }
       renderer.draw(s, viewRef.current);
       if (++hudTick % 3 === 0 || s.phase === "matchEnd") setHud(snapshot(s));
+      // Échelle d'adversaires : on laisse la pose de victoire 1,6 s, puis l'application enchaîne.
+      if (onFinish && !finished && s.phase === "matchEnd" && s.phaseT > 96) {
+        finished = true;
+        onFinish({ winner: s.winner, hp: [s.fighters[0].hp, s.fighters[1].hp], bestCombo: [s.fighters[0].bestCombo, s.fighters[1].bestCombo] });
+      }
     };
     raf = requestAnimationFrame(loop);
     const onVis = () => { if (document.hidden && s.phase === "fight") setPause(true); };
     document.addEventListener("visibilitychange", onVis);
     return () => { cancelAnimationFrame(raf); document.removeEventListener("visibilitychange", onVis); window.removeEventListener("resize", fit); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, teams, versus, level, reduced, announce, setPause]);
 
   // Clavier.
@@ -197,7 +228,7 @@ export default function FightScreen({ teams, mode, versus, level, labels, reduce
 
   const press = (k: keyof Input) => (d: boolean) => { touch.current = { ...touch.current, [k]: d }; };
   const stick = useCallback((d: { left: boolean; right: boolean; up: boolean; down: boolean }) => { touch.current = { ...touch.current, ...d }; }, []);
-  const ended = hud?.phase === "matchEnd";
+  const ended = hud?.phase === "matchEnd" && !onFinish;
   const winnerLabel = hud && hud.winner !== null ? labels[hud.winner] : null;
 
   const Bar = ({ side }: { side: 0 | 1 }) => {
@@ -216,6 +247,8 @@ export default function FightScreen({ teams, mode, versus, level, labels, reduce
           <span className={`fx-player fx-player--${side}`}>{labels[side]}</span>
         </div>
         <div className="fx-hp" role="meter" aria-label={`Vie de ${hud.names[side]}`} aria-valuemin={0} aria-valuemax={MAX_HP} aria-valuenow={hud.hp[side]}>
+          {/* Barre rouge qui s'écoule après le coup (dégâts reçus), puis la vie réelle. */}
+          <span className="fx-hp-lag" style={{ transform: `scaleX(${pct})` }} />
           <span style={{ transform: `scaleX(${pct})` }} className={pct < 0.25 ? "is-low" : ""} />
         </div>
         <div className="fx-hud-sub">
@@ -235,14 +268,18 @@ export default function FightScreen({ teams, mode, versus, level, labels, reduce
     <section className="fx-fight" aria-label="Combat">
       <div className="fx-hud">
         <Bar side={0} />
-        <div className="fx-timer" aria-label={`Temps restant : ${hud?.timer ?? 60} secondes`}>{hud?.timer ?? 60}</div>
+        <div className="fx-timer-box">
+          <div className="fx-timer" aria-label={opts.training ? "Sans limite de temps" : `Temps restant : ${hud?.timer ?? 60} secondes`}>{opts.training ? "∞" : hud?.timer ?? 60}</div>
+          {caption && <small className="fx-caption">{caption}</small>}
+        </div>
         <Bar side={1} />
       </div>
 
       <div className="fx-stage" style={{ aspectRatio: `${viewW} / ${STAGE_H}` }}>
         <canvas ref={canvasRef} width={viewW} height={STAGE_H} className="fx-canvas" aria-label="Arène de combat en pixel art" role="img" />
-        {combo && !ended && <div key={`c${combo.id}`} className={`fx-combo fx-combo--${combo.side}`} aria-live="polite"><b>{combo.n}</b><span>coups</span></div>}
-        {banner && !ended && <div key={banner.id} className="fx-banner" aria-live="assertive"><b>{banner.text}</b>{banner.sub && <span>{banner.sub}</span>}</div>}
+        {combo && !ended && <div key={`c${combo.id}`} className={`fx-combo fx-combo--${combo.side}`} aria-live="polite"><b>{combo.n}</b><span>coups</span><small>{combo.dmg} % de dégâts</small></div>}
+        {first && !ended && <div key={`f${first.id}`} className={`fx-first fx-first--${first.side}`} aria-hidden="true">Premier coup</div>}
+        {banner && !ended && <div key={banner.id} className={`fx-banner${banner.kind ? ` is-${banner.kind}` : ""}`} aria-live="assertive"><b>{banner.text}</b>{banner.sub && <span>{banner.sub}</span>}</div>}
         <button type="button" className="fx-pausebtn" onClick={() => setPause(true)} aria-label="Pause" disabled={ended}><Pause size={18} aria-hidden="true" /></button>
 
         {(paused || ended) && (

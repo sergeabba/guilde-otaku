@@ -3,6 +3,7 @@ import { memberAwards, objectPosition } from "../../lib/member-extras";
 import FightersApp, { type RosterMember } from "./FightersApp";
 import "./fighters-v2.css";
 import "./fighters-select.css";
+import "./fighters-mugen.css";
 
 // Les données des membres sont lues à chaque visite (comme les fiches profils).
 export const dynamic = "force-dynamic";
