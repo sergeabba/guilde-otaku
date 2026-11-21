@@ -5,6 +5,7 @@
 // ou la souris. En pause hors de l'écran ; absent avec « réduire les animations ».
 import { useEffect, useRef } from "react";
 import { parisNow, seasonOf, SEASON_PARTICLES } from "../../lib/ambiance";
+import { isLite } from "../../lib/perf";
 
 export default function CoverFx() {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -41,7 +42,8 @@ export default function CoverFx() {
     let t = 0;
     const frame = () => {
       raf = 0;
-      if (!visible || document.hidden) return;
+      // Appareil lent : une image fixe (dernier rendu), plus d'animation.
+      if (!visible || document.hidden || isLite()) return;
       t += 1;
       g.clearRect(0, 0, w, h);
       // Trame de points : rayon qui ondule en vague diagonale.

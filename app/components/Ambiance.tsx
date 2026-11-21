@@ -6,6 +6,7 @@
 import { useEffect } from "react";
 import { playClick } from "../../lib/fx";
 import { daypartOf, parisNow, seasonOf } from "../../lib/ambiance";
+import { detectPerf, isLite } from "../../lib/perf";
 
 const TILT = ".mc, .pf-panel, .fp-poster";
 const SOUND = "button, [role='button'], .gk-btn, .gk-chip, a.jx-tile";
@@ -15,6 +16,7 @@ export default function Ambiance() {
     const root = document.documentElement;
     const stamp = () => { const { date, hour } = parisNow(); root.dataset.season = seasonOf(date); root.dataset.daypart = daypartOf(hour); };
     stamp();
+    detectPerf();
     const clock = window.setInterval(stamp, 10 * 60_000);
 
     // Sons : au toucher d'un bouton (hors jeux de combat, qui ont leurs propres touches).
@@ -30,7 +32,7 @@ export default function Ambiance() {
     // Inclinaison à la souris : la carte survolée reçoit --tx/--ty (-1 à 1).
     let raf = 0, last: HTMLElement | null = null;
     const onMove = (e: PointerEvent) => {
-      if (e.pointerType !== "mouse") return;
+      if (e.pointerType !== "mouse" || isLite()) return;
       const el = (e.target as Element | null)?.closest?.(TILT) as HTMLElement | null;
       if (last && last !== el) { last.style.removeProperty("--tx"); last.style.removeProperty("--ty"); last.classList.remove("is-tilt"); }
       last = el;
@@ -51,7 +53,7 @@ export default function Ambiance() {
     // sur iPhone, l'accès au gyroscope demande une autorisation : on s'en passe).
     let base: { b: number; g: number } | null = null, graf = 0;
     const onTilt = (e: DeviceOrientationEvent) => {
-      if (e.beta == null || e.gamma == null) return;
+      if (e.beta == null || e.gamma == null || isLite()) return;
       base ??= { b: e.beta, g: e.gamma };
       const x = Math.max(-1, Math.min(1, (e.gamma - base.g) / 25)), y = Math.max(-1, Math.min(1, (e.beta - base.b) / 25));
       cancelAnimationFrame(graf);

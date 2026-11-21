@@ -27,7 +27,8 @@ export default function Celebrate() {
       g.scale(dpr, dpr);
       const { colors } = SEASON_PARTICLES[seasonOf(parisNow().date)];
       const palette = [...colors, "#d7332b", "#c9a84c", "#f6f0e6"];
-      const n = c.big ? 140 : 80;
+      const lite = document.documentElement.dataset.perf === "lite";
+      const n = Math.round((c.big ? 140 : 80) * (lite ? 0.35 : 1));
       const ps = Array.from({ length: n }, () => ({
         x: innerWidth / 2 + (Math.random() - 0.5) * innerWidth * 0.4, y: innerHeight * 0.55,
         vx: (Math.random() - 0.5) * 14, vy: -8 - Math.random() * 10, r: 5 + Math.random() * 7,

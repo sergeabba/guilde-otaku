@@ -18,6 +18,7 @@ import CommandPalette from "./components/CommandPalette";
 import SplashWrapper from "./components/SplashWrapper";
 import Ambiance from "./components/Ambiance";
 import Celebrate from "./components/Celebrate";
+import IntentPrefetch from "./components/IntentPrefetch";
 import "./styles/ambiance.css";
 import { ThemeProvider } from "./context/ThemeContext";
 import { MusicDockProvider } from "./components/MusicDock";
@@ -98,6 +99,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <RouteTransitions />
           <Ambiance />
           <Celebrate />
+          <IntentPrefetch />
           </MusicDockProvider>
           </MotionSettings>
         </ThemeProvider>

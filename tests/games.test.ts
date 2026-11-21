@@ -554,3 +554,15 @@ describe("profil vivant : records aux jeux", () => {
     expect(gameRecords([{ game: "plus-moins", score: 80, max_score: 780, created_at: "2026-11-19T10:00:00Z" }])[0]).toMatchObject({ best: 80, pct: -1 });
   });
 });
+
+import { framesLite, hardwareLite } from "../lib/perf";
+describe("appareil lent", () => {
+  it("se fie aux signaux matériels et à la fluidité mesurée", () => {
+    expect(hardwareLite({ hardwareConcurrency: 8, deviceMemory: 8 } as unknown as Navigator)).toBe(false);
+    expect(hardwareLite({ hardwareConcurrency: 4, deviceMemory: 2 } as unknown as Navigator)).toBe(true);
+    expect(hardwareLite({ hardwareConcurrency: 8, connection: { saveData: true } } as unknown as Navigator)).toBe(true);
+    expect(framesLite(Array(40).fill(16.7))).toBe(false);
+    expect(framesLite(Array(40).fill(40))).toBe(true);
+    expect(framesLite([50, 50])).toBe(false);
+  });
+});

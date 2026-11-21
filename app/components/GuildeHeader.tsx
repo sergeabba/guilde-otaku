@@ -42,6 +42,8 @@ export default function GuildeHeader({
 }: GuildeHeaderProps) {
   const { isDark, toggle } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
+  // Rubrique courante sur <html> : le trait de pinceau sous le titre change selon la page.
+  useEffect(() => { document.documentElement.dataset.page = activePage; }, [activePage]);
   const burgerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 

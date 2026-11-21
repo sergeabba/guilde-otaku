@@ -108,3 +108,102 @@ body.fx-ingame::before { display: none; }
 /* Tuiles des jeux : icône en tampon d'encre, penchée, qui se redresse au survol. */
 .jx-tile-icon { transform: rotate(-6deg); box-shadow: 3px 3px 0 #0d0c10; clip-path: polygon(6% 0, 100% 4%, 94% 100%, 0 96%); transition: transform 200ms cubic-bezier(.2, 1.6, .4, 1); }
 .jx-tile:hover .jx-tile-icon, .jx-tile:focus-visible .jx-tile-icon, .jx-tile[aria-current="true"] .jx-tile-icon { transform: rotate(4deg) scale(1.12); }
+
+/* ── Appareil lent (lib/perf.ts) : effets coûteux coupés ─────────────────── */
+html[data-perf="lite"] .mc-holo, html[data-perf="lite"] .gk-swoosh::after { display: none; }
+html[data-perf="lite"] .mc { transform: none !important; }
+html[data-perf="lite"] [data-gk-motion] img { filter: none !important; transition: none !important; }
+html[data-perf="lite"] body::before { display: none; }
+html[data-perf="lite"] .gk-speed { animation: none !important; }
+
+/* ── Thème clair « papier de manga » ─────────────────────────────────────────
+   Papier légèrement grainé et crème, trame de points discrète, encre plus noire,
+   traits plus épais et ombres d'encre franches. Seulement là où le clair s'applique
+   (les pages à ambiance sombre forcée gardent leur fond). */
+html[data-theme="light"] {
+  --gk-paper: #f5efe1;
+  --gk-paper-2: #ebe2cd;
+  --gk-white: #fffcf3;
+  --gk-stroke: 3px;
+}
+html[data-theme="light"] .gk-page:not(.tone-dark) {
+  --gk-text: #0b0a0d;
+  --gk-border: #0b0a0d;
+  --gk-shadow: #0b0a0d;
+  background-color: var(--gk-paper);
+  background-image:
+    /* trame de points, plus dense en haut de page */
+    radial-gradient(rgba(11, 10, 13, .085) .9px, transparent 1.3px),
+    /* grain du papier */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.28 0 0 0 0 0.18 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    /* bord de page légèrement jauni */
+    radial-gradient(130% 90% at 50% 30%, transparent 60%, rgba(170, 130, 60, .10));
+  background-size: 7px 7px, 160px 160px, 100% 100%;
+  background-attachment: scroll, scroll, fixed;
+}
+/* Titres à l'encre noire, avec une ombre décalée façon impression. */
+html[data-theme="light"] .gk-page:not(.tone-dark) .gk-display { color: #0b0a0d; }
+html[data-theme="light"] .gk-page:not(.tone-dark) .gk-inked { text-shadow: 4px 4px 0 #0b0a0d; }
+/* Cases et cartes : papier blanc, contour épais, ombre d'encre pleine. */
+html[data-theme="light"] .gk-page:not(.tone-dark) :is(.gk-panel, .mc, .fp, .hm-case, .gk-btn) { border-color: #0b0a0d; }
+html[data-theme="light"] .gk-page:not(.tone-dark) .mc { box-shadow: 5px 5px 0 #0b0a0d; }
+html[data-theme="light"] .gk-page:not(.tone-dark) .mc-plate { background: var(--gk-white); border-top: 3px solid #0b0a0d; }
+/* En-tête et pied de page : bande de papier plus claire, double filet d'encre. */
+html[data-theme="light"] .gk-header { background: rgba(255, 252, 243, .94); box-shadow: 0 3px 0 #0b0a0d, 0 6px 0 rgba(11, 10, 13, .12); }
+html[data-theme="light"] .gk-chapter b { background: #0b0a0d; color: var(--gk-white); }
+html[data-theme="light"] ::selection { background: #0b0a0d; color: #fffcf3; }
+
+
+/* ── Titres de page tracés au pinceau ───────────────────────────────────────
+   Sous le grand titre de chaque rubrique, un trait de pinceau (avec éclaboussures)
+   se dessine de gauche à droite. Forme et couleur selon la page (data-page,
+   posé par l'en-tête). Image de fond : aucune incidence sur la mise en page. */
+:root {
+  --gk-brush-v1-red: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 48' preserveAspectRatio='none'%3E%3Cpath fill='%23e8412c' d='M4 26C46 15 98 30 152 21S262 11 318 19 380 24 396 18L394 30C352 34 306 28 258 33S150 39 96 34 30 36 6 37Z'/%3E%3Ccircle fill='%23e8412c' cx='392' cy='8' r='3'/%3E%3Ccircle fill='%23e8412c' cx='14' cy='42' r='2.2'/%3E%3Ccircle fill='%23e8412c' cx='372' cy='40' r='1.6'/%3E%3C/svg%3E");
+  --gk-brush-v1-gold: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 48' preserveAspectRatio='none'%3E%3Cpath fill='%23c9a84c' d='M4 26C46 15 98 30 152 21S262 11 318 19 380 24 396 18L394 30C352 34 306 28 258 33S150 39 96 34 30 36 6 37Z'/%3E%3Ccircle fill='%23c9a84c' cx='392' cy='8' r='3'/%3E%3Ccircle fill='%23c9a84c' cx='14' cy='42' r='2.2'/%3E%3Ccircle fill='%23c9a84c' cx='372' cy='40' r='1.6'/%3E%3C/svg%3E");
+  --gk-brush-v1-blue: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 48' preserveAspectRatio='none'%3E%3Cpath fill='%233f7ad8' d='M4 26C46 15 98 30 152 21S262 11 318 19 380 24 396 18L394 30C352 34 306 28 258 33S150 39 96 34 30 36 6 37Z'/%3E%3Ccircle fill='%233f7ad8' cx='392' cy='8' r='3'/%3E%3Ccircle fill='%233f7ad8' cx='14' cy='42' r='2.2'/%3E%3Ccircle fill='%233f7ad8' cx='372' cy='40' r='1.6'/%3E%3C/svg%3E");
+  --gk-brush-v1-pink: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 48' preserveAspectRatio='none'%3E%3Cpath fill='%23f472b6' d='M4 26C46 15 98 30 152 21S262 11 318 19 380 24 396 18L394 30C352 34 306 28 258 33S150 39 96 34 30 36 6 37Z'/%3E%3Ccircle fill='%23f472b6' cx='392' cy='8' r='3'/%3E%3Ccircle fill='%23f472b6' cx='14' cy='42' r='2.2'/%3E%3Ccircle fill='%23f472b6' cx='372' cy='40' r='1.6'/%3E%3C/svg%3E");
+  --gk-brush-v1-green: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 48' preserveAspectRatio='none'%3E%3Cpath fill='%2322c55e' d='M4 26C46 15 98 30 152 21S262 11 318 19 380 24 396 18L394 30C352 34 306 28 258 33S150 39 96 34 30 36 6 37Z'/%3E%3Ccircle fill='%2322c55e' cx='392' cy='8' r='3'/%3E%3Ccircle fill='%2322c55e' cx='14' cy='42' r='2.2'/%3E%3Ccircle fill='%2322c55e' cx='372' cy='40' r='1.6'/%3E%3C/svg%3E");
+  --gk-brush-v2-red: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 48' preserveAspectRatio='none'%3E%3Cpath fill='%23e8412c' d='M8 20C70 12 140 16 210 13S330 10 392 16L390 24C322 22 260 27 196 25S80 26 10 29ZM40 33C110 29 190 33 270 30S360 31 380 30L378 36C300 39 220 36 150 39S70 40 42 39Z'/%3E%3Ccircle fill='%23e8412c' cx='18' cy='8' r='2.5'/%3E%3Ccircle fill='%23e8412c' cx='388' cy='40' r='2'/%3E%3C/svg%3E");
+  --gk-brush-v2-gold: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 48' preserveAspectRatio='none'%3E%3Cpath fill='%23c9a84c' d='M8 20C70 12 140 16 210 13S330 10 392 16L390 24C322 22 260 27 196 25S80 26 10 29ZM40 33C110 29 190 33 270 30S360 31 380 30L378 36C300 39 220 36 150 39S70 40 42 39Z'/%3E%3Ccircle fill='%23c9a84c' cx='18' cy='8' r='2.5'/%3E%3Ccircle fill='%23c9a84c' cx='388' cy='40' r='2'/%3E%3C/svg%3E");
+  --gk-brush-v2-blue: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 48' preserveAspectRatio='none'%3E%3Cpath fill='%233f7ad8' d='M8 20C70 12 140 16 210 13S330 10 392 16L390 24C322 22 260 27 196 25S80 26 10 29ZM40 33C110 29 190 33 270 30S360 31 380 30L378 36C300 39 220 36 150 39S70 40 42 39Z'/%3E%3Ccircle fill='%233f7ad8' cx='18' cy='8' r='2.5'/%3E%3Ccircle fill='%233f7ad8' cx='388' cy='40' r='2'/%3E%3C/svg%3E");
+  --gk-brush-v2-pink: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 48' preserveAspectRatio='none'%3E%3Cpath fill='%23f472b6' d='M8 20C70 12 140 16 210 13S330 10 392 16L390 24C322 22 260 27 196 25S80 26 10 29ZM40 33C110 29 190 33 270 30S360 31 380 30L378 36C300 39 220 36 150 39S70 40 42 39Z'/%3E%3Ccircle fill='%23f472b6' cx='18' cy='8' r='2.5'/%3E%3Ccircle fill='%23f472b6' cx='388' cy='40' r='2'/%3E%3C/svg%3E");
+  --gk-brush-v2-green: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 48' preserveAspectRatio='none'%3E%3Cpath fill='%2322c55e' d='M8 20C70 12 140 16 210 13S330 10 392 16L390 24C322 22 260 27 196 25S80 26 10 29ZM40 33C110 29 190 33 270 30S360 31 380 30L378 36C300 39 220 36 150 39S70 40 42 39Z'/%3E%3Ccircle fill='%2322c55e' cx='18' cy='8' r='2.5'/%3E%3Ccircle fill='%2322c55e' cx='388' cy='40' r='2'/%3E%3C/svg%3E");
+  --gk-brush-v3-red: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 48' preserveAspectRatio='none'%3E%3Cpath fill='%23e8412c' d='M2 30C30 18 60 34 92 22S150 32 186 21 246 33 282 22 342 32 398 20L396 31C352 40 320 30 286 38S218 30 184 38 124 30 90 38 30 32 4 41Z'/%3E%3Ccircle fill='%23e8412c' cx='380' cy='6' r='2.6'/%3E%3Ccircle fill='%23e8412c' cx='30' cy='8' r='1.8'/%3E%3C/svg%3E");
+  --gk-brush-v3-gold: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 48' preserveAspectRatio='none'%3E%3Cpath fill='%23c9a84c' d='M2 30C30 18 60 34 92 22S150 32 186 21 246 33 282 22 342 32 398 20L396 31C352 40 320 30 286 38S218 30 184 38 124 30 90 38 30 32 4 41Z'/%3E%3Ccircle fill='%23c9a84c' cx='380' cy='6' r='2.6'/%3E%3Ccircle fill='%23c9a84c' cx='30' cy='8' r='1.8'/%3E%3C/svg%3E");
+  --gk-brush-v3-blue: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 48' preserveAspectRatio='none'%3E%3Cpath fill='%233f7ad8' d='M2 30C30 18 60 34 92 22S150 32 186 21 246 33 282 22 342 32 398 20L396 31C352 40 320 30 286 38S218 30 184 38 124 30 90 38 30 32 4 41Z'/%3E%3Ccircle fill='%233f7ad8' cx='380' cy='6' r='2.6'/%3E%3Ccircle fill='%233f7ad8' cx='30' cy='8' r='1.8'/%3E%3C/svg%3E");
+  --gk-brush-v3-pink: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 48' preserveAspectRatio='none'%3E%3Cpath fill='%23f472b6' d='M2 30C30 18 60 34 92 22S150 32 186 21 246 33 282 22 342 32 398 20L396 31C352 40 320 30 286 38S218 30 184 38 124 30 90 38 30 32 4 41Z'/%3E%3Ccircle fill='%23f472b6' cx='380' cy='6' r='2.6'/%3E%3Ccircle fill='%23f472b6' cx='30' cy='8' r='1.8'/%3E%3C/svg%3E");
+  --gk-brush-v3-green: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 48' preserveAspectRatio='none'%3E%3Cpath fill='%2322c55e' d='M2 30C30 18 60 34 92 22S150 32 186 21 246 33 282 22 342 32 398 20L396 31C352 40 320 30 286 38S218 30 184 38 124 30 90 38 30 32 4 41Z'/%3E%3Ccircle fill='%2322c55e' cx='380' cy='6' r='2.6'/%3E%3Ccircle fill='%2322c55e' cx='30' cy='8' r='1.8'/%3E%3C/svg%3E");
+  --gk-brush-v4-red: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 48' preserveAspectRatio='none'%3E%3Cpath fill='%23e8412c' d='M10 24C80 6 170 30 250 18S360 8 394 22C360 30 300 22 240 30S120 38 60 34 20 36 10 24Z'/%3E%3Ccircle fill='%23e8412c' cx='394' cy='34' r='3'/%3E%3Ccircle fill='%23e8412c' cx='8' cy='10' r='2'/%3E%3Ccircle fill='%23e8412c' cx='360' cy='6' r='1.4'/%3E%3C/svg%3E");
+  --gk-brush-v4-gold: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 48' preserveAspectRatio='none'%3E%3Cpath fill='%23c9a84c' d='M10 24C80 6 170 30 250 18S360 8 394 22C360 30 300 22 240 30S120 38 60 34 20 36 10 24Z'/%3E%3Ccircle fill='%23c9a84c' cx='394' cy='34' r='3'/%3E%3Ccircle fill='%23c9a84c' cx='8' cy='10' r='2'/%3E%3Ccircle fill='%23c9a84c' cx='360' cy='6' r='1.4'/%3E%3C/svg%3E");
+  --gk-brush-v4-blue: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 48' preserveAspectRatio='none'%3E%3Cpath fill='%233f7ad8' d='M10 24C80 6 170 30 250 18S360 8 394 22C360 30 300 22 240 30S120 38 60 34 20 36 10 24Z'/%3E%3Ccircle fill='%233f7ad8' cx='394' cy='34' r='3'/%3E%3Ccircle fill='%233f7ad8' cx='8' cy='10' r='2'/%3E%3Ccircle fill='%233f7ad8' cx='360' cy='6' r='1.4'/%3E%3C/svg%3E");
+  --gk-brush-v4-pink: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 48' preserveAspectRatio='none'%3E%3Cpath fill='%23f472b6' d='M10 24C80 6 170 30 250 18S360 8 394 22C360 30 300 22 240 30S120 38 60 34 20 36 10 24Z'/%3E%3Ccircle fill='%23f472b6' cx='394' cy='34' r='3'/%3E%3Ccircle fill='%23f472b6' cx='8' cy='10' r='2'/%3E%3Ccircle fill='%23f472b6' cx='360' cy='6' r='1.4'/%3E%3C/svg%3E");
+  --gk-brush-v4-green: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 48' preserveAspectRatio='none'%3E%3Cpath fill='%2322c55e' d='M10 24C80 6 170 30 250 18S360 8 394 22C360 30 300 22 240 30S120 38 60 34 20 36 10 24Z'/%3E%3Ccircle fill='%2322c55e' cx='394' cy='34' r='3'/%3E%3Ccircle fill='%2322c55e' cx='8' cy='10' r='2'/%3E%3Ccircle fill='%2322c55e' cx='360' cy='6' r='1.4'/%3E%3C/svg%3E");
+  --gk-brush: var(--gk-brush-v1-red);
+}
+html[data-page="membres"] { --gk-brush: var(--gk-brush-v1-gold); }
+html[data-page="birthdays"] { --gk-brush: var(--gk-brush-v3-pink); }
+html[data-page="wanted"] { --gk-brush: var(--gk-brush-v4-red); }
+html[data-page="fighters"] { --gk-brush: var(--gk-brush-v3-red); }
+html[data-page="film-semaine"] { --gk-brush: var(--gk-brush-v2-gold); }
+html[data-page="bibliotheque"] { --gk-brush: var(--gk-brush-v2-blue); }
+html[data-page="bons-plans"] { --gk-brush: var(--gk-brush-v4-green); }
+html[data-page="atelier"] { --gk-brush: var(--gk-brush-v3-pink); }
+html[data-page="calendrier"] { --gk-brush: var(--gk-brush-v1-blue); }
+html[data-page="jeux"] { --gk-brush: var(--gk-brush-v4-red); }
+html[data-page="cinema"] { --gk-brush: var(--gk-brush-v2-red); }
+:is(.gk-hero h1, h1.hm-title, h1.cin-hero-title, h1.wt-title, h1.fs-title, h1.cal-title, h1.gk-h1) {
+  background-image: var(--gk-brush);
+  background-repeat: no-repeat;
+  background-position: -2% 100%;
+  background-size: 104% .34em;
+  padding-bottom: .12em;
+}
+@media (prefers-reduced-motion: no-preference) {
+  :is(.gk-hero h1, h1.hm-title, h1.cin-hero-title, h1.wt-title, h1.fs-title, h1.cal-title, h1.gk-h1) { animation: gk-brush-draw 900ms cubic-bezier(.65, 0, .25, 1) 250ms both; }
+}
+@keyframes gk-brush-draw { from { background-size: 0% .34em; } }
+/* Le titre du Cinéma garde son entrée d'origine, le pinceau s'y ajoute. */
+@media (prefers-reduced-motion: no-preference) {
+  h1.cin-hero-title { animation: cin-rise 800ms cubic-bezier(.16, 1, .3, 1) both, gk-brush-draw 900ms cubic-bezier(.65, 0, .25, 1) 350ms both; }
+}
