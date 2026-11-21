@@ -196,3 +196,30 @@ html:has(.pf-page) { scroll-padding-top: calc(var(--pf-head, 0px) + 72px); }
 .pf-badge.is-bronze { background: #d08b4f; } .pf-badge.is-argent { background: #c9cdd6; } .pf-badge.is-or { background: #f5c542; }
 /* Logo de la série du portrait anime : souvent large, parfois clair. */
 .pf-rank img.pf-series-logo { max-width: 190px; object-fit: contain; object-position: left center; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .55)) drop-shadow(0 0 6px rgba(0, 0, 0, .25)); }
+
+/* ── Profil vivant : activité dans les jeux et les votes ──────────────────── */
+.pf-act-stats { list-style: none; margin: 18px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; }
+.pf-act-stats li { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: var(--gk-surface-2); border: 2px solid var(--gk-border); box-shadow: 3px 3px 0 var(--gk-accent); font: 700 .95rem var(--gk-font-ui); text-transform: uppercase; }
+.pf-act-stats li b { font: 900 1.3rem var(--gk-font-ui); color: var(--gk-accent-text, var(--gk-accent)); }
+.pf-act-stats li.is-soft { box-shadow: none; color: var(--gk-dim); text-transform: none; font-weight: 600; }
+.pf-act-h { margin: 26px 0 12px; font: 900 italic 1.15rem var(--gk-font-ui); text-transform: uppercase; letter-spacing: .04em; }
+.pf-records { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); }
+.pf-records a { display: grid; gap: 6px; padding: 12px 14px; color: inherit; text-decoration: none; background: var(--gk-surface-2); border: 2px solid var(--gk-border); transition: transform 150ms, box-shadow 150ms; }
+.pf-records a:hover, .pf-records a:focus-visible { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 var(--gk-accent); }
+.pf-rec-game { font: 800 .8rem var(--gk-font-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--gk-dim); }
+.pf-rec-score { font: 900 1.6rem/1 var(--gk-font-ui); }
+.pf-rec-score small { font-size: .9rem; color: var(--gk-dim); }
+.pf-rec-bar { height: 8px; background: var(--gk-bg); border: 1.5px solid var(--gk-border); overflow: hidden; }
+.pf-rec-bar i { display: block; height: 100%; width: var(--pct); background: var(--gk-accent); transform-origin: left; }
+@media (prefers-reduced-motion: no-preference) { .gk-motion-visible .pf-rec-bar i { animation: pf-bar 900ms cubic-bezier(.2, .9, .25, 1) both; } }
+@keyframes pf-bar { from { transform: scaleX(0); } }
+.pf-rec-meta { font-size: .82rem; color: var(--gk-dim); }
+.pf-film-votes { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); }
+.pf-film-votes a { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 8px; color: inherit; text-decoration: none; background: var(--gk-surface-2); border: 2px solid var(--gk-border); }
+.pf-film-votes img, .pf-fv-ph { width: 56px; height: 84px; object-fit: cover; background: var(--gk-bg); }
+.pf-film-votes b { display: block; font: 900 italic 1rem/1.1 var(--gk-font-ui); text-transform: uppercase; overflow-wrap: anywhere; }
+.pf-film-votes small { font-size: .82rem; color: var(--gk-dim); }
+.pf-film-votes em { display: inline-flex; align-items: center; gap: 4px; font: 800 .78rem var(--gk-font-ui); font-style: normal; text-transform: uppercase; color: var(--gk-dim); }
+.pf-film-votes li.is-won a { border-color: var(--gk-gold, #c9a84c); box-shadow: 4px 4px 0 var(--gk-gold, #c9a84c); }
+.pf-film-votes li.is-won em { color: var(--gk-gold, #c9a84c); }
+.pf-act-note { margin-top: 18px; font-size: .85rem; color: var(--gk-dim); }

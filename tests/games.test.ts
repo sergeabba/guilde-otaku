@@ -539,3 +539,17 @@ describe("Blind test vidéo (génériques officiels)", () => {
     expect(blurAt("normal", 25_000)).toBe(0);
   });
 });
+
+import { gameRecords } from "../lib/member-activity";
+describe("profil vivant : records aux jeux", () => {
+  it("garde la meilleure partie par jeu (en % du maximum) et compte les parties", () => {
+    const r = gameRecords([
+      { game: "quiz-generique", score: 900, max_score: 1500, created_at: "2026-11-20T10:00:00Z", detail: { level: "normal" } },
+      { game: "quiz-generique", score: 1400, max_score: 3000, created_at: "2026-11-21T10:00:00Z", detail: { level: "expert" } },
+      { game: "voix", score: 300, max_score: 1200, created_at: "2026-11-19T10:00:00Z" },
+      { game: "inconnu", score: 1, max_score: 1, created_at: "2026-11-19T10:00:00Z" },
+    ]);
+    expect(r.map((x) => x.game)).toEqual(["quiz-generique", "voix"]);
+    expect(r[0]).toMatchObject({ plays: 2, best: 900, pct: 60, level: "Normal", last: "2026-11-21T10:00:00Z" });
+  });
+});

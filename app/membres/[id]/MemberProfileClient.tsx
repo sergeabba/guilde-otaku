@@ -29,6 +29,7 @@ import TrailerEmbed from "../../components/works/TrailerEmbed";
 import { trailerLangLabel } from "../../../lib/works/favorite";
 import TrailerReel, { useWorkTrailer } from "../../components/works/TrailerReel";
 import MemberBadges from "../../components/MemberBadges";
+import MemberActivity from "../../components/MemberActivity";
 import { FORMAT_LABEL } from "../../../lib/works/types";
 import "./profile.css";
 
@@ -326,6 +327,9 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
             <MemberMusic tracks={music} owner={member.name.split(" ")[0]} />
           </section>
         )}
+
+        <MemberActivity id={member.id} firstName={member.name.split(" ")[0]}
+          head={<SectionHead n={String(sections.length + 1).padStart(2, "0")} id="pf-activity-title" romaji="Katsudō" fr="Son activité" hand="dans les jeux et les votes" />} />
 
         {(prev || next) && (
           <nav className="pf-pager" aria-label="Autres membres">
