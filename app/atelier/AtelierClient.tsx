@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { findBySlug, shortSlug, slugOf } from "../../lib/atelier-slug";
 import { useBackClose } from "../hooks/useBackClose";
 import { createPortal, flushSync } from "react-dom";
-import Image from "next/image";
+import Image from "../components/GImage";
 import { ChevronLeft, ChevronRight, Cpu, Download, ExternalLink, Heart, Play, Share2, Shuffle, X } from "lucide-react";
 import GuildeHeader from "../components/GuildeHeader";
 import { useFavorites } from "../hooks/useFavorites";

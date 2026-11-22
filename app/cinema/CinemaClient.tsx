@@ -6,7 +6,7 @@
 import { optimizedSrc } from "../../lib/img";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useBackClose } from "../hooks/useBackClose";
-import Image from "next/image";
+import Image from "../components/GImage";
 import { ChevronLeft, ChevronRight, ExternalLink, Maximize, Play, X } from "lucide-react";
 import GuildeHeader from "../components/GuildeHeader";
 import WordReveal from "../components/WordReveal";

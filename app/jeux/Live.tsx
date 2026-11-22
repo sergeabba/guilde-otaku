@@ -4,7 +4,7 @@
 // extraits au même moment, scores en direct. L'hôte mène la partie (il tient le jeton
 // signé et demande le corrigé de chaque manche au serveur, une fois la manche finie).
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Image from "next/image";
+import Image from "../components/GImage";
 import { Check, Clock, Copy, Crown, LogOut, Play, Radio, RotateCcw, Share2, Users, Volume2 } from "lucide-react";
 import type { Member } from "../../data/members";
 import type { QuizRound } from "../../lib/games/quiz";

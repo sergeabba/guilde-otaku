@@ -5,7 +5,7 @@ import { optimizedSrc } from "../../lib/img";
 import { useEffect, useRef, useState } from "react";
 import { useBackClose } from "../hooks/useBackClose";
 import { createPortal } from "react-dom";
-import Image from "next/image";
+import Image from "./GImage";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { viewTransition, waitFor } from "../../lib/view-transition";

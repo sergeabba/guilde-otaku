@@ -5,7 +5,7 @@
 // peut dire qui il est pour que son visage apparaisse. Masqué tant que la table
 // des votes n'existe pas.
 import { useEffect, useState, useSyncExternalStore } from "react";
-import Image from "next/image";
+import Image from "./GImage";
 import { Eye, EyeOff } from "lucide-react";
 import { fetchMembers } from "../utils/dataAdapter";
 import type { Member } from "../../data/members";

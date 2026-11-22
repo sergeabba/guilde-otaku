@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
+import Image from "./GImage";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { Sword, Flame, ArrowRight, Palette, Sparkles } from "lucide-react";
 import React from "react";

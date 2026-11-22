@@ -5,7 +5,7 @@
 // Bash) + « qui es-tu ? » (membre) ou un pseudo. Les scores sont calculés par le serveur ;
 // l'historique est aussi gardé sur l'appareil (utile tant que la table n'existe pas).
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Image from "next/image";
+import Image from "../components/GImage";
 import { ArrowUpDown, Award, Building2, CalendarCheck, Check, Clock, Film, Grid3x3, Headphones, Heart, ListOrdered, Mic, PenTool, Play, Radio, RotateCcw, ScanSearch, Share2, Smile, Swords, Tags, Trophy, User, UserSearch, Users } from "lucide-react";
 import GuildeHeader from "../components/GuildeHeader";
 import { fetchMembers } from "../utils/dataAdapter";

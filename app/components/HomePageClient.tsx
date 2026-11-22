@@ -3,7 +3,7 @@
 import { optimizedSrc } from "../../lib/img";
 import { useState, useMemo, useEffect, useRef, useCallback, useSyncExternalStore } from "react";
 import { createPortal, flushSync } from "react-dom";
-import Image from "next/image";
+import Image from "./GImage";
 import Link from "next/link";
 import { ArrowDown, Search, Sword, User, X } from "lucide-react";
 import { Rank, Member, RANK_FILTER_ORDER } from "../../data/members";

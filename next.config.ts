@@ -11,7 +11,6 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   images: {
-    // Optimisation activée (suppression de unoptimized: true)
     // Formats modernes pour de meilleures performances
     formats: ["image/avif", "image/webp"],
     // Tailles de device standard pour le responsive

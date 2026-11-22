@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import Image from "./GImage";
 import { useState } from "react";
 import { Cake, Trophy } from "lucide-react";
 import { Member } from "../../data/members";

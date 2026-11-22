@@ -4,7 +4,7 @@
 // visiteur), l'épisode à venir le plus proche en grand, puis les autres en cartes
 // (affiche, bannière, synopsis français, lien Crunchyroll, fans de la Guilde).
 import { useEffect, useMemo, useState } from "react";
-import Image from "next/image";
+import Image from "../components/GImage";
 import Link from "next/link";
 import { Clock, Play } from "lucide-react";
 import GuildeHeader from "../components/GuildeHeader";

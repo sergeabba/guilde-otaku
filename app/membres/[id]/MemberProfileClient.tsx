@@ -9,7 +9,7 @@ import { useBackClose } from "../../hooks/useBackClose";
 import { createPortal, flushSync } from "react-dom";
 import { useRouter } from "next/navigation";
 import { viewTransition, waitFor } from "../../../lib/view-transition";
-import Image from "next/image";
+import Image from "../../components/GImage";
 import Link from "next/link";
 import { ArrowLeft, Cake, ChevronLeft, ChevronRight, Download, ExternalLink, Play, Share2, Trophy, X, Zap } from "lucide-react";
 import type { Member } from "../../../data/members";

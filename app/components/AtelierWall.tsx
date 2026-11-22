@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Image from "./GImage";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import type { AtelierTile } from "../../lib/atelier-server";
