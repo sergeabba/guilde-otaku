@@ -53,7 +53,14 @@ export default function MemberMusic({ tracks, owner, compact = false }: { tracks
                     {on && dock?.playing ? <Pause size={18} aria-hidden="true" /> : <Play size={18} aria-hidden="true" />}
                     {on && dock?.playing && <span className="mpl-eq" aria-hidden="true"><i /><i /><i /></span>}
                   </button>
-                ) : search ? (
+                ) : null}
+                {/* Spotify ne joue qu'un extrait sans compte : la version complète sur YouTube. */}
+                {canPlay && t.provider === "spotify" && search && (
+                  <a className="gk-btn gk-btn--ghost gk-btn--sm mpl-full" href={search} target="_blank" rel="noopener noreferrer">
+                    <Search size={14} aria-hidden="true" /> En entier<span className="gk-sr"> : {label} sur YouTube (nouvel onglet)</span>
+                  </a>
+                )}
+                {canPlay ? null : search ? (
                   <a className="gk-btn gk-btn--ghost gk-btn--sm" href={search} target="_blank" rel="noopener noreferrer">
                     <Search size={14} aria-hidden="true" /> YouTube<span className="gk-sr"> : chercher {label} (nouvel onglet)</span>
                   </a>

@@ -178,6 +178,32 @@ function FavoriteList({ kind, label, works, onChange, library }: { kind: Kind; l
 
 type TrackCandidate = MemberTrack & { previewUrl?: string; source?: string };
 
+/** Morceau Spotify (extrait de 30 s sans compte) : le remplacer par sa version YouTube,
+ *  en gardant titre, artiste et pochette. */
+function SwapToYoutube({ track, onSwap }: { track: MemberTrack; onSwap: (ref: { provider: "youtube"; id: string }) => string | null }) {
+  const [url, setUrl] = useState("");
+  const [err, setErr] = useState<string | null>(null);
+  const search = youtubeSearchUrl(track);
+  const go = () => {
+    const ref = parseMusicLink(url);
+    if (!ref || ref.provider !== "youtube") { setErr("Colle le lien d'une vidéo YouTube (youtube.com/watch?v=… ou youtu.be/…)."); return; }
+    const e = onSwap({ provider: "youtube", id: ref.id });
+    if (e) { setErr(e); return; }
+    setUrl(""); setErr(null);
+  };
+  return (
+    <div className="am-alert am-alert--info" style={{ marginTop: 6, display: "grid", gap: 6 }}>
+      <span>Spotify ne joue qu&apos;un extrait de 30 s aux visiteurs sans compte. Pour la version complète, remplace-le par le même titre sur YouTube.</span>
+      <div className="am-row" style={{ flexWrap: "wrap", gap: 6 }}>
+        {search && <a className="am-btn am-btn--sm" href={search} target="_blank" rel="noopener noreferrer">Chercher sur YouTube ↗</a>}
+        <input className="am-input" inputMode="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="Lien YouTube du morceau" aria-label="Lien YouTube de remplacement" style={{ flex: "1 1 220px" }} />
+        <button type="button" className="am-btn am-btn--sm am-btn--gold" onClick={go} disabled={!url.trim()}>Remplacer</button>
+      </div>
+      {err && <span role="alert" style={{ color: "var(--am-red, #e8412c)" }}>{err}</span>}
+    </div>
+  );
+}
+
 function MusicList({ tracks, onChange }: { tracks: MemberTrack[]; onChange: (t: MemberTrack[]) => void }) {
   const [q, setQ] = useState("");
   const [results, setResults] = useState<TrackCandidate[]>([]);
@@ -245,6 +271,10 @@ function MusicList({ tracks, onChange }: { tracks: MemberTrack[]; onChange: (t: 
                   aria-invalid={hasJapanese(t.artist ?? "")} onChange={(e) => patch(i, { artist: e.target.value || undefined })} />
                 <a href={openUrl(t)} target="_blank" rel="noopener noreferrer" style={{ font: "500 0.8rem var(--am-body)", color: "var(--am-gold)" }}>Vérifier le lien ↗</a>
                 {t.provider === "apple" && <p className="am-alert am-alert--error" style={{ marginTop: 6 }}>Apple Music n&apos;est plus lu sur le site : ajoute le lien YouTube de ce morceau puis retire celui-ci.</p>}
+                {t.provider === "spotify" && <SwapToYoutube track={t} onSwap={(ref) => {
+                  if (tracks.some((x, k) => k !== i && x.provider === ref.provider && x.id === ref.id)) return "Ce morceau YouTube est déjà dans la liste.";
+                  patch(i, { provider: ref.provider, id: ref.id }); return null;
+                }} />}
               </div>
               <div className="am-item-actions">
                 <button type="button" className="am-icon" aria-label="Monter" disabled={i === 0} onClick={() => { const l = [...tracks]; [l[i - 1], l[i]] = [l[i], l[i - 1]]; onChange(l); }}><ArrowUp size={16} aria-hidden="true" /></button>

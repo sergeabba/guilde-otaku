@@ -11,7 +11,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { usePathname } from "next/navigation";
 import { ChevronDown, ExternalLink, Maximize2, Minimize2, Music, Pause, Play, SkipBack, SkipForward, X } from "lucide-react";
 import type { MemberTrack } from "../../lib/member-extras";
-import { PROVIDER_LABEL, PROVIDER_LIMIT, isPlayable, openUrl } from "../../lib/music";
+import { PROVIDER_LABEL, PROVIDER_LIMIT, isPlayable, openUrl, youtubeSearchUrl } from "../../lib/music";
 
 export interface DockTrack extends MemberTrack {
   /** Membre dont c'est la playlist (affiché dans le lecteur). */
@@ -260,7 +260,12 @@ export function MusicDockProvider({ children }: { children: React.ReactNode }) {
                   {PROVIDER_LABEL[current.provider]} <ExternalLink size={13} aria-hidden="true" /><span className="gk-sr"> (nouvel onglet)</span>
                 </a>
               </div>
-              {current.provider === "spotify" && <p className="mdock-note">{PROVIDER_LIMIT.spotify}</p>}
+              {current.provider === "spotify" && (
+                <p className="mdock-note">
+                  {PROVIDER_LIMIT.spotify}
+                  {youtubeSearchUrl(current) && <> <a href={youtubeSearchUrl(current)!} target="_blank" rel="noopener noreferrer">Écouter en entier sur YouTube <ExternalLink size={12} aria-hidden="true" /></a></>}
+                </p>
+              )}
             </div>
           )}
         </aside>
