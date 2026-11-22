@@ -71,3 +71,16 @@ export async function getAtelierWork(key: string): Promise<AtelierTile | null> {
   }
   return (await cached()).find((t) => t.filename === key) ?? null;
 }
+
+/** Futilité (image ou vidéo de la Guilde) d'après son lien court /f/<slug>. */
+export async function getAtelierWorkBySlug(slug: string): Promise<(AtelierTile & { key: string }) | null> {
+  const { findBySlug } = await import("./atelier-slug");
+  const items: (AtelierTile & { key: string })[] = (await cached()).filter((t) => t.filename).map((t) => ({ ...t, key: t.filename! }));
+  const { driveFolder, getGuildVideos } = await import("./drive");
+  if (driveFolder()) {
+    for (const v of (await getGuildVideos().catch(() => [])).flatMap((c) => c.videos)) {
+      items.push({ src: v.thumb ?? "", title: v.title, accent: "#e8412c", filename: `drive:${v.id}`, description: v.description ?? undefined, key: `drive:${v.id}` });
+    }
+  }
+  return findBySlug(slug, items, (t) => ({ title: t.title, key: t.key }));
+}

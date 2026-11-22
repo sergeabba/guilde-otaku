@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { findBySlug, shortSlug } from "../../lib/atelier-slug";
 import { useBackClose } from "../hooks/useBackClose";
 import { createPortal, flushSync } from "react-dom";
 import Image from "next/image";
@@ -41,6 +42,7 @@ const KNOWN_ORDER = ["Création", "Portrait", "Scène", "VFX", "Vidéo"];
 const safeColor = (c?: string) => (c && /^#[0-9a-f]{6}$/i.test(c) ? c : "#dfb75b");
 /** Identifiant stable d'une œuvre : son nom de fichier (l'id de base peut manquer). */
 const keyOf = (w: AtelierImage) => w.filename;
+const itemOf = (w: AtelierImage) => ({ title: w.title || w.filename, key: keyOf(w) });
 
 // Même `sizes` pour la planche et la couche basse de la visionneuse : le navigateur
 // choisit alors le même fichier, déjà en cache, et l'agrandissement est immédiat.
@@ -101,7 +103,8 @@ export default function AtelierClient() {
   }, []);
 
   useEffect(() => {
-    pendingLink.current = new URLSearchParams(window.location.search).get("oeuvre");
+    const sp = new URLSearchParams(window.location.search);
+    pendingLink.current = sp.get("f") ? `f:${sp.get("f")}` : sp.get("oeuvre");
     load();
   }, [load]);
 
@@ -117,19 +120,29 @@ export default function AtelierClient() {
     [images, activeFilter, favOnly, isFavorite]
   );
 
+  // Lien court de chaque futilité (titre, sans nom de fichier) : /f/<slug>, ou ?f=<slug> ici.
+  const slugFor = useCallback((key: string) => {
+    const all = (images ?? []).map(itemOf);
+    const it = all.find((x) => x.key === key);
+    return it ? shortSlug(it, all) : null;
+  }, [images]);
   const setOpen = useCallback((key: string | null, ratio: number | null = null) => {
     setOpenState(key ? { key, ratio } : null);
     const url = new URL(window.location.href);
-    if (key) url.searchParams.set("oeuvre", key); else url.searchParams.delete("oeuvre");
+    url.searchParams.delete("oeuvre");
+    const slug = key ? slugFor(key) : null;
+    if (slug) url.searchParams.set("f", slug); else url.searchParams.delete("f");
     window.history.replaceState({}, "", url);
-  }, []);
+  }, [slugFor]);
 
-  // Lien profond : /atelier?oeuvre=nom-du-fichier
+  // Lien profond : /atelier?f=titre-court (ou l'ancien ?oeuvre=nom-du-fichier)
   useEffect(() => {
     if (!images || !pendingLink.current) return;
     const wanted = pendingLink.current;
     pendingLink.current = null;
-    const found = images.find((w) => keyOf(w) === wanted || String(w.id) === wanted);
+    const found = wanted.startsWith("f:")
+      ? findBySlug(wanted.slice(2), images, itemOf)
+      : images.find((w) => keyOf(w) === wanted || String(w.id) === wanted);
     if (found) setOpenState({ key: keyOf(found), ratio: null });
   }, [images]);
 
@@ -365,7 +378,7 @@ export default function AtelierClient() {
           onToggleFavorite={() => toggle(keyOf(current))}
           onClose={close}
           onStep={step}
-          onShare={() => share({ title: `${current.title} | Les futilités de la Guilde`, text: current.description || `Une des futilités de la Guilde Otaku.` })}
+          onShare={() => share({ title: `${current.title} | Les futilités de la Guilde`, text: current.description || `Une des futilités de la Guilde Otaku.`, url: `/f/${slugFor(keyOf(current)) ?? "futilite"}` })}
           onDownload={() => download(current)}
         />
       )}
