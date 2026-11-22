@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { findBySlug, shortSlug } from "../../lib/atelier-slug";
+import { findBySlug, shortSlug, slugOf } from "../../lib/atelier-slug";
 import { useBackClose } from "../hooks/useBackClose";
 import { createPortal, flushSync } from "react-dom";
 import Image from "next/image";
@@ -210,7 +210,7 @@ export default function AtelierClient() {
       const blob = await res.blob();
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = w.filename;
+      a.download = `${slugOf(w.title || "futilite")}.${(w.filename.match(/\.([a-z0-9]{3,4})$/i)?.[1] ?? "jpg").toLowerCase()}`;
       a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 2000);
       notify("Image téléchargée");
@@ -556,9 +556,7 @@ function Viewer({ work, ratio, neighbours, index, count, isFavorite, onToggleFav
         )}
         <dl className="at-meta">
           {work.universe && (<><dt>{work.video ? "Collection" : "Univers"}</dt><dd>{work.universe}</dd></>)}
-          {work.video
-            ? duration(work.video.durationMs) && (<><dt>Durée</dt><dd>{duration(work.video.durationMs)}</dd></>)
-            : (<><dt>Fichier</dt><dd>{work.filename}</dd></>)}
+          {work.video && duration(work.video.durationMs) && (<><dt>Durée</dt><dd>{duration(work.video.durationMs)}</dd></>)}
         </dl>
         <div className="at-actions">
           <button type="button" className="gk-btn gk-btn--sm" aria-pressed={isFavorite} onClick={onToggleFavorite}>
