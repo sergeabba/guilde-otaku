@@ -9,6 +9,7 @@
 ## Skills du projet (.claude/skills)
 - Interface ou CSS : charger `guilde-design` d'abord (tokens, composants, règles rōmaji) au lieu de relire `app/styles/shonen.css`.
 - Direction visuelle d'une nouvelle page : `frontend-design` (Anthropic). Relecture : `web-design-guidelines` (copie locale figée).
+- Regard critique sur le goût (mise en page, mouvement, textes) : `design-taste-frontend` (taste-skill, copie allégée, voir son `SOURCE.md`). `guilde-design` l'emporte en cas de conflit.
 - Code React/Next.js : `vercel-react-best-practices`, `vercel-composition-patterns` (lire seulement les fichiers `rules/` utiles).
 - Vérifier : `guilde-qa` (faux Supabase en lecture seule, captures, tests, build).
 - Économie de tokens : `caveman` (réponses compressées), `cavecrew` (délégation compacte).
