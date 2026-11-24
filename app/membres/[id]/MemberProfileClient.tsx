@@ -2,7 +2,7 @@
 
 import { portraitSeries, seriesLogoSrc } from "../../../lib/series-logo";
 import { saveImage, saveMessage } from "../../../lib/save-image";
-import { fileSlug } from "../../../lib/share";
+import { fileSlug, memberPlancheUrl } from "../../../lib/share";
 import { optimizedSrc } from "../../../lib/img";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useBackClose } from "../../hooks/useBackClose";
@@ -129,15 +129,17 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
   // (« Enregistrer l'image ») doit s'ouvrir juste après l'appui, sans attendre le serveur.
   const cardJob = useRef<{ url: string; job: Promise<Blob> } | null>(null);
   const cardIo = useRef<IntersectionObserver | null>(null);
+  // Carte classique ou planche de manga, selon le style affiché.
+  const activeCard = mode === "planche" ? memberPlancheUrl(member, pouvoirs) : cardUrl;
   const startCard = useCallback(() => {
-    // Une carte par adresse : passer au membre suivant prépare la sienne.
-    if (cardJob.current?.url !== cardUrl) {
-      const job = fetch(`${cardUrl}${cardUrl.includes("?") ? "&" : "?"}hd=1`).then((res) => { if (!res.ok) throw new Error(); return res.blob(); });
+    // Une carte par adresse : passer au membre suivant (ou à la planche) prépare la sienne.
+    if (cardJob.current?.url !== activeCard) {
+      const job = fetch(`${activeCard}${activeCard.includes("?") ? "&" : "?"}hd=1`).then((res) => { if (!res.ok) throw new Error(); return res.blob(); });
       job.catch(() => { if (cardJob.current?.job === job) cardJob.current = null; });
-      cardJob.current = { url: cardUrl, job };
+      cardJob.current = { url: activeCard, job };
     }
     return cardJob.current.job;
-  }, [cardUrl]);
+  }, [activeCard]);
   // Observe le bouton dès qu'il apparaît (il peut être affiché après le chargement).
   const cardBtn = useCallback((el: HTMLButtonElement | null) => {
     cardIo.current?.disconnect();
@@ -149,8 +151,8 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
   const downloadCard = async () => {
     setDownloading(true);
     try {
-      const r = await saveImage(await startCard(), `carte-otaku-${fileSlug(member.name)}.jpg`);
-      if (r !== "cancelled") notify(saveMessage(r, "Carte"));
+      const r = await saveImage(await startCard(), `${mode === "planche" ? "planche" : "carte"}-otaku-${fileSlug(member.name)}.jpg`);
+      if (r !== "cancelled") notify(saveMessage(r, mode === "planche" ? "Planche" : "Carte"));
     } catch {
       notify("La carte n'a pas pu être générée. Réessaie.");
     } finally {
@@ -203,6 +205,14 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
           <>
             <h1 className="gk-sr">{member.name}, planche de manga</h1>
             <MemberPlanche member={member} pouvoirs={pouvoirs} next={next} />
+            <div className="pf-cta pl-cta">
+              <button ref={cardBtn} type="button" className="gk-btn" onClick={downloadCard} aria-busy={downloading}>
+                <Download size={17} aria-hidden="true" /> {downloading ? "Préparation…" : "Télécharger la planche"}
+              </button>
+              <button type="button" className="gk-btn gk-btn--ghost" onClick={() => setShareOpen(true)}>
+                <Share2 size={17} aria-hidden="true" /> Partager la fiche
+              </button>
+            </div>
           </>
         ) : (<>
         {/* ── DOSSIER ─────────────────────────────────────────────────── */}
