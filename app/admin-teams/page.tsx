@@ -9,6 +9,8 @@ import { getAdminHeaders } from "../../lib/admin-fetch";
 import { defaultFormation, FORMATIONS, slotsOf, SPORT_LABEL, type GuildTeam, type Sport, type TeamSlot } from "../../lib/teams-logic";
 import { objectPosition } from "../../lib/member-extras";
 import { fetchMembers } from "../utils/dataAdapter";
+import { seriesLogoSrc } from "../../lib/series-logo";
+import { rankLogos, type Rank } from "../config/ranks";
 import type { Member } from "../../data/members";
 import AdminShell from "../admin-ui/AdminShell";
 import { Chip, useConfirm, useToast } from "../admin-ui/ui";
@@ -27,8 +29,9 @@ async function call<T>(method: string, body?: unknown): Promise<T> {
 const toDraft = (t: GuildTeam): Draft => ({ id: t.id, name: t.name, sport: t.sport, formation: t.formation, color: t.color ?? EMPTY(t.sport).color, motto: t.motto ?? "", slots: Object.fromEntries(t.slots.map((s) => [s.slot, s])), position: t.position, published: t.published });
 const toBody = (d: Draft) => ({ ...(d.id ? { id: d.id } : {}), name: d.name, sport: d.sport, formation: d.formation, color: d.color, motto: d.motto, position: d.position, published: d.published, slots: Object.values(d.slots).filter((s) => s.memberId > 0) });
 const toTeamMember = (m: Member): TeamMember => ({
-  id: m.id, name: m.name, rank: m.rank, image: m.animeChar || m.photo,
-  pos: objectPosition(m.animeChar ? m.extras?.animeFocus : m.extras?.photoFocus, "50% 18%"),
+  id: m.id, name: m.name, rank: m.rank, anime: m.animeChar || null, real: m.photo || null,
+  animePos: objectPosition(m.extras?.animeFocus, "50% 15%"), realPos: objectPosition(m.extras?.photoFocus, "50% 20%"),
+  logo: seriesLogoSrc(m) ?? rankLogos[m.rank as Rank] ?? null,
   stats: m.stats ?? null, special: m.special?.name && !["—", "Inconnu"].includes(m.special.name) ? m.special.name : null, bankai: null,
 });
 

@@ -5,6 +5,8 @@ import { listTeams } from "../../lib/teams";
 import { getPublicMembers } from "../../lib/members-server";
 import { objectPosition } from "../../lib/member-extras";
 import { POUVOIRS } from "../../data/pouvoirs";
+import { seriesLogoSrc } from "../../lib/series-logo";
+import { rankLogos, type Rank } from "../config/ranks";
 
 export const metadata: Metadata = {
   title: "Teams | Guilde Otaku",
@@ -21,8 +23,9 @@ export default async function TeamsPage() {
   const used = new Set(teams.flatMap((t) => t.slots.map((s) => s.memberId)));
   const members: TeamMember[] = all.filter((m) => used.has(m.id)).map((m) => ({
     id: m.id, name: m.name, rank: m.rank,
-    image: m.animeChar || m.photo,
-    pos: objectPosition(m.animeChar ? m.extras?.animeFocus : m.extras?.photoFocus, "50% 18%"),
+    anime: m.animeChar || null, real: m.photo || null,
+    animePos: objectPosition(m.extras?.animeFocus, "50% 15%"), realPos: objectPosition(m.extras?.photoFocus, "50% 20%"),
+    logo: seriesLogoSrc(m) ?? rankLogos[m.rank as Rank] ?? null,
     stats: m.stats && (m.stats.force || m.stats.vitesse || m.stats.technique) ? m.stats : null,
     special: m.special?.name && !["—", "Inconnu"].includes(m.special.name) ? m.special.name : null,
     bankai: POUVOIRS[m.id]?.bankai.nom ?? null,

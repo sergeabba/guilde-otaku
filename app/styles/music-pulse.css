@@ -1,0 +1,33 @@
+/* Le site au rythme de la musique (voir MusicPulse.tsx). Tempo de base : 120 battements
+   par minute (0,5 s). Les barres ont chacune leur durée pour un mouvement vivant. */
+
+.gk-wave { position: fixed; z-index: 60; left: 0; right: 0; bottom: 0; height: 28px; display: flex; align-items: flex-end; gap: 3px; padding: 0 3px;
+  pointer-events: none; opacity: 0; transform: translateY(100%); transition: opacity 400ms ease, transform 500ms cubic-bezier(.2, .9, .3, 1); }
+.gk-wave[data-on] { opacity: 1; transform: none; }
+.gk-wave i { flex: 1; height: 100%; transform-origin: bottom; transform: scaleY(0.12); border-radius: 2px 2px 0 0;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--gk-accent, #c9a84c) 90%, #fff), transparent);
+  opacity: 0.4; }
+@media (max-width: 899px) {
+  /* Au-dessus de la barre de navigation du bas et du lecteur. */
+  body:has(.gk-mobile-dock) .gk-wave { bottom: calc(68px + env(safe-area-inset-bottom)); height: 22px; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .gk-wave[data-on] i { animation: gk-eq var(--d, 0.5s) ease-in-out infinite alternate; animation-delay: calc(var(--b) * -0.13s); }
+  /* Ce qui bat au rythme : filet de l'en-tête, numéros de chapitre, disque du générique. */
+  html[data-music="on"] .gk-header { animation: gk-beat-line 0.5s ease-out infinite; }
+  html[data-music="on"] .gk-chapter b { animation: gk-beat 0.5s ease-out infinite; }
+  html[data-music="on"] .gk-brand img { animation: gk-beat 0.5s ease-out infinite; }
+  html[data-music="on"] .tm-stage-fx i { animation-duration: 1s !important; }
+}
+@keyframes gk-eq {
+  0% { transform: scaleY(0.12); }
+  35% { transform: scaleY(0.85); }
+  60% { transform: scaleY(0.35); }
+  100% { transform: scaleY(1); }
+}
+@keyframes gk-beat { 0% { transform: scale(1.12); } 40%, 100% { transform: scale(1); } }
+@keyframes gk-beat-line {
+  0% { box-shadow: 0 2px 0 color-mix(in srgb, var(--gk-accent, #c9a84c) 85%, transparent), 0 6px 18px -6px var(--gk-accent, #c9a84c); }
+  60%, 100% { box-shadow: 0 0 0 transparent; }
+}
