@@ -9,6 +9,7 @@ const row = (id: number, name: string, hidden = false) => ({ id, name, rank: "Ge
 
 async function load() {
   let mod!: typeof import("../app/utils/dataAdapter");
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   jest.isolateModules(() => { mod = require("../app/utils/dataAdapter"); });
   return mod;
 }
