@@ -142,15 +142,16 @@ html[data-theme="light"] .gk-page:not(.tone-dark) {
   background-attachment: scroll, scroll, fixed;
 }
 /* Titres à l'encre noire, avec une ombre décalée façon impression. */
-html[data-theme="light"] .gk-page:not(.tone-dark) .gk-display { color: #0b0a0d; }
-html[data-theme="light"] .gk-page:not(.tone-dark) .gk-inked { text-shadow: 4px 4px 0 #0b0a0d; }
+html[data-theme="light"] .gk-page:not(.tone-dark) .gk-display:not(.tone-dark *) { color: #0b0a0d; }
+html[data-theme="light"] .gk-page:not(.tone-dark) .gk-inked:not(.tone-dark *) { text-shadow: 4px 4px 0 #0b0a0d; }
 /* Cases et cartes : papier blanc, contour épais, ombre d'encre pleine. */
-html[data-theme="light"] .gk-page:not(.tone-dark) :is(.gk-panel, .mc, .fp, .hm-case, .gk-btn) { border-color: #0b0a0d; }
-html[data-theme="light"] .gk-page:not(.tone-dark) .mc { box-shadow: 5px 5px 0 #0b0a0d; }
-html[data-theme="light"] .gk-page:not(.tone-dark) .mc-plate { background: var(--gk-white); border-top: 3px solid #0b0a0d; }
-/* En-tête et pied de page : bande de papier plus claire, double filet d'encre. */
-html[data-theme="light"] .gk-header { background: rgba(255, 252, 243, .94); box-shadow: 0 3px 0 #0b0a0d, 0 6px 0 rgba(11, 10, 13, .12); }
-html[data-theme="light"] .gk-chapter b { background: #0b0a0d; color: var(--gk-white); }
+html[data-theme="light"] .gk-page:not(.tone-dark) :is(.gk-panel, .mc, .fp, .hm-case, .gk-btn):not(.tone-dark *) { border-color: #0b0a0d; }
+html[data-theme="light"] .gk-page:not(.tone-dark) .mc:not(.tone-dark *) { box-shadow: 5px 5px 0 #0b0a0d; }
+html[data-theme="light"] .gk-page:not(.tone-dark) .mc-plate:not(.tone-dark *) { background: var(--gk-white); border-top: 3px solid #0b0a0d; }
+/* En-tête et pied de page : bande de papier plus claire, double filet d'encre.
+   Jamais dans une zone forcée en sombre (.tone-dark) : texte clair sur papier clair. */
+html[data-theme="light"] .gk-header:not(.tone-dark) { background: rgba(255, 252, 243, .94); box-shadow: 0 3px 0 #0b0a0d, 0 6px 0 rgba(11, 10, 13, .12); }
+html[data-theme="light"] .gk-chapter:not(.tone-dark *) b { background: #0b0a0d; color: var(--gk-white); }
 html[data-theme="light"] ::selection { background: #0b0a0d; color: #fffcf3; }
 
 

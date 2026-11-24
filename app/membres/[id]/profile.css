@@ -232,3 +232,4 @@ html:has(.pf-page) { scroll-padding-top: calc(var(--pf-head, 0px) + 72px); }
 .pf-pouvoirs .pf-special-name { margin-bottom: 4px; overflow-wrap: anywhere; }
 .pf-pouvoir-sens { position: relative; z-index: 1; margin-bottom: 10px; font: 600 italic 0.95rem var(--gk-font-ui); letter-spacing: 0.04em; color: var(--gk-dim); }
 .pf-domaine { background: radial-gradient(circle at 50% 130%, color-mix(in srgb, var(--gk-accent) 30%, var(--gk-surface)) 0, var(--gk-surface) 65%); }
+@media (max-width: 480px) { .pf-mode-long { display: none; } }

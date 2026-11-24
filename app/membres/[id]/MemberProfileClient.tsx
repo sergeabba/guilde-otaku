@@ -191,7 +191,7 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
           <div className="pf-bar-right">
             <div className="gk-switch pf-mode" role="group" aria-label="Style de la fiche">
               <button type="button" aria-pressed={mode === "fiche"} onClick={() => changeMode("fiche")}><IdCard size={15} aria-hidden="true" /> Fiche</button>
-              <button type="button" aria-pressed={mode === "planche"} onClick={() => changeMode("planche")}><BookOpen size={15} aria-hidden="true" /> Lire en planche</button>
+              <button type="button" aria-pressed={mode === "planche"} onClick={() => changeMode("planche")}><BookOpen size={15} aria-hidden="true" /> <span className="pf-mode-long">Lire en </span>planche</button>
             </div>
             <button type="button" className="gk-btn gk-btn--sm" onClick={() => setShareOpen(true)} aria-haspopup="dialog">
               <Share2 size={16} aria-hidden="true" /> Partager
