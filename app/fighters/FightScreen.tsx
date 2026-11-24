@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pause, Play, RotateCcw, Users, Home, Keyboard } from "lucide-react";
+import { connectedPads, mergeInput, padInput, padPause } from "../../lib/fighters/gamepad";
 import { createMatch, step, NO_INPUT, MAX_HP, MAX_METER, FPS, STAGE_W, STAGE_H, type Input, type MatchOptions, type MatchState, type MatchEvent } from "../../lib/fighters/engine";
 import { STAGES, type Stage } from "../../lib/fighters/stages";
 import { FightAudio, audioPrefs, saveAudioPrefs, type AudioPrefs } from "../../lib/fighters/audio";
@@ -186,18 +187,24 @@ export default function FightScreen({ teams, mode, versus, level, labels, reduce
       viewRef.current = w; setViewW(w);
     };
     fit(); window.addEventListener("resize", fit);
-    let raf = 0, last = performance.now(), acc = 0, hudTick = 0;
+    let raf = 0, last = performance.now(), acc = 0, hudTick = 0, startHeld = false;
     const loop = (now: number) => {
       raf = requestAnimationFrame(loop);
       const dt = Math.min(100, now - last); last = now;
+      // Start / Options : pause et reprise (sur l'appui, pas tant que le bouton est tenu).
+      const start = connectedPads().some(padPause);
+      if (start && !startHeld && s.phase !== "matchEnd") setPause(!pausedRef.current);
+      startHeld = start;
       if (pausedRef.current || document.hidden) { renderer.draw(s, viewRef.current); return; }
       acc += dt;
       let steps = 0;
       while (acc >= 1000 / FPS && steps < 5) {
-        let p1: Input = { ...inputs.current[0] };
-        for (const k of Object.keys(p1) as (keyof Input)[]) p1[k] = p1[k] || touch.current[k];
+        // Manettes : la première joue J1, la deuxième J2 (à deux sur le même écran).
+        const pads = connectedPads();
+        let p1: Input = mergeInput(inputs.current[0], touch.current);
+        if (pads[0]) p1 = mergeInput(p1, padInput(pads[0]));
         if (cpuP1) p1 = aiInput(s, 0, mem0, rng, level);
-        const p2 = versus === "ia" ? aiInput(s, 1, mem, rng, level) : inputs.current[1];
+        const p2 = versus === "ia" ? aiInput(s, 1, mem, rng, level) : pads[1] ? mergeInput(inputs.current[1], padInput(pads[1])) : inputs.current[1];
         step(s, p1, p2);
         if (s.events.length) {
           renderer.onEvents(s.events, s);
@@ -330,6 +337,7 @@ export default function FightScreen({ teams, mode, versus, level, labels, reduce
                   <div><dt>Autres</dt><dd>avant + poing fort au contact = projection · {keyLabel("KeyH", "H")} ou poing léger + pied léger = esquive · enchaîner poing léger puis coup fort</dd></div>
                   {versus === "local" && <div><dt>J2</dt><dd>Flèches · pavé 4 5 1 2 (ou 7 8 9 0) coups · 6 (ou -) spéciale · 3 (ou =) super · 0 (ou .) esquive</dd></div>}
                   <div><dt>Pause</dt><dd>Échap ou {keyLabel("KeyP", "P")}</dd></div>
+                  <div><dt>Manette</dt><dd>croix ou stick : bouger · X / Carré poing léger · Y / Triangle poing fort · A / Croix pied léger · B / Rond pied fort · RB / R1 spéciale · RT / R2 super · LB / L1 esquive · Start pause{versus === "local" ? " · 2e manette : J2" : ""}</dd></div>
                 </dl>
               )}
             </div>

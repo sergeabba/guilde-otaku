@@ -11,6 +11,7 @@
 - Direction visuelle d'une nouvelle page : `frontend-design` (Anthropic). Relecture : `web-design-guidelines` (copie locale figée).
 - Regard critique sur le goût (mise en page, mouvement, textes) : `design-taste-frontend` (taste-skill, copie allégée, voir son `SOURCE.md`). `guilde-design` l'emporte en cas de conflit.
 - Effet animé (texte, fond, curseur, micro-interaction) : `react-bits` (catalogue React Bits, récupération sur GitHub, adaptation au site) avant d'en coder un.
+- Jeu Fighters (coups, personnages, IA, commandes, sensations) : `fighters-studio` (guide du genre combat, test d'équilibrage, test de jeu).
 - Code React/Next.js : `vercel-react-best-practices`, `vercel-composition-patterns` (lire seulement les fichiers `rules/` utiles).
 - Vérifier : `guilde-qa` (faux Supabase en lecture seule, captures, tests, build).
 - Économie de tokens : `caveman` (réponses compressées), `cavecrew` (délégation compacte).
