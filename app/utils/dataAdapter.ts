@@ -89,6 +89,29 @@ async function fetchWithRetry<T>(
 let membersFromLocal = false;
 export const lastMembersFromLocal = () => membersFromLocal;
 
+// Dernière liste correcte reçue de la base (masqués déjà retirés) : servie si la base
+// ne répond plus, à la place de la copie locale du site qui ignore les membres masqués.
+// Serveur : gardée en mémoire ; navigateur : aussi sur l'appareil.
+const SNAP_KEY = "gk-members-last";
+let lastGood: Member[] | null = null;
+function saveSnapshot(list: Member[]) {
+  lastGood = list;
+  if (typeof window !== "undefined") { try { localStorage.setItem(SNAP_KEY, JSON.stringify(list)); } catch { /* stockage plein ou indisponible */ } }
+}
+function readSnapshot(): Member[] | null {
+  if (lastGood?.length) return lastGood;
+  if (typeof window === "undefined") return null;
+  try { const l = JSON.parse(localStorage.getItem(SNAP_KEY) ?? "null"); return Array.isArray(l) && l.length ? (l as Member[]) : null; } catch { return null; }
+}
+/** Base injoignable : dernière liste correcte, sinon rien (jamais la copie locale, sauf
+ *  site de démonstration sans base configurée). */
+function fallbackMembers(): Member[] {
+  const snap = readSnapshot();
+  if (snap) { membersFromLocal = false; return snap.map((m) => ({ ...m })); }
+  membersFromLocal = true;
+  return process.env.NEXT_PUBLIC_SUPABASE_URL ? [] : localMembers.map((m) => ({ ...m }));
+}
+
 export async function fetchMembers(): Promise<Member[]> {
   // Retourner le cache si valide
   if (isCacheValid()) {
@@ -113,19 +136,18 @@ export async function fetchMembers(): Promise<Member[]> {
       membersCache = mapped;
       membersCacheTime = Date.now();
       membersFromLocal = false;
+      saveSnapshot(mapped);
       return mapped;
     }
 
-    // Supabase a répondu mais sans données → fallback local
-    membersFromLocal = true;
-    return localMembers.map((m) => ({ ...m }));
+    // Supabase a répondu mais sans données → dernière liste connue
+    return fallbackMembers();
   } catch (err) {
     // Erreur réseau ou Supabase → fallback local silencieux
     if (process.env.NODE_ENV === "development") {
       console.warn("[dataAdapter] Supabase indisponible, fallback local activé.", err);
     }
-    membersFromLocal = true;
-    return localMembers.map((m) => ({ ...m }));
+    return fallbackMembers();
   }
 }
 

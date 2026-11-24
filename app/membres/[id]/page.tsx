@@ -22,7 +22,9 @@ async function load(params: Props["params"]) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const found = await load(params);
-  if (!found) return { title: "Membre introuvable | Guilde Otaku", robots: { index: false } };
+  // Membre masqué ou inconnu : vraie erreur 404 (les métadonnées sont calculées avant
+  // l'envoi de la page aux robots : moteurs de recherche, aperçus WhatsApp…).
+  if (!found) notFound();
 
   const m = found.member;
   const romaji = rankRomaji[m.rank as Rank];
