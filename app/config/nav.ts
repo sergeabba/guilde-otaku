@@ -4,6 +4,7 @@ export type PageId =
   | "membres"
   | "birthdays"
   | "wanted"
+  | "teams"
   | "fighters"
   | "film-semaine"
   | "bibliotheque"
@@ -26,6 +27,7 @@ export interface NavEntry {
 export const NAV: NavEntry[] = [
   { id: "membres",      label: "Membres",       href: "/",             jp: "Nakama",   blurb: "L'annuaire de la Guilde, grade par grade." },
   { id: "birthdays",    label: "Anniversaires", href: "/birthdays",    jp: "Tanjōbi", blurb: "Qui souffle ses bougies, et dans combien de jours." },
+  { id: "teams",        label: "Teams",         href: "/teams",        jp: "Chīmu",   blurb: "Les cinq de basket et les onze de foot de la Guilde." },
   { id: "wanted",       label: "Wanted",        href: "/wanted",       jp: "Tehaisho", blurb: "Les avis de recherche et leurs primes." },
   { id: "fighters",     label: "Fighters",      href: "/fighters",     jp: "Tōshi",   blurb: "Choisis ton combattant, lance le duel." },
   { id: "film-semaine", label: "Film Semaine",  href: "/film-semaine", jp: "Eiga",   blurb: "Le film élu et les séances passées." },
@@ -42,7 +44,7 @@ export const chapterNo = (i: number) => String(i + 1).padStart(2, "0");
 /** Regroupement des rubriques (en-tête et sommaire) : trois familles au lieu de onze entrées. */
 export interface NavGroup { id: string; label: string; jp: string; items: PageId[] }
 export const NAV_GROUPS: NavGroup[] = [
-  { id: "guilde", label: "La Guilde", jp: "Nakama", items: ["membres", "birthdays", "wanted", "fighters", "jeux"] },
+  { id: "guilde", label: "La Guilde", jp: "Nakama", items: ["membres", "teams", "birthdays", "fighters", "jeux", "wanted"] },
   { id: "culture", label: "Animes & films", jp: "Bunka", items: ["bibliotheque", "calendrier", "cinema", "film-semaine"] },
   { id: "bonus", label: "Bonus", jp: "Omake", items: ["atelier", "bons-plans"] },
 ];

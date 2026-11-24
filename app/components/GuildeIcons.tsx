@@ -23,6 +23,13 @@ export const IconWanted = (p: P) => (
     <path d="M8.3 16c.8-1.8 2.1-2.7 3.7-2.7s2.9.9 3.7 2.7" />
   </Base>
 );
+/** Teams : maillot numéroté et ballon. */
+export const IconTeams = (p: P) => (
+  <Base {...p}>
+    <path d="M8 3.2 4 5.4l1.6 4 1.9-.8V20h9V8.6l1.9.8 1.6-4-4-2.2c-.6 1.5-2 2.4-4 2.4S8.6 4.7 8 3.2Z" />
+    <path className="gi-accent" d="M10.4 11.6h3.2l-2.2 5.2" />
+  </Base>
+);
 /** Fighters : sabres croisés et éclat d'impact. */
 export const IconFighters = (p: P) => (
   <Base {...p}>

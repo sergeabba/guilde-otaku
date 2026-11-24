@@ -50,9 +50,9 @@ createServer((req, res) => {
     return res.end(JSON.stringify(list));
   }
   // Actualités : tables gardées en mémoire (recette uniquement, rien n'est écrit sur disque).
-  const memTable = /^\/rest\/v1\/(news_items|news_runs|game_plays|tier_lists|atelier|emoji_puzzles|film_polls|film_poll_votes)$/.exec(u.pathname)?.[1];
+  const memTable = /^\/rest\/v1\/(news_items|news_runs|game_plays|tier_lists|atelier|emoji_puzzles|film_polls|film_poll_votes|guild_teams)$/.exec(u.pathname)?.[1];
   if (memTable) {
-    globalThis.__mem ??= { news_items: [], news_runs: [], game_plays: [], tier_lists: [], atelier: [], emoji_puzzles: [], film_polls: [], film_poll_votes: [], seq: 0 };
+    globalThis.__mem ??= { news_items: [], news_runs: [], game_plays: [], tier_lists: [], atelier: [], emoji_puzzles: [], film_polls: [], film_poll_votes: [], guild_teams: [], seq: 0 };
     const M = globalThis.__mem;
     const eqs = [...u.searchParams].filter(([k, v]) => v.startsWith("eq.") && k !== "select").map(([k, v]) => [k, v.slice(3)]);
     const match = (r) => eqs.every(([k, v]) => String(r[k]) === v);

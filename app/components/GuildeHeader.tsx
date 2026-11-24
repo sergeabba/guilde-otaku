@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useBackClose } from "../hooks/useBackClose";
 import { createPortal } from "react-dom";
 import { ChevronDown, Menu, Moon, Search, Sun, X } from "lucide-react";
-import { IconBiblio, IconFighters, IconGuilde, IconSommaire, IconWanted } from "./GuildeIcons";
+import { IconBiblio, IconFighters, IconGuilde, IconSommaire, IconTeams } from "./GuildeIcons";
 import { useTheme } from "../context/ThemeContext";
 import { NAV_GROUPS, groupOf, navEntry, type PageId } from "../config/nav";
 
@@ -23,7 +23,7 @@ interface GuildeHeaderProps {
 
 const QUICK_LINKS = [
   { id: "membres", label: "La Guilde", href: "/", Icon: IconGuilde },
-  { id: "wanted", label: "Wanted", href: "/wanted", Icon: IconWanted },
+  { id: "teams", label: "Teams", href: "/teams", Icon: IconTeams },
   { id: "fighters", label: "Fighters", href: "/fighters", Icon: IconFighters },
   { id: "bibliotheque", label: "Biblio", href: "/bibliotheque", Icon: IconBiblio },
 ] as const;

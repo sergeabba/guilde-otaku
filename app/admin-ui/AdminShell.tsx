@@ -3,12 +3,12 @@
 // Coque commune des pages d'administration : connexion, navigation entre les
 // rubriques (visible sur téléphone comme sur ordinateur), déconnexion.
 import Link from "next/link";
-import { BookOpen, Clapperboard, Gift, Image as ImageIcon, LayoutGrid, Lock, LogOut, Newspaper, Smile, Users, Vote } from "lucide-react";
+import { BookOpen, Clapperboard, Gift, Image as ImageIcon, LayoutGrid, Lock, LogOut, Newspaper, Shirt, Smile, Users, Vote } from "lucide-react";
 import { useAdminAuth } from "../hooks/useAdminAuth";
 import "../admin-membres/admin-membres.css";
 import "./admin-ui.css";
 
-export type AdminSection = "tableau" | "membres" | "bibliotheque" | "film" | "atelier" | "actus" | "bons-plans" | "emojis" | "votes";
+export type AdminSection = "tableau" | "membres" | "bibliotheque" | "film" | "atelier" | "actus" | "bons-plans" | "emojis" | "votes" | "teams";
 
 const NAV: { key: AdminSection; href: string; label: string; icon: React.ReactNode }[] = [
   { key: "tableau", href: "/admin", label: "Tableau", icon: <LayoutGrid size={17} aria-hidden="true" /> },
@@ -16,6 +16,7 @@ const NAV: { key: AdminSection; href: string; label: string; icon: React.ReactNo
   { key: "bibliotheque", href: "/admin-biblio", label: "Bibliothèque", icon: <BookOpen size={17} aria-hidden="true" /> },
   { key: "film", href: "/admin-film-semaine", label: "Film de la semaine", icon: <Clapperboard size={17} aria-hidden="true" /> },
   { key: "votes", href: "/admin-votes", label: "Votes de films", icon: <Vote size={17} aria-hidden="true" /> },
+  { key: "teams", href: "/admin-teams", label: "Teams", icon: <Shirt size={17} aria-hidden="true" /> },
   { key: "atelier", href: "/admin-atelier", label: "Futilités", icon: <ImageIcon size={17} aria-hidden="true" /> },
   { key: "actus", href: "/admin-actus", label: "Actualités", icon: <Newspaper size={17} aria-hidden="true" /> },
   { key: "bons-plans", href: "/admin-bons-plans", label: "Bons plans", icon: <Gift size={17} aria-hidden="true" /> },

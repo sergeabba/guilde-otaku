@@ -1,0 +1,152 @@
+/* Teams de la Guilde : ambiance anime de sport (présentation d'avant-match, terrain,
+   lignes de vitesse, éclats). Couleur de l'équipe : --tm (texte lisible : --tm-on). */
+
+.tm-page { --tm-ink: #08070b; background: var(--tm-ink); color: #f6f2e9; overflow-x: clip; }
+
+/* ─── En-tête de page ─── */
+.tm-hero { position: relative; isolation: isolate; padding-block: clamp(34px, 7vw, 84px) clamp(22px, 4vw, 40px); overflow: hidden; }
+.tm-hero::before { content: ""; position: absolute; inset: -40% -10%; z-index: -1;
+  background:
+    radial-gradient(60% 50% at 78% 40%, rgba(249, 115, 22, 0.32), transparent 70%),
+    radial-gradient(45% 45% at 15% 70%, rgba(37, 99, 235, 0.3), transparent 70%),
+    repeating-linear-gradient(105deg, rgba(255, 255, 255, 0.05) 0 2px, transparent 2px 34px); }
+.tm-hero::after { content: ""; position: absolute; top: 0; bottom: 0; left: -30%; width: 30%; z-index: -1;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.09), transparent); transform: skewX(-18deg); }
+.tm-kicker { font: 800 0.85rem var(--gk-font-ui); letter-spacing: 0.3em; text-transform: uppercase; color: #fb923c; }
+.tm-title { font: 400 clamp(3.4rem, 15vw, 9.5rem)/0.86 var(--gk-font-display); text-transform: uppercase; margin-top: 10px;
+  color: #fff; text-shadow: 5px 5px 0 #f97316, 10px 10px 0 rgba(37, 99, 235, 0.85); }
+.tm-lead { max-width: 60ch; margin-top: 18px; font: 500 1.08rem/1.5 var(--gk-font-body); color: rgba(246, 242, 233, 0.82); }
+.tm-filter { margin-top: 22px; }
+
+/* ─── Une équipe ─── */
+.tm-list { display: grid; gap: clamp(46px, 8vw, 96px); padding-bottom: clamp(60px, 9vw, 120px); }
+.tm-team { position: relative; scroll-margin-top: calc(var(--pf-head, 64px) + 12px); }
+.tm-banner { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: clamp(12px, 2.4vw, 26px);
+  padding: clamp(14px, 2.6vw, 24px) clamp(16px, 3vw, 30px); background: linear-gradient(100deg, var(--tm) 0 62%, color-mix(in srgb, var(--tm) 45%, #000) 62.2% 100%);
+  color: var(--tm-on); clip-path: polygon(0 0, 100% 0, calc(100% - 22px) 100%, 0 100%); box-shadow: inset 0 -6px 0 rgba(0, 0, 0, 0.25); }
+.tm-banner::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0.25;
+  background: repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.5) 0 2px, transparent 2px 18px); mix-blend-mode: overlay; }
+.tm-crest { display: grid; place-items: center; width: clamp(56px, 9vw, 84px); aspect-ratio: 1; background: #0b0a0f; color: var(--tm);
+  clip-path: polygon(50% 0, 100% 22%, 100% 70%, 50% 100%, 0 70%, 0 22%); }
+.tm-crest b { font: 400 clamp(1.3rem, 3vw, 2rem) var(--gk-font-display); }
+.tm-sport { font: 800 0.8rem var(--gk-font-ui); letter-spacing: 0.22em; text-transform: uppercase; opacity: 0.85; }
+.tm-name { font: 400 clamp(1.8rem, 6vw, 3.6rem)/0.95 var(--gk-font-display); text-transform: uppercase; overflow-wrap: anywhere; text-wrap: balance; }
+.tm-motto { margin-top: 6px; font: 700 clamp(1.1rem, 2.4vw, 1.4rem)/1.1 var(--gk-font-hand); }
+.tm-power { display: grid; justify-items: end; gap: 2px; min-width: 96px; color: #fff; }
+.tm-power span { font: 800 0.72rem var(--gk-font-ui); letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.8; }
+.tm-power b { font: 400 clamp(2rem, 5vw, 3rem)/1 var(--gk-font-display); }
+.tm-power i { display: block; width: 96px; height: 7px; background: rgba(0, 0, 0, 0.45); }
+.tm-power em { display: block; height: 100%; background: #fff; }
+@media (max-width: 599px) {
+  .tm-banner { grid-template-columns: auto minmax(0, 1fr); }
+  .tm-power { grid-column: 1 / -1; grid-template-columns: auto auto 1fr; align-items: center; justify-items: start; gap: 10px; }
+  .tm-power i { width: 100%; }
+}
+.tm-empty { margin-top: 16px; padding: 18px; border: 2px dashed rgba(255, 255, 255, 0.2); color: rgba(246, 242, 233, 0.7); font-style: italic; }
+
+.tm-body { display: grid; gap: clamp(16px, 3vw, 28px); margin-top: clamp(16px, 3vw, 26px); align-items: start; }
+@media (min-width: 900px) { .tm-body { grid-template-columns: minmax(0, 1fr) 300px; } }
+
+/* ─── Basket : le cinq majeur en cartes de joueurs ─── */
+.tm-five { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: clamp(8px, 1.6vw, 16px); list-style: none; padding: 0; margin: 0; }
+@media (max-width: 699px) {
+  .tm-five { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 42%; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 10px; overscroll-behavior-x: contain; }
+  .tm-five > li { scroll-snap-align: start; }
+}
+.tm-card { position: relative; display: block; width: 100%; aspect-ratio: 3 / 4.4; padding: 0; border: 0; cursor: pointer; color: #fff; background: #1a1922;
+  clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+  transition: transform var(--gk-med, 260ms) var(--gk-ease, ease), filter var(--gk-med, 260ms); }
+.tm-card::before { content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none;
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.85), inset 0 0 0 6px rgba(0, 0, 0, 0.6); }
+.tm-card::after { content: ""; position: absolute; inset: 0; z-index: 4; pointer-events: none; transform: translateX(-120%);
+  background: linear-gradient(105deg, transparent 30%, rgba(255, 255, 255, 0.45) 50%, transparent 70%); }
+.tm-card-img { position: absolute; inset: 0 0 26% 0; z-index: 1; background: linear-gradient(180deg, color-mix(in srgb, var(--tm) 30%, #d8dbe4), #9aa0ad); }
+.tm-card-no { position: absolute; z-index: 0; right: 6%; top: 2%; font: 400 clamp(3rem, 8vw, 5.6rem)/1 var(--gk-font-display); color: color-mix(in srgb, var(--tm) 70%, transparent); }
+.tm-card-pos { position: absolute; z-index: 2; left: 0; bottom: 26%; padding: 2px 10px 0 8px; font: 900 italic clamp(1.1rem, 2.4vw, 1.7rem)/1.1 var(--gk-font-ui);
+  color: #fff; background: linear-gradient(90deg, rgba(8, 7, 11, 0.8), transparent); letter-spacing: 0.04em; }
+.tm-card-name { position: absolute; z-index: 2; left: 0; right: 0; bottom: 0; height: 26%; display: grid; place-items: center; padding: 0 6px;
+  font: 900 italic clamp(0.9rem, 1.9vw, 1.25rem)/1 var(--gk-font-ui); text-transform: uppercase; letter-spacing: 0.06em; text-align: center; overflow-wrap: anywhere;
+  background: #0b0a0f; border-top: 4px solid var(--tm);
+  background-image: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0 3px, transparent 3px 8px); }
+.tm-cap { position: absolute; z-index: 5; right: 8px; top: 8px; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: #facc15; color: #111; box-shadow: 0 0 0 2px #111; }
+.tm-card[aria-pressed="true"] { transform: translateY(-8px); filter: drop-shadow(0 0 14px color-mix(in srgb, var(--tm) 80%, transparent)); }
+.tm-card[aria-pressed="true"]::before { box-shadow: inset 0 0 0 4px var(--tm), inset 0 0 0 7px rgba(0, 0, 0, 0.6); }
+@media (hover: hover) { .tm-card:hover { transform: translateY(-6px) rotate(-1deg); } .tm-card:hover::after { transform: translateX(120%); transition: transform 700ms ease; } }
+.tm-card:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+
+/* ─── Foot : le onze sur le terrain ─── */
+.tm-pitch { position: relative; width: 100%; max-width: 620px; justify-self: center; aspect-ratio: 68 / 88; overflow: hidden; border: 3px solid rgba(255, 255, 255, 0.85);
+  background:
+    radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 0.12), transparent 70%),
+    repeating-linear-gradient(180deg, #14532d 0 9%, #166534 9% 18%); box-shadow: 0 0 0 6px #0b0a0f, 10px 10px 0 6px var(--tm); }
+.tm-lines { position: absolute; inset: 0; pointer-events: none; }
+.tm-lines::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 2px solid rgba(255, 255, 255, 0.55); }
+.tm-circle { position: absolute; left: 50%; top: 50%; width: 26%; aspect-ratio: 1; transform: translate(-50%, -50%); border: 2px solid rgba(255, 255, 255, 0.55); border-radius: 50%; }
+.tm-box { position: absolute; left: 22%; right: 22%; height: 15%; border: 2px solid rgba(255, 255, 255, 0.55); }
+.tm-box.is-top { top: -2px; border-top: 0; } .tm-box.is-bottom { bottom: -2px; border-bottom: 0; }
+.tm-badge { position: absolute; z-index: 1; display: grid; justify-items: center; gap: 3px; transform: translate(-50%, -50%); padding: 0; border: 0; background: none; cursor: pointer; color: #fff; min-width: 44px; }
+.tm-badge-shape { position: relative; width: clamp(44px, 11vw, 74px); aspect-ratio: 1; background: #fff; overflow: hidden;
+  clip-path: polygon(50% 0, 100% 36%, 82% 100%, 18% 100%, 0 36%); }
+.tm-badge-shape > img { clip-path: polygon(50% 5%, 95% 38%, 79% 95%, 21% 95%, 5% 38%); }
+.tm-badge-no { position: absolute; left: 50%; bottom: 4%; transform: translateX(-50%); padding: 0 5px; font: 400 clamp(0.7rem, 1.8vw, 1rem)/1.1 var(--gk-font-display); color: #fff; background: var(--tm); }
+.tm-badge-name { display: inline-flex; align-items: center; gap: 3px; max-width: 13ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 1px 6px;
+  font: 900 italic clamp(0.62rem, 1.7vw, 0.86rem)/1.2 var(--gk-font-ui); text-transform: uppercase; letter-spacing: 0.05em; background: rgba(8, 7, 11, 0.85); }
+.tm-badge-name svg { color: #facc15; flex: none; }
+.tm-badge[aria-pressed="true"] .tm-badge-shape { background: var(--tm); }
+.tm-badge[aria-pressed="true"]::before { content: ""; position: absolute; left: 50%; top: calc(clamp(44px, 11vw, 74px) / 2); width: calc(clamp(44px, 11vw, 74px) * 1.5); aspect-ratio: 1;
+  transform: translate(-50%, -50%); border-radius: 50%; border: 3px solid var(--tm); z-index: -1; }
+.tm-badge:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+
+/* ─── Fiche du joueur sélectionné ─── */
+.tm-sheet { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 14px; padding: 14px; background: #121118; border: 3px solid #f6f2e9; box-shadow: 8px 8px 0 var(--tm); }
+@media (min-width: 900px) { .tm-sheet { grid-template-columns: 1fr; position: sticky; top: calc(var(--pf-head, 64px) + 16px); } }
+.tm-sheet-img { position: relative; aspect-ratio: 3 / 4; overflow: hidden; background: #22202a; border: 3px solid var(--tm); }
+@media (min-width: 900px) { .tm-sheet-img { aspect-ratio: 1; } }
+.tm-sheet-kick { font: 800 0.78rem var(--gk-font-ui); letter-spacing: 0.16em; text-transform: uppercase; color: var(--tm); filter: brightness(1.35); }
+.tm-sheet-name { margin-top: 4px; font: 400 clamp(1.4rem, 3vw, 1.9rem)/1 var(--gk-font-display); text-transform: uppercase; overflow-wrap: anywhere; }
+.tm-sheet-rank { margin-top: 4px; font: 700 0.95rem var(--gk-font-ui); color: rgba(246, 242, 233, 0.66); text-transform: uppercase; letter-spacing: 0.08em; }
+.tm-sheet-stats { display: grid; gap: 6px; margin: 12px 0 4px; }
+.tm-sheet-stats div { display: grid; grid-template-columns: 6.4em minmax(0, 1fr); align-items: center; gap: 8px; }
+.tm-sheet-stats dt { font: 800 0.78rem var(--gk-font-ui); text-transform: uppercase; letter-spacing: 0.1em; color: rgba(246, 242, 233, 0.7); }
+.tm-sheet-stats dd { display: grid; grid-template-columns: minmax(0, 1fr) 2.2em; align-items: center; gap: 8px; margin: 0; }
+.tm-sheet-stats i { display: block; height: 8px; background: rgba(255, 255, 255, 0.12); }
+.tm-sheet-stats em { display: block; height: 100%; background: var(--tm); }
+.tm-sheet-stats b { font: 400 1rem var(--gk-font-display); text-align: right; font-variant-numeric: tabular-nums; }
+.tm-sheet-skill { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; font: 700 0.98rem var(--gk-font-ui); }
+.tm-sheet-skill span { font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(246, 242, 233, 0.6); }
+.tm-sheet-skill svg { color: var(--tm); filter: brightness(1.4); }
+.tm-sheet-skill i { font-style: normal; }
+.tm-sheet-link { margin-top: 12px; }
+
+/* ─── Mouvement : entrée façon générique d'anime de sport ─── */
+@media (prefers-reduced-motion: no-preference) {
+  .tm-hero::after { animation: tm-sweep 4.5s ease-in-out infinite; }
+  .tm-title { animation: tm-slam 700ms cubic-bezier(.2, 1.4, .4, 1) both; }
+  .tm-team .tm-banner { animation: tm-band 620ms cubic-bezier(.2, .9, .3, 1) both; animation-timeline: view(); animation-range: entry 0% entry 60%; }
+  .tm-five > li { animation: tm-card-in 640ms cubic-bezier(.2, 1.2, .4, 1) both; animation-delay: calc(var(--i) * 90ms); }
+  .tm-badge { animation: tm-pop 520ms cubic-bezier(.2, 1.5, .4, 1) both; animation-delay: calc(240ms + var(--i) * 60ms); }
+  .tm-card[aria-pressed="true"] .tm-card-img { animation: tm-flash 520ms ease-out; }
+  .tm-badge[aria-pressed="true"]::before { animation: tm-ring 1.6s ease-out infinite; }
+  .tm-sheet { animation: tm-sheet-in 380ms cubic-bezier(.2, .9, .3, 1); }
+}
+@keyframes tm-sweep { 0%, 30% { left: -30%; } 70%, 100% { left: 120%; } }
+@keyframes tm-slam { from { opacity: 0; transform: scale(1.5) skewX(-10deg); filter: blur(6px); } }
+@keyframes tm-band { from { clip-path: polygon(0 0, 0 0, 0 100%, 0 100%); } }
+@keyframes tm-card-in { from { opacity: 0; transform: translateY(50px) rotate(4deg) scale(0.9); } }
+@keyframes tm-pop { from { opacity: 0; transform: translate(-50%, -50%) scale(0.3); } }
+@keyframes tm-flash { 0% { filter: brightness(2.2) saturate(0); } 100% { filter: none; } }
+@keyframes tm-ring { 0% { opacity: 0.9; transform: translate(-50%, -50%) scale(0.75); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(1.25); } }
+@keyframes tm-sheet-in { from { opacity: 0; transform: translateX(16px); } }
+
+/* Postes à pourvoir */
+.tm-card.is-ghost { cursor: default; background: transparent; outline: 3px dashed rgba(255, 255, 255, 0.28); outline-offset: -3px; clip-path: none; }
+.tm-card.is-ghost::before { display: none; }
+.tm-card.is-ghost .tm-card-pos { bottom: 26%; background: none; color: rgba(255, 255, 255, 0.4); }
+.tm-card.is-ghost .tm-card-name { background: transparent; border-top: 3px dashed rgba(255, 255, 255, 0.22); color: rgba(255, 255, 255, 0.45); font-size: 0.85rem; }
+.tm-ghost { position: absolute; display: grid; place-items: center; width: clamp(34px, 8vw, 52px); aspect-ratio: 1; transform: translate(-50%, -50%);
+  border: 2px dashed rgba(255, 255, 255, 0.45); border-radius: 50%; color: rgba(255, 255, 255, 0.6); pointer-events: auto; }
+.tm-ghost b { font: 900 italic clamp(0.6rem, 1.6vw, 0.8rem) var(--gk-font-ui); letter-spacing: 0.04em; }
+
+/* Admin : une ligne par poste (libellé, joueur, numéro, capitaine) */
+.tm-admin-slot { display: grid; grid-template-columns: minmax(110px, 160px) minmax(0, 1fr) 76px auto; gap: 8px; align-items: center; }
+@media (max-width: 560px) { .tm-admin-slot { grid-template-columns: minmax(0, 1fr) 70px auto; } .tm-admin-slot > b { grid-column: 1 / -1; } }
