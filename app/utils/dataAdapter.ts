@@ -84,6 +84,11 @@ async function fetchWithRetry<T>(
  * - Retry automatique (2 tentatives avec backoff exponentiel)
  * - Fallback sur les données locales en cas d'échec
  */
+/** Vrai si la dernière lecture des membres vient de la copie locale (Supabase muet) :
+ *  la copie locale ne connaît pas les membres masqués dans l'admin. */
+let membersFromLocal = false;
+export const lastMembersFromLocal = () => membersFromLocal;
+
 export async function fetchMembers(): Promise<Member[]> {
   // Retourner le cache si valide
   if (isCacheValid()) {
@@ -107,16 +112,19 @@ export async function fetchMembers(): Promise<Member[]> {
       const mapped = visible.map(mapRowToMember);
       membersCache = mapped;
       membersCacheTime = Date.now();
+      membersFromLocal = false;
       return mapped;
     }
 
     // Supabase a répondu mais sans données → fallback local
+    membersFromLocal = true;
     return localMembers.map((m) => ({ ...m }));
   } catch (err) {
     // Erreur réseau ou Supabase → fallback local silencieux
     if (process.env.NODE_ENV === "development") {
       console.warn("[dataAdapter] Supabase indisponible, fallback local activé.", err);
     }
+    membersFromLocal = true;
     return localMembers.map((m) => ({ ...m }));
   }
 }

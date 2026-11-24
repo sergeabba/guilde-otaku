@@ -1,0 +1,33 @@
+/* Bannière d'anniversaire : bande d'encre, filets dorés, traits de vitesse, portraits. */
+.gk-bday { position: relative; z-index: 101; display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 6px 48px 6px 14px; overflow: hidden;
+  background: #0d0c10; color: #fff7e6; border-top: 3px solid #c9a84c; border-bottom: 3px solid #c9a84c; box-shadow: 0 3px 0 #d7332b; font-family: var(--gk-font-ui); }
+.gk-bday-lines { position: absolute; inset: 0; pointer-events: none; opacity: .18;
+  background: repeating-linear-gradient(100deg, transparent 0 26px, #ff9ebb 26px 28px, transparent 28px 70px); }
+@media (prefers-reduced-motion: no-preference) {
+  .gk-bday { animation: gk-bday-in 520ms cubic-bezier(.2, .9, .25, 1.1) both; }
+  .gk-bday-lines { animation: gk-bday-run 6s linear infinite; }
+  .gk-bday-face { animation: gk-bday-pop 600ms cubic-bezier(.2, 1.6, .4, 1) both; }
+  .gk-bday-face:nth-child(2) { animation-delay: 90ms; } .gk-bday-face:nth-child(3) { animation-delay: 180ms; }
+}
+@keyframes gk-bday-in { from { transform: translateY(-100%); } }
+@keyframes gk-bday-run { to { background-position: -140px 0; } }
+@keyframes gk-bday-pop { from { transform: scale(.4) rotate(-20deg); opacity: 0; } }
+.gk-bday-faces { position: relative; display: flex; flex-shrink: 0; }
+.gk-bday-face { width: 40px; height: 40px; margin-left: -8px; overflow: hidden; display: grid; place-items: center; background: var(--c); border: 2.5px solid #fff7e6; box-shadow: 3px 3px 0 var(--c); clip-path: polygon(8% 0, 100% 0, 92% 100%, 0 100%); }
+.gk-bday-face:first-child { margin-left: 0; }
+.gk-bday-face img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; }
+.gk-bday-face b { font: 900 1.1rem var(--gk-font-ui); color: #0d0c10; }
+.gk-bday-text { position: relative; display: grid; min-width: 0; margin: 0; line-height: 1.1; }
+.gk-bday-text small { font: 800 .7rem var(--gk-font-ui); letter-spacing: .22em; text-transform: uppercase; color: #ff9ebb; }
+.gk-bday-text span { font: 700 clamp(.92rem, 2.6vw, 1.08rem) var(--gk-font-ui); text-transform: uppercase; letter-spacing: .03em; overflow-wrap: anywhere; }
+.gk-bday-text strong { color: #e8b931; }
+.gk-bday-cta { position: relative; flex-shrink: 0; margin-left: auto; display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 6px 12px; color: #0d0c10; background: #e8b931; text-decoration: none;
+  font: 900 italic .85rem var(--gk-font-ui); text-transform: uppercase; clip-path: polygon(6% 0, 100% 0, 94% 100%, 0 100%); box-shadow: 3px 3px 0 #d7332b; }
+.gk-bday-cta:hover, .gk-bday-cta:focus-visible { background: #fff7e6; outline: none; }
+.gk-bday-close { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; display: grid; place-items: center; background: none; border: 0; color: rgba(255, 247, 230, .7); cursor: pointer; }
+.gk-bday-close:hover, .gk-bday-close:focus-visible { color: #fff; }
+@media (max-width: 520px) {
+  .gk-bday { flex-wrap: wrap; row-gap: 6px; }
+  .gk-bday-faces .gk-bday-face { width: 34px; height: 34px; }
+  .gk-bday-cta { margin-left: 0; }
+}

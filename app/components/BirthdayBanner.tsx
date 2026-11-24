@@ -1,155 +1,68 @@
 "use client";
 
-// ─── app/components/BirthdayBanner.tsx ───────────────────────────────────────
-// Affiche une bannière le jour de l'anniversaire d'un ou plusieurs membres.
-// v2 — Améliorations :
-//   1. Typage strict (SupabaseMemberRow au lieu de any[])
-//   2. role="alert" + aria-live="polite" pour les lecteurs d'écran
-//   3. Optimisation : select("id,name,birthday") au lieu de select("*")
-//   4. isTodayBirthday() centralisé depuis app/types
-//   5. Gestion d'erreur Supabase explicite
-
+// Bannière du jour d'anniversaire : bande d'encre façon manga, portrait du membre,
+// « Tanjōbi omedetō », bouton pour aller lui souhaiter sur sa fiche.
+// Seulement les membres visibles (fetchMembers écarte ceux masqués dans l'admin).
+// Fermée, elle ne revient pas avant le lendemain sur cet appareil.
 import { useEffect, useState } from "react";
-import { supabase } from "../../lib/supabase";
 import Link from "next/link";
-import { Gift, ChevronRight, X } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { ChevronRight, X } from "lucide-react";
+import { fetchMembers, lastMembersFromLocal } from "../utils/dataAdapter";
 import { isTodayBirthday } from "../types";
+import type { Member } from "../../data/members";
+import { optimizedSrc } from "../../lib/img";
+import "./birthday-banner.css";
 
-// Type minimal pour la bannière (on ne sélectionne que les colonnes nécessaires)
-interface BirthdayMember {
-  id:       number;
-  name:     string;
-  birthday: string;
-}
+const KEY = "gk-bday-closed";
+const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Paris" }).format(new Date());
 
 export default function BirthdayBanner() {
-  const [birthdayMembers, setBirthdayMembers] = useState<BirthdayMember[]>([]);
-  const [isVisible, setIsVisible] = useState(true);
+  const [list, setList] = useState<Member[]>([]);
+  const [closed, setClosed] = useState(true);
 
   useEffect(() => {
-    const fetchBirthdays = async () => {
-      // On ne sélectionne que les colonnes nécessaires → requête plus légère
-      const { data, error } = await supabase
-        .from("fighters")
-        .select("id, name, birthday");
-
-      if (error || !data) return;
-
-      const celebrating = (data as BirthdayMember[]).filter(
-        (m) => m.birthday && isTodayBirthday(m.birthday)
-      );
-      setBirthdayMembers(celebrating);
-    };
-
-    fetchBirthdays();
+    let alive = true;
+    fetchMembers()
+      .then((members) => {
+        // Copie locale (Supabase muet) : elle ignore les membres masqués, pas de bannière.
+        if (!alive || lastMembersFromLocal()) return;
+        let wasClosed = false;
+        try { wasClosed = localStorage.getItem(KEY) === today(); } catch { /* stockage indisponible */ }
+        setClosed(wasClosed);
+        setList(members.filter((m) => m.birthday && isTodayBirthday(m.birthday)));
+      })
+      .catch(() => {});
+    return () => { alive = false; };
   }, []);
 
-  // Prénom uniquement pour la bannière (plus lisible)
-  const names = birthdayMembers
-    .map((m) => m.name.split(" ")[0])
-    .join(" & ");
+  if (closed || !list.length) return null;
+  const close = () => { setClosed(true); try { localStorage.setItem(KEY, today()); } catch { /* stockage indisponible */ } };
+  const first = (m: Member) => m.name.split(" ")[0];
+  const names = list.length === 1 ? first(list[0]) : `${list.slice(0, -1).map(first).join(", ")} et ${first(list[list.length - 1])}`;
+  const href = list.length === 1 ? `/membres/${list[0].id}` : "/birthdays";
 
   return (
-    <AnimatePresence>
-      {isVisible && birthdayMembers.length > 0 && (
-        <motion.div
-          initial={{ height: 0, opacity: 0 }}
-          animate={{ height: "auto", opacity: 1 }}
-          exit={{ height: 0, opacity: 0 }}
-          transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-          className="guilde-birthday-banner"
-          style={{ overflow: "hidden", position: "relative", zIndex: 101 }}
-          // ✅ Accessibilité : annonce la bannière aux lecteurs d'écran
-          role="alert"
-          aria-live="polite"
-          aria-atomic="true"
-        >
-          <div
-            className="animate-gradient"
-            style={{
-              background: "linear-gradient(90deg, #f03e3e, #ec4899, #f03e3e)",
-              backgroundSize: "200% auto",
-              color: "#fff",
-              padding: "0 56px 0 20px",
-              height: "44px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 4px 15px rgba(240, 62, 62, 0.4)",
-            }}
-          >
-            <Link
-              href="/birthdays"
-              className="no-min"
-              style={{
-                textDecoration: "none",
-                color: "inherit",
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-                flexWrap: "wrap",
-                justifyContent: "center",
-              }}
-            >
-              <Gift size={16} aria-hidden="true" />
-              <span
-                style={{
-                  fontSize: "14px",
-                  fontWeight: 800,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.1em",
-                  fontFamily: "'Barlow Condensed', sans-serif",
-                }}
-              >
-                🎂 C&apos;est l&apos;anniversaire de{" "}
-                <strong>{names}</strong> aujourd&apos;hui !
-              </span>
-              <span
-                style={{
-                  background: "rgba(0,0,0,0.2)",
-                  padding: "2px 8px",
-                  borderRadius: "100px",
-                  fontSize: "11px",
-                  fontWeight: 900,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px",
-                  fontFamily: "'Barlow Condensed', sans-serif",
-                }}
-              >
-                FÊTER ÇA <ChevronRight size={12} aria-hidden="true" />
-              </span>
-            </Link>
-
-            {/* ── BOUTON FERMER ── touch target 44×44px ───────────────────── */}
-            <button
-              onClick={() => setIsVisible(false)}
-              aria-label="Fermer la bannière d'anniversaire"
-              className="no-min"
-              style={{
-                position: "absolute",
-                right: 0,
-                top: 0,
-                width: "44px",
-                height: "44px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "transparent",
-                border: "none",
-                color: "rgba(255,255,255,0.7)",
-                cursor: "pointer",
-                transition: "color 0.2s",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.7)")}
-            >
-              <X size={16} aria-hidden="true" />
-            </button>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <div className="guilde-birthday-banner gk-bday" role="status" aria-live="polite">
+      <span className="gk-bday-lines" aria-hidden="true" />
+      <div className="gk-bday-faces" aria-hidden="true">
+        {list.slice(0, 3).map((m) => {
+          const src = m.animeChar || m.photo;
+          return (
+            <span key={m.id} className="gk-bday-face" style={{ "--c": m.color || "#c9a84c" } as React.CSSProperties}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              {src ? <img src={optimizedSrc(src, 96)} alt="" width={40} height={40} /> : <b>{m.name.slice(0, 1)}</b>}
+            </span>
+          );
+        })}
+      </div>
+      <p className="gk-bday-text">
+        <small>Tanjōbi omedetō</small>
+        <span>Aujourd&apos;hui, c&apos;est l&apos;anniversaire de <strong>{names}</strong></span>
+      </p>
+      <Link href={href} className="gk-bday-cta">
+        {list.length === 1 ? "Lui souhaiter" : "Leur souhaiter"} <ChevronRight size={15} aria-hidden="true" />
+      </Link>
+      <button type="button" className="gk-bday-close" onClick={close} aria-label="Fermer la bannière d'anniversaire jusqu'à demain"><X size={16} aria-hidden="true" /></button>
+    </div>
   );
 }
