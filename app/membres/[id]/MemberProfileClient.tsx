@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import { viewTransition, waitFor } from "../../../lib/view-transition";
 import Image from "../../components/GImage";
 import Link from "next/link";
-import { ArrowLeft, Cake, ChevronLeft, ChevronRight, Download, ExternalLink, Play, Share2, Trophy, X, Zap } from "lucide-react";
+import { ArrowLeft, BookOpen, Cake, ChevronLeft, ChevronRight, Download, ExternalLink, Flame, IdCard, Play, Share2, Trophy, X, Zap } from "lucide-react";
 import type { Member } from "../../../data/members";
 import GuildeHeader from "../../components/GuildeHeader";
 import RomajiLabel from "../../components/RomajiLabel";
@@ -31,6 +31,8 @@ import TrailerReel, { useWorkTrailer } from "../../components/works/TrailerReel"
 import MemberBadges from "../../components/MemberBadges";
 import MemberActivity from "../../components/MemberActivity";
 import { FORMAT_LABEL } from "../../../lib/works/types";
+import MemberPlanche from "./MemberPlanche";
+import type { Pouvoirs } from "../../../data/pouvoirs";
 import "./profile.css";
 
 export interface ProfileNeighbor {
@@ -44,8 +46,12 @@ type View = "duo" | "real" | "anime";
 
 const STAT_LABELS: [keyof Member["stats"], string][] = [["force", "Force"], ["vitesse", "Vitesse"], ["technique", "Technique"]];
 
-export default function MemberProfileClient({ member, prev, next, cardUrl, chroniques }: {
+export default function MemberProfileClient({ member, prev, next, cardUrl, chroniques, pouvoirs = null, initialMode = "fiche" }: {
   member: Member;
+  /** Bankai et extension du territoire (data/pouvoirs.ts) */
+  pouvoirs?: Pouvoirs | null;
+  /** Fiche classique ou planche de manga (?vue=planche) */
+  initialMode?: "fiche" | "planche";
   prev: ProfileNeighbor | null;
   next: ProfileNeighbor | null;
   cardUrl: string;
@@ -53,6 +59,16 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
   chroniques: Record<string, string>;
 }) {
   const [view, setView] = useState<View>("duo");
+  const [mode, setMode] = useState(initialMode);
+  // Fiche ou planche : gardé dans l'adresse (lien partageable), sans recharger la page.
+  const changeMode = (m: "fiche" | "planche") => {
+    if (m === mode) return;
+    viewTransition({ kind: "swap", update: () => flushSync(() => setMode(m)) });
+    const url = new URL(location.href);
+    if (m === "planche") url.searchParams.set("vue", "planche"); else url.searchParams.delete("vue");
+    history.replaceState(history.state, "", url);
+    window.scrollTo({ top: 0 });
+  };
   const [animated, setAnimated] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [days, setDays] = useState<number | null>(null);
@@ -152,6 +168,7 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
   const sections = [
     awards.length > 0 && { id: "pf-palmares", label: "Palmarès" },
     (stats || special) && { id: "pf-combat", label: "Combat" },
+    pouvoirs && { id: "pf-pouvoirs", label: "Pouvoirs" },
     { id: "pf-univers", label: "Univers" },
     music.length > 0 && { id: "pf-musique", label: "Musique" },
   ].filter(Boolean).map((t, i) => ({ ...(t as { id: string; label: string }), n: String(i + 1).padStart(2, "0") }));
@@ -172,12 +189,22 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
             <ArrowLeft size={16} aria-hidden="true" /> L&apos;annuaire
           </Link>
           <div className="pf-bar-right">
+            <div className="gk-switch pf-mode" role="group" aria-label="Style de la fiche">
+              <button type="button" aria-pressed={mode === "fiche"} onClick={() => changeMode("fiche")}><IdCard size={15} aria-hidden="true" /> Fiche</button>
+              <button type="button" aria-pressed={mode === "planche"} onClick={() => changeMode("planche")}><BookOpen size={15} aria-hidden="true" /> Lire en planche</button>
+            </div>
             <button type="button" className="gk-btn gk-btn--sm" onClick={() => setShareOpen(true)} aria-haspopup="dialog">
               <Share2 size={16} aria-hidden="true" /> Partager
             </button>
           </div>
         </nav>
 
+        {mode === "planche" ? (
+          <>
+            <h1 className="gk-sr">{member.name}, planche de manga</h1>
+            <MemberPlanche member={member} pouvoirs={pouvoirs} next={next} />
+          </>
+        ) : (<>
         {/* ── DOSSIER ─────────────────────────────────────────────────── */}
         <section className="pf-hero" aria-labelledby="pf-name">
           <div className="pf-portraits">
@@ -313,6 +340,26 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
           </section>
         )}
 
+        {pouvoirs && (
+          <section id="pf-pouvoirs" className="pf-section" aria-labelledby="pf-pouvoirs-title" data-gk-motion="">
+            <SectionHead n={num("pf-pouvoirs")} id="pf-pouvoirs-title" romaji="Chikara" fr="Bankai et territoire" hand="imaginés par la Guilde" />
+            <div className="pf-power-grid pf-pouvoirs">
+              <div className="gk-panel pf-special">
+                <p className="pf-kicker"><Flame size={14} aria-hidden="true" /> Bankai</p>
+                <p className="pf-special-name" lang="ja-Latn">{pouvoirs.bankai.nom}</p>
+                <p className="pf-pouvoir-sens">{pouvoirs.bankai.sens}</p>
+                <p className="gk-body">{pouvoirs.bankai.effet}</p>
+              </div>
+              <div className="gk-panel pf-special pf-domaine">
+                <p className="pf-kicker"><Zap size={14} aria-hidden="true" /> Extension du territoire</p>
+                <p className="pf-special-name" lang="ja-Latn">{pouvoirs.domaine.nom}</p>
+                <p className="pf-pouvoir-sens">{pouvoirs.domaine.sens}</p>
+                <p className="gk-body">{pouvoirs.domaine.effet}</p>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* ── SON UNIVERS ─────────────────────────────────────────────── */}
         <section id="pf-univers" className="pf-section" aria-labelledby="pf-universe" data-gk-motion="">
           <SectionHead n={num("pf-univers")} id="pf-universe" romaji="Sekai" fr="Son univers" hand={`ce qui fait vibrer ${member.name.split(" ")[0]}`} />
@@ -330,6 +377,7 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
 
         <MemberActivity id={member.id} firstName={member.name.split(" ")[0]}
           head={<SectionHead n={String(sections.length + 1).padStart(2, "0")} id="pf-activity-title" romaji="Katsudō" fr="Son activité" hand="dans les jeux et les votes" />} />
+        </>)}
 
         {(prev || next) && (
           <nav className="pf-pager" aria-label="Autres membres">

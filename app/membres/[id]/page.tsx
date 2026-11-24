@@ -6,6 +6,7 @@ import { memberCardUrl, memberOgUrl, memberProfilePath } from "../../../lib/shar
 import { DOSSIER_BASH_DATA, normalizeDossierBashKey } from "../../../lib/dossier-bash";
 import { workKey, type FavoriteWork } from "../../../lib/member-extras";
 import { rankRomaji, type Rank } from "../../config/ranks";
+import { POUVOIRS } from "../../../data/pouvoirs";
 
 // Rendue à la demande (la mise en page lit un cookie). Les données des membres sont
 // mises en cache côté serveur et vidées à chaque modification dans l'admin
@@ -13,6 +14,7 @@ import { rankRomaji, type Rank } from "../../config/ranks";
 
 interface Props {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }
 
 async function load(params: Props["params"]) {
@@ -72,8 +74,9 @@ function chroniqueLinks(works: FavoriteWork[]): Record<string, string> {
   return out;
 }
 
-export default async function MemberPage({ params }: Props) {
+export default async function MemberPage({ params, searchParams }: Props) {
   const found = await load(params);
+  const planche = (await searchParams)?.vue === "planche";
   if (!found) notFound();
 
   const { member, prev, next } = found;
@@ -86,6 +89,8 @@ export default async function MemberPage({ params }: Props) {
       next={neighbor(next)}
       cardUrl={memberCardUrl(member)}
       chroniques={chroniqueLinks(works)}
+      pouvoirs={POUVOIRS[member.id] ?? null}
+      initialMode={planche ? "planche" : "fiche"}
     />
   );
 }
