@@ -3,14 +3,14 @@ import type { ExploMember } from "../../../lib/explo-data";
 import { directSrc } from "../../../lib/image-loader";
 
 /** Personnage détouré (ou portrait entier à défaut). */
-export function Cut({ m, className, priority = false }: { m: ExploMember; className?: string; priority?: boolean }) {
+export function Cut({ m, className, priority = false, eager = false }: { m: ExploMember; className?: string; priority?: boolean; eager?: boolean }) {
   if (m.cut) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img className={className} src={m.cut.src} alt={`${m.name}, version anime`} width={m.cut.w} height={m.cut.h} decoding="async" loading={priority ? "eager" : "lazy"} fetchPriority={priority ? "high" : "auto"} data-explo-hero={priority ? "" : undefined} />;
+    return <img className={className} src={m.cut.src} alt={`${m.name}, version anime`} width={m.cut.w} height={m.cut.h} decoding="async" loading={priority || eager ? "eager" : "lazy"} fetchPriority={priority ? "high" : "auto"} data-explo-hero={priority ? "" : undefined} />;
   }
   const src = m.anime ?? m.real;
   // eslint-disable-next-line @next/next/no-img-element
-  return src ? <img className={`${className ?? ""} is-plain`} src={directSrc(src, 960)} alt={m.name} decoding="async" loading={priority ? "eager" : "lazy"} /> : null;
+  return src ? <img className={`${className ?? ""} is-plain`} src={directSrc(src, 960)} alt={m.name} decoding="async" loading={priority || eager ? "eager" : "lazy"} /> : null;
 }
 
 /** Gros plan sur le visage (haut de la silhouette détourée). */

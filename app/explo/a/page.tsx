@@ -56,7 +56,7 @@ export default async function ExploA() {
         {page2.map((m, i) => (
           <TurnLink key={m.id} href={`/explo/a/membre/${m.id}`} kind="xa-turn" className={`xa-cast xa-c${i}`} style={{ "--acc": m.accent } as React.CSSProperties} label={`${m.name}, ${m.rank}`} morph=".xa-cut">
             <span className="xa-cast-bg"><span className="xa-in"><span className="xa-speed" /><span className="xa-tone" /></span></span>
-            <Cut m={m} className="xa-cut xa-inked" />
+            <Cut m={m} className="xa-cut xa-inked" eager />
             <span className="xa-tag"><b>{m.first}</b><small>{m.rank}</small></span>
           </TurnLink>
         ))}
