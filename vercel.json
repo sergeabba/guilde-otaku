@@ -1,6 +1,7 @@
 {
   "git": {
     "deploymentEnabled": {
+      "claude/guilde-niveau-superieur": true,
       "claude/*": false
     }
   },
