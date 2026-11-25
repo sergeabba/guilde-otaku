@@ -39,7 +39,8 @@ export default function Tome({ m, member, prev, next, links, chroniques, positio
   const src = face === "anime" ? (m.anime ?? m.real) : (m.real ?? m.anime);
   const pos = face === "anime" ? m.animePos : m.realPos;
   const video = face === "anime" ? m.animeVideo : m.realVideo;
-  const words = m.name.replace(/["“”]/g, "").split(/\s+/);
+  // Une parenthèse ou un guillemet seul ne doit pas rester seul sur sa ligne : « ( MR » devient « (MR ».
+  const words = m.name.replace(/["“”]/g, "").replace(/([(\[])\s+/g, "$1").replace(/\s+([)\]])/g, "$1").split(/\s+/);
 
   const chapters: [string, string][] = [["ch-origines", "Origines"]];
   if (m.stats || m.special || m.bankai || m.domaine) chapters.push(["ch-pouvoirs", "Pouvoirs"]);

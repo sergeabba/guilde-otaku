@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion, type PanInfo } from "framer-motion";
 import Image from "../../components/GImage";
-import { useBackClose } from "../../hooks/useBackClose";
+import { markNavigation, useBackClose } from "../../hooks/useBackClose";
 import { flagUrl } from "../../config/countries";
 import { DUR, EASE, SPRING } from "../../../lib/motion";
 import { goTome } from "../tome-nav";
@@ -118,7 +118,9 @@ export default function Collection({ members, ranks, countries, generations }: {
     if (openSheet) setSheet(true);
   }, []);
   /** Ouvre le tome : l'image d'origine devient la couverture. */
-  const open = useCallback((id: number, from?: Element | null) => { setSheet(false); goTome(router, id, "open", from); }, [router]);
+  // La navigation est annoncée avant de fermer la feuille : sinon la feuille retire son entrée
+  // d'historique (retour) et annule l'ouverture du tome.
+  const open = useCallback((id: number, from?: Element | null) => { markNavigation(); setSheet(false); goTome(router, id, "open", from); }, [router]);
   useBackClose(sheet, () => setSheet(false));
 
   // Clavier (mode collection) : flèches dans la grille, Entrée ouvre le tome, « / » cherche.

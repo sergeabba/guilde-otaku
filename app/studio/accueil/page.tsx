@@ -85,7 +85,7 @@ export default async function StudioAccueil({ searchParams }: { searchParams: Pr
         {star && (
           <div className="ac-lines">
             <p className="ac-kicker t-ui">{anniv ? "La une de son anniversaire" : "En couverture"}</p>
-            <h1 id="ac-star-name" className="t-display ac-name" style={{ "--len": Math.max(...star.name.split(/\s+/).map((w) => w.length)) } as React.CSSProperties}>{star.name}</h1>
+            <h1 id="ac-star-name" className="t-display ac-name" style={{ "--len": Math.max(...star.name.split(/\s+/).map((w) => w.length)) } as React.CSSProperties}>{star.name.replace(/([(\[])\s+/g, "$1").replace(/\s+([)\]])/g, "$1")}</h1>
             <p className="ac-rank r-dense t-ui"><b>{star.rank}</b><span>{star.romaji}</span></p>
             {star.lede && <p className="ac-quote t-edit">« {star.lede} »</p>}
             <Link className="ac-cta t-ui m-press" href={`/studio/membre/${star.id}`}>Lire son tome <span aria-hidden="true">→</span></Link>
