@@ -7,6 +7,7 @@
 - Do not guess APIs, versions, flags, commit SHAs, or package names. Verify by reading code or docs before asserting.
 
 ## Skills du projet (.claude/skills)
+- **Point d'entrée design, mouvement et jeu : `guilde-studio`** (routeur : quel skill pour quelle tâche, priorités, politique technique, références). Bibliothèque à la demande : `.claude/skill-library/INDEX.md`.
 - Interface ou CSS : charger `guilde-design` d'abord (tokens, composants, règles rōmaji) au lieu de relire `app/styles/shonen.css`.
 - Direction visuelle d'une nouvelle page : `frontend-design` (Anthropic). Relecture : `web-design-guidelines` (copie locale figée).
 - Regard critique sur le goût (mise en page, mouvement, textes) : `design-taste-frontend` (taste-skill, copie allégée, voir son `SOURCE.md`). `guilde-design` l'emporte en cas de conflit.
