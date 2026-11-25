@@ -125,7 +125,12 @@ export default function MenuB({ members, entries, hud }: { members: ExploMember[
           <ul className="xb-roster" role="listbox" aria-label="Nakama" aria-activedescendant={`xb-c${sel}`}>
             {cast.map((m, k) => (
               <li key={m.id} id={`xb-c${k}`} data-card={k} role="option" aria-selected={k === sel} className={k === sel ? "is-on" : ""} style={{ "--acc": m.accent } as React.CSSProperties}>
-                <button type="button" onMouseEnter={() => setSel(k)} onFocus={() => setSel(k)} onClick={() => (k === sel ? open(`/explo/b/membre/${m.id}`) : setSel(k))} aria-label={`${m.name}, ${m.rank}`}>
+                <button type="button" onMouseEnter={() => setSel(k)} onFocus={() => setSel(k)}
+                  // Au toucher, le focus arrive avant le clic : on retient si la carte était déjà choisie
+                  // au moment de l'appui, pour qu'un premier toucher sélectionne seulement.
+                  onPointerDown={(e) => { e.currentTarget.dataset.was = String(k === sel); }}
+                  onClick={(e) => { const was = e.currentTarget.dataset.was; delete e.currentTarget.dataset.was; if (was === "true" || (was === undefined && k === sel)) open(`/explo/b/membre/${m.id}`); else setSel(k); }}
+                  aria-label={`${m.name}, ${m.rank}`}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={m.cut!.src} alt="" loading="lazy" />
                   <span>{m.first}</span>
