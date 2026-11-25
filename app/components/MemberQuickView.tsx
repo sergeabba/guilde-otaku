@@ -22,6 +22,7 @@ import MemberMusic from "./MemberMusic";
 import ShareSheet from "./ShareSheet";
 import "../membres/[id]/profile.css";
 import "./quickview.css";
+import { rescuedByFallback } from "../../lib/local-image";
 
 function FavRow({ label, fr, works, href }: { label: string; fr: string; works: FavoriteWork[]; href: string }) {
   if (!works.length) return null;
@@ -119,7 +120,7 @@ export default function MemberQuickView({ member, onClose, viewMode }: { member:
                 <figure key={p.key} className="pf-panel">
                   <Image src={p.src} alt={p.key === "real" ? `${member.name}, photo` : `${member.name}, version anime`} fill priority={i === 0}
                     sizes="(max-width: 699px) 50vw, 300px" style={{ objectFit: "cover", objectPosition: p.pos }}
-                    onError={() => setErrors((e) => ({ ...e, [p.key]: true }))} />
+                    onError={(ev) => { if (!rescuedByFallback(ev.currentTarget)) setErrors((e) => ({ ...e, [p.key]: true })); }} />
                   <figcaption className={p.key === "anime" ? "is-accent" : ""}>{p.label}</figcaption>
                 </figure>
               ))}

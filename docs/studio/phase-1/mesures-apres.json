@@ -1,0 +1,98 @@
+[
+ {
+  "dev": "ordi",
+  "path": "/",
+  "img": 406,
+  "tot": 1049
+ },
+ {
+  "dev": "ordi",
+  "path": "/membres/10",
+  "img": 94,
+  "tot": 732
+ },
+ {
+  "dev": "ordi",
+  "path": "/teams",
+  "img": 10,
+  "tot": 575
+ },
+ {
+  "dev": "ordi",
+  "path": "/fighters",
+  "img": 1301,
+  "tot": 1858
+ },
+ {
+  "dev": "ordi",
+  "path": "/birthdays",
+  "img": 247,
+  "tot": 778
+ },
+ {
+  "dev": "ordi",
+  "path": "/cinema",
+  "img": 455,
+  "tot": 1009
+ },
+ {
+  "dev": "ordi",
+  "path": "/atelier",
+  "img": 10,
+  "tot": 530
+ },
+ {
+  "dev": "ordi",
+  "path": "/wanted",
+  "img": 232,
+  "tot": 780
+ },
+ {
+  "dev": "tel",
+  "path": "/",
+  "img": 604,
+  "tot": 1238
+ },
+ {
+  "dev": "tel",
+  "path": "/membres/10",
+  "img": 87,
+  "tot": 733
+ },
+ {
+  "dev": "tel",
+  "path": "/teams",
+  "img": 10,
+  "tot": 560
+ },
+ {
+  "dev": "tel",
+  "path": "/fighters",
+  "img": 794,
+  "tot": 1332
+ },
+ {
+  "dev": "tel",
+  "path": "/birthdays",
+  "img": 291,
+  "tot": 829
+ },
+ {
+  "dev": "tel",
+  "path": "/cinema",
+  "img": 330,
+  "tot": 891
+ },
+ {
+  "dev": "tel",
+  "path": "/atelier",
+  "img": 10,
+  "tot": 542
+ },
+ {
+  "dev": "tel",
+  "path": "/wanted",
+  "img": 104,
+  "tot": 658
+ }
+]

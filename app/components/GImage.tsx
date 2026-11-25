@@ -18,6 +18,7 @@ export default function GImage(props: ImageProps) {
   if (typeof props.src === "string") {
     const src = props.src;
     // Grande image du site : le navigateur choisit la version WebP adaptée à l'écran.
+    // Secours si le navigateur ne lit pas l'AVIF : ImageFallback (originalOf).
     if (hasLocalVariants(src)) return <NextImage {...props} loader={({ width }) => localVariant(src, width) ?? src} />;
     return <NextImage {...props} src={directSrc(src, widthHint(props))} unoptimized />;
   }

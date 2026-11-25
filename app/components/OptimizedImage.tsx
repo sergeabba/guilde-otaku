@@ -11,6 +11,7 @@
 
 import { useState, CSSProperties } from "react";
 import { optimizedSrc } from "../../lib/img";
+import { rescuedByFallback } from "../../lib/local-image";
 
 interface OptimizedImageProps {
   src: string;
@@ -82,7 +83,7 @@ export default function OptimizedImage({
           loading={priority ? "eager" : "lazy"}
           decoding="async"
           onLoad={() => setIsLoaded(true)}
-          onError={() => setHasError(true)}
+          onError={(e) => { if (!rescuedByFallback(e.currentTarget)) setHasError(true); }}
           style={{
             position: "absolute",
             inset: 0,

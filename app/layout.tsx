@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { cookies, headers } from "next/headers";
 // Polices auto-hébergées (public/fonts) : le build ne dépend plus de Google Fonts.
 import "./styles/fonts.css";
+import "./styles/typo-directions.css";
 import "./globals.css";
 import "./styles/shonen.css";
 import "./styles/motion.css";
@@ -20,6 +21,7 @@ import Ambiance from "./components/Ambiance";
 import Celebrate from "./components/Celebrate";
 import MusicPulse from "./components/MusicPulse";
 import OffscreenPause from "./components/OffscreenPause";
+import TypoPreview from "./components/TypoPreview";
 import IntentPrefetch from "./components/IntentPrefetch";
 import ImageFallback from "./components/ImageFallback";
 import "./styles/ambiance.css";
@@ -104,6 +106,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <Celebrate />
           <MusicPulse />
           <OffscreenPause />
+          <TypoPreview />
           <IntentPrefetch />
           <ImageFallback />
           </MusicDockProvider>

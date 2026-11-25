@@ -1,0 +1,250 @@
+/* Directions typographiques (Phase 1, aperçus) : polices Fontsource auto-hébergées,
+   licence SIL OFL 1.1 (LICENSE dans chaque dossier public/fonts/<police>). Sous-ensembles
+   latin et latin-ext seulement. Un fichier n'est téléchargé que si la police est utilisée. */
+
+/* anton-latin-ext-400-normal */
+@font-face {
+  font-family: 'Anton';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url(/fonts/anton/anton-latin-ext-400-normal.woff2) format('woff2');
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+/* anton-latin-400-normal */
+@font-face {
+  font-family: 'Anton';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url(/fonts/anton/anton-latin-400-normal.woff2) format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+/* fraunces-latin-ext-wght-normal */
+@font-face {
+  font-family: 'Fraunces Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url(/fonts/fraunces/fraunces-latin-ext-wght-normal.woff2) format('woff2-variations');
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+/* fraunces-latin-wght-normal */
+@font-face {
+  font-family: 'Fraunces Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url(/fonts/fraunces/fraunces-latin-wght-normal.woff2) format('woff2-variations');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+/* fraunces-latin-ext-wght-italic */
+@font-face {
+  font-family: 'Fraunces Variable';
+  font-style: italic;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url(/fonts/fraunces/fraunces-latin-ext-wght-italic.woff2) format('woff2-variations');
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+/* fraunces-latin-wght-italic */
+@font-face {
+  font-family: 'Fraunces Variable';
+  font-style: italic;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url(/fonts/fraunces/fraunces-latin-wght-italic.woff2) format('woff2-variations');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+/* archivo-latin-ext-wdth-normal */
+@font-face {
+  font-family: 'Archivo Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  src: url(/fonts/archivo/archivo-latin-ext-wdth-normal.woff2) format('woff2-variations');
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+/* archivo-latin-wdth-normal */
+@font-face {
+  font-family: 'Archivo Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  src: url(/fonts/archivo/archivo-latin-wdth-normal.woff2) format('woff2-variations');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+/* chakra-petch-latin-ext-500-normal */
+@font-face {
+  font-family: 'Chakra Petch';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url(/fonts/chakra-petch/chakra-petch-latin-ext-500-normal.woff2) format('woff2');
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+/* chakra-petch-latin-500-normal */
+@font-face {
+  font-family: 'Chakra Petch';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url(/fonts/chakra-petch/chakra-petch-latin-500-normal.woff2) format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+/* chakra-petch-latin-ext-700-normal */
+@font-face {
+  font-family: 'Chakra Petch';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url(/fonts/chakra-petch/chakra-petch-latin-ext-700-normal.woff2) format('woff2');
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+/* chakra-petch-latin-700-normal */
+@font-face {
+  font-family: 'Chakra Petch';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url(/fonts/chakra-petch/chakra-petch-latin-700-normal.woff2) format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+/* cinzel-latin-ext-700-normal */
+@font-face {
+  font-family: 'Cinzel';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url(/fonts/cinzel/cinzel-latin-ext-700-normal.woff2) format('woff2');
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+/* cinzel-latin-700-normal */
+@font-face {
+  font-family: 'Cinzel';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url(/fonts/cinzel/cinzel-latin-700-normal.woff2) format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+/* cinzel-latin-ext-900-normal */
+@font-face {
+  font-family: 'Cinzel';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 900;
+  src: url(/fonts/cinzel/cinzel-latin-ext-900-normal.woff2) format('woff2');
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+/* cinzel-latin-900-normal */
+@font-face {
+  font-family: 'Cinzel';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 900;
+  src: url(/fonts/cinzel/cinzel-latin-900-normal.woff2) format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+/* cormorant-garamond-latin-ext-500-normal */
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url(/fonts/cormorant-garamond/cormorant-garamond-latin-ext-500-normal.woff2) format('woff2');
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+/* cormorant-garamond-latin-500-normal */
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url(/fonts/cormorant-garamond/cormorant-garamond-latin-500-normal.woff2) format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+/* cormorant-garamond-latin-ext-600-italic */
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: italic;
+  font-display: swap;
+  font-weight: 600;
+  src: url(/fonts/cormorant-garamond/cormorant-garamond-latin-ext-600-italic.woff2) format('woff2');
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+/* cormorant-garamond-latin-600-italic */
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: italic;
+  font-display: swap;
+  font-weight: 600;
+  src: url(/fonts/cormorant-garamond/cormorant-garamond-latin-600-italic.woff2) format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+
+/* ═══ TROIS DIRECTIONS TYPOGRAPHIQUES (aperçu : ?typo=hebdo | kirikomi | densetsu) ═══
+   Mêmes rôles dans les trois : affiche (titres de page), accroche (chapô, citations,
+   numéros de chapitre), interface (boutons, onglets, étiquettes), chiffres (stats,
+   primes, scores), texte courant (Barlow partout, pour la lecture).
+   Rien ne change sans attribut data-typo : le site reste tel quel. */
+
+/* ── A. HEBDO : le magazine manga premium ──────────────────────────────────
+   Dela Gothic (identité de la Guilde) en affiche, Fraunces en accroche italique
+   d'éditorial, Barlow Condensed pour l'interface. Contraste gras / fin, comme une
+   couverture de magazine hebdomadaire. */
+html[data-typo="hebdo"] {
+  --gk-font-editorial: "Fraunces Variable", Georgia, serif;
+  --gk-font-data: var(--font-barlow-condensed), "Barlow Condensed", sans-serif;
+}
+html[data-typo="hebdo"] .gk-display { letter-spacing: -0.035em; line-height: 0.92; }
+html[data-typo="hebdo"] :is(.gk-hero-lede, .tm-lead, .fs-lead, .gk-story-kicker + h3 + p, .pf-bio, .pl-bubble, .cin-intro p, blockquote) {
+  font-family: var(--gk-font-editorial); font-style: italic; font-weight: 420; font-variation-settings: "opsz" 36; letter-spacing: -0.005em;
+}
+html[data-typo="hebdo"] .gk-chapter > b { font-family: var(--gk-font-editorial); font-style: italic; font-weight: 700; letter-spacing: 0; }
+html[data-typo="hebdo"] :is(.gk-hero-kicker, .gk-story-kicker, .tm-kicker) { font-family: var(--gk-font-editorial); font-style: italic; text-transform: none; letter-spacing: 0; font-weight: 600; font-size: 1.15em; }
+html[data-typo="hebdo"] .gk-hand { font-family: var(--gk-font-editorial); font-style: italic; font-weight: 500; transform: none; }
+
+/* ── B. KIRIKOMI : l'affiche de combat ─────────────────────────────────────
+   Anton en capitales serrées et inclinées pour l'affiche, Archivo très large pour
+   l'interface, Chakra Petch pour les chiffres façon écran de jeu. Découpé, frontal,
+   rapide : présentation de combattants. */
+html[data-typo="kirikomi"] {
+  --gk-font-display: "Anton", var(--font-barlow-condensed), sans-serif;
+  --gk-font-ui: "Archivo Variable", var(--font-barlow-condensed), sans-serif;
+  --gk-font-data: "Chakra Petch", var(--font-barlow-condensed), sans-serif;
+  --gk-font-editorial: var(--gk-font-body);
+}
+html[data-typo="kirikomi"] .gk-display { text-transform: uppercase; letter-spacing: -0.01em; line-height: 0.86; transform: skewX(-6deg); transform-origin: left bottom; }
+html[data-typo="kirikomi"] :is(.gk-chapter, .gk-chip, .gk-switch button, .gk-nav a) { font-stretch: 112%; font-weight: 800; letter-spacing: 0.02em; }
+html[data-typo="kirikomi"] .gk-chapter > b { font-family: var(--gk-font-data); }
+
+/* ── C. DENSETSU : la légende de la guilde ─────────────────────────────────
+   Cinzel en capitales gravées pour les grands moments (titres, rangs, cérémonies),
+   Cormorant Garamond en italique pour les accroches et citations, Dela Gothic gardée
+   pour les chiffres. Solennel, prestigieux : le registre de la guilde. */
+html[data-typo="densetsu"] {
+  --gk-font-display: "Cinzel", Georgia, serif;
+  --gk-font-editorial: "Cormorant Garamond", Georgia, serif;
+  --gk-font-data: var(--font-dela), "Dela Gothic One", sans-serif;
+}
+html[data-typo="densetsu"] .gk-display { font-weight: 900; letter-spacing: 0.04em; line-height: 0.98; }
+html[data-typo="densetsu"] :is(.gk-hero-lede, .tm-lead, .fs-lead, .gk-story-kicker + h3 + p, .pf-bio, .pl-bubble, .cin-intro p, blockquote) {
+  font-family: var(--gk-font-editorial); font-style: italic; font-weight: 600; font-size: 1.2em; line-height: 1.4; letter-spacing: 0.005em;
+}
+html[data-typo="densetsu"] .gk-chapter { letter-spacing: 0.18em; }
+html[data-typo="densetsu"] .gk-chapter > b { font-family: var(--gk-font-display); }
+
+/* Le logo reste en Dela Gothic One dans toutes les directions : c'est l'identité. */
+html[data-typo] .gk-brand-name { font-family: var(--font-dela), "Dela Gothic One", sans-serif; }
+
+/* Chiffres (stats, primes, puissance, compteurs) : rôle « données » des directions. */
+html[data-typo] :is(.pf-stats dd b, .tm-power b, .pl-row strong, .gk-stat b, [class*="-count"] b, [class*="-score"] b) { font-family: var(--gk-font-data); font-variant-numeric: tabular-nums; }
+
+/* Sélecteur d'aperçu (TypoPreview.tsx), visible seulement pendant un aperçu. */
+.gk-typo-bar { position: fixed; z-index: 120; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; gap: 4px; padding: 4px; background: #0d0c10; border: 2px solid #f3eee2; box-shadow: 4px 4px 0 #c9a84c; }
+.gk-typo-bar button { min-height: 36px; padding: 0 10px; border: 0; background: transparent; color: #f3eee2; font: 800 0.8rem "Barlow Condensed", sans-serif; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; white-space: nowrap; }
+.gk-typo-bar button[aria-pressed="true"] { background: #c9a84c; color: #0d0c10; }
+@media (max-width: 899px) { body:has(.gk-mobile-dock) .gk-typo-bar { bottom: calc(80px + env(safe-area-inset-bottom)); } .gk-typo-bar button { padding: 0 7px; font-size: 0.72rem; } }

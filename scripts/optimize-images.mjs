@@ -1,9 +1,11 @@
 #!/usr/bin/env node
-// Versions WebP des grandes images du dossier public, à plusieurs largeurs, sans toucher
-// aux originaux. Remplace l'optimiseur d'images de Vercel (quota mensuel limité).
+// Versions AVIF des images du dossier public, à plusieurs largeurs, sans toucher aux
+// originaux (servis en secours aux rares navigateurs sans AVIF). Remplace l'optimiseur
+// d'images de Vercel (quota mensuel limité). La miniature de 32 px existe aussi en WebP
+// (fonds CSS, sans secours possible).
 //   node scripts/optimize-images.mjs          génère ce qui manque
 //   node scripts/optimize-images.mjs --check  échoue si une image n'a pas ses versions
-// Sorties : public/_opt/img/<chemin>/<largeur>.webp et lib/image-variants.json.
+// Sorties : public/_opt/img/<chemin>/<largeur>-<empreinte>.avif (+ 32-<empreinte>.webp), lib/image-variants.json.
 // Exclus : le pixel art de Fighters (une compression avec perte abîmerait les pixels),
 // les drapeaux et logos de rang (petits), le dossier _opt lui-même.
 import { createHash } from "node:crypto";
@@ -15,8 +17,8 @@ const ROOT = new URL("..", import.meta.url).pathname;
 const PUBLIC = join(ROOT, "public");
 const OUT = join(PUBLIC, "_opt", "img");
 const MANIFEST = join(ROOT, "lib", "image-variants.json");
-const MIN_BYTES = 120 * 1024;
-const WIDTHS = [32, 320, 640, 960, 1280, 1920];
+const MIN_BYTES = 30 * 1024;
+const WIDTHS = [32, 320, 480, 640, 828, 1080, 1280, 1920];
 const MAX_W = 2400;
 const SKIP = [/^_opt\//, /^fighters\//, /^flags\//, /^ranks\//, /^sounds\//];
 const CHECK = process.argv.includes("--check");
@@ -44,19 +46,24 @@ for await (const file of walk(PUBLIC)) {
   const base = rel.slice(0, -extname(rel).length).replace(/[^a-zA-Z0-9/_-]+/g, "-");
   const out = [];
   for (const w of widths) {
-    const dest = join(OUT, base, `${w}-${hash}.webp`);
-    // Marqueur : la version WebP n'était pas plus légère que l'original (JPEG déjà bien
-    // compressé) ; à cette largeur, c'est l'original qui est servi.
+    const avif = join(OUT, base, `${w}-${hash}.avif`);
+    const webp = w === 32 ? join(OUT, base, `${w}-${hash}.webp`) : null;
+    // Marqueur : la version AVIF n'était pas nettement plus légère que l'original (JPEG
+    // déjà bien compressé) ; à cette largeur, c'est l'original qui est servi.
     const keep = join(OUT, base, `${w}-${hash}.original`);
-    const url = "/" + relative(PUBLIC, dest).split("\\").join("/");
+    const url = "/" + relative(PUBLIC, avif).split("\\").join("/");
     if (await stat(keep).then(() => true, () => false)) continue;
-    if (await stat(dest).then(() => true, () => false)) { out.push(w); continue; }
+    const have = await Promise.all([avif, webp].map((f) => (f ? stat(f).then(() => true, () => false) : true)));
+    if (have[0] && have[1]) { out.push(w); continue; }
     if (CHECK) { missing++; console.error(`manquant : ${url}`); continue; }
-    await mkdir(dirname(dest), { recursive: true });
-    const webp = await sharp(buf).resize({ width: w, withoutEnlargement: true }).webp({ quality: w === cap ? 90 : 84, alphaQuality: 90, effort: 5, smartSubsample: true }).toBuffer();
-    if (webp.length >= size * 0.92) { await writeFile(keep, ""); continue; }
-    await writeFile(dest, webp);
-    out.push(w); made++; bytesOut += webp.length;
+    await mkdir(dirname(avif), { recursive: true });
+    const img = () => sharp(buf).resize({ width: w, withoutEnlargement: true });
+    // Qualités choisies à la mesure (SSIM au moins 0,98 sur les illustrations).
+    const a = await img().avif({ quality: w === cap ? 62 : 55, effort: 4 }).toBuffer();
+    if (a.length >= size * 0.92) { await writeFile(keep, ""); continue; }
+    await writeFile(avif, a);
+    if (webp) await writeFile(webp, await img().webp({ quality: 80 }).toBuffer());
+    out.push(w); made++; bytesOut += a.length;
   }
   bytesIn += size;
   // full : largeur au-delà de laquelle l'original est servi tel quel.

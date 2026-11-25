@@ -18,6 +18,7 @@ import { bounty, BOUNTY_RULES, formatBounty, RANK_BOUNTY, sayBounty } from "../.
 import { saveImage, saveMessage } from "../../lib/save-image";
 import { fileSlug } from "../../lib/share";
 import "./wanted.css";
+import { rescuedByFallback } from "../../lib/local-image";
 
 type ViewMode = "real" | "anime";
 type SortMode = "prime-desc" | "registre" | "prime-asc";
@@ -57,7 +58,7 @@ function Poster({ member, viewMode, eager = false }: { member: Member; viewMode:
         <span className="wp-photo">
           {src && failed !== src ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img key={src} className="is-swap" src={optimizedSrc(src, eager ? 828 : 384)} alt="" loading={eager ? "eager" : "lazy"} decoding="async" onError={() => setFailed(src)} />
+            <img key={src} className="is-swap" src={optimizedSrc(src, eager ? 828 : 384)} alt="" loading={eager ? "eager" : "lazy"} decoding="async" onError={(e) => { if (!rescuedByFallback(e.currentTarget)) setFailed(src); }} />
           ) : (
             <span className="wp-photo-empty" aria-hidden="true">?</span>
           )}

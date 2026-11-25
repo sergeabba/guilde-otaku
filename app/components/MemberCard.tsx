@@ -9,6 +9,7 @@ import { rankAccents } from "../config/ranks";
 import { onColor } from "../utils/color";
 import VideoPlayer from "./VideoPlayer";
 import { objectPosition } from "../../lib/member-extras";
+import { rescuedByFallback } from "../../lib/local-image";
 
 export default function MemberCard({ member, index, viewMode, onClick }: {
   member: Member;
@@ -52,7 +53,7 @@ export default function MemberCard({ member, index, viewMode, onClick }: {
             sizes="(max-width: 600px) 50vw, (max-width: 900px) 33vw, (max-width: 1180px) 25vw, 250px"
             priority={index < 2}
             style={{ objectPosition: objectPosition(isAnime ? member.extras?.animeFocus : member.extras?.photoFocus, "50% 0%") }}
-            onError={() => setErrors((e) => ({ ...e, [isAnime ? "anime" : "real"]: true }))}
+            onError={(ev) => { if (!rescuedByFallback(ev.currentTarget)) setErrors((e) => ({ ...e, [isAnime ? "anime" : "real"]: true })); }}
           />
         ) : (
           <div className="mc-fallback" aria-hidden="true">{isAnime ? "Kage" : "Kao"}</div>
