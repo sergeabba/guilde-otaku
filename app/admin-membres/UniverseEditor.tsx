@@ -8,7 +8,7 @@ import { hasJapanese, sameWork, workKey, workTitle, type FavoriteWork, type Memb
 import WorkSearch from "../components/works/WorkSearch";
 import { candidateToFavorite, trailerLangLabel } from "../../lib/works/favorite";
 import { FORMAT_LABEL, type WorkCandidate } from "../../lib/works/types";
-import { parseMusicLink, openUrl, PROVIDER_LABEL, youtubeSearchUrl } from "../../lib/music";
+import { parseMusicLink, openUrl, PROVIDER_LABEL, youtubeMatches, youtubeSearchUrl } from "../../lib/music";
 
 type Kind = "ANIME" | "MANGA";
 const SOURCE_NAME: Record<FavoriteWork["source"], string> = { tmdb: "TMDB", mangadex: "MangaDex", anilist: "AniList (ancien favori)", manual: "Saisie manuelle" };
@@ -180,25 +180,64 @@ type TrackCandidate = MemberTrack & { previewUrl?: string; source?: string };
 
 /** Morceau Spotify (extrait de 30 s sans compte) : le remplacer par sa version YouTube,
  *  en gardant titre, artiste et pochette. */
-function SwapToYoutube({ track, onSwap }: { track: MemberTrack; onSwap: (ref: { provider: "youtube"; id: string }) => string | null }) {
+function SwapToYoutube({ track, onSwap, onFull }: {
+  track: MemberTrack;
+  onSwap: (ref: { provider: "youtube"; id: string }) => string | null;
+  onFull: (full: { fullVideo?: string; fullVideoTitle?: string }) => void;
+}) {
   const [url, setUrl] = useState("");
   const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [mismatch, setMismatch] = useState<{ id: string; title?: string } | null>(null);
   const search = youtubeSearchUrl(track);
-  const go = () => {
+  const readLink = () => {
     const ref = parseMusicLink(url);
-    if (!ref || ref.provider !== "youtube") { setErr("Colle le lien d'une vidéo YouTube (youtube.com/watch?v=… ou youtu.be/…)."); return; }
+    if (!ref || ref.provider !== "youtube") { setErr("Colle le lien d'une vidéo YouTube (youtube.com/watch?v=… ou youtu.be/…)."); return null; }
+    return ref;
+  };
+  const swap = () => {
+    const ref = readLink(); if (!ref) return;
     const e = onSwap({ provider: "youtube", id: ref.id });
     if (e) { setErr(e); return; }
     setUrl(""); setErr(null);
   };
+  // Version complète : la vidéo doit vraiment correspondre au morceau Spotify (titre, artiste).
+  const attach = async () => {
+    const ref = readLink(); if (!ref) return;
+    setBusy(true); setErr(null); setMismatch(null);
+    try {
+      const r = await fetch("/api/admin/music-search", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ q: url }) });
+      const d = await r.json().catch(() => null);
+      const found = d?.results?.[0] as { title?: string; artist?: string } | undefined;
+      if (!found?.title) { setErr("Titre de la vidéo introuvable : réessaie, ou utilise « Remplacer »."); return; }
+      if (youtubeMatches(track, found)) { onFull({ fullVideo: ref.id, fullVideoTitle: found.title }); setUrl(""); }
+      else setMismatch({ id: ref.id, title: found.title });
+    } catch { setErr("Vérification impossible pour le moment."); }
+    finally { setBusy(false); }
+  };
+  if (track.fullVideo) {
+    return (
+      <div className="am-alert am-alert--info" style={{ marginTop: 6, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+        <span>Version complète sur YouTube : <b>{track.fullVideoTitle ?? track.fullVideo}</b></span>
+        <button type="button" className="am-btn am-btn--sm" onClick={() => onFull({ fullVideo: undefined, fullVideoTitle: undefined })}>Retirer</button>
+      </div>
+    );
+  }
   return (
     <div className="am-alert am-alert--info" style={{ marginTop: 6, display: "grid", gap: 6 }}>
-      <span>Spotify ne joue qu&apos;un extrait de 30 s aux visiteurs sans compte. Pour la version complète, remplace-le par le même titre sur YouTube.</span>
+      <span>Spotify ne joue qu&apos;un extrait de 30 s aux visiteurs sans compte. Ajoute la même chanson sur YouTube : la fiche proposera alors les deux services. La vidéo est vérifiée (titre et artiste).</span>
       <div className="am-row" style={{ flexWrap: "wrap", gap: 6 }}>
         {search && <a className="am-btn am-btn--sm" href={search} target="_blank" rel="noopener noreferrer">Chercher sur YouTube ↗</a>}
-        <input className="am-input" inputMode="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="Lien YouTube du morceau" aria-label="Lien YouTube de remplacement" style={{ flex: "1 1 220px" }} />
-        <button type="button" className="am-btn am-btn--sm am-btn--gold" onClick={go} disabled={!url.trim()}>Remplacer</button>
+        <input className="am-input" inputMode="url" value={url} onChange={(e) => { setUrl(e.target.value); setMismatch(null); }} placeholder="Lien YouTube du même morceau" aria-label="Lien YouTube de la version complète" style={{ flex: "1 1 220px" }} />
+        <button type="button" className="am-btn am-btn--sm am-btn--gold" onClick={attach} disabled={!url.trim() || busy}>{busy ? "Vérification…" : "Ajouter en entier"}</button>
+        <button type="button" className="am-btn am-btn--sm" onClick={swap} disabled={!url.trim()}>Remplacer</button>
       </div>
+      {mismatch && (
+        <div role="alert" style={{ display: "grid", gap: 6 }}>
+          <span>La vidéo « {mismatch.title} » ne semble pas être « {[track.title, track.artist].filter(Boolean).join(" · ")} ».</span>
+          <button type="button" className="am-btn am-btn--sm" style={{ justifySelf: "start" }} onClick={() => { onFull({ fullVideo: mismatch.id, fullVideoTitle: mismatch.title }); setMismatch(null); setUrl(""); }}>J&apos;ai écouté : c&apos;est le même morceau</button>
+        </div>
+      )}
       {err && <span role="alert" style={{ color: "var(--am-red, #e8412c)" }}>{err}</span>}
     </div>
   );
@@ -273,8 +312,8 @@ function MusicList({ tracks, onChange }: { tracks: MemberTrack[]; onChange: (t: 
                 {t.provider === "apple" && <p className="am-alert am-alert--error" style={{ marginTop: 6 }}>Apple Music n&apos;est plus lu sur le site : ajoute le lien YouTube de ce morceau puis retire celui-ci.</p>}
                 {t.provider === "spotify" && <SwapToYoutube track={t} onSwap={(ref) => {
                   if (tracks.some((x, k) => k !== i && x.provider === ref.provider && x.id === ref.id)) return "Ce morceau YouTube est déjà dans la liste.";
-                  patch(i, { provider: ref.provider, id: ref.id }); return null;
-                }} />}
+                  patch(i, { provider: ref.provider, id: ref.id, fullVideo: undefined, fullVideoTitle: undefined }); return null;
+                }} onFull={(f) => patch(i, f)} />}
               </div>
               <div className="am-item-actions">
                 <button type="button" className="am-icon" aria-label="Monter" disabled={i === 0} onClick={() => { const l = [...tracks]; [l[i - 1], l[i]] = [l[i], l[i - 1]]; onChange(l); }}><ArrowUp size={16} aria-hidden="true" /></button>

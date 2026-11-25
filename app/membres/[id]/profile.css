@@ -126,21 +126,6 @@ html[data-theme="light"] .pf-backdrop-img { opacity: 0.2; }
 @media (hover: hover) { .pf-work:hover { transform: translate(-3px, -3px); box-shadow: 6px 6px 0 var(--gk-accent); } }
 .pf-work:active { transform: translate(3px, 3px); box-shadow: none; }
 
-.pf-worksheet { width: min(720px, 100%); }
-.pf-ws-body { display: grid; grid-template-columns: clamp(130px, 34%, 220px) minmax(0, 1fr); gap: clamp(14px, 3vw, 24px); align-items: end; }
-.pf-ws-body img, .pf-ws-nocover { width: 100%; aspect-ratio: 2 / 3; object-fit: cover; border: var(--gk-stroke) solid var(--gk-border); box-shadow: 6px 6px 0 var(--gk-accent); background: var(--gk-surface-2); }
-.pf-ws-nocover { display: grid; place-items: center; font: 400 3.4rem var(--gk-font-display); color: var(--gk-faint); }
-@media (max-width: 479px) { .pf-ws-body { grid-template-columns: 1fr; justify-items: center; text-align: center; } .pf-ws-body img, .pf-ws-nocover { width: min(220px, 62vw); } .pf-ws-meta { justify-content: center; } }
-.pf-ws-info { min-width: 0; display: grid; gap: 8px; }
-.pf-ws-body h2 { font: 400 clamp(1.5rem, 5vw, 2.3rem)/1 var(--gk-font-display); overflow-wrap: anywhere; text-wrap: balance; }
-.pf-ws-sub { font: 600 1rem var(--gk-font-body); color: var(--gk-dim); }
-.pf-ws-meta { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
-.pf-ws-meta span { padding: 3px 9px; font: 800 0.78rem var(--gk-font-ui); letter-spacing: 0.06em; text-transform: uppercase; border: 1.5px solid var(--gk-rule); color: var(--gk-dim); }
-.pf-ws-meta span:first-child { background: var(--gk-accent); color: var(--pf-on, #111); border-color: #111; }
-.pf-ws-block { display: grid; gap: 8px; }
-.pf-ws-block h3 { font: 900 italic 1.15rem/1 var(--gk-font-ui); text-transform: uppercase; }
-.pf-ws-credit { font: 600 0.78rem var(--gk-font-body); color: var(--gk-faint); }
-.pf-ws-note { margin-top: 12px; font: 500 italic 1rem/1.5 var(--gk-font-body); }
 
 /* ─── Musique (la playlist est stylée dans styles/music.css) ─── */
 .pf-music-sec .mpl-list { box-shadow: 8px 8px 0 color-mix(in srgb, var(--gk-accent) 80%, #000); }

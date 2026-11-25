@@ -3,8 +3,7 @@ import { notFound } from "next/navigation";
 import MemberProfileClient, { type ProfileNeighbor } from "./MemberProfileClient";
 import { getPublicMember, parseMemberId } from "../../../lib/members-server";
 import { memberCardUrl, memberOgUrl, memberProfilePath } from "../../../lib/share";
-import { DOSSIER_BASH_DATA, normalizeDossierBashKey } from "../../../lib/dossier-bash";
-import { workKey, type FavoriteWork } from "../../../lib/member-extras";
+import { chroniqueLinks } from "../../../lib/chroniques";
 import { rankRomaji, type Rank } from "../../config/ranks";
 import { POUVOIRS } from "../../../data/pouvoirs";
 import { tinyImage } from "../../../lib/tiny-image";
@@ -56,24 +55,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 const neighbor = (m: { id: number; name: string; rank: string; animeChar: string; photo: string } | null): ProfileNeighbor | null =>
   m ? { id: m.id, name: m.name, rank: m.rank, image: m.animeChar || m.photo } : null;
-
-/** Relie un favori à la Chronique du Bash quand elle en parle (par titre). */
-function chroniqueLinks(works: FavoriteWork[]): Record<string, string> {
-  const index = new Map<string, string>();
-  for (const c of DOSSIER_BASH_DATA) {
-    const slug = normalizeDossierBashKey(c.title).replace(/\s+/g, "-");
-    index.set(normalizeDossierBashKey(c.title), slug);
-    index.set(normalizeDossierBashKey(c.searchQuery), slug);
-  }
-  const out: Record<string, string> = {};
-  for (const w of works) {
-    for (const t of [w.titleRomaji, w.titleLocalized]) {
-      const slug = t && index.get(normalizeDossierBashKey(t));
-      if (slug) { out[workKey(w)] = slug; break; }
-    }
-  }
-  return out;
-}
 
 export default async function MemberPage({ params, searchParams }: Props) {
   const found = await load(params);

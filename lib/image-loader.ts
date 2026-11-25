@@ -8,6 +8,12 @@
 // - AniList, YouTube, Apple : déjà à une taille raisonnable.
 const TMDB_SIZES = [92, 154, 185, 342, 500, 780, 1280];
 const SUPABASE = /^https:\/\/[\w-]+\.supabase\.(co|in)\/storage\/v1\/object\/public\//;
+/** Largeurs des vignettes du stockage public (route /api/img). */
+export const THUMB_WIDTHS = [160, 320, 480, 640, 960, 1280] as const;
+/** Chemin accepté par /api/img : un fichier image du seau public guilde-images. */
+export function storagePathOk(p: string): boolean {
+  return /^guilde-images\/[\w.\/-]{1,200}\.(jpe?g|png|webp|avif)$/i.test(p) && !p.includes("..") && !p.includes("//");
+}
 const TMDB = /^https:\/\/image\.tmdb\.org\/t\/p\/(w\d+|original)\//;
 const MANGADEX = /^https:\/\/uploads\.mangadex\.org\/covers\/[^?]+\.(jpe?g|png|webp)$/i;
 
@@ -17,7 +23,12 @@ import { localVariant } from "./local-image";
  *  pour une grande image du site, l'original pour une petite, l'adresse adaptée sinon. */
 export function directSrc(src: string, width: number): string {
   if (src.startsWith("/")) return localVariant(src, width) ?? src;
-  if (SUPABASE.test(src)) return src;
+  if (SUPABASE.test(src)) {
+    // Portraits du stockage : vignette à la bonne largeur (WebP), l'original au-delà.
+    const path = decodeURIComponent(src.replace(SUPABASE, "").split("?")[0]);
+    const w = THUMB_WIDTHS.find((t) => t >= width);
+    return w && storagePathOk(path) ? `/api/img?p=${encodeURIComponent(path)}&w=${w}` : src;
+  }
   if (TMDB.test(src)) {
     const size = TMDB_SIZES.find((s) => s >= width);
     return src.replace(TMDB, `https://image.tmdb.org/t/p/${size ? `w${size}` : "original"}/`);

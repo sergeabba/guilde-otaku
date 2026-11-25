@@ -1,16 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { ExternalLink, Music, Pause, Play, Search } from "lucide-react";
+import { ExternalLink, Music, Pause, Play } from "lucide-react";
 import type { MemberTrack } from "../../lib/member-extras";
-import { PROVIDER_LABEL, isPlayable, openUrl, youtubeSearchUrl } from "../../lib/music";
+import { PROVIDER_LABEL, isPlayable, openUrl } from "../../lib/music";
 import { useMusicDock } from "./MusicDock";
 
 /**
  * Playlist d'un membre. Un appui sur un morceau l'ouvre dans le lecteur flottant
  * du site (YouTube complet pour tous, Spotify en extrait sans compte) ; la
  * lecture continue pendant la navigation. Les anciens liens Apple Music ne sont
- * plus lus : un lien de recherche YouTube du même titre est proposé.
+ * plus lus. Spotify et YouTube restent deux services distincts : la version complète
+ * sur YouTube n'apparaît que si l'admin a ajouté une vidéo vérifiée du même morceau.
  */
 export default function MemberMusic({ tracks, owner, compact = false }: { tracks: MemberTrack[]; owner?: string; compact?: boolean }) {
   const dock = useMusicDock();
@@ -31,7 +32,6 @@ export default function MemberMusic({ tracks, owner, compact = false }: { tracks
           const label = [t.title, t.artist].filter(Boolean).join(" · ") || "Morceau sans titre";
           const on = dock?.isCurrent(t) ?? false;
           const canPlay = isPlayable(t) && !!dock;
-          const search = youtubeSearchUrl(t);
           return (
             <li key={`${t.provider}:${t.id}`} className={`mpl-item${on ? " is-on" : ""}${canPlay ? "" : " is-legacy"}`}>
               <span className="mpl-n" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
@@ -44,27 +44,25 @@ export default function MemberMusic({ tracks, owner, compact = false }: { tracks
               </div>
               <span className={`mpl-src mpl-src--${t.provider}`}>{t.provider === "spotify" ? "Spotify · extrait" : PROVIDER_LABEL[t.provider]}</span>
               <div className="mpl-actions">
-                {canPlay ? (
+                {canPlay && (
                   <button
                     type="button" className={`mpl-play${on && dock?.playing ? " is-playing" : ""}`}
                     onClick={() => (on ? dock!.toggle() : dock!.play(queue, Math.max(0, queue.findIndex((q) => q.provider === t.provider && q.id === t.id))))}
-                    aria-label={on && dock?.playing ? `Pause : ${label}` : `Écouter ${label}`}
+                    aria-label={on && dock?.playing ? `Pause : ${label}` : `Écouter ${label} sur ${t.provider === "spotify" ? "Spotify (extrait)" : "YouTube"}`}
                   >
                     {on && dock?.playing ? <Pause size={18} aria-hidden="true" /> : <Play size={18} aria-hidden="true" />}
                     {on && dock?.playing && <span className="mpl-eq" aria-hidden="true"><i /><i /><i /></span>}
                   </button>
-                ) : null}
-                {/* Spotify ne joue qu'un extrait sans compte : la version complète sur YouTube. */}
-                {canPlay && t.provider === "spotify" && search && (
-                  <a className="gk-btn gk-btn--ghost gk-btn--sm mpl-full" href={search} target="_blank" rel="noopener noreferrer">
-                    <Search size={14} aria-hidden="true" /> En entier<span className="gk-sr"> : {label} sur YouTube (nouvel onglet)</span>
-                  </a>
                 )}
-                {canPlay ? null : search ? (
-                  <a className="gk-btn gk-btn--ghost gk-btn--sm" href={search} target="_blank" rel="noopener noreferrer">
-                    <Search size={14} aria-hidden="true" /> YouTube<span className="gk-sr"> : chercher {label} (nouvel onglet)</span>
-                  </a>
-                ) : null}
+                {/* Spotify ne joue qu'un extrait sans compte : la même chanson en entier sur YouTube,
+                    seulement si l'admin a ajouté une vidéo vérifiée. Aucun bouton sinon. */}
+                {dock && t.provider === "spotify" && t.fullVideo && (
+                  <button type="button" className="gk-btn gk-btn--ghost gk-btn--sm mpl-full"
+                    onClick={() => dock.play([{ provider: "youtube", id: t.fullVideo!, title: t.title, artist: t.artist, cover: `https://i.ytimg.com/vi/${t.fullVideo}/mqdefault.jpg`, owner }], 0)}
+                    aria-label={`Écouter ${label} en entier sur YouTube`}>
+                    <Play size={14} aria-hidden="true" /> YouTube · en entier
+                  </button>
+                )}
                 {canPlay && !compact && (
                   <a className="mpl-ext" href={openUrl(t)} target="_blank" rel="noopener noreferrer" aria-label={`Ouvrir ${label} dans ${PROVIDER_LABEL[t.provider]} (nouvel onglet)`}>
                     <ExternalLink size={15} aria-hidden="true" />

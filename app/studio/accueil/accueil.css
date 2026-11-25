@@ -46,7 +46,7 @@
 .ac-exclu i { font-style: normal; font-size: 1.05rem; font-weight: 700; color: var(--hanko); }
 .ac-lines { grid-area: lines; position: relative; z-index: 3; align-self: end; padding-bottom: clamp(8px, 2vw, 30px); }
 .ac-kicker { display: inline-block; margin: 0 0 10px; padding: 3px 10px; background: var(--hanko); color: var(--white); font-size: .8rem; transform: rotate(-2deg); }
-.ac-name { margin: 0; font-size: clamp(2.6rem, 5.4vw, 5.6rem); overflow-wrap: anywhere; }
+.ac-name { margin: 0; font-size: clamp(2.2rem, min(5.4vw, calc(44vw / var(--len, 8))), 5.6rem); overflow-wrap: break-word; hyphens: manual; }
 .ac-rank { display: inline-flex; align-items: stretch; margin: 14px 0 0; border: 2px solid var(--ink); font-size: .9rem; }
 .ac-rank b { padding: 5px 12px; background: var(--acc); color: var(--ink); font-family: var(--f-display); font-weight: 900; letter-spacing: .06em; }
 .ac-rank span { padding: 5px 12px; font-family: var(--f-edit); font-style: italic; text-transform: none; letter-spacing: .02em; font-weight: 600; }
@@ -59,7 +59,7 @@
 
 .ac-side { grid-area: side; position: relative; z-index: 3; display: flex; flex-direction: column; justify-content: flex-end; gap: 0; padding-bottom: 8px; }
 .ac-line { display: block; margin: 0; padding: 14px 0; border-top: 3px solid var(--ink); text-decoration: none; }
-.ac-line small { display: block; margin-bottom: 6px; font-size: .72rem; color: var(--hanko); }
+.ac-line small { display: block; margin-bottom: 6px; font-size: .72rem; color: var(--hanko-ink); }
 .ac-bday { display: grid; grid-template-columns: 58px 1fr; gap: 12px; align-items: center; }
 .ac-bday-face { position: relative; width: 58px; aspect-ratio: 1; border-radius: 50%; overflow: hidden; border: 3px solid var(--ink); background: var(--paper-2); }
 .ac-bday b { display: block; font-size: 1.5rem; line-height: 1; font-weight: 500; }
@@ -96,7 +96,7 @@
 /* ─── Chapitres ─── */
 .ac-ch { padding-block: clamp(64px, 10vw, 140px); }
 .ac-ch-head { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 clamp(14px, 2.4vw, 32px); align-items: end; margin-bottom: clamp(24px, 4vw, 48px); }
-.ac-ch-no { grid-row: span 2; margin: 0; font-size: clamp(4.4rem, 11vw, 10rem); line-height: .8; color: transparent; -webkit-text-stroke: 2px currentColor; }
+.ac-ch-no { grid-row: span 2; margin: 0; font-size: clamp(4.4rem, 11vw, 10rem); line-height: .8; color: transparent; -webkit-text-stroke: 2px var(--ink); }
 .ac-ch-head h2 { margin: 0; font-size: clamp(2.4rem, 6vw, 5.4rem); }
 .ac-ch-head p:last-child { margin: 10px 0 0; max-width: 46ch; font-size: clamp(1.05rem, 1.4vw, 1.3rem); line-height: 1.35; }
 
@@ -115,7 +115,7 @@
 .ac-case-cap { position: absolute; left: 10px; bottom: 10px; display: grid; padding: 6px 10px 5px; background: var(--white); border: 2px solid var(--ink); box-shadow: 3px 3px 0 var(--acc); }
 .ac-case-cap b { font-size: clamp(1.1rem, 1.8vw, 1.7rem); line-height: 1; }
 .ac-case.is-0 .ac-case-cap b { font-size: clamp(1.6rem, 3.4vw, 3rem); }
-.ac-case-cap small { font-size: .66rem; color: var(--hanko); }
+.ac-case-cap small { font-size: .66rem; color: var(--hanko-ink); }
 
 /* Hiérarchie : registre cérémonial, une ligne par grade. */
 .ac-ranks { background: var(--ink); color: var(--paper); }
@@ -171,7 +171,7 @@
   .ac-star { margin: -16vw 6px 0; min-height: 0; aspect-ratio: 4 / 5; box-shadow: 9px 9px 0 var(--acc, var(--gold)), 9px 9px 0 3px var(--ink); }
   .ac-polaroid { right: -8px; bottom: -18px; width: 104px; }
   .ac-lines { padding-top: 18px; }
-  .ac-name { font-size: 13vw; }
+  .ac-name { font-size: min(13vw, calc(140vw / var(--len, 8))); }
   .ac-side { flex-direction: row; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 16px; margin-inline: -16px; padding: 18px 16px 6px; overscroll-behavior-x: contain; justify-content: flex-start; }
   .ac-side > * { flex: 0 0 76%; scroll-snap-align: start; border: 3px solid var(--ink); padding: 14px; background: var(--white); }
   .ac-barcode { margin-top: 18px; }
@@ -190,3 +190,143 @@
   .ac-bdays { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 78%; overflow-x: auto; scroll-snap-type: x mandatory; padding: 6px 4px 18px; }
   .ac-bcard { scroll-snap-align: center; }
 }
+
+/* ═══ Éditions de la une ═══════════════════════════════════════════════════
+   Même grille, autre matière : la couverture prend l'édition du grade du membre
+   en couverture, ou l'édition anniversaire. */
+.ac-collector { margin-left: 6px; padding: 2px 8px; font-style: normal; background: linear-gradient(100deg, #fff1c2, var(--gold) 50%, #a7832e); color: var(--ink); }
+.ac-cover.is-mirror { grid-template-areas: "mast mast mast" "issue issue issue" "side star lines" "side star bar"; grid-template-columns: minmax(200px, .5fr) minmax(0, 1.05fr) minmax(0, .95fr); }
+
+/* Prestige : nuit, dorure, vedette dans un cadre d'or. */
+.ac-cover.ed-prestige { background-color: #0f0d12; color: var(--paper); background-image: radial-gradient(rgba(201, 168, 76, .16) 1px, transparent 1.4px); }
+.ed-prestige .ac-mast { color: var(--gold); -webkit-text-stroke: 0; text-shadow: 0 .04em 0 #6e5520, 0 .08em 0 #0f0d12; }
+.ed-prestige .ac-mast-w > span:nth-child(odd) { color: #e8cf7d; }
+.ed-prestige .ac-issue b { background: var(--gold); color: var(--ink); }
+.ed-prestige .ac-star { border-color: var(--gold); box-shadow: 0 0 0 10px #0f0d12, 0 0 0 12px var(--gold), 16px 16px 0 12px rgba(201, 168, 76, .25); transform: none; }
+.ed-prestige::before { background: repeating-conic-gradient(from 0deg, rgba(201, 168, 76, .14) 0 4deg, transparent 4deg 10deg); }
+.ed-prestige .ac-line { border-color: var(--gold); }
+.ed-prestige .ac-cta { background: var(--gold); color: var(--ink) !important; box-shadow: 5px 5px 0 var(--paper); }
+.ed-prestige .ac-quote, .ed-prestige .ac-name { color: var(--paper); }
+.ed-prestige .ac-rank { border-color: var(--gold); }
+.ed-prestige .ac-barcode i { border-color: #0f0d12; outline-color: var(--gold); background-color: var(--paper); }
+.ed-prestige .ac-scroll { background: #0f0d12; border-color: var(--gold); color: var(--gold); }
+.ed-prestige .ac-exclu span { background: var(--gold); color: var(--ink); }
+
+/* Seinen : papier gris, vedette en duotone, trame et titre plus sobre. */
+.ac-cover.ed-seinen { background-color: #d8d2c4; color: #1b1a1f; background-image: radial-gradient(rgba(27, 26, 31, .22) 1px, transparent 1.4px); background-size: 5px 5px; }
+.ed-seinen::before { display: none; }
+.ed-seinen .ac-mast { -webkit-text-stroke-color: #d8d2c4; letter-spacing: -.05em; }
+.ed-seinen .ac-star { transform: none; box-shadow: 10px 10px 0 #1b1a1f; }
+.ed-seinen .ac-star > img { filter: grayscale(.4) contrast(1.15) sepia(.15); }
+.ed-seinen .ac-kicker { background: #1b1a1f; }
+
+/* Anniversaire : papier kraft, confettis, ruban. */
+.ac-cover.ed-anniversaire { background-color: #f6e3c8; background-image: radial-gradient(color-mix(in srgb, var(--hanko) 22%, transparent) 1.2px, transparent 1.6px); }
+.ed-anniversaire .ac-mast { color: var(--hanko); }
+.ed-anniversaire .ac-star { transform: rotate(2deg); box-shadow: 14px 14px 0 var(--hanko), 14px 14px 0 4px var(--ink); }
+.ac-ribbon { transform: rotate(-4deg); }
+.ac-ribbon span { background: var(--hanko); }
+.ac-ribbon b { font-size: clamp(2rem, 3.6vw, 3.4rem); }
+.ac-ribbon i { color: var(--ink); font-size: 1.3rem; }
+.ac-confetti { position: absolute; inset: 0; z-index: 1; pointer-events: none; background:
+  radial-gradient(circle at 12% 30%, var(--hanko) 0 5px, transparent 6px), radial-gradient(circle at 22% 72%, var(--gold) 0 6px, transparent 7px),
+  radial-gradient(circle at 48% 14%, #3b7dd8 0 4px, transparent 5px), radial-gradient(circle at 86% 22%, var(--hanko) 0 6px, transparent 7px),
+  radial-gradient(circle at 92% 64%, #3b7dd8 0 5px, transparent 6px), radial-gradient(circle at 64% 88%, var(--gold) 0 5px, transparent 6px),
+  linear-gradient(35deg, transparent 49%, var(--gold) 49% 51%, transparent 51%) 30% 40% / 22px 22px no-repeat,
+  linear-gradient(-25deg, transparent 49%, var(--hanko) 49% 51%, transparent 51%) 78% 46% / 24px 24px no-repeat; }
+@media (prefers-reduced-motion: no-preference) { .ac-confetti { animation: ac-confetti 1.6s var(--m-out) 400ms both; } }
+@keyframes ac-confetti { from { opacity: 0; transform: translateY(-40px); } }
+.ac-births.is-fete { background: #f6e3c8; }
+.ac-more { margin-top: 26px; } .ac-more a { font-size: .85rem; }
+.ac-archive-bar { margin: 0; padding: 8px 16px; background: var(--ink); color: var(--paper); text-align: center; font-size: .78rem; }
+
+/* ─── La planche des visages change de disposition chaque semaine ─── */
+@media (min-width: 900px) {
+  .is-layout-1 .ac-case.is-0 { grid-column: 4 / 7; grid-row: 1 / 4; clip-path: polygon(6% 0, 100% 0, 100% 100%, 0 100%); }
+  .is-layout-1 .ac-case.is-1 { grid-column: 1 / 4; grid-row: 1; clip-path: polygon(0 0, 100% 0, 97% 100%, 0 100%); }
+  .is-layout-1 .ac-case.is-2 { grid-column: 1 / 2; grid-row: 2 / 4; clip-path: none; }
+  .is-layout-1 .ac-case.is-3 { grid-column: 2 / 4; grid-row: 2; clip-path: none; }
+  .is-layout-1 .ac-case.is-4 { grid-column: 2 / 4; grid-row: 3; clip-path: polygon(0 0, 100% 0, 95% 100%, 0 100%); }
+  .is-layout-1 .ac-case.is-5 { grid-column: 1 / 5; grid-row: 4; clip-path: polygon(0 0, 100% 0, 97% 100%, 0 100%); }
+  .is-layout-1 .ac-case.is-6 { grid-column: 5 / 7; grid-row: 4; clip-path: none; }
+  .is-layout-2 .ac-page { grid-auto-rows: clamp(150px, 17vw, 250px); }
+  .is-layout-2 .ac-case.is-0 { grid-column: 2 / 6; grid-row: 1 / 3; clip-path: polygon(4% 0, 100% 0, 96% 100%, 0 100%); }
+  .is-layout-2 .ac-case.is-1 { grid-column: 1 / 2; grid-row: 1 / 3; clip-path: none; }
+  .is-layout-2 .ac-case.is-2 { grid-column: 6 / 7; grid-row: 1 / 3; clip-path: none; }
+  .is-layout-2 .ac-case.is-3 { grid-column: 1 / 3; grid-row: 3; clip-path: polygon(0 0, 100% 0, 94% 100%, 0 100%); }
+  .is-layout-2 .ac-case.is-4 { grid-column: 3 / 5; grid-row: 3; clip-path: polygon(6% 0, 100% 0, 94% 100%, 0 100%); }
+  .is-layout-2 .ac-case.is-5 { grid-column: 5 / 7; grid-row: 3; clip-path: polygon(6% 0, 100% 0, 100% 100%, 0 100%); }
+  .is-layout-2 .ac-case.is-6 { display: none; }
+}
+
+/* ─── À la une : film, vote, atelier, générique du jour ─── */
+.ac-une { background: var(--paper-2); }
+.ac-une-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: clamp(16px, 2.4vw, 32px); align-items: start; }
+.st .ac-film-card { position: relative; display: grid; max-width: 820px; text-decoration: none; background: var(--ink); color: var(--paper); border: 4px solid var(--ink); box-shadow: 10px 10px 0 var(--hanko); }
+.ac-film-img { position: relative; aspect-ratio: 16 / 9; overflow: hidden; }
+.ac-film-txt { display: grid; gap: 8px; padding: 18px 20px 22px; }
+.ac-film-txt small { color: var(--gold); font-size: .75rem; }
+.ac-film-txt b { font-size: clamp(1.8rem, 3.4vw, 3rem); }
+.ac-film-txt span { font-size: 1.05rem; line-height: 1.4; opacity: .85; }
+.ac-poll { min-width: 0; }
+.ac-poll:empty { display: none; }
+.ac-une-grid:has(.ac-poll:empty) { grid-template-columns: minmax(0, 1fr); }
+.ac-poll-frame { margin: 0; }
+.ac-atelier { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: center; gap: 20px; padding: 14px; text-decoration: none; background: var(--white); border: 3px solid var(--ink); }
+.ac-atelier-strip { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.ac-atelier-strip span { position: relative; aspect-ratio: 1; overflow: hidden; border: 2px solid var(--ink); }
+.ac-atelier b { display: block; font-size: clamp(1.4rem, 2.6vw, 2.2rem); }
+.ac-atelier small { color: var(--hanko-ink); font-size: .75rem; }
+/* Générique du jour : le composant du site, habillé comme une page du magazine. */
+.ac-gen { margin-top: clamp(28px, 4vw, 48px); }
+.ac-gen .sotd { position: relative; overflow: hidden; padding: clamp(28px, 5vw, 56px) 0; background: var(--ink); color: var(--paper); border-block: 4px solid var(--ink); }
+.ac-gen .sotd-backdrop { position: absolute; inset: -20%; background: var(--sotd-cover) center / cover; filter: blur(40px) saturate(1.3); opacity: .35; }
+.ac-gen .sotd-inner { position: relative; display: grid; grid-template-columns: minmax(160px, 300px) minmax(0, 1fr); gap: clamp(20px, 4vw, 48px); align-items: center; width: min(1320px, 100% - 2 * clamp(16px, 4vw, 56px)); margin-inline: auto; }
+.ac-gen .sotd-art { position: relative; }
+.ac-gen .sotd-cover img, .ac-gen .sotd-cover-empty { display: grid; place-items: center; width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; border: 3px solid var(--paper); box-shadow: 8px 8px 0 var(--hanko); background: var(--ink-2); }
+.ac-gen .sotd-disc { display: none; }
+.ac-gen .gk-chapter { display: inline-flex; gap: 8px; padding: 3px 10px; background: var(--hanko); color: var(--white); font: 800 .75rem var(--f-cond); letter-spacing: .14em; }
+.ac-gen .gk-chapter b { font-weight: 400; }
+.ac-gen .sotd-anime { margin: 14px 0 0; font: 700 1rem var(--f-cond); letter-spacing: .06em; text-transform: uppercase; opacity: .8; }
+.ac-gen .sotd-kind { margin-right: 8px; padding: 1px 6px; border: 1px solid currentColor; }
+.ac-gen .sotd-title { margin: 8px 0 0; font: 400 clamp(2rem, 4.6vw, 4rem)/.95 var(--f-logo); letter-spacing: -.03em; }
+.ac-gen .sotd-artist { margin: 6px 0 0; font: italic 500 1.3rem var(--f-edit); }
+.ac-gen .sotd-player { display: flex; align-items: center; gap: 14px; margin-top: 18px; }
+.ac-gen .sotd-play { display: grid; place-items: center; width: 58px; height: 58px; border-radius: 50%; border: 3px solid var(--paper); background: var(--hanko); color: var(--white); cursor: pointer; }
+.ac-gen .sotd-bar { flex: 1; max-width: 320px; height: 6px; background: rgba(255, 253, 248, .2); }
+.ac-gen .sotd-bar span { display: block; height: 100%; background: var(--gold); transform-origin: left; }
+.ac-gen .sotd-time, .ac-gen .sotd-note { font: 700 .8rem var(--f-cond); letter-spacing: .08em; text-transform: uppercase; opacity: .75; }
+.ac-gen .sotd-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.ac-gen .gk-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 42px; padding: 0 14px; background: var(--paper); color: var(--ink); border: 2px solid var(--paper); font: 800 .8rem var(--f-cond); letter-spacing: .08em; text-transform: uppercase; text-decoration: none; cursor: pointer; }
+.ac-gen .gk-btn--ghost { background: transparent; color: var(--paper); }
+.ac-gen .gk-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* ─── Archives : la pile de magazines ─── */
+.ac-arch { min-height: 100svh; }
+.ac-arch-head { padding-block: clamp(32px, 6vw, 72px) 20px; }
+.ac-arch-head h1 { margin: 6px 0 0; font-size: clamp(2.6rem, 7vw, 6rem); }
+.ac-arch-head p:last-child { margin: 10px 0 0; font-size: 1.2rem; max-width: 50ch; }
+.ac-stack { list-style: none; padding-block: 20px 40px; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(46%, 220px), 1fr)); gap: clamp(18px, 3vw, 36px); margin-block: 0; }
+.ac-mini a { position: relative; display: block; aspect-ratio: 3 / 4; overflow: hidden; text-decoration: none; background: var(--paper); border: 3px solid var(--ink); box-shadow: 8px 8px 0 var(--acc); transform: rotate(var(--r)); transition: transform var(--m-swap) var(--m-out); }
+.ac-mini a:hover, .ac-mini a:focus-visible { transform: rotate(0) translateY(-8px); }
+.ac-mini-img { position: absolute; inset: 20% 8% 18%; overflow: hidden; border: 2px solid var(--ink); }
+.ac-mini-mast { position: absolute; left: 8%; right: 8%; top: 5%; font-size: clamp(.9rem, 1.7vw, 1.3rem); line-height: 1; white-space: nowrap; color: var(--ink); }
+.ac-mini-no { position: absolute; left: 8%; top: 13%; font-size: .62rem; }
+.ac-mini-collector { position: absolute; right: 6%; top: 13%; padding: 1px 6px; background: var(--gold); font-size: .6rem; }
+.ac-mini-name { position: absolute; left: 6%; bottom: 7%; padding: 2px 8px; background: var(--white); border: 2px solid var(--ink); font-size: clamp(1rem, 2vw, 1.4rem); }
+.ac-mini-date { position: absolute; right: 6%; bottom: 2%; font-size: .85rem; }
+.ac-mini.ed-prestige a { background: #0f0d12; }
+.ac-mini.ed-prestige .ac-mini-mast { color: var(--gold); }
+.ac-mini.ed-prestige .ac-mini-no, .ac-mini.ed-prestige .ac-mini-date { color: var(--paper); }
+.ac-mini.ed-seinen a { background: #d8d2c4; } .ac-mini.ed-seinen .ac-mini-img img { filter: grayscale(.4); }
+.ac-mini.ed-anniversaire a { background: #f6e3c8; } .ac-mini.ed-anniversaire .ac-mini-mast { color: var(--hanko-ink); }
+.ac-arch-note { padding-bottom: 60px; font-size: 1rem; opacity: .75; max-width: 70ch; }
+
+@media (max-width: 899px) {
+  .ac-cover.is-mirror { grid-template-columns: minmax(0, 1fr); grid-template-areas: "mast" "issue" "star" "exclu" "lines" "side" "bar"; }
+  .ac-une-grid, .ac-atelier { grid-template-columns: minmax(0, 1fr); }
+  .ac-gen .sotd-inner { grid-template-columns: minmax(0, 1fr); }
+  .ac-gen .sotd-art { width: min(220px, 60vw); }
+  .ac-issue { flex-wrap: wrap; }
+}
+.ed-prestige .ac-line small { color: var(--gold); }

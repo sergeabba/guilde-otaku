@@ -3,8 +3,24 @@
    .r-hebdo (magazine, identité principale), .r-kiri (compétition), .r-dense (prestige).
    Logo toujours en Dela Gothic One, texte courant toujours en Barlow. */
 
+/* Archivo figée à la seule graisse du registre Kirikomi (800, largeur 112 %) : 16 Ko au lieu
+   de 171 Ko pour la police variable complète (OFL, sans nom réservé ; originaux conservés). */
+@font-face { font-family: "Archivo Kiri"; font-style: normal; font-weight: 800; font-stretch: 112%; font-display: swap;
+  src: url(/fonts/archivo/archivo-latin-kiri-800-112.woff2) format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212; }
+@font-face { font-family: "Archivo Kiri"; font-style: normal; font-weight: 800; font-stretch: 112%; font-display: swap;
+  src: url(/fonts/archivo/archivo-latin-ext-kiri-800-112.woff2) format("woff2");
+  unicode-range: U+0100-017F; }
+/* Fraunces italique figée à 420 (seule graisse du registre Hebdo) : 33 Ko au lieu de 86 Ko. */
+@font-face { font-family: "Fraunces Edit"; font-style: italic; font-weight: 300 600; font-display: swap;
+  src: url(/fonts/fraunces/fraunces-latin-420-italic.woff2) format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212; }
+@font-face { font-family: "Fraunces Edit"; font-style: italic; font-weight: 300 600; font-display: swap;
+  src: url(/fonts/fraunces/fraunces-latin-ext-420-italic.woff2) format("woff2");
+  unicode-range: U+0100-017F; }
+
 .st {
-  --ink: #0d0c10; --ink-2: #17151c; --paper: #f4efe4; --paper-2: #ebe3d2; --white: #fffdf8; --hanko: #d7332b; --gold: #c9a84c;
+  --ink: #0d0c10; --ink-2: #17151c; --paper: #f4efe4; --paper-2: #ebe3d2; --white: #fffdf8; --hanko: #d7332b; --hanko-ink: #ad2620; --gold: #c9a84c;
   --f-logo: var(--font-dela), "Dela Gothic One", sans-serif;
   --f-body: var(--font-barlow), "Barlow", system-ui, sans-serif;
   --f-cond: var(--font-barlow-condensed), "Barlow Condensed", sans-serif;
@@ -12,8 +28,8 @@
   font-family: var(--f-body); color: var(--ink); background: var(--paper);
   -webkit-font-smoothing: antialiased; overflow-x: clip;
 }
-.r-hebdo { --f-display: var(--font-dela), "Dela Gothic One", sans-serif; --f-edit: "Fraunces Variable", Georgia, serif; --f-ui: var(--f-cond); --f-data: var(--f-cond); }
-.r-kiri  { --f-display: "Anton", var(--f-cond), sans-serif; --f-edit: var(--f-body); --f-ui: "Archivo Variable", var(--f-cond), sans-serif; --f-data: "Chakra Petch", var(--f-cond), sans-serif; }
+.r-hebdo { --f-display: var(--font-dela), "Dela Gothic One", sans-serif; --f-edit: "Fraunces Edit", "Fraunces Variable", Georgia, serif; --f-ui: var(--f-cond); --f-data: var(--f-cond); }
+.r-kiri  { --f-display: "Anton", var(--f-cond), sans-serif; --f-edit: var(--f-body); --f-ui: "Archivo Kiri", var(--f-cond), sans-serif; --f-data: "Chakra Petch", var(--f-cond), sans-serif; }
 .r-dense { --f-display: "Cinzel", Georgia, serif; --f-edit: "Cormorant Garamond", Georgia, serif; --f-ui: var(--f-cond); --f-data: var(--font-dela), "Dela Gothic One", sans-serif; }
 
 .t-display { font-family: var(--f-display); font-weight: 400; line-height: .9; letter-spacing: -.03em; text-wrap: balance; }
@@ -41,7 +57,29 @@
 .st-nav-open { display: inline-flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 14px; background: var(--ink); color: var(--white); border: 0; cursor: pointer; font: 800 .9rem var(--f-cond); letter-spacing: .12em; text-transform: uppercase; }
 .st-nav.is-dark .st-nav-open { background: var(--white); color: var(--ink); }
 .st-nav-open i { display: grid; gap: 3px; } .st-nav-open i::before, .st-nav-open i::after { content: ""; display: block; width: 18px; height: 2px; background: currentColor; }
-@media (max-width: 719px) { .st-nav-issue { display: none; } }
+.st-nav-quick { display: flex; gap: 2px; margin-left: auto; }
+.st-nav-quick a { position: relative; padding: 8px 12px; text-decoration: none; font: 800 .82rem var(--f-cond); letter-spacing: .12em; text-transform: uppercase; }
+.st-nav-quick a::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: 2px; height: 3px; background: var(--hanko); transform: scaleX(0); transform-origin: left; transition: transform 220ms var(--ease-out); }
+.st-nav-quick a:hover::after, .st-nav-quick a[aria-current="page"]::after { transform: scaleX(1); }
+.st-nav-acts { display: flex; align-items: center; gap: 8px; }
+.st-nav-search { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 12px; background: transparent; color: inherit; border: 2px solid currentColor; cursor: pointer; }
+.st-nav-search kbd { font: 700 .68rem var(--f-cond); letter-spacing: .08em; opacity: .7; }
+.st-nav-issue { white-space: nowrap; }
+@media (max-width: 1180px) { .st-nav-issue { display: none; } }
+@media (max-width: 899px) { .st-nav-quick, .st-nav-search kbd { display: none; } .st-nav-search { border: 0; padding: 0 8px; } .st-nav-open { display: none; } }
+
+/* Barre d'onglets du téléphone : les mêmes rubriques que le site, le sommaire en dernier. */
+.st-dock { display: none; }
+@media (max-width: 899px) {
+  .st { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
+  .st-dock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; display: grid; grid-template-columns: repeat(5, 1fr); padding-bottom: env(safe-area-inset-bottom); background: var(--paper); border-top: 3px solid var(--ink); color: var(--ink); }
+  .st-dock a, .st-dock button { display: grid; justify-items: center; align-content: center; gap: 3px; min-height: 60px; padding: 0; border: 0; background: none; color: inherit; text-decoration: none; font: 800 .66rem var(--f-cond); letter-spacing: .08em; text-transform: uppercase; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .st-dock svg { width: 22px; height: 22px; }
+  .st-dock [aria-current="page"] { background: var(--ink); color: var(--paper); }
+  .st-dock a:active, .st-dock button:active { transform: scale(.94); }
+}
+.st-toc-search { display: inline-flex; align-items: center; gap: 10px; align-self: flex-start; min-height: 44px; padding: 0 16px; background: transparent; color: var(--paper); border: 2px solid var(--paper); font: 800 .85rem var(--f-cond); letter-spacing: .1em; text-transform: uppercase; cursor: pointer; }
+.st-toc li a[aria-current="page"] span { color: var(--gold); }
 
 .st-toc { position: fixed; inset: 0; z-index: 90; display: grid; grid-template-columns: minmax(0, 1fr); overflow: auto; background: var(--ink); color: var(--white); padding: clamp(20px, 4vw, 48px); }
 @media (min-width: 900px) { .st-toc { grid-template-columns: 1fr 1.3fr; gap: 48px; } }

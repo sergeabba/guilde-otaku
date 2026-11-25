@@ -1,0 +1,30 @@
+/* Système de mouvement de la Guilde : mêmes valeurs que lib/motion.ts. */
+.st {
+  --m-tap: 120ms; --m-swap: 220ms; --m-enter: 420ms; --m-page: 620ms; --m-reveal: 900ms;
+  --m-out: cubic-bezier(.22, 1, .36, 1); --m-inout: cubic-bezier(.65, 0, .35, 1);
+  --m-strike: cubic-bezier(.7, 0, .2, 1); --m-rite: cubic-bezier(.16, 1, .3, 1);
+}
+
+/* Appui : la matière s'enfonce, comme un tampon. */
+.m-press { transition: transform var(--m-tap) var(--m-out), box-shadow var(--m-tap) var(--m-out); }
+.m-press:active { transform: translate(2px, 2px) scale(.98); }
+
+/* Transitions de page natives (View Transitions) entre la collection et le tome. */
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: 320ms; animation-timing-function: cubic-bezier(.22, 1, .36, 1); }
+::view-transition-group(tome-cover) { animation-duration: 620ms; animation-timing-function: cubic-bezier(.65, 0, .35, 1); }
+::view-transition-old(tome-cover), ::view-transition-new(tome-cover) { height: 100%; object-fit: cover; }
+::view-transition-new(tome-cover) { animation: m-vt-reveal 620ms cubic-bezier(.65, 0, .35, 1) both; }
+::view-transition-old(tome-cover) { animation: none; opacity: 1; }
+@keyframes m-vt-reveal { from { opacity: .2; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .st *, .st *::before, .st *::after { scroll-behavior: auto !important; }
+  .m-press:active { transform: none; }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
+
+/* Chapitres hors écran : ni mise en page ni peinture tant qu'ils sont loin ; leurs polices
+   et images ne sont demandées qu'à l'approche. La hauteur estimée évite les sauts. */
+.st .tm2-ch:not(#ch-origines), .st .tm2-extra, .st .tm2-end, .st .ac-ch, .st .ac-end, .st .co-gen ~ .co-gen {
+  content-visibility: auto; contain-intrinsic-size: auto 900px;
+}

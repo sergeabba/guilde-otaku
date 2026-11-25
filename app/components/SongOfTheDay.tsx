@@ -1,7 +1,8 @@
 "use client";
 
 // Le générique du jour : pochette en grand (le disque sort de la pochette pendant
-// l'écoute), titre, artiste, anime, extrait de 30 s et liens vers la version complète.
+// l'écoute), titre, artiste, anime, extrait de 30 s, lien Apple Music et recherche YouTube
+// (le catalogue n'a pas de lien YouTube vérifié par titre : on ne promet pas le morceau exact).
 // « Un autre » tire un nouveau générique au hasard.
 import { useEffect, useRef, useState } from "react";
 import { ExternalLink, Pause, Play, Shuffle } from "lucide-react";
@@ -112,7 +113,7 @@ export default function SongOfTheDay({ initial, today = true }: { initial: Anime
           {error && <p className="sotd-note" role="alert">{error}</p>}
 
           <div className="sotd-links">
-            <a className="gk-btn gk-btn--sm" href={song.youtubeUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={15} aria-hidden="true" /> En entier sur YouTube</a>
+            <a className="gk-btn gk-btn--sm" href={song.youtubeUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={15} aria-hidden="true" /> Chercher sur YouTube<span className="gk-sr"> (recherche, nouvel onglet)</span></a>
             {song.appleUrl && <a className="gk-btn gk-btn--sm gk-btn--ghost" href={song.appleUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={15} aria-hidden="true" /> Apple Music</a>}
             <button type="button" className="gk-btn gk-btn--sm gk-btn--ghost" onClick={another} disabled={loading} aria-busy={loading}><Shuffle size={15} aria-hidden="true" /> {loading ? "Tirage…" : "Un autre"}</button>
           </div>

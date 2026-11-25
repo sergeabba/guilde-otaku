@@ -3,15 +3,30 @@
 import type { Member, Rank } from "../data/members";
 import { RANK_FILTER_ORDER } from "../data/members";
 import { getPublicMembers } from "./members-server";
-import { objectPosition, memberAwards, featuredWorks, workTitle } from "./member-extras";
+import { objectPosition, memberAwards, featuredWorks, workTitle, sameWork, type FavoriteWork, type MemberTrack, type CardMotif } from "./member-extras";
 import { POUVOIRS } from "../data/pouvoirs";
 import { rankAccents, rankRomaji } from "../app/config/ranks";
 import { COUNTRIES } from "../app/config/countries";
 import { parseBirthday } from "../app/types";
+import { portraitSeries, seriesLogoSrc } from "./series-logo";
+
+/** Trois éditions de couverture, selon la famille du grade (voir docs/studio/phase-1). */
+export type Edition = "prestige" | "shonen" | "seinen";
+
+/** Générations : regroupement des grades existants (aucune date d'arrivée n'existe). */
+export const GENERATIONS: { id: string; label: string; romaji: string; ranks: Rank[]; blurb: string }[] = [
+  { id: "fondation", label: "La fondation", romaji: "Sōritsu", ranks: ["Fondateur"], blurb: "Là où tout a commencé." },
+  { id: "couronne", label: "La couronne", romaji: "Ōkan", ranks: ["Monarque", "Ex Monarque", "Ordre Céleste"], blurb: "Ceux qui ont porté ou gardé le trône." },
+  { id: "releve", label: "La relève", romaji: "Kōkei", ranks: ["New G dorée", "Futurs Espoirs"], blurb: "La nouvelle génération qui pousse." },
+  { id: "anciens", label: "Les anciens", romaji: "Kodai", ranks: ["Vieux Briscard", "Fantôme", "Revenant"], blurb: "Les vétérans, les disparus et ceux qui reviennent." },
+];
+
+export interface StudioWork { key: string; title: string; cover: string | null; year: number | null; kind: string; note: string | null; raw: FavoriteWork }
 
 export interface StudioMember {
   id: number; name: string; first: string; rank: Rank; romaji: string; accent: string;
   anime: string | null; real: string | null; animePos: string; realPos: string;
+  animeVideo: string | null; realVideo: string | null;
   bio: string; lede: string; birthday: string | null; birthDay: number | null; birthMonth: number | null;
   country: string | null; flag: string | null;
   stats: { force: number; vitesse: number; technique: number } | null;
@@ -19,8 +34,14 @@ export interface StudioMember {
   bankai: { nom: string; sens: string; effet: string } | null;
   domaine: { nom: string; sens: string; effet: string } | null;
   awards: { title: string; year?: number; description?: string }[];
-  works: { title: string; cover: string | null; year: number | null; kind: string; note: string | null }[];
+  works: StudioWork[];
+  music: MemberTrack[];
   alias: string | null;
+  /** Identité de couverture : édition (famille du grade), motif et couleur choisis dans l'admin. */
+  edition: Edition; motif: CardMotif; generation: string;
+  /** Sujet du portrait anime à gauche : la couverture se compose en miroir. */
+  mirror: boolean;
+  series: { title: string; logo: string | null } | null;
 }
 
 /** Nom court affichable : le premier mot, ou les deux premiers s'il est trop court (« Dr », « Don »). */
@@ -39,6 +60,13 @@ function ledeOf(bio: string): string {
   return `${s.slice(0, cut > 80 ? cut : 168).replace(/[\s,;:]+$/, "")}…`;
 }
 
+export function editionOf(rank: Rank): Edition {
+  if (["Fondateur", "Monarque", "Ex Monarque", "Ordre Céleste"].includes(rank)) return "prestige";
+  if (["New G dorée", "Futurs Espoirs"].includes(rank)) return "shonen";
+  return "seinen";
+}
+const DEFAULT_MOTIF: Record<Edition, CardMotif> = { prestige: "rayons", shonen: "vitesse", seinen: "trame" };
+
 export function toStudio(m: Member): StudioMember {
   const x = m.extras ?? {};
   const st = m.stats && (m.stats.force || m.stats.vitesse || m.stats.technique) ? m.stats : null;
@@ -46,21 +74,29 @@ export function toStudio(m: Member): StudioMember {
   const p = POUVOIRS[m.id] ?? null;
   const bd = m.birthday ? parseBirthday(m.birthday) : null;
   const c = COUNTRIES.find((k) => k.code === m.country);
-  const works = [...featuredWorks(x.favoriteAnime, 4), ...featuredWorks(x.favoriteManga, 2)].slice(0, 6).map((w) => ({
-    title: workTitle(w), cover: w.coverUrl ?? null, year: w.year ?? null, kind: w.kind === "MANGA" ? "Manga" : "Anime", note: w.personalNote ?? null,
+  const works = [...featuredWorks(x.favoriteAnime, 6), ...featuredWorks(x.favoriteManga, 4)].slice(0, 8).map((w) => ({
+    key: `${w.source}:${w.sourceId ?? workTitle(w)}`, title: workTitle(w), cover: w.coverUrl ?? null, year: w.year ?? null,
+    kind: w.kind === "MANGA" ? "Manga" : "Anime", note: w.personalNote ?? null, raw: w,
   }));
+  const edition = editionOf(m.rank);
+  const s = portraitSeries(m);
   return {
     id: m.id, name: m.name, first: shortName(m.name), rank: m.rank,
-    romaji: rankRomaji[m.rank] ?? "", accent: rankAccents[m.rank] ?? "#c9a84c",
+    romaji: rankRomaji[m.rank] ?? "", accent: x.card?.color ?? rankAccents[m.rank] ?? "#c9a84c",
     anime: m.animeChar || null, real: m.photo || null,
     animePos: objectPosition(x.animeFocus, "50% 18%"), realPos: objectPosition(x.photoFocus, "50% 22%"),
+    animeVideo: m.animeVideo || null, realVideo: m.photoVideo || null,
     bio: m.bio ?? "", lede: ledeOf(m.bio ?? ""), birthday: m.birthday || null,
     birthDay: bd?.day ?? null, birthMonth: bd?.month ?? null,
     country: c?.label ?? null, flag: c?.code ?? null,
     stats: st ? { force: st.force ?? 0, vitesse: st.vitesse ?? 0, technique: st.technique ?? 0 } : null,
     special: sp ? { name: sp.name, effect: sp.effect && sp.effect !== "—" ? sp.effect : "" } : null,
     bankai: p?.bankai ?? null, domaine: p?.domaine ?? null,
-    awards: memberAwards(m), works, alias: x.displayNameRomaji ?? null,
+    awards: memberAwards(m), works, music: x.music ?? [], alias: x.displayNameRomaji ?? null,
+    edition, motif: x.card?.motif ?? DEFAULT_MOTIF[edition],
+    generation: GENERATIONS.find((g) => g.ranks.includes(m.rank))?.id ?? "anciens",
+    mirror: !!x.animeFocus && x.animeFocus.x < 40,
+    series: s ? { title: s.title, logo: seriesLogoSrc(m) } : null,
   };
 }
 
@@ -104,3 +140,38 @@ export function byRank(list: StudioMember[]) {
 }
 
 export const FR_MONTHS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+
+// ─── Liens entre membres : seulement ce que les données prouvent ─────────────
+
+export interface MemberLink { id: number; name: string; image: string | null; pos: string; accent: string; kind: "cite" | "team" | "oeuvres" | "pays"; reason: string }
+
+const fold = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+
+/** Un membre est-il cité dans un texte ? Nom complet, nom court ou alias, en mot entier. */
+export function mentions(text: string, m: Pick<StudioMember, "name" | "first" | "alias">): boolean {
+  const t = ` ${fold(text).replace(/[^a-z0-9]+/g, " ")} `;
+  return [m.name, m.first, m.alias].filter((n): n is string => !!n && n.replace(/\W/g, "").length >= 3)
+    .some((n) => t.includes(` ${fold(n).replace(/[^a-z0-9]+/g, " ").trim()} `));
+}
+
+export function memberLinks(m: StudioMember, all: StudioMember[], teams: { name: string; members: number[] }[] = [], max = 6): MemberLink[] {
+  const out = new Map<number, MemberLink>();
+  const add = (o: StudioMember, kind: MemberLink["kind"], reason: string) => {
+    if (o.id === m.id || out.has(o.id)) return;
+    out.set(o.id, { id: o.id, name: o.name, image: o.anime ?? o.real, pos: o.anime ? o.animePos : o.realPos, accent: o.accent, kind, reason });
+  };
+  // 1. Cité dans une distinction (dans un sens ou dans l'autre).
+  for (const a of m.awards) for (const o of all) if (mentions(`${a.title} ${a.description ?? ""}`, o)) add(o, "cite", `Cité dans « ${a.title} »`);
+  for (const o of all) for (const a of o.awards) if (mentions(`${a.title} ${a.description ?? ""}`, m)) add(o, "cite", `Le cite dans « ${a.title} »`);
+  // 2. Même équipe publiée.
+  for (const t of teams) if (t.members.includes(m.id)) for (const id of t.members) { const o = all.find((x) => x.id === id); if (o) add(o, "team", `Coéquipier · ${t.name}`); }
+  // 3. Favoris en commun (le plus de titres partagés d'abord).
+  const shared = all.filter((o) => o.id !== m.id).map((o) => ({ o, w: m.works.filter((w) => o.works.some((v) => sameWork(w.raw, v.raw))) }))
+    .filter((x) => x.w.length).sort((a, b) => b.w.length - a.w.length);
+  for (const { o, w } of shared.slice(0, 4)) add(o, "oeuvres", w.length > 1 ? `${w.length} favoris en commun, dont ${w[0].title}` : `Fan de ${w[0].title} aussi`);
+  // 4. Compatriotes (seulement pour compléter).
+  // Plafonnés à trois pour ne pas noyer les liens plus parlants.
+  let pays = 0;
+  if (m.flag) for (const o of all) if (o.id !== m.id && o.flag === m.flag && out.size < max && pays < 3 && !out.has(o.id)) { add(o, "pays", `Compatriote · ${m.country}`); pays++; }
+  return [...out.values()].slice(0, max);
+}

@@ -51,6 +51,10 @@ export interface MemberTrack {
   album?: string;
   /** Pochette renvoyée par le service (Apple, Spotify, YouTube). */
   cover?: string;
+  /** Spotify seulement : la même chanson en entier sur YouTube (identifiant vérifié dans l'admin). */
+  fullVideo?: string;
+  /** Titre de cette vidéo au moment de la vérification. */
+  fullVideoTitle?: string;
 }
 
 /** Une distinction du palmarès (distincte du grade). */
@@ -237,6 +241,11 @@ function tracks(v: unknown): MemberTrack[] | undefined {
     if (album) t.album = album;
     const cover = safeCover(o.cover);
     if (cover) t.cover = cover;
+    if (t.provider === "spotify" && typeof o.fullVideo === "string" && /^[\w-]{11}$/.test(o.fullVideo)) {
+      t.fullVideo = o.fullVideo;
+      const ft = latinText(o.fullVideoTitle, 160);
+      if (ft) t.fullVideoTitle = ft;
+    }
     out.push(t);
   }
   return out.length ? out : undefined;

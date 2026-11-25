@@ -13,7 +13,14 @@ export default function GImage(props: ImageProps) {
     // Grande image du site : le navigateur choisit la version WebP adaptée à l'écran.
     // Secours si le navigateur ne lit pas l'AVIF : ImageFallback (originalOf).
     if (hasLocalVariants(src)) return <NextImage {...props} loader={({ width }) => localVariant(src, width) ?? src} />;
-    return <NextImage {...props} src={directSrc(src, widthHint(props))} unoptimized />;
+    const direct = directSrc(src, widthHint(props));
+    if (direct === src) return <NextImage {...props} unoptimized />;
+    // Vignette indisponible : on retombe sur l'image d'origine, une seule fois.
+    return <NextImage {...props} src={direct} unoptimized onError={(e) => {
+      const img = e.currentTarget;
+      if (img.dataset.fb) { props.onError?.(e); return; }
+      img.dataset.fb = "1"; img.src = src;
+    }} />;
   }
   return <NextImage {...props} />;
 }

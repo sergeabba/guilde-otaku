@@ -104,3 +104,20 @@ export const PROVIDER_LIMIT: Record<MusicProvider, string> = {
 
 /** Hauteur du lecteur intégré officiel. */
 export const EMBED_HEIGHT: Record<MusicProvider, number> = { youtube: 0, spotify: 152, apple: 175 };
+
+const STOP = new Set(["the", "a", "an", "de", "la", "le", "les", "du", "des", "et", "and", "feat", "ft", "official", "video", "audio", "lyrics", "clip", "officiel", "mv", "hd", "op", "ed", "opening", "ending", "full", "version", "remastered"]);
+const words = (s = "") => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").split(" ").filter((w) => w && !STOP.has(w));
+
+/**
+ * La vidéo YouTube correspond-elle vraiment au morceau choisi ? Tous les mots du titre
+ * doivent figurer dans le titre de la vidéo, et l'artiste (s'il est connu) dans le titre
+ * ou le nom de la chaîne. Sert à n'afficher « En entier sur YouTube » que pour le bon morceau.
+ */
+export function youtubeMatches(track: { title?: string; artist?: string }, video: { title?: string; artist?: string }): boolean {
+  const t = words(track.title);
+  if (!t.length) return false;
+  const v = new Set([...words(video.title), ...words(video.artist)]);
+  if (!t.every((w) => v.has(w))) return false;
+  const a = words(track.artist);
+  return !a.length || a.some((w) => v.has(w));
+}
