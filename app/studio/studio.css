@@ -1,0 +1,65 @@
+/* ═══ STUDIO · prototypes Phase 1 ═══════════════════════════════════════════
+   Trois registres d'un même univers, combinables localement :
+   .r-hebdo (magazine, identité principale), .r-kiri (compétition), .r-dense (prestige).
+   Logo toujours en Dela Gothic One, texte courant toujours en Barlow. */
+
+.st {
+  --ink: #0d0c10; --ink-2: #17151c; --paper: #f4efe4; --paper-2: #ebe3d2; --white: #fffdf8; --hanko: #d7332b; --gold: #c9a84c;
+  --f-logo: var(--font-dela), "Dela Gothic One", sans-serif;
+  --f-body: var(--font-barlow), "Barlow", system-ui, sans-serif;
+  --f-cond: var(--font-barlow-condensed), "Barlow Condensed", sans-serif;
+  --ease-out: cubic-bezier(.22, 1, .36, 1); --ease-snap: cubic-bezier(.2, 1.4, .4, 1);
+  font-family: var(--f-body); color: var(--ink); background: var(--paper);
+  -webkit-font-smoothing: antialiased; overflow-x: clip;
+}
+.r-hebdo { --f-display: var(--font-dela), "Dela Gothic One", sans-serif; --f-edit: "Fraunces Variable", Georgia, serif; --f-ui: var(--f-cond); --f-data: var(--f-cond); }
+.r-kiri  { --f-display: "Anton", var(--f-cond), sans-serif; --f-edit: var(--f-body); --f-ui: "Archivo Variable", var(--f-cond), sans-serif; --f-data: "Chakra Petch", var(--f-cond), sans-serif; }
+.r-dense { --f-display: "Cinzel", Georgia, serif; --f-edit: "Cormorant Garamond", Georgia, serif; --f-ui: var(--f-cond); --f-data: var(--font-dela), "Dela Gothic One", sans-serif; }
+
+.t-display { font-family: var(--f-display); font-weight: 400; line-height: .9; letter-spacing: -.03em; text-wrap: balance; }
+.r-kiri .t-display, .t-display.r-kiri { text-transform: uppercase; letter-spacing: -.005em; line-height: .86; }
+.r-dense .t-display, .t-display.r-dense { font-weight: 900; text-transform: uppercase; letter-spacing: .04em; line-height: 1; }
+.t-edit { font-family: var(--f-edit); font-style: italic; font-weight: 420; font-variation-settings: "opsz" 48; }
+.r-dense .t-edit, .t-edit.r-dense { font-weight: 600; font-variation-settings: normal; }
+.t-ui { font-family: var(--f-ui); font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+.r-kiri .t-ui, .t-ui.r-kiri { font-stretch: 112%; letter-spacing: .04em; }
+.t-data { font-family: var(--f-data); font-variant-numeric: tabular-nums; }
+.t-logo { font-family: var(--f-logo); letter-spacing: -.02em; }
+
+.st-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.st :focus-visible { outline: 3px solid var(--hanko); outline-offset: 3px; }
+.st a { color: inherit; }
+.st-wrap { width: min(1320px, 100% - 2 * clamp(16px, 4vw, 56px)); margin-inline: auto; }
+
+/* ─── Navigation : un sommaire de magazine ───────────────────────────────── */
+.st-nav { position: sticky; top: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 56px; padding-inline: clamp(12px, 3vw, 32px);
+  background: color-mix(in srgb, var(--paper) 92%, transparent); border-bottom: 3px solid var(--ink); }
+.st-nav.is-dark { background: color-mix(in srgb, var(--ink) 94%, transparent); color: var(--white); border-color: var(--white); }
+.st-nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; font-family: var(--f-logo); font-size: 1.15rem; }
+.st-nav-logo img { width: 34px; height: auto; }
+.st-nav-issue { font: 700 .78rem var(--f-cond); letter-spacing: .14em; text-transform: uppercase; opacity: .7; }
+.st-nav-open { display: inline-flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 14px; background: var(--ink); color: var(--white); border: 0; cursor: pointer; font: 800 .9rem var(--f-cond); letter-spacing: .12em; text-transform: uppercase; }
+.st-nav.is-dark .st-nav-open { background: var(--white); color: var(--ink); }
+.st-nav-open i { display: grid; gap: 3px; } .st-nav-open i::before, .st-nav-open i::after { content: ""; display: block; width: 18px; height: 2px; background: currentColor; }
+@media (max-width: 719px) { .st-nav-issue { display: none; } }
+
+.st-toc { position: fixed; inset: 0; z-index: 90; display: grid; grid-template-columns: minmax(0, 1fr); overflow: auto; background: var(--ink); color: var(--white); padding: clamp(20px, 4vw, 48px); }
+@media (min-width: 900px) { .st-toc { grid-template-columns: 1fr 1.3fr; gap: 48px; } }
+.st-toc-head { display: flex; flex-direction: column; justify-content: space-between; gap: 24px; }
+.st-toc-title { font-size: clamp(3.4rem, 11vw, 9rem); color: var(--paper); }
+.st-toc-close { align-self: flex-start; min-height: 44px; padding: 0 16px; background: var(--paper); color: var(--ink); border: 0; font: 800 .9rem var(--f-cond); letter-spacing: .12em; text-transform: uppercase; cursor: pointer; }
+.st-toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; counter-reset: toc; }
+.st-toc li a { display: grid; grid-template-columns: 3.2rem 1fr auto; align-items: baseline; gap: 14px; padding: 12px 0; border-bottom: 1px solid rgba(255, 253, 248, .16); text-decoration: none; }
+.st-toc li a b { font: 400 1.6rem var(--f-logo); color: var(--gold); }
+.st-toc li a span { font-size: clamp(1.4rem, 3.4vw, 2.2rem); line-height: 1; }
+.st-toc li a small { font: 700 .75rem var(--f-cond); letter-spacing: .14em; text-transform: uppercase; opacity: .6; }
+.st-toc li a:hover span, .st-toc li a:focus-visible span { color: var(--gold); }
+.st-toc-group { margin: 18px 0 6px; font: 800 .78rem var(--f-cond); letter-spacing: .2em; text-transform: uppercase; color: var(--gold); }
+
+/* Trame d'impression et lignes de vitesse (matières de la Guilde). */
+.st-dots { background-image: radial-gradient(color-mix(in srgb, var(--ink) 18%, transparent) 1.1px, transparent 1.5px); background-size: 7px 7px; }
+.st-speed { background-image: repeating-conic-gradient(from 0deg at var(--sx, 70%) var(--sy, 40%), transparent 0 3.5deg, color-mix(in srgb, var(--ink) 9%, transparent) 3.5deg 4.5deg); }
+
+@media (prefers-reduced-motion: reduce) {
+  .st *, .st *::before, .st *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; animation-delay: 0ms !important; transition-duration: 1ms !important; }
+}

@@ -2,6 +2,7 @@ import { existsSync, statSync } from "node:fs";
 import { join } from "node:path";
 import variants from "../lib/image-variants.json";
 import { hasLocalVariants, localVariant, originalOf, tinyWebp } from "../lib/local-image";
+import { widthHint } from "../lib/image-loader";
 
 const PUB = join(__dirname, "..", "public");
 const MAP = variants as Record<string, { w: number[]; h: string; dir: string; ow: number }>;
@@ -32,5 +33,13 @@ describe("versions AVIF et WebP des images du site", () => {
     // scripts/optimize-images.mjs --check fait la vérification complète.
     expect(Object.keys(MAP).length).toBeGreaterThan(30);
     expect(Object.keys(MAP).some((k) => k.startsWith("/fighters/"))).toBe(false);
+  });
+});
+
+describe("widthHint", () => {
+  it("ignore les px des conditions média", () => {
+    expect(widthHint({ sizes: "(max-width: 899px) 40vw, 200px" })).toBe(400);
+    expect(widthHint({ sizes: "(max-width: 899px) 100vw, 62vw" })).toBe(780);
+    expect(widthHint({ width: 120 })).toBe(240);
   });
 });

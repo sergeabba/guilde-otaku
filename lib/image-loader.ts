@@ -25,3 +25,11 @@ export function directSrc(src: string, width: number): string {
   if (MANGADEX.test(src) && !/\.(256|512)\.jpg$/.test(src)) return `${src}.${width <= 256 ? 256 : 512}.jpg`;
   return src;
 }
+
+/** Largeur utile en pixels : attribut width, sinon la plus grande taille en px de « sizes », ×2 (écrans denses). */
+export function widthHint(p: { width?: unknown; sizes?: string }): number {
+  if (typeof p.width === "number") return p.width * 2;
+  // Les conditions entre parenthèses (« (max-width: 899px) ») ne sont pas des tailles d'image.
+  const px = [...(p.sizes ?? "").replace(/\([^)]*\)/g, "").matchAll(/(\d+)px/g)].map((m) => Number(m[1]));
+  return px.length ? Math.max(...px) * 2 : 780;
+}
