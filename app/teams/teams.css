@@ -177,7 +177,7 @@
 }
 @keyframes tm-slam { from { opacity: 0; transform: scale(1.5) skewX(-10deg); filter: blur(6px); } }
 @keyframes tm-beams { from { transform: translateX(-4%); opacity: 0.35; } to { transform: translateX(4%); opacity: 0.6; } }
-@keyframes tm-sway { from { margin-left: -3%; opacity: 0.6; } to { margin-left: 3%; opacity: 1; } }
+@keyframes tm-sway { from { translate: -3% 0; opacity: 0.6; } to { translate: 3% 0; opacity: 1; } }
 @keyframes tm-card-in { from { opacity: 0; transform: translateY(50px) rotate(4deg) scale(0.9); } }
 @keyframes tm-pop { from { opacity: 0; transform: translate(-50%, -20%) scale(0.6); } }
 @keyframes tm-flash { 0% { filter: brightness(2.2) saturate(0); } 100% { filter: none; } }

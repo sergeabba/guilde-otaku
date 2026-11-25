@@ -297,7 +297,11 @@ export default function WantedPage() {
 
   return (
     <div className="gk-page tone-dark wt-page">
-      <audio ref={audioRef} src="/wanted.mp3" loop preload="none" />
+      <audio ref={audioRef} loop preload="none">
+        {/* AAC 128 kb/s (1,8 Mo) ; l'original MP3 en secours. */}
+        <source src="/_opt/audio-wanted.m4a" type="audio/mp4" />
+        <source src="/wanted.mp3" type="audio/mpeg" />
+      </audio>
       <GuildeHeader activePage="wanted" accentColor="#e2b33c" bgColor="#06121c" tone="dark" />
 
       {/* ── La mer, la nuit : titre et les trois têtes les plus chères ── */}

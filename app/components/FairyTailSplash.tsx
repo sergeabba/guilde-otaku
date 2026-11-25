@@ -211,16 +211,20 @@ export default function FairyTailSplash({ onFinish }: { onFinish: () => void }) 
             "opacity 1.4s ease, transform 1.6s cubic-bezier(0.22, 1, 0.36, 1), filter 0.6s ease",
         }}
       >
+        {/* Versions compressées de « Ma vidéo.mp4 » (sans piste son, lue en muet) :
+            720p sur téléphone (1,5 Mo), 1080p ailleurs (3 Mo) au lieu de 8 Mo. */}
         <video
           ref={videoRef}
-          src="/Ma%20vid%C3%A9o.mp4"
           autoPlay
           muted
           playsInline
           loop={false}
           preload="metadata"
           style={{ pointerEvents: "none" }}
-        />
+        >
+          <source src="/_opt/video/intro-720.mp4" type="video/mp4" media="(max-width: 899px)" />
+          <source src="/_opt/video/intro-1080.mp4" type="video/mp4" />
+        </video>
       </div>
 
       {/* ── Vignette cinématique ──────────────────────────────────────────── */}

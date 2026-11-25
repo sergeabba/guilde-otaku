@@ -2,9 +2,9 @@ import { directSrc } from "../lib/image-loader";
 import { optimizedSrc } from "../lib/img";
 
 describe("sources d'images (quota de l'optimiseur Vercel)", () => {
-  it("garde l'optimiseur pour les images du site seulement", () => {
-    expect(directSrc("/photos/craig.jpg", 640)).toBeNull();
-    expect(optimizedSrc("/photos/craig.jpg", 640)).toMatch(/^\/_next\/image\?url=%2Fphotos%2Fcraig\.jpg&w=640/);
+  it("n'utilise jamais l'optimiseur Vercel pour les images du site", () => {
+    expect(optimizedSrc("/photos/inconnue.jpg", 640)).toBe("/photos/inconnue.jpg");
+    expect(optimizedSrc("/photos/craig.jpg", 640)).not.toMatch(/_next\/image/);
   });
   it("sert Supabase tel quel, TMDB à la bonne taille, MangaDex en vignette", () => {
     const sb = "https://abc.supabase.co/storage/v1/object/public/atelier/lizzy.jpg";

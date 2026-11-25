@@ -46,8 +46,10 @@ type View = "duo" | "real" | "anime";
 
 const STAT_LABELS: [keyof Member["stats"], string][] = [["force", "Force"], ["vitesse", "Vitesse"], ["technique", "Technique"]];
 
-export default function MemberProfileClient({ member, prev, next, cardUrl, chroniques, pouvoirs = null, initialMode = "fiche" }: {
+export default function MemberProfileClient({ member, prev, next, cardUrl, chroniques, pouvoirs = null, initialMode = "fiche", backdrop = null }: {
   member: Member;
+  /** Miniature floue du portrait (lib/tiny-image.ts), agrandie en fond de page. */
+  backdrop?: string | null;
   /** Bankai et extension du territoire (data/pouvoirs.ts) */
   pouvoirs?: Pouvoirs | null;
   /** Fiche classique ou planche de manga (?vue=planche) */
@@ -182,7 +184,7 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
 
       {/* Fond de la fiche : portrait anime flouté, lueur à la couleur du rang, trame. */}
       <div className="pf-backdrop" aria-hidden="true">
-        {(member.animeChar || member.photo) && <span className="pf-backdrop-img" style={{ backgroundImage: `url(${JSON.stringify(`/_next/image?url=${encodeURIComponent(member.animeChar || member.photo)}&w=64&q=75`)})` }} />}
+        {backdrop && <span className="pf-backdrop-img" style={{ backgroundImage: `url(${JSON.stringify(backdrop)})` }} />}
       </div>
 
       <main className="gk-wrap pf-main" style={{ paddingBottom: "clamp(56px, 9vw, 110px)" }}>

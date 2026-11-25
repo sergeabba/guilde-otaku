@@ -1,6 +1,7 @@
-// Choix de la source des images (composant GImage et optimizedSrc) : seules les images du site
-// lui-même (dossier public : portraits, couvertures locales) passent par l'optimiseur
-// de Vercel, dont le quota mensuel est limité. Le reste est servi en direct :
+// Choix de la source des images (composant GImage et optimizedSrc), sans l'optimiseur de
+// Vercel (quota mensuel épuisé) :
+// - images du site (dossier public) : versions WebP pré-calculées (lib/local-image.ts),
+//   l'original pour les petites ;
 // - Supabase (futilités, portraits envoyés par l'admin) : tel quel ;
 // - TMDB : à la taille la plus proche parmi celles que TMDB fournit lui-même ;
 // - MangaDex : vignette 256 ou 512 px fournie par MangaDex ;
@@ -10,9 +11,12 @@ const SUPABASE = /^https:\/\/[\w-]+\.supabase\.(co|in)\/storage\/v1\/object\/pub
 const TMDB = /^https:\/\/image\.tmdb\.org\/t\/p\/(w\d+|original)\//;
 const MANGADEX = /^https:\/\/uploads\.mangadex\.org\/covers\/[^?]+\.(jpe?g|png|webp)$/i;
 
-/** Adresse directe (sans l'optimiseur de Vercel) d'une image externe, ou null pour une image du site. */
-export function directSrc(src: string, width: number): string | null {
-  if (src.startsWith("/")) return null;
+import { localVariant } from "./local-image";
+
+/** Adresse directe (sans l'optimiseur de Vercel) d'une image : version WebP pré-calculée
+ *  pour une grande image du site, l'original pour une petite, l'adresse adaptée sinon. */
+export function directSrc(src: string, width: number): string {
+  if (src.startsWith("/")) return localVariant(src, width) ?? src;
   if (SUPABASE.test(src)) return src;
   if (TMDB.test(src)) {
     const size = TMDB_SIZES.find((s) => s >= width);

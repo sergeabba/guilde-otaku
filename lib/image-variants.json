@@ -1,0 +1,596 @@
+{
+ "/anime/brian_anime.jpg": {
+  "w": [
+   32,
+   320,
+   640,
+   960
+  ],
+  "h": "46e583bb46",
+  "ow": 1200,
+  "oh": 1200,
+  "dir": "/_opt/img/anime/brian_anime",
+  "full": true
+ },
+ "/anime/bruni_anime.jpg": {
+  "w": [
+   32,
+   320,
+   640,
+   960,
+   1273
+  ],
+  "h": "24a0a70b86",
+  "ow": 1273,
+  "oh": 1273,
+  "dir": "/_opt/img/anime/bruni_anime"
+ },
+ "/anime/godwin_anime.jpg": {
+  "w": [
+   32,
+   320,
+   640,
+   960
+  ],
+  "h": "33d21daf8a",
+  "ow": 1196,
+  "oh": 1196,
+  "dir": "/_opt/img/anime/godwin_anime",
+  "full": true
+ },
+ "/anime/gomes_anime.jpg": {
+  "w": [
+   32,
+   320,
+   640,
+   960,
+   1200
+  ],
+  "h": "c4fd7dedf7",
+  "ow": 1200,
+  "oh": 1200,
+  "dir": "/_opt/img/anime/gomes_anime"
+ },
+ "/anime/leyna_anime.jpg": {
+  "w": [
+   32,
+   320,
+   640,
+   960,
+   1081
+  ],
+  "h": "ab75024dbb",
+  "ow": 1081,
+  "oh": 1080,
+  "dir": "/_opt/img/anime/leyna_anime"
+ },
+ "/anime/maxime_anime.jpg": {
+  "w": [
+   32,
+   320,
+   640,
+   960,
+   1199
+  ],
+  "h": "a7a63799c2",
+  "ow": 1199,
+  "oh": 1201,
+  "dir": "/_opt/img/anime/maxime_anime"
+ },
+ "/anime/melrick_anime.jpg": {
+  "w": [
+   32,
+   320,
+   640,
+   960
+  ],
+  "h": "f163701c5f",
+  "ow": 1080,
+  "oh": 1080,
+  "dir": "/_opt/img/anime/melrick_anime",
+  "full": true
+ },
+ "/anime/remy_anime.jpg": {
+  "w": [
+   32,
+   320,
+   640
+  ],
+  "h": "434461dddf",
+  "ow": 890,
+  "oh": 890,
+  "dir": "/_opt/img/anime/remy_anime",
+  "full": true
+ },
+ "/anime/x1080.jpg": {
+  "w": [
+   32,
+   320,
+   640,
+   960,
+   1280,
+   1440
+  ],
+  "h": "a13697a9ac",
+  "ow": 1440,
+  "oh": 1080,
+  "dir": "/_opt/img/anime/x1080"
+ },
+ "/arena_dojo.jpg": {
+  "w": [
+   32,
+   320,
+   640,
+   960
+  ],
+  "h": "8e9ff650ce",
+  "ow": 1200,
+  "oh": 675,
+  "dir": "/_opt/img/arena_dojo",
+  "full": true
+ },
+ "/arena_xillia.jpg": {
+  "w": [
+   32,
+   320,
+   640,
+   960,
+   1280
+  ],
+  "h": "fd80641ee6",
+  "ow": 1920,
+  "oh": 1080,
+  "dir": "/_opt/img/arena_xillia",
+  "full": true
+ },
+ "/atelier/bash-grazy.png": {
+  "w": [
+   32,
+   320,
+   640,
+   960,
+   1280,
+   1536
+  ],
+  "h": "d420d60679",
+  "ow": 1536,
+  "oh": 2752,
+  "dir": "/_opt/img/atelier/bash-grazy"
+ },
+ "/atelier/don-bashjjk.png": {
+  "w": [
+   32,
+   320,
+   640,
+   960,
+   1280,
+   1920,
+   2080
+  ],
+  "h": "96c0a487ca",
+  "ow": 2080,
+  "oh": 2048,
+  "dir": "/_opt/img/atelier/don-bashjjk"
+ },
+ "/atelier/duel-food.png": {
+  "w": [
+   32,
+   320,
+   640,
+   960,
+   1280,
+   1792
+  ],
+  "h": "80f7c49cb6",
+  "ow": 1792,
+  "oh": 2400,
+  "dir": "/_opt/img/atelier/duel-food"
+ },
+ "/atelier/florianemha.png": {
+  "w": [
+   32,
+   320,
+   640,
+   960,
+   1280,
+   1792
+  ],
+  "h": "b96e674f62",
+  "ow": 1792,
+  "oh": 2400,
+  "dir": "/_opt/img/atelier/florianemha"
+ },
+ "/atelier/food.jpg": {
+  "w": [
+   32,
+   320,
+   640,
+   960,
+   1280,
+   1920,
+   2400
+  ],
+  "h": "9ddcfa9d0d",
+  "ow": 3584,
+  "oh": 4800,
+  "dir": "/_opt/img/atelier/food"
+ },
+ "/atelier/gemini-3-pro-image-preview-2k_a_change_le_17_du_gate.jpeg": {
+  "w": [
+   32,
+   320,
+   640,
+   960,
+   1280,
+   1792
+  ],
+  "h": "b08f0020a0",
+  "ow": 1792,
+  "oh": 2400,
+  "dir": "/_opt/img/atelier/gemini-3-pro-image-preview-2k_a_change_le_17_du_gate"
+ },
+ "/atelier/gemini-3-pro-image-preview-2k_a_Use_the_first_image_ - 2026-03-30T130216.784.png": {
+  "w": [
+   32,
+   320,
+   640,
+   960,
+   1280,
+   1920,
+   2048
+  ],
+  "h": "734885587f",
+  "ow": 2048,
+  "oh": 2048,
+  "dir": "/_opt/img/atelier/gemini-3-pro-image-preview-2k_a_Use_the_first_image_---2026-03-30T130216-784"
+ },
+ "/atelier/godwin-divine.png": {
+  "w": [
+   32,
+   320,
+   640,
+   960,
+   1280,
+   1792
+  ],
+  "h": "9e4ac4a42a",
+  "ow": 1792,
+  "oh": 2400,
+  "dir": "/_opt/img/atelier/godwin-divine"
+ },
+ "/atelier/godwin-nagi.png": {
+  "w": [
+   32,
+   320,
+   640,
+   960,
+   1280,
+   1920,
+   2016
+  ],
+  "h": "b781370b16",
+  "ow": 2016,
+  "oh": 2112,
+  "dir": "/_opt/img/atelier/godwin-nagi"
+ },
+ "/atelier/godwintraicy1.png": {
+  "w": [
+   32,
+   320,
+   640,
+   960,
+   1280,
+   1920,
+   2016
+  ],
+  "h": "8525deafb2",
+  "ow": 2016,
+  "oh": 2112,
+  "dir": "/_opt/img/atelier/godwintraicy1"
+ },
+ "/atelier/godwintraicy2.png": {
+  "w": [
+   32,
+   320,
+   640,
+   960,
+   1280,
+   1792
+  ],
+  "h": "23207b74e4",
+  "ow": 1792,
+  "oh": 2400,
+  "dir": "/_opt/img/atelier/godwintraicy2"
+ },
+ "/atelier/jise-ben.png": {
+  "w": [
+   32,
+   320,
+   640,
+   960,
+   1280,
+   1536
+  ],
+  "h": "b0587f75be",
+  "ow": 1536,
+  "oh": 2752,
+  "dir": "/_opt/img/atelier/jise-ben"
+ },
+ "/atelier/teamotaku.png": {
+  "w": [
+   32,
+   320,
+   640,
+   960,
+   1280,
+   1920,
+   2080
+  ],
+  "h": "d2f8e7197e",
+  "ow": 2080,
+  "oh": 2048,
+  "dir": "/_opt/img/atelier/teamotaku"
+ },
+ "/atelier/trix.png": {
+  "w": [
+   32,
+   320,
+   640,
+   960,
+   1280,
+   1792
+  ],
+  "h": "b592deaa53",
+  "ow": 1792,
+  "oh": 2400,
+  "dir": "/_opt/img/atelier/trix"
+ },
+ "/covers/dossier-bash/180228/cover.jpg": {
+  "w": [
+   32,
+   230
+  ],
+  "h": "aef988eff5",
+  "ow": 230,
+  "oh": 325,
+  "dir": "/_opt/img/covers/dossier-bash/180228/cover"
+ },
+ "/photos/armand.jpg": {
+  "w": [
+   32,
+   320,
+   640,
+   960,
+   1280
+  ],
+  "h": "0a27fd703c",
+  "ow": 1920,
+  "oh": 2560,
+  "dir": "/_opt/img/photos/armand",
+  "full": true
+ },
+ "/photos/christoff.jpg": {
+  "w": [
+   32,
+   320,
+   640,
+   960,
+   1280
+  ],
+  "h": "2449d5de76",
+  "ow": 1440,
+  "oh": 1800,
+  "dir": "/_opt/img/photos/christoff",
+  "full": true
+ },
+ "/photos/daoud.jpg": {
+  "w": [
+   32,
+   320,
+   509
+  ],
+  "h": "b139782dbf",
+  "ow": 509,
+  "oh": 679,
+  "dir": "/_opt/img/photos/daoud"
+ },
+ "/photos/dorian.jpg": {
+  "w": [
+   32,
+   320,
+   640,
+   960,
+   1080
+  ],
+  "h": "82c8b504a7",
+  "ow": 1080,
+  "oh": 1896,
+  "dir": "/_opt/img/photos/dorian"
+ },
+ "/photos/floriane.jpg": {
+  "w": [
+   32,
+   320,
+   640,
+   960,
+   1280
+  ],
+  "h": "bd503960e0",
+  "ow": 1920,
+  "oh": 2560,
+  "dir": "/_opt/img/photos/floriane",
+  "full": true
+ },
+ "/photos/gomes.jpg": {
+  "w": [
+   32,
+   320
+  ],
+  "h": "01f50b9344",
+  "ow": 489,
+  "oh": 869,
+  "dir": "/_opt/img/photos/gomes",
+  "full": true
+ },
+ "/photos/grace.jpg": {
+  "w": [
+   32,
+   320,
+   640,
+   960,
+   1280
+  ],
+  "h": "ee8feb1a3a",
+  "ow": 1920,
+  "oh": 2560,
+  "dir": "/_opt/img/photos/grace",
+  "full": true
+ },
+ "/photos/graziella.jpg": {
+  "w": [
+   32,
+   320,
+   640,
+   960,
+   1280,
+   1920
+  ],
+  "h": "7589073428",
+  "ow": 1922,
+  "oh": 2560,
+  "dir": "/_opt/img/photos/graziella",
+  "full": true
+ },
+ "/photos/loreena.jpg": {
+  "w": [
+   32,
+   320,
+   640,
+   960,
+   1152
+  ],
+  "h": "1f47ec5d2f",
+  "ow": 1152,
+  "oh": 2048,
+  "dir": "/_opt/img/photos/loreena"
+ },
+ "/photos/lucas.jpg": {
+  "w": [
+   32,
+   320,
+   640,
+   960,
+   1280
+  ],
+  "h": "ae893ac6b1",
+  "ow": 1920,
+  "oh": 2560,
+  "dir": "/_opt/img/photos/lucas",
+  "full": true
+ },
+ "/photos/lucia.jpg": {
+  "w": [
+   32,
+   320,
+   640,
+   960,
+   1280
+  ],
+  "h": "097b965717",
+  "ow": 1920,
+  "oh": 2560,
+  "dir": "/_opt/img/photos/lucia",
+  "full": true
+ },
+ "/photos/maxime.jpg": {
+  "w": [
+   32,
+   320,
+   640
+  ],
+  "h": "af05d46724",
+  "ow": 960,
+  "oh": 1280,
+  "dir": "/_opt/img/photos/maxime",
+  "full": true
+ },
+ "/photos/neverhood.jpg": {
+  "w": [
+   32,
+   320,
+   640
+  ],
+  "h": "a25fe66659",
+  "ow": 900,
+  "oh": 1600,
+  "dir": "/_opt/img/photos/neverhood",
+  "full": true
+ },
+ "/photos/paule.jpg": {
+  "w": [
+   32,
+   320,
+   640
+  ],
+  "h": "01b59e6948",
+  "ow": 1152,
+  "oh": 2048,
+  "dir": "/_opt/img/photos/paule",
+  "full": true
+ },
+ "/photos/thomas.jpg": {
+  "w": [
+   32,
+   320,
+   640,
+   960,
+   1280
+  ],
+  "h": "4b3d2af9dc",
+  "ow": 1536,
+  "oh": 1536,
+  "dir": "/_opt/img/photos/thomas",
+  "full": true
+ },
+ "/photos/tina.jpg": {
+  "w": [
+   32,
+   320,
+   640,
+   960,
+   1280
+  ],
+  "h": "59c92e4c5b",
+  "ow": 1920,
+  "oh": 2560,
+  "dir": "/_opt/img/photos/tina",
+  "full": true
+ },
+ "/photos/traicy.JPG": {
+  "w": [
+   32,
+   320,
+   640,
+   960,
+   1280
+  ],
+  "h": "7ef4c3d6bf",
+  "ow": 1919,
+  "oh": 2560,
+  "dir": "/_opt/img/photos/traicy",
+  "full": true
+ },
+ "/story/guilde-otaku-19.jpg": {
+  "w": [
+   32,
+   320,
+   640,
+   960,
+   1122
+  ],
+  "h": "eb55b6d459",
+  "ow": 1122,
+  "oh": 1402,
+  "dir": "/_opt/img/story/guilde-otaku-19"
+ }
+}

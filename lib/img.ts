@@ -10,9 +10,6 @@ export function optimizedSrc(src: string | null | undefined, width: number): str
   if (!src) return undefined;
   if (src.startsWith("/_next/") || src.startsWith("data:") || /\.svg($|\?)/i.test(src)) return src;
   if (!src.startsWith("/") && !REMOTE.test(src)) return src;
-  // Images externes : en direct (quota de l'optimiseur Vercel gardé pour les images du site).
-  const direct = directSrc(src, width);
-  if (direct) return direct;
-  const w = WIDTHS.find((x) => x >= width) ?? 1920;
-  return `/_next/image?url=${encodeURIComponent(src)}&w=${w}&q=75`;
+  // Sans l'optimiseur de Vercel : versions WebP du site, adresses adaptées des sources externes.
+  return directSrc(src, WIDTHS.find((x) => x >= width) ?? 1920);
 }

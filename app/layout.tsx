@@ -19,6 +19,7 @@ import SplashWrapper from "./components/SplashWrapper";
 import Ambiance from "./components/Ambiance";
 import Celebrate from "./components/Celebrate";
 import MusicPulse from "./components/MusicPulse";
+import OffscreenPause from "./components/OffscreenPause";
 import IntentPrefetch from "./components/IntentPrefetch";
 import ImageFallback from "./components/ImageFallback";
 import "./styles/ambiance.css";
@@ -102,6 +103,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <Ambiance />
           <Celebrate />
           <MusicPulse />
+          <OffscreenPause />
           <IntentPrefetch />
           <ImageFallback />
           </MusicDockProvider>

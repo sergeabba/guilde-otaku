@@ -1,4 +1,5 @@
 import Image from "./GImage";
+import { localVariant } from "../../lib/local-image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import WordReveal from "./WordReveal";
@@ -69,7 +70,9 @@ export default function ChapterStory() {
           >
             <div className="gk-stack-inner">
               <div className="gk-stack-bg" aria-hidden="true">
-                <Image src={c.image} alt="" fill sizes="(max-width: 899px) 100vw, 50vw" />
+                <Image src={c.image} alt="" fill sizes="(max-width: 899px) 100vw, 1px" />
+                {/* Ordinateur : miniature de 32 px agrandie, flou sans filtre coûteux. */}
+                <span className="gk-stack-blur" style={{ backgroundImage: `url(${JSON.stringify(localVariant(c.image, 32) ?? c.image)})` }} />
               </div>
               <div className="gk-stack-shade" aria-hidden="true" />
               <figure className="gk-stack-figure" style={{ aspectRatio: `${c.w} / ${c.h}`, maxWidth: `min(${c.w}px, 44vw)`, maxHeight: c.h }}>

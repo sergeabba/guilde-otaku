@@ -7,6 +7,7 @@ import { DOSSIER_BASH_DATA, normalizeDossierBashKey } from "../../../lib/dossier
 import { workKey, type FavoriteWork } from "../../../lib/member-extras";
 import { rankRomaji, type Rank } from "../../config/ranks";
 import { POUVOIRS } from "../../../data/pouvoirs";
+import { tinyImage } from "../../../lib/tiny-image";
 
 // Rendue à la demande (la mise en page lit un cookie). Les données des membres sont
 // mises en cache côté serveur et vidées à chaque modification dans l'admin
@@ -80,6 +81,7 @@ export default async function MemberPage({ params, searchParams }: Props) {
   if (!found) notFound();
 
   const { member, prev, next } = found;
+  const backdrop = await tinyImage(member.animeChar || member.photo);
   const works = [...(member.extras?.favoriteAnime ?? []), ...(member.extras?.favoriteManga ?? [])];
 
   return (
@@ -91,6 +93,7 @@ export default async function MemberPage({ params, searchParams }: Props) {
       chroniques={chroniqueLinks(works)}
       pouvoirs={POUVOIRS[member.id] ?? null}
       initialMode={planche ? "planche" : "fiche"}
+      backdrop={backdrop}
     />
   );
 }
