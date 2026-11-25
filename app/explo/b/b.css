@@ -1,0 +1,129 @@
+/* ═══ DIRECTION B · GRAND MENU ════════════════════════════════════════════════
+   Nuit indigo, couleur du membre en grands aplats, blanc pur, noir d'encre.
+   Tout est incliné : barres, cartes, lettres découpées. Les personnages détourés
+   portent deux silhouettes décalées (couleur et noir). */
+.xb {
+  --night: #0d0b24; --ink: #050509; --white: #fff; --hot: var(--acc, #f5e400);
+  --f-cond: var(--font-barlow-condensed), "Barlow Condensed", sans-serif;
+  position: relative; min-height: 100svh; overflow: hidden; background: var(--night); color: var(--white); isolation: isolate;
+  font-family: var(--font-barlow), system-ui, sans-serif; transition: background 500ms;
+}
+.xb a { color: inherit; text-decoration: none; }
+.xb :focus-visible { outline: 3px solid var(--white); outline-offset: 4px; }
+
+/* Fond : étoiles géantes qui tournent, rayures. */
+.xb-bg { position: absolute; inset: 0; z-index: -1; overflow: hidden; }
+.xb-star { will-change: transform; contain: strict; position: absolute; left: 30%; top: 50%; width: 120vmax; aspect-ratio: 1; translate: -50% -50%; background: var(--hot); opacity: .9; transition: background 500ms;
+  clip-path: polygon(50% 0, 56% 38%, 85% 15%, 63% 45%, 100% 50%, 63% 55%, 85% 85%, 56% 62%, 50% 100%, 44% 62%, 15% 85%, 37% 55%, 0 50%, 37% 45%, 15% 15%, 44% 38%); }
+.xb-star.is-2 { width: 120vmax; left: 34%; background: var(--ink); opacity: 1; scale: .55; }
+.xb-stripes { position: absolute; inset: 0; background: repeating-linear-gradient(-24deg, rgba(255, 255, 255, .06) 0 18px, transparent 18px 46px); }
+@media (prefers-reduced-motion: no-preference) {
+  .xb-star { animation: xb-rot 60s linear infinite; } .xb-star.is-2 { animation-duration: 40s; animation-direction: reverse; }
+}
+@keyframes xb-rot { to { rotate: 360deg; } }
+
+/* Personnage : image + deux silhouettes (masque du détourage) décalées. */
+.xb-stage { position: absolute; z-index: 1; left: -1%; bottom: 0; width: 60vw; height: 100svh; pointer-events: none; }
+.xb-host { position: absolute; inset: 0; }
+.xb-host img, .xb-sil { position: absolute; left: 0; bottom: 0; width: 100%; height: 106%; object-fit: contain; object-position: bottom left; }
+.xb-sil { -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: bottom left; mask-position: bottom left; }
+.xb-sil.is-acc { background: var(--white); translate: 22px -10px; }
+.xb-sil.is-ink { background: var(--ink); translate: -18px 12px; }
+.xb-host.is-plain .xb-sil { display: none; }
+.xb-host.is-plain img { left: 6%; bottom: 6%; width: 80%; height: 82%; object-fit: cover; clip-path: polygon(8% 0, 100% 4%, 92% 100%, 0 96%); }
+@media (prefers-reduced-motion: no-preference) { .xb-host { will-change: transform; animation: xb-float 5s ease-in-out infinite alternate; } }
+@keyframes xb-float { to { transform: translateY(-8px); } }
+
+/* Lettres découpées. */
+.rn { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: .06em .3em; margin: 0; line-height: 1; }
+.rn-w { display: inline-flex; align-items: baseline; white-space: nowrap; }
+.rn-c { display: inline-block; padding: .04em .1em .02em; margin: 0 .015em; line-height: .95; font-weight: 900; }
+.rn-c.is-ink { background: var(--ink); color: var(--white); }
+.rn-c.is-paper { background: var(--white); color: var(--ink); }
+.rn-c.is-hot { background: var(--hot); color: var(--ink); }
+.rn-c.is-outline { color: transparent; -webkit-text-stroke: 2px var(--white); }
+
+/* Bloc de date (haut gauche). */
+.xb-hud { position: absolute; z-index: 4; left: clamp(16px, 3vw, 44px); top: clamp(14px, 3vh, 34px); display: grid; justify-items: start; gap: 2px; transform: rotate(-6deg); transform-origin: left top; }
+.xb-hud p { margin: 0; }
+.xb-hud-week { display: flex; align-items: flex-end; gap: 8px; }
+.xb-hud-week b { font: 400 clamp(4rem, 8vw, 7.5rem)/.8 "Anton", sans-serif; color: var(--white); -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill; text-shadow: 6px 6px 0 var(--hot); }
+.xb-hud-week small { font: 900 italic 1rem var(--f-cond); letter-spacing: .2em; text-transform: uppercase; padding: 2px 8px; background: var(--ink); }
+.xb-hud-day { display: flex; gap: 0; }
+.xb-hud-day b { padding: 2px 12px; background: var(--white); color: var(--ink); font: 900 italic 1.5rem var(--f-cond); text-transform: uppercase; }
+.xb-hud-day span { padding: 2px 12px; background: var(--ink); font: 800 1.5rem var(--f-cond); }
+.xb-hud-count { margin-top: 6px !important; padding: 2px 10px; background: var(--hot); color: var(--ink); font: 800 .8rem var(--f-cond); letter-spacing: .14em; text-transform: uppercase; }
+.xb-logo { position: absolute; z-index: 4; right: clamp(16px, 3vw, 44px); top: clamp(14px, 3vh, 30px); display: grid; place-items: center; width: 60px; aspect-ratio: 1; background: var(--white); clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+.xb-logo img { width: 30px; height: auto; }
+
+/* Menu : escalier de barres inclinées. */
+.xb-menu { position: absolute; z-index: 3; right: clamp(20px, 3vw, 60px); top: 50%; translate: 0 -46%; }
+.xb-menu ul { list-style: none; margin: 0; padding: 0; display: grid; gap: clamp(4px, 1vh, 12px); justify-items: end; }
+.xb-menu li { margin-right: calc(var(--k) * 1.4vw); transform: rotate(-7deg); }
+.xb-menu a { position: relative; display: block; padding: .08em .5em; }
+.xb-item { position: relative; z-index: 1; display: block; font: 900 italic clamp(1.9rem, 3.6vw, 3.8rem)/1 var(--f-cond); text-transform: uppercase; letter-spacing: -.01em; color: var(--white); -webkit-text-stroke: 2px var(--ink); paint-order: stroke fill; text-shadow: 4px 4px 0 var(--ink); transition: color 150ms; }
+.xb-menu a:hover .xb-item { color: var(--hot); }
+.xb-item.is-ransom { font-size: clamp(2.2rem, 4.2vw, 4.4rem); text-shadow: none; -webkit-text-stroke: 0; }
+.xb-bar { position: absolute; z-index: 0; inset: -6% -8% -6% -10%; background: var(--white); clip-path: polygon(4% 0, 100% 8%, 96% 100%, 0 90%); box-shadow: none; }
+.xb-bar::after { content: ""; position: absolute; inset: 0; background: var(--hot); translate: 10px 8px; z-index: -1; }
+.xb-cursor { position: absolute; z-index: 2; left: -1.9em; top: 50%; width: 1.5em; height: 1.1em; translate: 0 -50%; font-size: clamp(1.6rem, 3vw, 3rem); background: var(--hot); clip-path: polygon(0 0, 100% 50%, 0 100%, 22% 50%); filter: drop-shadow(3px 3px 0 var(--ink)); }
+@media (prefers-reduced-motion: no-preference) { .xb-cursor { animation: xb-poke 700ms ease-in-out infinite alternate; } }
+@keyframes xb-poke { to { translate: 8px -50%; } }
+.xb-why { margin: clamp(16px, 3vh, 30px) 0 0; display: flex; justify-content: flex-end; align-items: stretch; transform: rotate(-7deg); }
+.xb-why span { padding: 6px 12px; background: var(--ink); font: 800 .9rem var(--f-cond); letter-spacing: .1em; text-transform: uppercase; }
+.xb-why b { padding: 6px 14px; background: var(--white); color: var(--ink); font: 900 italic 1.1rem var(--f-cond); text-transform: uppercase; }
+@media (prefers-reduced-motion: no-preference) {
+  .xb-menu li { animation: xb-in 420ms cubic-bezier(.8, 0, .2, 1) both; animation-delay: calc(var(--k) * 55ms + 150ms); }
+  .xb-why { animation: xb-in 300ms cubic-bezier(.8, 0, .2, 1) both; }
+}
+@keyframes xb-in { from { translate: 120% 0; } }
+.xb-keys { position: absolute; z-index: 3; right: clamp(16px, 3vw, 44px); bottom: 16px; margin: 0; padding: 4px 12px; background: var(--ink); font: 800 .78rem var(--f-cond); letter-spacing: .16em; text-transform: uppercase; transform: skewX(-12deg); }
+
+/* Sélection des nakama. */
+.xb-party { position: absolute; inset: 0; z-index: 3; }
+.xb-party-head { position: absolute; left: clamp(16px, 3vw, 44px); top: clamp(150px, 22vh, 210px); display: grid; justify-items: start; gap: 10px; }
+.xb.is-party .xb-hud { opacity: .0; }
+.xb-back { padding: 6px 14px; border: 0; background: var(--white); color: var(--ink); font: 900 italic 1rem var(--f-cond); text-transform: uppercase; transform: skewX(-12deg); cursor: pointer; }
+.xb-party-title { font-size: clamp(1.8rem, 3.4vw, 3.2rem); transform: rotate(-5deg); }
+.xb.is-party .xb-party-head { top: clamp(16px, 3vh, 34px); }
+.xb-pick { position: absolute; right: clamp(20px, 5vw, 90px); top: 14vh; width: min(40vw, 620px); display: grid; justify-items: end; gap: 12px; text-align: right; }
+.xb-pick-name { font-size: clamp(3rem, 7vw, 7rem); transform: rotate(-6deg); justify-content: flex-end; }
+.xb-pick-rank { margin: 0; display: flex; transform: skewX(-12deg); }
+.xb-pick-rank b { padding: 4px 14px; background: var(--ink); font: 900 1.3rem "Cinzel", serif; letter-spacing: .08em; text-transform: uppercase; }
+.xb-pick-rank span { padding: 4px 14px; background: var(--white); color: var(--ink); font: italic 600 1.3rem "Fraunces Edit", serif; }
+.xb-pick-skill { margin: 0; display: grid; justify-items: end; font: 400 clamp(1.4rem, 2.4vw, 2.2rem)/1 "Anton", sans-serif; text-transform: uppercase; color: var(--white); -webkit-text-stroke: 1.5px var(--ink); paint-order: stroke fill; }
+.xb-pick-skill small { font: 800 .8rem var(--f-cond); letter-spacing: .3em; padding: 2px 8px; background: var(--hot); color: var(--ink); -webkit-text-stroke: 0; }
+.xb-go { display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 22px; border: 0; background: var(--white); color: var(--ink); font: 900 italic 1.2rem var(--f-cond); text-transform: uppercase; clip-path: polygon(6% 0, 100% 0, 94% 100%, 0 100%); cursor: pointer; }
+.xb-go kbd { font: 700 .72rem var(--f-cond); padding: 2px 6px; background: var(--ink); color: var(--white); }
+.xb-roster { list-style: none; position: absolute; left: 0; right: 0; bottom: 34px; margin: 0; padding: 30px 4vw 12px 46vw; display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; scroll-padding-inline: 46vw 4vw; }
+.xb-roster li { flex: none; transform: skewX(-10deg); transition: transform 220ms cubic-bezier(.34, 1.56, .64, 1); }
+.xb-roster button { position: relative; display: block; width: clamp(78px, 7vw, 110px); height: clamp(120px, 22vh, 190px); padding: 0; border: 3px solid var(--ink); background: var(--acc); overflow: hidden; cursor: pointer; }
+.xb-roster img { position: absolute; left: 50%; bottom: 0; height: 130%; width: auto; max-width: none; translate: -50% 0; transform: skewX(10deg); }
+.xb-roster span { position: absolute; left: 0; right: 0; bottom: 0; padding: 2px 4px; background: var(--ink); font: 900 italic .78rem var(--f-cond); text-transform: uppercase; transform: skewX(10deg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.xb-roster li.is-on { transform: skewX(-10deg) translateY(-18px) scale(1.12); z-index: 1; }
+.xb-roster li.is-on button { border-color: var(--white); box-shadow: 0 0 0 3px var(--ink), 8px 8px 0 3px var(--ink); }
+
+/* ═══ Téléphone ═══ */
+@media (max-width: 899px) {
+  .xb-stage { left: 0; width: 100vw; height: 62svh; bottom: auto; top: 6svh; }
+  .xb-host img, .xb-sil { object-position: bottom center; -webkit-mask-position: bottom center; mask-position: bottom center; height: 100%; }
+  .xb-star { left: 50%; top: 36%; }
+  .xb-star.is-2 { left: 50%; top: 36%; }
+  .xb-hud { transform: rotate(-5deg) scale(.7); }
+  .xb-menu { left: 0; right: 0; top: auto; bottom: 0; translate: 0 0; padding: 0 0 18px; background: linear-gradient(180deg, transparent, var(--ink) 30%); }
+  .xb-menu ul { justify-items: stretch; gap: 2px; padding-top: 30px; }
+  .xb-menu li { margin-right: 0; margin-left: calc(var(--k) * 3vw); transform: rotate(-4deg); }
+  .xb-item { font-size: 8.4vw; }
+  .xb-item.is-ransom { font-size: 9.4vw; }
+  .xb-cursor { left: -1.2em; font-size: 1.4rem; }
+  .xb-why { justify-content: center; padding: 0 12px; transform: rotate(-3deg); }
+  .xb-why span { font-size: .7rem; } .xb-why b { font-size: .9rem; }
+  .xb-keys { display: none; }
+  .xb-pick { left: 12px; right: 12px; top: auto; bottom: calc(22svh + 40px); width: auto; justify-items: start; text-align: left; }
+  .xb-pick-name { font-size: 15vw; justify-content: flex-start; }
+  .xb-pick-skill { justify-items: start; }
+  .xb-roster { bottom: 10px; padding: 26px 12px 8px; scroll-padding-inline: 12px; }
+  .xb-roster button { width: 22vw; height: 19svh; }
+  .xb.is-party .xb-stage { top: 2svh; height: 50svh; }
+  .xb-party-head { top: 12px !important; }
+}

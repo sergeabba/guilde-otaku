@@ -1,0 +1,566 @@
+{
+ "/anime/craig_anime.jpg": {
+  "src": "/_opt/cutout/cbb82fdb76c8.webp",
+  "w": 800,
+  "h": 632,
+  "box": [
+   0.0,
+   0.0,
+   93.6,
+   100.0
+  ],
+  "edge": 0.15
+ },
+ "/anime/leyna_anime.jpg": {
+  "src": "/_opt/cutout/ea41b84f5269.webp",
+  "w": 1081,
+  "h": 1080,
+  "box": [
+   0.0,
+   0.0,
+   100.0,
+   100.0
+  ],
+  "edge": 0.43
+ },
+ "/anime/roys_anime.jpg": {
+  "src": "/_opt/cutout/3c9a562057dc.webp",
+  "w": 709,
+  "h": 709,
+  "box": [
+   0.0,
+   0.0,
+   100.0,
+   100.0
+  ],
+  "edge": 0.15
+ },
+ "https://cocotbrclgjfqmdcffag.supabase.co/storage/v1/object/public/guilde-images/fighters/don_sergio_anime.jpg": {
+  "src": "/_opt/cutout/e580f61b9f0d.webp",
+  "w": 736,
+  "h": 1308,
+  "box": [
+   0.0,
+   6.0,
+   94.2,
+   100.0
+  ],
+  "edge": 0.01
+ },
+ "https://cocotbrclgjfqmdcffag.supabase.co/storage/v1/object/public/guilde-images/fighters/anthony_anime.jpg": {
+  "src": "/_opt/cutout/926874a47356.webp",
+  "w": 724,
+  "h": 1024,
+  "box": [
+   0.0,
+   5.3,
+   100.0,
+   100.0
+  ],
+  "edge": 0.17
+ },
+ "/anime/mike_anime.jpg": {
+  "src": "/_opt/cutout/13fc54baa414.webp",
+  "w": 736,
+  "h": 1104,
+  "box": [
+   0.0,
+   0.5,
+   96.6,
+   100.0
+  ],
+  "edge": 0.1
+ },
+ "/anime/hugo_anime.jpg": {
+  "src": "/_opt/cutout/7caa97924b0b.webp",
+  "w": 736,
+  "h": 1104,
+  "box": [
+   0.0,
+   5.7,
+   100.0,
+   100.0
+  ],
+  "edge": 0.27
+ },
+ "/anime/kevin_anime.jpg": {
+  "src": "/_opt/cutout/c1b47ea3cabf.webp",
+  "w": 800,
+  "h": 800,
+  "box": [
+   0.0,
+   0.0,
+   100.0,
+   100.0
+  ],
+  "edge": 0.33
+ },
+ "/anime/gomes_anime.jpg": {
+  "src": "/_opt/cutout/6de10b5c59ec.webp",
+  "w": 1200,
+  "h": 1200,
+  "box": [
+   0.0,
+   0.0,
+   100.0,
+   100.0
+  ],
+  "edge": 0.49
+ },
+ "/anime/bvsh_anime.jpg": {
+  "src": "/_opt/cutout/b8a017fb3add.webp",
+  "w": 736,
+  "h": 736,
+  "box": [
+   0.0,
+   0.0,
+   100.0,
+   100.0
+  ],
+  "edge": 0.31
+ },
+ "https://cocotbrclgjfqmdcffag.supabase.co/storage/v1/object/public/guilde-images/fighters/oxance_anime.jpeg": {
+  "src": "/_opt/cutout/123739ab8f42.webp",
+  "w": 720,
+  "h": 1280,
+  "box": [
+   0.0,
+   16.6,
+   100.0,
+   100.0
+  ],
+  "edge": 0.24
+ },
+ "/anime/ben_anime.jpg": {
+  "src": "/_opt/cutout/ceffb815bbef.webp",
+  "w": 750,
+  "h": 750,
+  "box": [
+   0.0,
+   0.0,
+   98.9,
+   100.0
+  ],
+  "edge": 0.26
+ },
+ "/anime/remy_anime.jpg": {
+  "src": "/_opt/cutout/481e876cab9c.webp",
+  "w": 890,
+  "h": 890,
+  "box": [
+   0.0,
+   0.0,
+   100.0,
+   100.0
+  ],
+  "edge": 0.55
+ },
+ "/anime/lucas_anime.jpg": {
+  "src": "/_opt/cutout/200d815f2b1a.webp",
+  "w": 474,
+  "h": 474,
+  "box": [
+   0.0,
+   0.0,
+   97.5,
+   100.0
+  ],
+  "edge": 0.04
+ },
+ "/anime/gleyn_anime.jpg": {
+  "src": "/_opt/cutout/76b32d8a6704.webp",
+  "w": 736,
+  "h": 679,
+  "box": [
+   1.6,
+   0.9,
+   98.2,
+   100.0
+  ],
+  "edge": 0.0
+ },
+ "/anime/bruni_anime.jpg": {
+  "src": "/_opt/cutout/ce05c9bd7709.webp",
+  "w": 1273,
+  "h": 1273,
+  "box": [
+   0.1,
+   0.0,
+   93.0,
+   100.0
+  ],
+  "edge": 0.14
+ },
+ "/anime/saske_anime.jpg": {
+  "src": "/_opt/cutout/47222986d467.webp",
+  "w": 749,
+  "h": 727,
+  "box": [
+   0.0,
+   0.0,
+   100.0,
+   100.0
+  ],
+  "edge": 0.66
+ },
+ "/anime/abigaelle_anime.jpg": {
+  "src": "/_opt/cutout/3575548c854e.webp",
+  "w": 735,
+  "h": 767,
+  "box": [
+   0.0,
+   0.0,
+   100.0,
+   100.0
+  ],
+  "edge": 0.3
+ },
+ "/anime/graziella_anime.jpg": {
+  "src": "/_opt/cutout/2f1ccefb4263.webp",
+  "w": 736,
+  "h": 900,
+  "box": [
+   0.0,
+   7.3,
+   97.6,
+   100.0
+  ],
+  "edge": 0.18
+ },
+ "/anime/godwin_anime.jpg": {
+  "src": "/_opt/cutout/446775361600.webp",
+  "w": 1196,
+  "h": 1196,
+  "box": [
+   0.0,
+   0.0,
+   100.0,
+   100.0
+  ],
+  "edge": 0.28
+ },
+ "/anime/fenela_anime.jpg": {
+  "src": "/_opt/cutout/d4f6e16eb7bf.webp",
+  "w": 736,
+  "h": 736,
+  "box": [
+   0.0,
+   0.0,
+   84.2,
+   100.0
+  ],
+  "edge": 0.23
+ },
+ "https://cocotbrclgjfqmdcffag.supabase.co/storage/v1/object/public/guilde-images/fighters/neverhood_anime.jpeg": {
+  "src": "/_opt/cutout/f380491d0c74.webp",
+  "w": 735,
+  "h": 749,
+  "box": [
+   0.0,
+   0.0,
+   100.0,
+   100.0
+  ],
+  "edge": 0.28
+ },
+ "/anime/loreena_anime.jpg": {
+  "src": "/_opt/cutout/3dfcd48abd81.webp",
+  "w": 640,
+  "h": 640,
+  "box": [
+   0.0,
+   0.0,
+   93.3,
+   100.0
+  ],
+  "edge": 0.12
+ },
+ "/anime/christoff_anime.jpg": {
+  "src": "/_opt/cutout/17a59709e555.webp",
+  "w": 723,
+  "h": 1024,
+  "box": [
+   0.4,
+   0.1,
+   100.0,
+   100.0
+  ],
+  "edge": 0.2
+ },
+ "https://cocotbrclgjfqmdcffag.supabase.co/storage/v1/object/public/guilde-images/fighters/junior_mg_anime.jpg": {
+  "src": "/_opt/cutout/304068715470.webp",
+  "w": 736,
+  "h": 736,
+  "box": [
+   0.0,
+   0.0,
+   100.0,
+   100.0
+  ],
+  "edge": 0.65
+ },
+ "/anime/thomas_anime.jpg": {
+  "src": "/_opt/cutout/635e4a608764.webp",
+  "w": 736,
+  "h": 736,
+  "box": [
+   0.0,
+   0.0,
+   100.0,
+   100.0
+  ],
+  "edge": 0.29
+ },
+ "https://cocotbrclgjfqmdcffag.supabase.co/storage/v1/object/public/guilde-images/fighters/grace_38_anime_mwii4sa3.jpg": {
+  "src": "/_opt/cutout/e76abfee35a4.webp",
+  "w": 736,
+  "h": 736,
+  "box": [
+   35.3,
+   98.1,
+   38.7,
+   99.2
+  ],
+  "edge": 0.0
+ },
+ "/anime/floriane_anime.jpg": {
+  "src": "/_opt/cutout/88026adcce45.webp",
+  "w": 736,
+  "h": 736,
+  "box": [
+   0.0,
+   0.0,
+   100.0,
+   100.0
+  ],
+  "edge": 0.41
+ },
+ "/anime/traicy_anime.jpg": {
+  "src": "/_opt/cutout/8e69363291ba.webp",
+  "w": 736,
+  "h": 736,
+  "box": [
+   9.8,
+   0.0,
+   100.0,
+   100.0
+  ],
+  "edge": 0.38
+ },
+ "/anime/tina_anime.jpg": {
+  "src": "/_opt/cutout/698e611f9244.webp",
+  "w": 719,
+  "h": 720,
+  "box": [
+   0.0,
+   0.0,
+   100.0,
+   100.0
+  ],
+  "edge": 0.75
+ },
+ "/anime/kadi_anime.jpg": {
+  "src": "/_opt/cutout/e682ab6a749b.webp",
+  "w": 576,
+  "h": 635,
+  "box": [
+   0.0,
+   0.0,
+   99.8,
+   100.0
+  ],
+  "edge": 0.19
+ },
+ "/anime/lony_anime.jpg": {
+  "src": "/_opt/cutout/c7238332236a.webp",
+  "w": 640,
+  "h": 640,
+  "box": [
+   10.3,
+   0.0,
+   100.0,
+   100.0
+  ],
+  "edge": 0.14
+ },
+ "https://cocotbrclgjfqmdcffag.supabase.co/storage/v1/object/public/guilde-images/fighters/emeraude_norina_47_anime_mwf8w8gz.jpg": {
+  "src": "/_opt/cutout/e4aea2042b40.webp",
+  "w": 1200,
+  "h": 1200,
+  "box": [
+   0.0,
+   7.1,
+   100.0,
+   100.0
+  ],
+  "edge": 0.13
+ },
+ "/anime/lune_anime.jpg": {
+  "src": "/_opt/cutout/ffde4a35b001.webp",
+  "w": 720,
+  "h": 720,
+  "box": [
+   3.1,
+   0.0,
+   86.7,
+   100.0
+  ],
+  "edge": 0.09
+ },
+ "/anime/jeremih_anime.jpg": {
+  "src": "/_opt/cutout/6837753c8cec.webp",
+  "w": 736,
+  "h": 736,
+  "box": [
+   0.0,
+   0.3,
+   100.0,
+   100.0
+  ],
+  "edge": 0.12
+ },
+ "/anime/suliane_anime.jpg": {
+  "src": "/_opt/cutout/e70b16bb0b1f.webp",
+  "w": 736,
+  "h": 736,
+  "box": [
+   0.0,
+   0.0,
+   100.0,
+   100.0
+  ],
+  "edge": 0.88
+ },
+ "https://cocotbrclgjfqmdcffag.supabase.co/storage/v1/object/public/guilde-images/fighters/lucia_anime.jpg": {
+  "src": "/_opt/cutout/6c8e78a04521.webp",
+  "w": 1089,
+  "h": 1400,
+  "box": [
+   7.3,
+   0.0,
+   90.1,
+   100.0
+  ],
+  "edge": 0.06
+ },
+ "/anime/marie_anime.jpg": {
+  "src": "/_opt/cutout/87a51aef96aa.webp",
+  "w": 736,
+  "h": 736,
+  "box": [
+   0.0,
+   0.5,
+   96.6,
+   100.0
+  ],
+  "edge": 0.13
+ },
+ "/anime/merveille_anime.jpg": {
+  "src": "/_opt/cutout/541c1ddb1428.webp",
+  "w": 736,
+  "h": 736,
+  "box": [
+   0.0,
+   0.0,
+   100.0,
+   100.0
+  ],
+  "edge": 0.33
+ },
+ "/anime/brian_anime.jpg": {
+  "src": "/_opt/cutout/33ccfd7a54b9.webp",
+  "w": 1200,
+  "h": 1200,
+  "box": [
+   1.3,
+   0.9,
+   100.0,
+   100.0
+  ],
+  "edge": 0.05
+ },
+ "/anime/armand_anime.jpg": {
+  "src": "/_opt/cutout/10a9838e786b.webp",
+  "w": 736,
+  "h": 736,
+  "box": [
+   0.0,
+   0.0,
+   100.0,
+   100.0
+  ],
+  "edge": 0.94
+ },
+ "https://cocotbrclgjfqmdcffag.supabase.co/storage/v1/object/public/guilde-images/fighters/1775168353694_anime.jpg": {
+  "src": "/_opt/cutout/e3d54d3b9d60.webp",
+  "w": 736,
+  "h": 736,
+  "box": [
+   9.9,
+   2.7,
+   100.0,
+   100.0
+  ],
+  "edge": 0.11
+ },
+ "https://cocotbrclgjfqmdcffag.supabase.co/storage/v1/object/public/guilde-images/fighters/vyrgill_anime.jpg": {
+  "src": "/_opt/cutout/478a73563f7b.webp",
+  "w": 735,
+  "h": 736,
+  "box": [
+   15.5,
+   0.0,
+   84.4,
+   100.0
+  ],
+  "edge": 0.04
+ },
+ "https://cocotbrclgjfqmdcffag.supabase.co/storage/v1/object/public/guilde-images/fighters/d_sir_e_angelique_anime.jpg": {
+  "src": "/_opt/cutout/299ba5633ca7.webp",
+  "w": 671,
+  "h": 751,
+  "box": [
+   0.0,
+   0.0,
+   100.0,
+   100.0
+  ],
+  "edge": 0.64
+ },
+ "https://cocotbrclgjfqmdcffag.supabase.co/storage/v1/object/public/guilde-images/fighters/lizzy_anime.webp": {
+  "src": "/_opt/cutout/dee7ed586988.webp",
+  "w": 1080,
+  "h": 1080,
+  "box": [
+   0.0,
+   0.0,
+   98.7,
+   100.0
+  ],
+  "edge": 0.15
+ },
+ "https://cocotbrclgjfqmdcffag.supabase.co/storage/v1/object/public/guilde-images/fighters/teddy_1_con_nu_62_anime_mwfhpn1i.jpg": {
+  "src": "/_opt/cutout/3bb0449dd70e.webp",
+  "w": 387,
+  "h": 516,
+  "box": [
+   0.0,
+   0.0,
+   100.0,
+   100.0
+  ],
+  "edge": 0.58
+ },
+ "https://cocotbrclgjfqmdcffag.supabase.co/storage/v1/object/public/guilde-images/fighters/grey_63_anime_mwkzrvba.jpg": {
+  "src": "/_opt/cutout/b1db33857f5e.webp",
+  "w": 1200,
+  "h": 1200,
+  "box": [
+   3.2,
+   0.0,
+   100.0,
+   100.0
+  ],
+  "edge": 0.2
+ }
+}

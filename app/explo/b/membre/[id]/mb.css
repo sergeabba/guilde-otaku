@@ -1,0 +1,131 @@
+/* ═══ DIRECTION B · écran de statut ═══ */
+.xs-menu { position: absolute; z-index: 6; right: clamp(16px, 3vw, 44px); top: clamp(14px, 3vh, 30px); display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: var(--white); color: var(--ink) !important; font: 900 italic 1.1rem var(--f-cond); text-transform: uppercase; transform: skewX(-12deg); }
+.xs-menu kbd { font: 700 .7rem var(--f-cond); padding: 2px 6px; background: var(--ink); color: var(--white); }
+.xs-stage { width: 50vw; left: -2%; }
+.xs-head { position: absolute; z-index: 3; left: clamp(16px, 3vw, 44px); top: clamp(16px, 4vh, 40px); display: grid; justify-items: start; gap: 10px; }
+.xs-no { margin: 0; padding: 2px 10px; background: var(--ink); font: 900 1rem "Cinzel", serif; letter-spacing: .2em; transform: rotate(-6deg); }
+.xs-name { font-size: clamp(3rem, 7vw, 7rem); transform: rotate(-6deg); transform-origin: left; }
+.xs-card { position: absolute; left: calc(100% + 24px); top: 0; width: 120px; aspect-ratio: 120 / 170; display: grid; place-content: center; justify-items: center; gap: 2px; text-align: center; color: var(--white); transform: rotate(7deg); }
+.xs-card-frame { position: absolute; inset: 0; z-index: -1; }
+.xs-card-frame rect:first-child { fill: var(--ink); stroke: var(--hot); stroke-width: 2; }
+.xs-card-frame rect + rect, .xs-card-frame path, .xs-card-frame circle { fill: none; stroke: var(--hot); stroke-width: 1.2; }
+.xs-card b { font: 900 .78rem/1.1 "Cinzel", serif; letter-spacing: .08em; text-transform: uppercase; max-width: 9ch; }
+.xs-card span { font: italic 600 .9rem "Fraunces Edit", serif; color: var(--hot); }
+
+/* Panneau de droite, onglets inclinés. */
+.xs-panel { position: absolute; z-index: 3; right: clamp(16px, 4vw, 70px); top: 50%; translate: 0 -46%; width: min(46vw, 660px); }
+.xs-tabs { display: flex; align-items: center; gap: 4px; transform: skewX(-12deg); }
+.xs-tabs kbd { padding: 2px 8px; background: var(--white); color: var(--ink); font: 900 .9rem var(--f-cond); }
+.xs-tabs button { position: relative; flex: 1; min-height: 46px; padding: 0 12px; border: 0; background: var(--ink); color: var(--white); font: 900 italic 1.1rem var(--f-cond); text-transform: uppercase; cursor: pointer; }
+.xs-tabs button span { position: relative; z-index: 1; }
+.xs-tabs button[aria-selected="true"] { color: var(--ink); background: var(--white); box-shadow: 6px 6px 0 var(--hot); }
+.xs-tab-ink { position: absolute; inset: 0; background: var(--white); box-shadow: 6px 6px 0 var(--hot); }
+.xs-body { margin-top: 14px; padding: 22px 24px; background: color-mix(in srgb, var(--ink) 90%, transparent); border-left: 8px solid var(--hot); clip-path: polygon(0 0, 100% 2%, 98% 100%, 1% 97%); min-height: 330px; }
+.xs-statut { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 22px; align-items: center; }
+.xs-radar { width: 100%; overflow: visible; }
+.xs-radar-grid { fill: none; stroke: rgba(255, 255, 255, .25); stroke-width: 1; }
+.xs-radar-val { fill: color-mix(in srgb, var(--hot) 70%, transparent); stroke: var(--white); stroke-width: 2.5; }
+@media (prefers-reduced-motion: no-preference) { .xs-radar-val { transform-origin: 100px 100px; animation: xs-grow 600ms cubic-bezier(.34, 1.56, .64, 1) both; } }
+@keyframes xs-grow { from { scale: 0; } }
+.xs-radar text { fill: var(--white); font: 800 11px var(--f-cond); letter-spacing: .06em; text-transform: uppercase; }
+.xs-bio p { margin: 0 0 10px; font-size: 1.02rem; line-height: 1.45; }
+.xs-name-full { font: 900 italic 1.3rem var(--f-cond) !important; text-transform: uppercase; color: var(--hot); }
+.xs-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.xs-chips span { padding: 3px 10px; background: var(--white); color: var(--ink); font: 800 .78rem var(--f-cond); letter-spacing: .08em; text-transform: uppercase; transform: skewX(-12deg); }
+.xs-note { margin: 0; font: italic 600 1.15rem "Fraunces Edit", serif; }
+.xs-skills { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 18px; }
+.xs-skills ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; align-content: start; }
+.xs-skills li button { width: 100%; display: grid; justify-items: start; gap: 2px; padding: 8px 12px; border: 0; background: rgba(255, 255, 255, .08); color: var(--white); text-align: left; transform: skewX(-10deg); cursor: pointer; }
+.xs-skills li button[aria-pressed="true"] { background: var(--white); color: var(--ink); box-shadow: 5px 5px 0 var(--hot); }
+.xs-skills li small { font: 800 .68rem var(--f-cond); letter-spacing: .14em; text-transform: uppercase; opacity: .75; }
+.xs-skills li b { font: 400 1.15rem/1.05 "Anton", sans-serif; text-transform: uppercase; }
+.xs-skill p { margin: 0 0 8px; line-height: 1.4; }
+.xs-skill-k { display: inline-block; padding: 2px 8px; background: var(--hot); color: var(--ink); font: 800 .75rem var(--f-cond); letter-spacing: .2em; text-transform: uppercase; }
+.xs-skill-name { font: 400 clamp(1.8rem, 3vw, 2.6rem)/.95 "Anton", sans-serif !important; text-transform: uppercase; }
+.xs-skill-sens { font: italic 600 1.1rem "Fraunces Edit", serif; color: var(--hot); }
+.xs-medals { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.xs-medals li { display: flex; align-items: baseline; gap: 12px; padding: 10px 14px; background: var(--white); color: var(--ink); transform: skewX(-10deg); }
+.xs-medals span { color: var(--hot); font-size: 1.4rem; -webkit-text-stroke: 1px var(--ink); }
+.xs-medals b { font: 900 1.05rem "Cinzel", serif; text-transform: uppercase; letter-spacing: .04em; }
+.xs-works { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.xs-works li { display: grid; gap: 4px; transform: rotate(var(--r)); }
+.xs-works img { width: 100%; aspect-ratio: 2 / 3; object-fit: cover; border: 3px solid var(--white); box-shadow: 6px 6px 0 var(--hot); }
+.xs-works b { font: 800 .72rem var(--f-cond); letter-spacing: .06em; text-transform: uppercase; }
+.xs-nav { position: absolute; z-index: 3; right: clamp(16px, 4vw, 70px); bottom: 20px; display: flex; gap: 10px; }
+.xs-nav button { min-height: 44px; padding: 0 16px; border: 0; background: var(--ink); color: var(--white); font: 900 italic 1rem var(--f-cond); text-transform: uppercase; transform: skewX(-12deg); cursor: pointer; }
+.xs-nav kbd { padding: 1px 6px; background: var(--white); color: var(--ink); font: 800 .8rem var(--f-cond); }
+
+/* ═══ Incrustation du bankai ═══ */
+.xs-cutin { position: fixed; inset: 0; z-index: 100; overflow: hidden; background: rgba(5, 5, 9, .55); cursor: pointer; }
+.xs-ci-flash { position: absolute; inset: 0; background: var(--white); opacity: 0; }
+.xs-ci-bar { position: absolute; left: -20%; right: -20%; height: 34%; background: var(--ink); transform: rotate(-9deg); }
+.xs-ci-bar.is-a { top: -6%; } .xs-ci-bar.is-b { bottom: -6%; }
+.xs-ci-band { position: absolute; left: -20%; right: -20%; top: 33%; height: 30%; background: var(--hot); transform: rotate(-9deg); overflow: hidden; border-block: 6px solid var(--white); }
+.xs-ci-band span { position: absolute; inset: -40% 0; background-size: 150% auto; background-repeat: no-repeat; filter: contrast(1.15) saturate(1.2); }
+.xs-ci-word { position: absolute; left: 6%; top: 8%; font-size: clamp(4rem, 12vw, 12rem); transform: rotate(-9deg); }
+.xs-ci-name { position: absolute; right: 5%; bottom: 12%; margin: 0; max-width: 80%; font: 400 clamp(2.6rem, 7vw, 7.4rem)/.86 "Anton", sans-serif; text-transform: uppercase; text-align: right; color: var(--white); -webkit-text-stroke: .05em var(--ink); paint-order: stroke fill; text-shadow: .06em .06em 0 var(--hot); transform: rotate(-9deg); }
+.xs-ci-res { position: absolute; left: 6%; bottom: 7%; max-width: 46ch; display: grid; gap: 6px; padding: 12px 16px; background: var(--white); color: var(--ink); transform: rotate(-2deg); opacity: 0; }
+.xs-ci-res b { font: italic 600 1.2rem "Fraunces Edit", serif; }
+.xs-ci-close { position: absolute; right: 20px; top: 20px; z-index: 2; min-height: 44px; padding: 0 16px; border: 0; background: var(--white); color: var(--ink); font: 900 italic 1rem var(--f-cond); text-transform: uppercase; transform: skewX(-12deg); }
+.xs-ci-close kbd { font-size: .7rem; padding: 1px 5px; background: var(--ink); color: var(--white); }
+@media (prefers-reduced-motion: no-preference) {
+  .xs-ci-flash { animation: xs-flash 420ms ease-out both; }
+  .xs-ci-bar.is-a { animation: xs-bar-a 380ms cubic-bezier(.8, 0, .2, 1) 80ms both; }
+  .xs-ci-bar.is-b { animation: xs-bar-b 380ms cubic-bezier(.8, 0, .2, 1) 80ms both; }
+  .xs-ci-band { animation: xs-band 420ms cubic-bezier(.8, 0, .2, 1) 260ms both; }
+  .xs-ci-band span { animation: xs-pan 2600ms cubic-bezier(.2, .8, .3, 1) 300ms both; }
+  .xs-ci-word { animation: xs-slam 360ms cubic-bezier(.8, 0, .2, 1) 520ms both; }
+  .xs-ci-name { animation: xs-slam 420ms cubic-bezier(.8, 0, .2, 1) 900ms both; }
+  .xs-ci-res { animation: xs-res 360ms ease-out 1700ms both; }
+}
+@media (prefers-reduced-motion: reduce) { .xs-ci-res { opacity: 1; } }
+@keyframes xs-flash { 0% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes xs-bar-a { from { translate: -110% 0; } }
+@keyframes xs-bar-b { from { translate: 110% 0; } }
+@keyframes xs-band { from { transform: rotate(-9deg) scaleY(0); } }
+@keyframes xs-pan { from { background-position-x: 0%; transform: scale(1.25); } }
+@keyframes xs-slam { from { transform: rotate(-9deg) scale(3); opacity: 0; } }
+@keyframes xs-res { to { opacity: 1; } }
+
+/* ═══ Extension du territoire : l'interface entière change d'environnement ═══ */
+.xs-rings { position: absolute; inset: 0; opacity: 0; transition: opacity 600ms; background: repeating-radial-gradient(circle at 25% 60%, transparent 0 30px, color-mix(in srgb, var(--hot) 60%, transparent) 30px 33px); }
+.xb.is-domain { background: var(--ink); }
+.xb.is-domain .xs-rings { opacity: 1; }
+.xb.is-domain .xb-star { background: color-mix(in srgb, var(--hot) 30%, var(--ink)); scale: 1.4; }
+.xb.is-domain .xb-star.is-2 { background: #000; }
+.xb.is-domain .xb-host img { filter: drop-shadow(0 0 0 var(--hot)) drop-shadow(6px 0 0 var(--hot)) drop-shadow(-6px 0 0 var(--hot)) drop-shadow(0 -6px 0 var(--hot)) brightness(1.05) contrast(1.15); }
+.xb.is-domain .xs-body { background: color-mix(in srgb, var(--hot) 22%, var(--ink)); }
+@media (prefers-reduced-motion: no-preference) {
+  .xb.is-domain .xs-rings { animation: xs-rings 2.4s linear infinite; }
+  .xb.is-domain { animation: xs-quake 380ms steps(3) 1; }
+}
+@keyframes xs-rings { from { background-size: 100% 100%; } to { background-size: 115% 115%; } }
+@keyframes xs-quake { 33% { translate: 6px -4px; } 66% { translate: -5px 3px; } }
+.xs-ring { position: absolute; z-index: 2; left: 24%; top: 58%; width: min(90vh, 820px); translate: -50% -50%; pointer-events: none; overflow: visible; }
+.xs-ring text { fill: var(--hot); font: 400 21px "Anton", sans-serif; letter-spacing: 3px; text-transform: uppercase; }
+@media (prefers-reduced-motion: no-preference) { .xs-ring { animation: xb-rot 26s linear infinite; } }
+.xs-dm-banner { position: absolute; z-index: 5; left: 50%; top: 0; translate: -50% 0; display: flex; align-items: stretch; transform: skewX(-12deg); }
+.xs-dm-banner span { padding: 8px 14px; background: var(--hot); color: var(--ink); font: 800 .85rem var(--f-cond); letter-spacing: .24em; text-transform: uppercase; }
+.xs-dm-banner b { padding: 6px 16px; background: var(--white); color: var(--ink); font: 400 1.4rem "Anton", sans-serif; text-transform: uppercase; }
+.xs-dm-banner button { border: 0; padding: 0 14px; background: var(--ink); color: var(--white); font: 900 italic .9rem var(--f-cond); text-transform: uppercase; cursor: pointer; }
+
+@media (max-width: 899px) {
+  .xs { min-height: 100svh; height: auto; padding-bottom: 90px; }
+  .xs-stage { position: relative; left: 0; width: 100vw; height: 52svh; top: 0; }
+  .xs-head { top: 64px; }
+  .xs-name { font-size: 15vw; }
+  .xs-card { left: auto; right: -40vw; top: 100%; width: 92px; }
+  .xs-panel { position: relative; left: auto; right: auto; top: auto; translate: none; width: auto; margin: -4svh 12px 0; }
+  .xs-tabs { overflow-x: auto; scrollbar-width: none; }
+  .xs-tabs button { flex: none; font-size: .95rem; }
+  .xs-statut, .xs-skills { grid-template-columns: minmax(0, 1fr); }
+  .xs-radar { max-width: 220px; justify-self: center; }
+  .xs-works { grid-template-columns: repeat(2, 1fr); }
+  .xs-nav { position: fixed; left: 12px; right: 12px; bottom: 12px; justify-content: space-between; }
+  .xs-ring { left: 50%; top: 32svh; width: 96vw; }
+  .xs-dm-banner { top: 56px; }
+  .xs-dm-banner b { font-size: 1rem; }
+  .xs-ci-word { font-size: 18vw; }
+  .xs-ci-name { font-size: 12vw; bottom: auto; top: 64%; left: 5%; text-align: left; }
+  .xs-ci-res { right: 6%; }
+}

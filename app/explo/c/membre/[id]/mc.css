@@ -1,0 +1,38 @@
+/* ═══ DIRECTION C · le film d'un membre ═══ */
+.xcm-name { position: absolute; left: 5vw; right: 5vw; bottom: 22svh; margin: 0; font: italic 420 clamp(4rem, 12vw, 13rem)/.82 var(--f-film); letter-spacing: -.045em; color: #fff; mix-blend-mode: difference; transform: translateX(calc(var(--d) * -30vw)); }
+.xcm-rank { position: absolute; left: 5vw; bottom: 14svh; margin: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline; font: 700 .95rem var(--f-cap); letter-spacing: .4em; text-transform: uppercase; }
+.xcm-rank b { color: var(--tint); }
+.xcm-rank em { font: italic 420 1.3rem var(--f-film); letter-spacing: 0; text-transform: none; }
+.xcm-subs { position: absolute; left: 50%; bottom: 17svh; translate: -50% 0; width: min(820px, 88vw); display: grid; gap: 10px; text-align: center; }
+.xcm-subs p { margin: 0; font: 600 clamp(1.05rem, 1.6vw, 1.4rem)/1.4 var(--font-barlow), sans-serif; color: #fff; text-shadow: 0 2px 0 #000, 0 0 16px rgba(0, 0, 0, .95); }
+.xcm-subs p:nth-child(2) { opacity: clamp(0, calc((var(--d) + .25) * 4), 1); }
+.xcm-subs p:nth-child(3) { opacity: clamp(0, calc((var(--d) - .05) * 4), 1); }
+.xcm-credit { position: absolute; left: 50%; bottom: 10svh; translate: -50% 0; margin: 0; white-space: nowrap; font: 600 .78rem var(--f-tc); letter-spacing: .2em; text-transform: uppercase; opacity: .75; }
+.xcm-stats { position: absolute; left: 5vw; top: 26svh; margin: 0; display: grid; gap: 4px; transform: translateX(calc(var(--d) * -20vw)); }
+.xcm-stats div { display: flex; align-items: baseline; gap: 18px; }
+.xcm-stats dt { width: 7.5em; font: 700 .85rem var(--f-cap); letter-spacing: .4em; text-transform: uppercase; color: var(--tint); }
+.xcm-stats dd { margin: 0; font: 600 clamp(3rem, 7vw, 7rem)/.95 var(--f-tc); letter-spacing: -.02em; }
+.xcm-special { position: absolute; left: 5vw; bottom: 14svh; max-width: 44ch; margin: 0; display: grid; gap: 6px; }
+.xcm-special small { font: 700 .78rem var(--f-cap); letter-spacing: .4em; text-transform: uppercase; color: var(--tint); }
+.xcm-special b { font: italic 420 clamp(2rem, 4vw, 3.6rem)/1 var(--f-film); }
+.xcm-special span { font-size: 1.05rem; line-height: 1.4; opacity: .85; }
+.xcm-big { position: absolute; left: 0; right: 0; top: 14svh; margin: 0; text-align: center; font: 700 clamp(2rem, 6vw, 6rem) var(--f-cap); letter-spacing: .2em; color: var(--tint); transform: scale(calc(1 + max(var(--d), calc(-1 * var(--d))) * .6)); text-shadow: 0 0 40px color-mix(in srgb, var(--tint) 60%, transparent); }
+.xcm-power { position: absolute; left: 5vw; right: 5vw; top: 42svh; margin: 0; text-align: center; font: italic 420 clamp(3rem, 9vw, 9.5rem)/.86 var(--f-film); letter-spacing: -.03em; color: #fff; text-shadow: 0 4px 0 #000, 0 0 50px rgba(0, 0, 0, .9); transform: translateY(calc(var(--d) * -14svh)); }
+.xcm-power.is-domain { top: 30svh; }
+.xcm-actor { position: absolute; z-index: 1; right: 6vw; bottom: 7svh; height: 88svh; pointer-events: none;
+  --a: max(var(--d, 0), calc(-1 * var(--d, 0))); opacity: clamp(0, calc(1.25 - var(--a) * .55), 1); transform: translateX(calc(var(--d) * -14vw)) scale(calc(1 + (1 - min(1, var(--a))) * .08)); }
+.xcm-actor img { height: 100%; width: auto; filter: drop-shadow(0 0 0 var(--tint)) drop-shadow(0 0 24px color-mix(in srgb, var(--tint) 60%, transparent)) drop-shadow(0 30px 40px rgba(0, 0, 0, .7)); }
+.xcm-next { position: absolute; left: 5vw; top: 30svh; display: grid; justify-items: start; gap: 10px; }
+.xcm-next a { font: italic 420 clamp(3rem, 8vw, 8rem)/.9 var(--f-film); }
+.xcm-next a.is-prev { font-size: clamp(1.3rem, 2.4vw, 2rem); opacity: .7; }
+.xcm-next a:hover { color: var(--tint); }
+.xc-scene.xcm-s5 a { pointer-events: auto; }
+@media (max-width: 899px) {
+  .xcm-name { font-size: 17vw; bottom: 26svh; }
+  .xcm-rank { bottom: 17svh; letter-spacing: .25em; font-size: .78rem; }
+  .xcm-actor { right: -14vw; height: 66svh; }
+  .xcm-stats { top: 18svh; }
+  .xcm-stats dd { font-size: 14vw; }
+  .xcm-power { top: 46svh; font-size: 13vw; }
+  .xcm-credit { white-space: normal; text-align: center; width: 88vw; }
+}
