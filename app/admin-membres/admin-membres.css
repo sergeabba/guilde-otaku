@@ -90,3 +90,9 @@ select.am-input option { background: #0c0c16; }
   .am-sheet { animation: am-in 220ms cubic-bezier(.2,.8,.2,1) both; }
   @keyframes am-in { from { transform: translateX(24px); opacity: 0; } }
 }
+
+/* Aperçu en direct d'une scène de pouvoir : la scène réelle, réduite dans un cadre. */
+.am-ps-row { display: grid; gap: 10px; padding-block: 6px; border-bottom: 1px dashed rgba(246,240,228,.15); }
+.am-ps-preview { position: relative; height: 300px; overflow: hidden; border: 2px solid var(--am-line, #3a3640); background: #0d0c10; }
+.am-ps-preview-inner { position: absolute; left: 0; top: 0; width: 250%; transform: scale(.4); transform-origin: top left; pointer-events: none; }
+.am-ps-preview-inner .ps { min-height: 740px; }

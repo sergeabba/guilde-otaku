@@ -16,6 +16,7 @@ import AwardsEditor, { awardsIssue } from "./AwardsEditor";
 import { useConfirm } from "../admin-ui/ui";
 import { POUVOIRS } from "../../data/pouvoirs";
 import { FAMILY_LABEL, familiesOf } from "../../lib/power-scene";
+import PowerScene from "../components/member/PowerScene";
 
 type Tab = "identite" | "portraits" | "combat" | "univers";
 
@@ -48,6 +49,15 @@ function identityErrors(v: Identity): Partial<Record<keyof Identity, string>> {
   return e;
 }
 
+function ScenePreview({ k, nom, sens, effet, family, art, seed }: { k: "special" | "bankai" | "domaine"; nom: string; sens: string; effet: string; family?: PowerFamilyId; art?: string; seed: number }) {
+  // Aperçu en direct : la vraie scène de la fiche, réduite dans un cadre (mêmes réglages).
+  return (
+    <div className="am-ps-preview" aria-label="Aperçu de la scène">
+      <div className="am-ps-preview-inner"><PowerScene kind={k} id={`am-ps-${k}`} seed={seed} nom={nom} sens={sens} effet={effet} family={family} art={art} /></div>
+    </div>
+  );
+}
+
 export default function MemberEditor({ member, extrasSupported, onClose, onSaved, onDeleted }: {
   member: SupabaseMemberRow | null;
   extrasSupported: boolean;
@@ -57,6 +67,7 @@ export default function MemberEditor({ member, extrasSupported, onClose, onSaved
 }) {
   const [row, setRow] = useState<SupabaseMemberRow | null>(member);
   const [tab, setTab] = useState<Tab>("identite");
+  const [preview, setPreview] = useState<"special" | "bankai" | "domaine" | null>(null);
   const [form, setForm] = useState<Identity>(() => toIdentity(member));
   // Palmarès : si aucun n'est encore saisi, on part de l'ancienne distinction unique (colonne badge).
   const initialExtras = (): MemberExtras => {
@@ -342,21 +353,23 @@ export default function MemberEditor({ member, extrasSupported, onClose, onSaved
                 // et illustration dédiée (chemin du site ou image du stockage Supabase).
                 const ps = extras.powerScenes ?? {};
                 const pw = POUVOIRS[row.id];
+                const fallbackArt = row.animechar || row.photo || undefined;
                 const setScene = (k: "special" | "bankai" | "domaine", v: { family?: PowerFamilyId; art?: string }) => {
                   const next = { ...ps, [k]: { ...ps[k], ...v } };
                   for (const kk of Object.keys(next) as (keyof typeof next)[]) { const it = next[kk]; if (it && !it.family && !it.art) delete next[kk]; }
                   patchExtras({ powerScenes: Object.keys(next).length ? next : undefined });
                 };
-                const rows: { k: "special" | "bankai" | "domaine"; label: string; text: string }[] = [
-                  { k: "special", label: "Attaque spéciale", text: [form.specialName, form.specialEffect].filter(Boolean).join(" ") },
-                  ...(pw ? [{ k: "bankai" as const, label: `Bankai · ${pw.bankai.nom}`, text: `${pw.bankai.nom} ${pw.bankai.sens} ${pw.bankai.effet}` }, { k: "domaine" as const, label: `Territoire · ${pw.domaine.nom}`, text: `${pw.domaine.nom} ${pw.domaine.sens} ${pw.domaine.effet}` }] : []),
+                const rows: { k: "special" | "bankai" | "domaine"; label: string; text: string; nom: string; sens: string; effet: string }[] = [
+                  { k: "special", label: "Attaque spéciale", text: [form.specialName, form.specialEffect].filter(Boolean).join(" "), nom: form.specialName || "Attaque spéciale", sens: "Attaque spéciale", effet: form.specialEffect || "" },
+                  ...(pw ? [{ k: "bankai" as const, label: `Bankai · ${pw.bankai.nom}`, text: `${pw.bankai.nom} ${pw.bankai.sens} ${pw.bankai.effet}`, nom: pw.bankai.nom, sens: pw.bankai.sens, effet: pw.bankai.effet }, { k: "domaine" as const, label: `Territoire · ${pw.domaine.nom}`, text: `${pw.domaine.nom} ${pw.domaine.sens} ${pw.domaine.effet}`, nom: pw.domaine.nom, sens: pw.domaine.sens, effet: pw.domaine.effet }] : []),
                 ];
                 return (
                   <fieldset className="am-fieldset">
                     <legend>Scènes de pouvoir</legend>
                     <p className="am-intro" style={{ margin: 0 }}>La famille visuelle est déduite du texte du pouvoir. Choisis-la à la main quand la description est ambiguë ou humoristique, et ajoute si besoin une illustration dédiée.</p>
-                    {rows.map(({ k, label, text }) => (
-                      <div key={k} className="am-row" style={{ flexWrap: "wrap", gap: 10, alignItems: "end" }}>
+                    {rows.map(({ k, label, text, nom, sens, effet }) => (
+                      <div key={k} className="am-ps-row">
+                      <div className="am-row" style={{ flexWrap: "wrap", gap: 10, alignItems: "end" }}>
                         <label className="am-field" style={{ minWidth: 220 }}>
                           <span>{label}</span>
                           <select className="am-input" value={ps[k]?.family ?? ""} onChange={(e) => setScene(k, { family: (e.target.value || undefined) as PowerFamilyId | undefined })}>
@@ -368,6 +381,9 @@ export default function MemberEditor({ member, extrasSupported, onClose, onSaved
                           <span>Illustration (facultative)</span>
                           <input className="am-input" placeholder="/anime/… ou URL du stockage" defaultValue={ps[k]?.art ?? ""} onBlur={(e) => setScene(k, { art: e.target.value.trim() || undefined })} />
                         </label>
+                        <button type="button" className="am-btn am-btn--sm" aria-expanded={preview === k} onClick={() => setPreview(preview === k ? null : k)}>{preview === k ? "Masquer l'aperçu" : "Aperçu"}</button>
+                      </div>
+                      {preview === k && <ScenePreview k={k} nom={nom} sens={sens} effet={effet} family={ps[k]?.family} art={ps[k]?.art ?? fallbackArt} seed={row.id} />}
                       </div>
                     ))}
                   </fieldset>

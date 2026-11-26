@@ -183,3 +183,26 @@ body:has(.am-sheet) .am-toasts { bottom: calc(88px + env(safe-area-inset-bottom)
 .am-news-meta b { color: var(--am-gold, #c9a84c); }
 .am-news textarea.am-input { resize: vertical; min-height: 84px; font: inherit; }
 .am-panel > h2#am-runs { font: 900 1.1rem var(--am-font); text-transform: uppercase; }
+
+/* ═══ Admin sur téléphone : en-tête compact, rubriques en feuille ═══════════════ */
+.am-nav-m { display: none; }
+@media (max-width: 700px) {
+  .am-top-label { display: none; }
+  .am-top .am-btn--sm { min-width: 44px; justify-content: center; padding-inline: 10px; }
+  .am-brand { font-size: 1rem; }
+  .am-nav { display: none !important; }
+  .am-nav-m { display: block; border-top: 1px solid rgba(246,240,228,.12); }
+  .am-nav-m > summary { list-style: none; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 52px; padding: 6px 16px; cursor: pointer; font: 900 1rem var(--gk-font-ui, sans-serif); text-transform: uppercase; letter-spacing: .04em; }
+  .am-nav-m > summary::-webkit-details-marker { display: none; }
+  .am-nav-m > summary small { font-size: .72rem; letter-spacing: .08em; color: #c9a84c; }
+  .am-nav-m[open] > summary small::after { content: " ▲"; }
+  .am-nav-m nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 0 12px 12px; }
+  .am-nav-m-link { display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 8px 10px; border: 1px solid rgba(246,240,228,.16); border-radius: 10px; color: inherit; text-decoration: none; font: 800 .86rem var(--gk-font-ui, sans-serif); text-transform: uppercase; }
+  .am-nav-m-link[aria-current="page"] { background: #c9a84c; color: #0d0c10; border-color: #c9a84c; }
+  .am-page-head { gap: 10px !important; }
+  .am-page-head h1 { font-size: 1.7rem !important; }
+  .am-intro { font-size: .9rem !important; }
+  .am-page-actions { display: flex; flex-wrap: nowrap; gap: 8px; width: 100%; }
+  .am-page-actions .am-btn { flex: 1; justify-content: center; font-size: .82rem; padding-inline: 10px; }
+}
+@media (max-width: 700px) { .am-chip { min-height: 40px !important; padding: 4px 12px !important; font-size: .8rem !important; } }

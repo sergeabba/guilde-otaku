@@ -9,7 +9,7 @@
 | Accueil (couverture, entrées, mobile) | Validé sur mobile | Interactions entrées/personnages plus riches ; sections sous la couverture |
 | Fiches membres (vue Personnage) | Validé sur mobile | Nom recomposé sans plaque (colonne d'identité, portrait décalé, nom réel en second plan) ; reste : distinctions et personnalisation des illustrations |
 | Scènes de pouvoir (spéciale, bankai, territoire) | Fonctionnel | Qualité d'illustration (illustrations dédiées, shader de matière) |
-| Admin : réglages des scènes de pouvoir | Fonctionnel | Aperçu en direct ; test de sauvegarde avec données factices |
+| Admin : réglages des scènes de pouvoir | Validé sur mobile | Aperçu en direct (la vraie scène, réduite) ; sauvegarde et suppression testées en isolé (`scripts/qa/admin-mock.js`, écritures interceptées) |
 | Annuaire (arcanes, liste) | Validé sur mobile | — |
 | Teams (terrain, capitaine, écussons, annonce) | Validé visuellement (données de test) | Confrontations, affiches de match, fiches joueurs |
 | Wanted | Validé sur mobile | Finition |
@@ -21,7 +21,7 @@
 | Calendrier | Validé sur mobile | Vue jour en ligne horaire (repère « maintenant »), vue semaine en grille de programmation (ordinateur) |
 | Futilités / Atelier | Validé sur mobile | Salles par univers, cartels ; galerie réelle non lisible ici (clé de service), testée avec `?demo=galerie` (images de public/atelier) |
 | Bons Plans | Validé sur mobile | Accès direct par nom, rayons numérotés, affiche typographique du dernier ajout |
-| Administration (ergonomie mobile) | Non commencé | — |
+| Administration (ergonomie mobile) | En cours | En-tête compact, rubriques en feuille, actions côte à côte ; reste : autres rubriques admin passées une à une |
 | Jeux (salle, lancement) | Validé sur mobile | Emblème original, motif d'écran et police par borne ; écran-titre au lancement. Parties complètes : dépendent d'AniList et des sources externes, non jouables entièrement ici |
 | Fighters : styles, techniques signature, IA | Fonctionnel | Tests de jouabilité réels |
 | Fighters : équilibrage | Fonctionnel | Plus de simulations ; matrice avantages/faiblesses |

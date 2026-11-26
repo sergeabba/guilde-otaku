@@ -3,7 +3,7 @@
 // Coque commune des pages d'administration : connexion, navigation entre les
 // rubriques (visible sur téléphone comme sur ordinateur), déconnexion.
 import Link from "next/link";
-import { BookOpen, Clapperboard, Gift, Image as ImageIcon, LayoutGrid, Lock, LogOut, Newspaper, Shirt, Smile, Users, Vote } from "lucide-react";
+import { BookOpen, Clapperboard, ExternalLink, Gift, Image as ImageIcon, LayoutGrid, Lock, LogOut, Newspaper, Shirt, Smile, Users, Vote } from "lucide-react";
 import { useAdminAuth } from "../hooks/useAdminAuth";
 import "../admin-membres/admin-membres.css";
 import "./admin-ui.css";
@@ -63,10 +63,24 @@ export default function AdminShell({ section, title, intro, actions, status, chi
         <div className="am-top-row">
           <Link href="/admin" className="am-brand"><b>Admin</b> Guilde Otaku</Link>
           <div className="am-top-actions">
-            <Link href="/" className="am-btn am-btn--sm" target="_blank" rel="noopener noreferrer">Voir le site<span className="am-sr"> (nouvel onglet)</span></Link>
-            <button type="button" className="am-btn am-btn--sm" onClick={logout}><LogOut size={15} aria-hidden="true" /> Se déconnecter</button>
+            <Link href="/" className="am-btn am-btn--sm" target="_blank" rel="noopener noreferrer" aria-label="Voir le site (nouvel onglet)"><ExternalLink size={15} aria-hidden="true" /><span className="am-top-label">Voir le site</span></Link>
+            <button type="button" className="am-btn am-btn--sm" onClick={logout} aria-label="Se déconnecter"><LogOut size={15} aria-hidden="true" /><span className="am-top-label">Se déconnecter</span></button>
           </div>
         </div>
+        {/* Téléphone : la rubrique courante, et toutes les rubriques dans une feuille. */}
+        {(() => {
+          const cur = NAV.find((n) => n.key === section) ?? NAV[0];
+          return (
+            <details className="am-nav-m">
+              <summary>{cur.icon}<span>{cur.label}</span><small>Changer de rubrique</small></summary>
+              <nav aria-label="Rubriques de l'administration">
+                {NAV.map((n) => (
+                  <Link key={n.key} href={n.href} className="am-nav-m-link" aria-current={n.key === section ? "page" : undefined}>{n.icon}<span>{n.label}</span></Link>
+                ))}
+              </nav>
+            </details>
+          );
+        })()}
         <nav className="am-nav" aria-label="Rubriques de l'administration">
           {NAV.map((n) => (
             <Link key={n.key} href={n.href} className="am-nav-link" aria-current={n.key === section ? "page" : undefined}>{n.icon}<span>{n.label}</span></Link>
