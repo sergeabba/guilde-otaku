@@ -26,6 +26,7 @@ import IntentPrefetch from "./components/IntentPrefetch";
 import ImageFallback from "./components/ImageFallback";
 import "./styles/ambiance.css";
 import { ThemeProvider } from "./context/ThemeContext";
+import { FACE_INIT_SCRIPT } from "../lib/face-script";
 import { MusicDockProvider } from "./components/MusicDock";
 
 // Android : barre du navigateur aux couleurs du site, clavier qui redimensionne la page
@@ -82,8 +83,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const hasSeenSplash = !forceSplash && (isBot || isMobileVisitor || cookieStore.get("guilde-splash-seen")?.value === "1");
 
   return (
-    <html lang="fr" data-scroll-behavior="smooth">
+    <html lang="fr" data-scroll-behavior="smooth" data-face="anime" suppressHydrationWarning>
       <head>
+        {/* Portrait préféré (anime ou réel) posé avant l'affichage : voir lib/face.ts. */}
+        <script dangerouslySetInnerHTML={{ __html: FACE_INIT_SCRIPT }} />
         {/* Police de l'interface et du texte courant, visibles dès le premier écran. */}
         <link rel="preload" href="/fonts/barlow-condensed/barlow-condensed-latin-700-normal.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         <link rel="preload" href="/fonts/barlow/barlow-latin-400-normal.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />

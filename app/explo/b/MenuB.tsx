@@ -10,19 +10,24 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { ExploMember } from "../../../lib/explo-data";
 import { useBackClose } from "../../hooks/useBackClose";
 import { viewTransition, waitFor } from "../../../lib/view-transition";
-import Ransom from "./Ransom";
+import Ransom from "../../components/Ransom";
+import FaceToggle from "../../components/FaceToggle";
+import { useFace } from "../../../lib/face";
 
 export interface BEntry { id: string; label: string; href: string; host: number; why: string }
 
 export function Host({ m, big = false }: { m: ExploMember; big?: boolean }) {
-  const src = m.cut?.src ?? m.anime ?? m.real ?? "";
+  const face = useFace();
+  const real = face === "real" && !!m.real;
+  const src = real ? m.real! : (m.cut?.src ?? m.anime ?? m.real ?? "");
+  const cut = !real && !!m.cut;
   const mask = { WebkitMaskImage: `url(${src})`, maskImage: `url(${src})` } as React.CSSProperties;
   return (
-    <div className={`xb-host${big ? " is-big" : ""}${m.cut ? "" : " is-plain"}`} style={{ "--acc": m.accent } as React.CSSProperties}>
-      <span className="xb-sil is-acc" style={mask} />
-      <span className="xb-sil is-ink" style={mask} />
+    <div className={`xb-host${big ? " is-big" : ""}${cut ? "" : " is-plain"}`} style={{ "--acc": m.accent } as React.CSSProperties}>
+      {cut && <span className="xb-sil is-acc" style={mask} />}
+      {cut && <span className="xb-sil is-ink" style={mask} />}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt={`${m.name}, version anime`} data-explo-hero="" />
+      <img src={src} alt={`${m.name}, ${real ? "photo réelle" : "version anime"}`} data-explo-hero="" style={real ? { objectPosition: m.realPos } : undefined} />
     </div>
   );
 }
@@ -87,6 +92,7 @@ export default function MenuB({ members, entries, hud }: { members: ExploMember[
       </div>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <a className="xb-logo" href="/explo/b" aria-label="Guilde Otaku"><img src="/logo-header.png" alt="" width={44} height={38} /></a>
+      <div className="xb-face"><FaceToggle /></div>
 
       <AnimatePresence mode="popLayout" initial={false}>
         <motion.div key={party ? `p${pm.id}` : `m${host.id}`} className="xb-stage" {...slash} transition={{ duration: reduce ? .15 : .45, ease: [.8, 0, .2, 1] }}>

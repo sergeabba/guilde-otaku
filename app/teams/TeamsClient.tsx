@@ -1,9 +1,10 @@
 "use client";
+import { setFace, useFace } from "../../lib/face";
 
 // Page Teams : filtre basket / foot, puis chaque équipe publiée.
 import { useMemo, useState } from "react";
 import GuildeHeader from "../components/GuildeHeader";
-import TeamBoard, { type Face, type TeamMember } from "./TeamBoard";
+import TeamBoard, { type TeamMember } from "./TeamBoard";
 import type { GuildTeam, Sport } from "../../lib/teams-logic";
 import "./teams.css";
 
@@ -11,7 +12,8 @@ type Filter = "tout" | Sport;
 
 export default function TeamsClient({ teams, members, available }: { teams: GuildTeam[]; members: TeamMember[]; available: boolean }) {
   const [filter, setFilter] = useState<Filter>("tout");
-  const [faceMode, setFaceMode] = useState<Face>("anime");
+  const faceMode = useFace();
+  const setFaceMode = setFace;
   const byId = useMemo(() => new Map(members.map((m) => [m.id, m])), [members]);
   const sports = new Set(teams.map((t) => t.sport));
   const shown = teams.filter((t) => filter === "tout" || t.sport === filter);

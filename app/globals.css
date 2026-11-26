@@ -1148,3 +1148,7 @@ body {
   .ft-bar-fill    { transition: width 0.3s ease !important; }
   .ft-sound-tap-icon { animation: none !important; }
 }
+
+/* Préférence de portrait (lib/face.ts) : un seul des deux est montré, sans attendre React. */
+html[data-face="real"] .face-anime.has-real { display: none !important; }
+html:not([data-face="real"]) .face-real { display: none !important; }

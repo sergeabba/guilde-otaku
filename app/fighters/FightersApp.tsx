@@ -14,6 +14,10 @@ import { MAX_HP } from "../../lib/fighters/engine";
 import { celebrate } from "../../lib/fx";
 import type { MatchResult } from "./FightScreen";
 import { useMusicDock } from "../components/MusicDock";
+import Ransom from "../components/Ransom";
+import FaceToggle from "../components/FaceToggle";
+import { setFace, useFace } from "../../lib/face";
+import { directSrc } from "../../lib/image-loader";
 
 const FightScreen = dynamic(() => import("./FightScreen"), { ssr: false });
 
@@ -30,6 +34,8 @@ export interface RosterMember {
   stats: { force: number; vitesse: number; technique: number } | null;
   special: { name: string; effect: string } | null;
   awards: string[];
+  /** Détourage du portrait anime (lib/cutouts.json), si fiable. */
+  cut?: { src: string; box: [number, number, number, number] } | null;
 }
 
 export type Mode = "team" | "duel";
@@ -79,7 +85,7 @@ function TitleScreen({ roster, game, setGame, versus, setVersus, level, setLevel
   roster: RosterMember[]; game: GameMode; setGame: (m: GameMode) => void; versus: Versus; setVersus: (v: Versus) => void;
   level: AiLevel; setLevel: (l: AiLevel) => void; onStart: () => void;
 }) {
-  const strip = useMemo(() => roster.filter((m) => m.anime || m.photo).slice(0, 18), [roster]);
+  const hosts = useMemo(() => modeHosts(roster), [roster]);
   const [stage, setStage] = useState<"press" | "menu" | "who">("press");
   const items = [...MODES.map((m) => m.id), "options"] as const;
   const [cur, setCur] = useState(Math.max(0, items.indexOf(game)));
@@ -113,55 +119,119 @@ function TitleScreen({ roster, game, setGame, versus, setVersus, level, setLevel
   }, [stage, cur, whoCur, level, choose, onStart, setLevel, setVersus]);
 
   const desc = items[cur] === "options" ? `Niveau de l'IA : ${level}. Flèches gauche et droite (ou toucher) pour changer.` : MODES.find((m) => m.id === items[cur])?.desc;
+  const hostOf = (id: string) => hosts[id] ?? hosts.arcade;
+  const shown = stage === "who" ? hostOf(game) : stage === "press" ? hostOf("arcade") : hostOf(items[cur]);
+  const acc = shown ? accentOf(shown.m) : "#f5e400";
+  const whoItems = ["Contre l'IA", "2 joueurs"];
   return (
-    <section className="fx-title is-mugen" aria-labelledby="fx-title-h" onClick={() => stage === "press" && setStage("menu")}>
-      <div className="fx-title-strips" aria-hidden="true">
-        {[0, 1, 2].map((row) => (
-          <div key={row} className={`fx-strip fx-strip--${row}`}>
-            {strip.filter((_, i) => i % 3 === row).concat(strip.filter((_, i) => i % 3 === row)).map((m, i) => (
-              <span key={`${m.id}-${i}`} className="fx-strip-cell" style={{ "--fx-c": accentOf(m) } as React.CSSProperties}><Portrait m={m} /></span>
-            ))}
-          </div>
-        ))}
-      </div>
-      <div className="fx-title-shade" aria-hidden="true" />
-      <div className="fx-title-inner">
-        <p className="fx-kicker">Chapitre IV · L&apos;arène</p>
-        <h1 id="fx-title-h" className="fx-logo"><span>GUILDE</span><span>FIGHTERS</span></h1>
-        {stage === "press" && (
-          <button type="button" className="fx-press" onClick={(e) => { e.stopPropagation(); setStage("menu"); }}>Appuie sur Entrée</button>
-        )}
-        {stage === "menu" && (
-          <nav className="fx-menu" aria-label="Modes de jeu">
-            <ul role="listbox" aria-label="Mode de jeu" aria-activedescendant={`fx-mode-${items[cur]}`}>
-              {items.map((id, i) => (
-                <li key={id} id={`fx-mode-${id}`} role="option" aria-selected={cur === i}>
-                  <button type="button" className={cur === i ? "is-cur" : ""} onMouseEnter={() => setCur(i)} onFocus={() => setCur(i)} onClick={() => { setCur(i); choose(i); }}>
-                    {id === "options" ? <>Options <em>IA : {level}</em></> : MODES.find((m) => m.id === id)!.label}
+    <section className={`fp is-${stage}`} aria-labelledby="fx-title-h" style={{ "--fp-acc": acc } as React.CSSProperties}
+      onClick={() => stage === "press" && setStage("menu")}>
+      <div className="fp-bg" aria-hidden="true"><span className="fp-star" /><span className="fp-star is-2" /><span className="fp-stripes" /></div>
+
+      {shown && (
+        <div className="fp-stage" key={`${stage}-${shown.m.id}`} aria-hidden="true">
+          <FpHost m={shown.m} />
+        </div>
+      )}
+
+      <header className="fp-head">
+        <p className="fp-kicker">Chapitre IV · L&apos;arène</p>
+        <h1 id="fx-title-h" className="fp-logo"><span>Guilde</span><span>Fighters</span></h1>
+      </header>
+      <div className="fp-face" onClick={(e) => e.stopPropagation()}><FaceToggle /></div>
+
+      {stage === "press" && (
+        <button type="button" className="fp-press" onClick={(e) => { e.stopPropagation(); setStage("menu"); }}>
+          <span className="fp-press-key">Appuie sur Entrée</span><span className="fp-press-touch">Touche pour jouer</span>
+        </button>
+      )}
+
+      {stage !== "press" && (
+        <nav className="fp-menu" aria-label={stage === "who" ? "Adversaire" : "Modes de jeu"}>
+          {stage === "who" && <p className="fp-sub"><b>{MODES.find((m) => m.id === game)?.label}</b><span>Contre qui ?</span></p>}
+          <ul role="listbox" aria-label={stage === "who" ? "Adversaire" : "Mode de jeu"} aria-activedescendant={stage === "menu" ? `fx-mode-${items[cur]}` : `fx-who-${whoCur}`}>
+            {(stage === "menu" ? items.map((id) => id as string) : whoItems).map((id, i) => {
+              const on = stage === "menu" ? cur === i : whoCur === i;
+              const label = stage === "who" ? id : id === "options" ? "Options" : MODES.find((m) => m.id === id)!.label;
+              return (
+                <li key={id} id={stage === "menu" ? `fx-mode-${id}` : `fx-who-${i}`} role="option" aria-selected={on} className={on ? "is-on" : ""} style={{ "--k": i } as React.CSSProperties}>
+                  <button type="button"
+                    onMouseEnter={() => (stage === "menu" ? setCur(i) : setWhoCur(i))} onFocus={() => (stage === "menu" ? setCur(i) : setWhoCur(i))}
+                    onClick={() => { if (stage === "menu") { setCur(i); choose(i); } else { setVersus(i ? "local" : "ia"); onStart(); } }}>
+                    {/* Les deux libellés restent dans la page (le CSS montre le bon) : remplacer le nœud
+                        sous le doigt entre l'appui et le relâchement annulerait le clic. */}
+                    <span className="fp-bar" aria-hidden="true" />
+                    <span className="fp-cursor" aria-hidden="true" />
+                    <Ransom text={label} className="fp-item is-ransom" />
+                    <span className="fp-item is-plain">{label}</span>
+                    {id === "options" && <em className="fp-level">IA : {level}</em>}
                   </button>
                 </li>
-              ))}
-            </ul>
-            <p className="fx-menu-desc" aria-live="polite">{desc}</p>
-          </nav>
-        )}
-        {stage === "who" && (
-          <nav className="fx-menu" aria-label="Adversaire">
-            <ul role="listbox" aria-label="Adversaire">
-              {["Contre l'IA", "2 joueurs (même clavier)"].map((label, i) => (
-                <li key={label} role="option" aria-selected={whoCur === i}>
-                  <button type="button" className={whoCur === i ? "is-cur" : ""} onMouseEnter={() => setWhoCur(i)} onClick={() => { setVersus(i ? "local" : "ia"); onStart(); }}>{label}</button>
-                </li>
-              ))}
-              <li><button type="button" className="fx-menu-back" onClick={() => setStage("menu")}>Retour</button></li>
-            </ul>
-            <p className="fx-menu-desc">{MODES.find((m) => m.id === game)?.label} : {whoCur ? "J1 à gauche (ZQSD + UIJK), J2 à droite (flèches + pavé numérique)." : `l'ordinateur, niveau ${level}.`}</p>
-          </nav>
-        )}
-        <p className="fx-proto">Personnages en pixel art inspirés des photos de la Guilde. Combat à quatre boutons, garde haute et basse, combos et jauge de super.</p>
-      </div>
+              );
+            })}
+            {stage === "who" && <li className="fp-back-li"><button type="button" className="fp-back" onClick={() => setStage("menu")}>‹ Retour</button></li>}
+          </ul>
+          <div className="fp-info" aria-live="polite">
+            <p className="fp-desc">{stage === "who" ? (whoCur ? "J1 à gauche (ZQSD + UIJK), J2 à droite (flèches + pavé numérique)." : `L'ordinateur, niveau ${level}.`) : desc}</p>
+            {shown && <p className="fp-why"><span>{shown.why}</span><b>{shown.m.name}</b>{shown.value && <i>{shown.value}</i>}</p>}
+          </div>
+        </nav>
+      )}
+
+      <p className="fp-keys" aria-hidden="true">{stage === "press" ? "Entrée Commencer" : stage === "who" ? "↑ ↓ Choisir · Entrée Valider · Échap Retour" : "↑ ↓ Choisir · Entrée Valider · Échap Titre"}</p>
     </section>
   );
+}
+
+/** Hôte d'un mode : personnage détouré doublé de deux silhouettes, ou photo réelle dans un cadre incliné. */
+function FpHost({ m }: { m: RosterMember }) {
+  const face = useFace();
+  const real = face === "real" && m.photo;
+  if (!real && m.cut) {
+    const mask = { WebkitMaskImage: `url(${m.cut.src})`, maskImage: `url(${m.cut.src})` } as React.CSSProperties;
+    return (
+      <div className="fp-host">
+        <span className="fp-sil is-paper" style={mask} />
+        <span className="fp-sil is-ink" style={mask} />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={m.cut.src} alt="" decoding="async" fetchPriority="high" />
+      </div>
+    );
+  }
+  const src = real ? m.photo! : (m.anime ?? m.photo);
+  if (!src) return null;
+  return (
+    <div className="fp-host is-frame">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={directSrc(src, 960)} alt="" decoding="async" style={{ objectPosition: real ? m.photoPos : m.animePos }} />
+    </div>
+  );
+}
+
+/** Un hôte par mode, choisi d'après les fiches (sans doublon) : le plus complet pour l'arcade, etc. */
+function modeHosts(roster: RosterMember[]) {
+  const pool = roster.filter((m) => m.cut || m.anime || m.photo);
+  const withCut = pool.filter((m) => m.cut);
+  const used = new Set<number>();
+  const best = (score: (m: RosterMember) => number) => {
+    for (const list of [withCut, pool]) {
+      const pick = list.filter((m) => !used.has(m.id) && score(m) > 0).sort((a, b) => score(b) - score(a))[0];
+      if (pick) { used.add(pick.id); return pick; }
+    }
+    return null;
+  };
+  const st = (k: "force" | "vitesse" | "technique") => (m: RosterMember) => Number(m.stats?.[k] ?? 0);
+  const total = (m: RosterMember) => (m.stats ? Number(m.stats.force) + Number(m.stats.vitesse) + Number(m.stats.technique) : 0);
+  const out: Record<string, { m: RosterMember; why: string; value?: string } | null> = {};
+  const set = (id: string, m: RosterMember | null, why: string, value?: string) => { out[id] = m ? { m, why, value } : null; };
+  let m = best(total); set("arcade", m, "Le plus complet", m ? `${total(m)} pts` : undefined);
+  m = best(st("force")); set("survie", m, "La plus grande force", m ? `Force ${m.stats!.force}` : undefined);
+  m = best(st("vitesse")); set("entrainement", m, "Le plus rapide", m ? `Vitesse ${m.stats!.vitesse}` : undefined);
+  m = best(st("technique")); set("versus", m, "La meilleure technique", m ? `Technique ${m.stats!.technique}` : undefined);
+  m = best((x) => x.awards.length); set("equipes", m, "Le plus titré", m ? `${m.awards.length} titre${m.awards.length > 1 ? "s" : ""}` : undefined);
+  m = best((x) => (x.special ? 1 : 0)); set("spectateur", m, "Coup spécial", m?.special?.name);
+  set("options", out.arcade?.m ?? null, "Champion de l'arcade", out.arcade?.value);
+  return out;
 }
 
 // ─── Choix de l'arène ────────────────────────────────────────────────────────
@@ -298,7 +368,8 @@ const hasSprite = (m: RosterMember) => CUSTOM_IDS.includes(m.id);
 function BigPortrait({ side, label, m, team, size, order, active, status }: {
   side: 0 | 1; label: string; m: RosterMember | null; team: RosterMember[]; size: number; order: number[]; active: boolean; status: string;
 }) {
-  const [kind, setKind] = useState<"anime" | "real">("anime");
+  const kind = useFace();
+  const setKind = setFace;
   return (
     <aside className={`fxs-side fxs-side--${side}${active ? " is-active" : ""}`} style={{ "--fx-c": m ? accentOf(m) : side === 0 ? "#e8463a" : "#3a8de8" } as React.CSSProperties} aria-label={`${label} : ${m ? m.name : "aucun membre"}`}>
       <div className="fxs-art">

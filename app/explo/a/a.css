@@ -175,3 +175,10 @@ a:hover .xa-face { filter: none; }
   .xa-cols li { flex: 1 0 30%; border-bottom: 2px solid var(--ink); }
   .xa-col-name { min-height: 8em; }
 }
+
+/* Bascule anime / réel : la photo prend la place du détourage, dans un cadre de case incliné. */
+.xa-cut.is-real { aspect-ratio: 3 / 4; object-fit: cover; filter: none; clip-path: polygon(6% 0, 100% 3%, 94% 100%, 0 97%); }
+.xa-hero .xa-cut.is-real { height: 92%; width: auto; margin-bottom: 2%; }
+.xa-cast .xa-cut.is-real { height: 92%; max-width: 92%; }
+.xa-facebtn { transform-origin: left bottom; position: fixed; z-index: 60; left: 14px; bottom: calc(14px + env(safe-area-inset-bottom)); --ft-bg: #fff; --ft-fg: #0b0b0b; --ft-bg-solid: #fff; }
+@media (max-width: 899px) { .xa-facebtn { scale: .78; } }

@@ -1,0 +1,9 @@
+/* Lettres découpées. */
+.rn { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: .06em .3em; margin: 0; line-height: 1; }
+.rn-w { display: inline-flex; align-items: baseline; white-space: nowrap; }
+.rn-c { display: inline-block; padding: .04em .1em .02em; margin: 0 .015em; line-height: .95; font-weight: 900; }
+.rn-c.is-ink { background: var(--rn-ink, #050509); color: var(--rn-paper, #fff); }
+.rn-c.is-paper { background: var(--rn-paper, #fff); color: var(--rn-ink, #050509); }
+.rn-c.is-hot { background: var(--rn-hot, var(--acc, #f5e400)); color: var(--rn-ink, #050509); }
+.rn-c.is-outline { color: transparent; -webkit-text-stroke: 2px var(--rn-paper, #fff); }
+

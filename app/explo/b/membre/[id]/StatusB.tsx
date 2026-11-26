@@ -11,7 +11,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { ExploMember } from "../../../../../lib/explo-data";
 import { viewTransition, waitFor } from "../../../../../lib/view-transition";
 import { Host } from "../../MenuB";
-import Ransom from "../../Ransom";
+import Ransom from "../../../../components/Ransom";
 
 type Tab = "statut" | "pouvoirs" | "palmares" | "univers";
 const TABS: [Tab, string][] = [["statut", "Statut"], ["pouvoirs", "Pouvoirs"], ["palmares", "Palmarès"], ["univers", "Univers"]];

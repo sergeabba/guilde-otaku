@@ -1,4 +1,5 @@
 "use client";
+import { setFace, useFace } from "../../../../lib/face";
 
 // Un membre, un tome. La couverture se compose selon l'identité du membre :
 // - édition (famille du grade) : prestige, shōnen ou seinen ;
@@ -32,7 +33,7 @@ export default function Tome({ m, member, prev, next, links, chroniques, positio
 }) {
   const router = useRouter();
   const reduce = useReducedMotion();
-  const [face, setFace] = useState<"anime" | "real">(m.anime ? "anime" : "real");
+  const face = useFace();
   const [moving, setMoving] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);

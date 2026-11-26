@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { exploData, type ExploMember } from "../../../lib/explo-data";
 import TurnLink from "../TurnLink";
 import TabNav from "./TabNav";
+import FaceToggle from "../../components/FaceToggle";
 import { Cut, Face, hosts } from "./parts";
 import "./a.css";
 
@@ -23,6 +24,7 @@ export default async function ExploA() {
   return (
     <main className="xa" data-explo="/explo/a">
       <TabNav hosts={hosts(members, star)} />
+      <div className="xa-facebtn"><FaceToggle /></div>
 
       {/* ── PLANCHE 1 : l'ouverture du chapitre ─────────────────────────────── */}
       <section className="xa-page xa-p1" aria-labelledby="xa-title">

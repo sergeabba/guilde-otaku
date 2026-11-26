@@ -2,10 +2,10 @@
 // Tout vient des fiches réelles ; s'y ajoute le détourage du portrait anime quand il existe
 // (scripts/make-cutouts.py, lib/cutouts.json). Sans détourage, chaque direction retombe
 // sur le portrait entier.
-import cutouts from "./cutouts.json";
+import { cutoutFor, type Cutout } from "./cutout";
 import { studioMembers, isoWeek, coverStar, type StudioMember } from "./studio-data";
 
-export interface Cutout { src: string; w: number; h: number; box: [number, number, number, number]; edge?: number }
+export type { Cutout };
 export interface ExploMember {
   id: number; name: string; first: string; rank: string; romaji: string; accent: string; alias: string | null;
   anime: string | null; real: string | null; animePos: string; realPos: string; cut: Cutout | null;
@@ -19,14 +19,11 @@ export interface ExploMember {
   edition: string; generation: string; series: string | null;
 }
 
-const CUT = cutouts as unknown as Record<string, Cutout>;
-/** Détourage écarté s'il reste opaque sur les bords (fond mal retiré) : portrait entier à la place. */
-const reliable = (c?: Cutout) => (c && (c.edge ?? 0) <= 0.55 ? c : null);
 
 export function toExplo(m: StudioMember): ExploMember {
   return {
     id: m.id, name: m.name, first: m.first, rank: m.rank, romaji: m.romaji, accent: m.accent, alias: m.alias,
-    anime: m.anime, real: m.real, animePos: m.animePos, realPos: m.realPos, cut: reliable(m.anime ? CUT[m.anime] : undefined),
+    anime: m.anime, real: m.real, animePos: m.animePos, realPos: m.realPos, cut: cutoutFor(m.anime),
     bio: m.bio, lede: m.lede, country: m.country, flag: m.flag, birthday: m.birthday,
     stats: m.stats, special: m.special, bankai: m.bankai, domaine: m.domaine,
     awards: m.awards.map((a) => ({ title: a.title, year: a.year })),

@@ -1,6 +1,8 @@
 // Lettres découpées : chaque caractère prend une police, une couleur de papier, une
 // inclinaison et une taille différentes, de façon stable (même nom = même collage).
 // Polices de la Guilde (OFL) : Anton, Dela Gothic One, Cinzel, Fraunces, Chakra Petch, Barlow Condensed.
+import "./ransom.css";
+
 const FONTS = ["'Anton', sans-serif", "var(--font-dela), 'Dela Gothic One', sans-serif", "'Cinzel', serif", "'Fraunces Edit', 'Fraunces Variable', serif", "'Chakra Petch', sans-serif", "var(--font-barlow-condensed), sans-serif"];
 const STYLE = ["ink", "paper", "hot", "ink", "outline", "paper", "hot"] as const;
 

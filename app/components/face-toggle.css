@@ -1,0 +1,6 @@
+/* Bascule anime / réel : deux boutons collés, l'actif en plein. Couleurs reprises du parent. */
+.face-toggle { display: inline-flex; padding: 3px; gap: 0; background: var(--ft-bg, rgba(5, 5, 9, .82)); border: 2px solid var(--ft-fg, #fff); transform: skewX(-10deg); }
+.face-toggle button { min-height: 36px; min-width: 64px; padding: 0 12px; border: 0; background: transparent; color: var(--ft-fg, #fff); font: 800 .82rem/1 var(--font-barlow-condensed), "Barlow Condensed", sans-serif; letter-spacing: .14em; text-transform: uppercase; cursor: pointer; }
+.face-toggle button > * , .face-toggle button { -webkit-tap-highlight-color: transparent; }
+.face-toggle button[aria-pressed="true"] { background: var(--ft-fg, #fff); color: var(--ft-bg-solid, #050509); }
+.face-toggle button:focus-visible { outline: 3px solid var(--ft-fg, #fff); outline-offset: 2px; }

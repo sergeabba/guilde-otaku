@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Exploration artistique · trois dire
 // Sommaire de l'exploration : trois directions radicalement différentes, à comparer.
 const DIRS = [
   { k: "A", href: "/explo/a", name: "La planche vivante", lang: "Manga éditorial expérimental", what: "La page est une planche : cases diagonales, personnages qui débordent, onomatopées, bulles. Navigation par onglets de tranche. Bankai piloté par le défilement.", member: "/explo/a/membre/4" },
-  { k: "B", href: "/explo/b", name: "Grand menu", lang: "Interface de JRPG", what: "L'accueil est un menu principal, chaque rubrique a son hôte. Sélection d'équipe, écran de statut, incrustation du bankai, territoire qui change toute l'interface.", member: "/explo/b/membre/4" },
+  { k: "B", href: "/explo/b", name: "Grand menu", lang: "Interface de JRPG", what: "L'accueil est un menu principal, chaque rubrique a son hôte. Sélection d'équipe, écran de statut, incrustation du bankai, territoire qui change toute l'interface. Retenu : c'est désormais l'écran titre de Fighters (/fighters).", member: "/explo/b/membre/4" },
   { k: "C", href: "/explo/c", name: "Butai", lang: "Cinéma immersif WebGL", what: "Une scène WebGL fixe traversée au défilement : trame, fondus à l'encre, grain. Chaque membre a son film, du portrait anime à la photo réelle.", member: "/explo/c/membre/4" },
 ];
 

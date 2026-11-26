@@ -4,6 +4,7 @@ import { exploData } from "../../../../../lib/explo-data";
 import { parseMemberId } from "../../../../../lib/members-server";
 import TurnLink from "../../../TurnLink";
 import TabNav from "../../TabNav";
+import FaceToggle from "../../../../components/FaceToggle";
 import { Cut, Face, hosts } from "../../parts";
 import BankaiA from "./BankaiA";
 import "../../a.css";
@@ -44,6 +45,7 @@ export default async function ChapterA({ params }: Props) {
   return (
     <main className="xa xa-m" data-explo={`/explo/a/membre/${m.id}`} style={{ "--acc": m.accent } as React.CSSProperties}>
       <TabNav hosts={hosts(members, star)} />
+      <div className="xa-facebtn"><FaceToggle /></div>
 
       {/* ── SPLASH : l'ouverture du chapitre ────────────────────────────────── */}
       <section className="xa-page xa-m1" aria-labelledby="xa-name">

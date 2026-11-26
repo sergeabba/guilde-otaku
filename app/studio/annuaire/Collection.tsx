@@ -17,6 +17,7 @@ import { markNavigation, useBackClose } from "../../hooks/useBackClose";
 import { flagUrl } from "../../config/countries";
 import { DUR, EASE, SPRING } from "../../../lib/motion";
 import { goTome } from "../tome-nav";
+import { setFace, useFace } from "../../../lib/face";
 
 export interface CollectionMember {
   id: number; name: string; first: string; rank: string; romaji: string; accent: string;
@@ -65,7 +66,7 @@ export default function Collection({ members, ranks, countries, generations }: {
   const [rank, setRank] = useState<string | null>(null);
   const [country, setCountry] = useState<string | null>(null);
   const [q, setQ] = useState("");
-  const [face, setFace] = useState<Face>("anime");
+  const face = useFace();
   const [sort, setSort] = useState<"numero" | "nom" | "anniversaire">("numero");
   const [sel, setSel] = useState<number>(members[0]?.id ?? 0);
   const [sheet, setSheet] = useState(false);

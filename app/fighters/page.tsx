@@ -1,9 +1,11 @@
 import { getPublicMembers } from "../../lib/members-server";
 import { memberAwards, objectPosition } from "../../lib/member-extras";
+import { cutoutFor } from "../../lib/cutout";
 import FightersApp, { type RosterMember } from "./FightersApp";
 import "./fighters-v2.css";
 import "./fighters-select.css";
 import "./fighters-mugen.css";
+import "./fighters-persona.css";
 
 // Les données des membres sont lues à chaque visite (comme les fiches profils).
 export const dynamic = "force-dynamic";
@@ -26,6 +28,7 @@ export default async function FightersPage() {
       bio: m.bio ? (m.bio.length > 180 ? `${m.bio.slice(0, 177).trimEnd()}…` : m.bio) : "",
       stats: hasStats ? { force: s.force, vitesse: s.vitesse, technique: s.technique } : null,
       special: special ? { name: special.name, effect: special.effect && special.effect !== "—" ? special.effect : "" } : null,
+      cut: (() => { const c = cutoutFor(m.animeChar); return c ? { src: c.src, box: c.box } : null; })(),
       awards: memberAwards(m).slice(0, 3).map((a) => (a.year ? `${a.title} ${a.year}` : a.title)),
     };
   });

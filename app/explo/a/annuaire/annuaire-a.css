@@ -1,0 +1,101 @@
+/* ═══ A · L'ANNUAIRE EN PLANCHES ════════════════════════════════════════════
+   En-tête de planche (titre, encadré, bulle de recherche, tampons de grade),
+   puis un chapitre par grade : cases inclinées dont le personnage déborde. */
+.xn { min-height: 100svh; padding-bottom: 80px; }
+.xn-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+
+.xn-head { position: relative; display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 14px 24px; padding: clamp(24px, 5vw, 56px) clamp(16px, 4vw, 56px) 20px; border-bottom: 4px solid var(--ink); }
+.xn-kicker { grid-column: 1 / -1; justify-self: start; max-width: none; transform: rotate(-2deg); }
+.xn-title { margin: 0; font: 400 clamp(3.2rem, 10vw, 9rem)/.86 var(--f-big); letter-spacing: -.04em; text-transform: uppercase; color: var(--ink); text-shadow: .05em .05em 0 var(--red); }
+.xn-count { margin: 0; justify-self: end; font: 700 1rem var(--f-cap); letter-spacing: .14em; text-transform: uppercase; }
+.xn-count b { font: 400 2.6rem/1 var(--f-big); color: var(--red); margin-right: 6px; }
+
+/* Recherche : une bulle de dialogue. */
+.xn-search { grid-column: 1 / -1; position: relative; justify-self: start; width: min(100%, 560px); }
+.xn-search input { width: 100%; min-height: 56px; padding: 10px 28px; border: 3px solid var(--ink); border-radius: 999px; background: var(--paper); color: var(--ink); font: 700 1.35rem var(--f-hand); outline: none; }
+.xn-search input:focus-visible { box-shadow: 5px 5px 0 var(--red); }
+.xn-search::after { content: ""; position: absolute; left: 48px; bottom: -16px; width: 26px; height: 20px; background: var(--paper); border-right: 3px solid var(--ink); clip-path: polygon(0 0, 100% 0, 100% 100%); }
+
+/* Grades : tampons ; vue : deux onglets collés. */
+.xn-ranks { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.xn-ranks button, .xn-views button, .xn-sort button { min-height: 40px; padding: 0 14px; border: 2.5px solid var(--ink); background: var(--paper); color: var(--ink); font: 800 .9rem var(--f-cap); letter-spacing: .1em; text-transform: uppercase; cursor: pointer; }
+.xn-ranks button small { margin-left: 4px; font-weight: 600; opacity: .6; }
+.xn-ranks button[aria-pressed="true"] { background: var(--ink); color: var(--paper); box-shadow: 4px 4px 0 var(--acc, var(--red)); }
+.xn-views { grid-column: 1 / -1; display: flex; justify-self: start; }
+.xn-views button + button { border-left: 0; }
+.xn-views button[aria-pressed="true"], .xn-sort button[aria-pressed="true"] { background: var(--red); color: var(--paper); }
+.xn-empty { margin: 40px clamp(16px, 4vw, 56px); max-width: 40ch; }
+
+/* ─── Planche : un chapitre par grade. ─── */
+.xn-chapter { padding: clamp(28px, 4vw, 48px) clamp(16px, 4vw, 56px) 10px; }
+.xn-ch-title { margin: 0 0 clamp(26px, 4vw, 44px); display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
+.xn-ch-no { padding: 4px 10px; background: var(--ink); color: var(--paper); font: 800 .8rem var(--f-cap); letter-spacing: .2em; text-transform: uppercase; transform: rotate(-3deg); }
+.xn-ch-title b { font: 400 clamp(1.8rem, 4vw, 3.4rem)/1 var(--f-big); text-transform: uppercase; }
+.xn-ch-title i { font: italic 600 1.2rem "Fraunces Edit", serif; color: var(--red); }
+.xn-ch-title small { font: 700 .85rem var(--f-cap); letter-spacing: .14em; text-transform: uppercase; opacity: .7; }
+
+.xn-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(clamp(150px, 16vw, 210px), 1fr)); grid-auto-rows: clamp(210px, 22vw, 290px); grid-auto-flow: dense; gap: clamp(22px, 2.6vw, 34px) clamp(12px, 1.6vw, 20px); }
+.xn-cell { position: relative; }
+.xn-cell.is-big { grid-column: span 2; grid-row: span 2; }
+.xn-link { position: absolute; inset: 0; display: block; clip-path: inset(-40% -4% -4% -4%); }
+/* Le personnage sort par le haut de sa case, jamais sur les cases voisines. */
+/* Case : fond tramé à la couleur du membre, contour d'encre qui suit la diagonale. */
+.xn-bg { position: absolute; inset: 0; filter: drop-shadow(3px 0 0 var(--ink)) drop-shadow(-3px 0 0 var(--ink)) drop-shadow(0 3px 0 var(--ink)) drop-shadow(0 -3px 0 var(--ink)); }
+.xn-bg::before { content: ""; position: absolute; inset: 0; background: color-mix(in srgb, var(--acc) 30%, var(--paper)); clip-path: var(--clip); }
+.xn-bg .xa-speed, .xn-bg .xa-tone { clip-path: var(--clip); inset: 0; }
+.xn-bg .xa-speed { opacity: .25; }
+.xn-s0 { --clip: polygon(0 4%, 100% 0, 100% 100%, 0 100%); }
+.xn-s1 { --clip: polygon(0 0, 100% 6%, 94% 100%, 0 100%); }
+.xn-s2 { --clip: polygon(6% 0, 100% 0, 100% 96%, 0 100%); }
+.xn-s3 { --clip: polygon(0 0, 100% 0, 100% 100%, 5% 94%); }
+.xn-s4 { --clip: polygon(0 3%, 96% 0, 100% 100%, 3% 100%); }
+.xn-cell .xa-cut { position: absolute; z-index: 2; left: 50%; bottom: 0; height: 118%; width: auto; max-width: 112%; object-fit: contain; object-position: bottom; transform: translateX(-50%); transition: transform 420ms cubic-bezier(.22, 1, .36, 1), filter 500ms; }
+.xn-cell .xa-cut.xn-plain, .xn-cell .xa-cut.is-real { left: 7%; top: 6%; bottom: auto; width: 86%; height: 78%; max-width: none; transform: none; object-fit: cover; clip-path: var(--clip); aspect-ratio: auto; }
+.xn-cell .xa-cut.is-real { filter: none; }
+.xn-cell.is-big .xa-cut:not(.xn-plain):not(.is-real) { height: 108%; max-width: 100%; }
+.xn-link:hover .xa-cut:not(.xn-plain):not(.is-real), .xn-link:focus-visible .xa-cut:not(.xn-plain):not(.is-real) { transform: translateX(-50%) translateY(-4%) scale(1.04); }
+.xn-link:hover > .xa-inked, .xn-link:focus-visible > .xa-inked { filter: grayscale(0) contrast(1.05) drop-shadow(4px 0 0 #fff) drop-shadow(-4px 0 0 #fff) drop-shadow(0 4px 0 #fff) drop-shadow(0 -4px 0 #fff) drop-shadow(0 0 1.5px var(--ink)) drop-shadow(0 0 1.5px var(--ink)); }
+.xn-tag { position: absolute; z-index: 3; left: -6px; bottom: 10px; display: grid; justify-items: start; transform: rotate(-4deg); }
+.xn-tag b { padding: 2px 10px; background: var(--ink); color: var(--paper); font: 900 italic clamp(1rem, 1.4vw, 1.3rem)/1.2 var(--f-cap); text-transform: uppercase; }
+.xn-tag small { padding: 1px 8px; background: var(--paper); border: 2px solid var(--ink); border-top: 0; font: 700 .72rem var(--f-cap); letter-spacing: .14em; }
+.xn-cell.is-big .xn-tag b { font-size: clamp(1.4rem, 2.4vw, 2.2rem); }
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .xn-cell { animation: xn-in linear both; animation-timeline: view(); animation-range: entry 0% entry 60%; }
+  }
+}
+@keyframes xn-in { from { opacity: 0; translate: 0 40px; } }
+
+/* ─── Liste : une ligne par membre. ─── */
+.xn-list { padding: 24px clamp(16px, 4vw, 56px); }
+.xn-sort { display: flex; align-items: center; gap: 6px; margin-bottom: 14px; font: 800 .8rem var(--f-cap); letter-spacing: .14em; text-transform: uppercase; }
+.xn-sort button { min-height: 36px; }
+.xn-list ol { list-style: none; margin: 0; padding: 0; border-top: 3px solid var(--ink); }
+.xn-row { display: grid; grid-template-columns: 56px 64px minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.2fr); align-items: center; gap: 14px; min-height: 64px; padding: 4px 8px; border-bottom: 1.5px solid var(--ink); }
+.xn-row:hover, .xn-row:focus-visible { background: color-mix(in srgb, var(--acc) 22%, var(--paper)); }
+.xn-thumb { position: relative; width: 52px; height: 52px; overflow: hidden; border: 2px solid var(--ink); clip-path: polygon(8% 0, 100% 0, 92% 100%, 0 100%); background: var(--acc); }
+.xn-no { font: 700 .8rem var(--f-cap); letter-spacing: .12em; opacity: .6; }
+.xn-name { font: 900 italic 1.2rem var(--f-cap); text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.xn-rank { justify-self: start; padding: 2px 10px; background: var(--ink); color: var(--paper); font: 800 .78rem var(--f-cap); letter-spacing: .1em; text-transform: uppercase; box-shadow: 3px 3px 0 var(--acc); white-space: nowrap; }
+.xn-meta { font: 500 .9rem var(--font-barlow), sans-serif; opacity: .75; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ═══ Téléphone ═══ */
+@media (max-width: 899px) {
+  .xn-head { grid-template-columns: auto 1fr; padding-top: 72px; gap: 10px 14px; }
+  .xn-title { grid-column: 1 / -1; font-size: 15vw; }
+  .xn-count b { font-size: 2rem; }
+  .xn-search input { min-height: 50px; font-size: 1.2rem; }
+  .xn-ranks button, .xn-views button { min-height: 38px; font-size: .8rem; }
+  .xn-views { grid-column: 1 / -1; }
+  .xn-count { grid-column: 1 / -1; justify-self: start; }
+  .xn-ranks { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: calc(-1 * clamp(16px, 4vw, 56px)); padding: 4px clamp(16px, 4vw, 56px) 8px; }
+  .xn-ranks button { flex: none; }
+  .xn-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 52vw; gap: 26px 12px; }
+  .xn-cell.is-big { grid-column: span 2; grid-row: span 1; }
+  .xn-row { grid-template-columns: 48px minmax(0, 1fr) auto; grid-template-areas: "t n r" "t m m"; gap: 2px 12px; padding: 8px 4px; }
+  .xn-thumb { grid-area: t; width: 48px; height: 48px; }
+  .xn-no { display: none; }
+  .xn-name { grid-area: n; font-size: 1.05rem; }
+  .xn-rank { grid-area: r; font-size: .68rem; }
+  .xn-meta { grid-area: m; font-size: .8rem; }
+}
