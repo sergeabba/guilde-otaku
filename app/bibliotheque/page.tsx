@@ -22,6 +22,7 @@ import { useFavorites } from "../hooks/useFavorites";
 import { useShare } from "../hooks/useShare";
 import { normalize } from "../utils/text";
 import "./biblio.css";
+import "./biblio-v3.css";
 import RubricMark from "../components/guilde/RubricMark";
 
 type Category = "Tout" | BiblioCategory;

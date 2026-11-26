@@ -21,6 +21,7 @@ import { DevineAnime, DevinePerso, EmojiQuiz } from "./Dle";
 import Qcm from "./Qcm";
 import Clips from "./Clips";
 import "./jeux.css";
+import "./jeux-v3.css";
 import RubricMark from "../components/guilde/RubricMark";
 
 type Tab = "defi-jour" | "devine-anime" | "devine-perso" | "emoji" | "themes" | "createur" | "studio" | "voix" | "generiques" | "direct" | "quiz" | "nostalgie" | "affiche" | "plus-moins" | "tier" | "duel" | "badges" | "classement";

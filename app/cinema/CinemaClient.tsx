@@ -44,7 +44,14 @@ export default function CinemaClient({ rows, hero: picked = null, guild = null }
       <div className="gk-page tone-dark cin-page">
         <GuildeHeader activePage="cinema" tone="dark" />
         <main className="cin-main">
-          <p className="gk-wrap cin-empty" role="alert">Le catalogue du Cinéma est indisponible pour le moment : TMDB ne répond pas ou sa clé n&apos;est pas configurée.</p>
+          {/* Façade de salle un soir de relâche : le catalogue externe ne répond pas, mais le
+              reste de la programmation (génériques, séries gratuites, nostalgie) reste ouvert. */}
+          <section className="cin-closed" role="status" aria-labelledby="cin-closed-h">
+            <div className="cin-marquee" aria-hidden="true">{Array.from({ length: 28 }, (_, i) => <i key={i} style={{ "--b": i } as React.CSSProperties} />)}</div>
+            <p className="cin-closed-kicker">Gekijō · la salle de la Guilde</p>
+            <h1 id="cin-closed-h" className="cin-closed-title"><span>Relâche</span><span>ce soir</span></h1>
+            <p className="cin-closed-text">Le catalogue des sorties ne répond pas pour le moment (TMDB indisponible ou clé non configurée). La programmation de la Guilde continue juste en dessous.</p>
+          </section>
           <Generiques />
           <FreeShows onOpen={setFreeShow} />
           <Nostalgie />
