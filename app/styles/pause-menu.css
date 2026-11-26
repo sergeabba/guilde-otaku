@@ -80,3 +80,16 @@
 .arc-name { position: absolute; z-index: 3; left: 50%; bottom: 5%; translate: -50% 0; font-size: .78rem; white-space: nowrap; }
 .arc-seal { position: absolute; z-index: 3; right: -10px; bottom: 14%; }
 
+/* Téléphone : les entrées passent avant le portrait. Le personnage se tient à droite, en
+   arrière-plan, et les entrées le chevauchent à gauche (composition de menu, pas une pile). */
+@media (max-width: 899px) {
+  .pm { min-height: calc(100svh - 120px); align-content: start; }
+  .pm-host { order: 2; position: absolute !important; right: -14%; top: 170px; width: 74% !important; height: auto; aspect-ratio: 3 / 4.4 !important; margin: 0 !important; z-index: -1; }
+  .pm-host.is-photo { right: 4%; width: 52% !important; top: 190px; }
+  .pm-menu { order: 3; margin-top: 4px !important; }
+  .pm-menu li { font-size: clamp(1.3rem, 6.8vw, 1.8rem) !important; margin-left: 0 !important; }
+  .pm-menu li:nth-child(even) { margin-left: 5vw !important; }
+  .pm-menu li:not(.is-on) .lame-face { text-shadow: .06em .06em 0 var(--gu-ink), 0 0 10px var(--gu-ink); }
+  .pm-why { order: 4; }
+  .pm-title { font-size: 11vw !important; }
+}

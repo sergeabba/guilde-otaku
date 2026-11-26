@@ -35,6 +35,7 @@ export interface AiMemory { plan: Step[]; until: number }
 export const newAiMemory = (): AiMemory => ({ plan: [], until: 0 });
 
 const QCF = (btn: "lp" | "hp"): Step[] => [{ d: true, n: 2 }, { d: true, f: true, n: 2 }, { f: true, n: 1 }, { f: true, btn: [btn], n: 1 }];
+const QCB = (btn: "lp" | "hp"): Step[] => [{ d: true, n: 2 }, { d: true, b: true, n: 2 }, { b: true, n: 1 }, { b: true, btn: [btn], n: 1 }];
 const QCF2 = (): Step[] => [...QCF("lp").slice(0, 3), ...QCF("hp")];
 const hold = (s: Omit<Step, "n">, n: number): Step => ({ ...s, n });
 
@@ -93,7 +94,14 @@ export function aiInput(s: MatchState, side: 0 | 1, mem: AiMemory, rng: Rng, lev
   mem.until = s.frame + L.think;
 
   // Style de combat (archétype de la fiche) : distance préférée, pression, projectiles, projections.
-  const P = ARCHETYPES[archetypeOf(me.profile.stats)].ai;
+  const style = archetypeOf(me.profile.stats);
+  const P = ARCHETYPES[style].ai;
+  // Technique signature du style, utilisée là où elle a un sens.
+  const sigRange = style === "grappler" ? 30 : style === "zoner" ? 220 : style === "rushdown" || style === "speedster" ? 110 : 60;
+  if (style !== "polyvalent" && me.y === 0 && dist < sigRange && dist > (style === "zoner" ? 90 : 0) && rng() < 0.18 * L.aggression) {
+    mem.plan = [...QCB("lp"), hold({}, 14)];
+    return run();
+  }
   if (dist < 36 && me.y === 0 && foe.y === 0 && rng() < P.throwRate * L.aggression) {
     mem.plan = [hold({ f: true, btn: ["hp"] }, 1), hold({}, 12)];
     return run();

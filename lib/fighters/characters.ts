@@ -69,7 +69,7 @@ import rosterSheets from "./sheets/roster.json";
 
 /** Échelle des personnages (sprites d'environ 76 px de haut dans une arène de 216 px). */
 const K = 1.3;
-const N = (m: Omit<MoveDef, "anim"> & { anim?: string }): MoveDef => {
+export const N = (m: Omit<MoveDef, "anim"> & { anim?: string }): MoveDef => {
   const sc = (b: Box): Box => ({ x: Math.round(b.x * K), y: Math.round(b.y * K), w: Math.round(b.w * K), h: Math.round(b.h * K) });
   return { anim: m.id, ...m, hit: sc(m.hit), ...(m.projectile ? { projectile: { ...m.projectile, h: Math.round(m.projectile.h * K) } } : {}) };
 };

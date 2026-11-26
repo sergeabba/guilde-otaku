@@ -3,7 +3,7 @@
 // de bouger et de frapper, dans des bornes qui gardent les règles d'équilibrage (un coup paré reste
 // punissable : startup, active, recovery et blockstun ne changent pas).
 // Il oriente aussi le comportement de l'IA (distance préférée, pression, projectiles, projections).
-import type { CharacterDef, MoveDef, NormalId } from "./characters";
+import { N, type CharacterDef, type MoveDef, type NormalId, type SpecialDef } from "./characters";
 
 export type Archetype = "rushdown" | "zoner" | "grappler" | "shoto" | "speedster" | "contre" | "technique" | "polyvalent";
 
@@ -28,12 +28,12 @@ export interface ArchetypeInfo {
 
 export const ARCHETYPES: Record<Archetype, ArchetypeInfo> = {
   rushdown: { label: "Rushdown", pitch: "Avance sans relâche et enchaîne au contact.", ease: 2, walk: 1.12, backWalk: 0.95, jump: 1, damage: 1, lightStun: 2, projectile: 0.9, ai: { range: 30, press: 0.85, wave: 0.1, throwRate: 0.25, jump: 0.12 } },
-  zoner: { label: "Zoner", pitch: "Tient à distance avec ses projectiles et punit l'approche.", ease: 2, walk: 0.94, backWalk: 1.05, jump: 0.96, damage: 0.96, lightStun: 0, projectile: 1.25, ai: { range: 150, press: 0.3, wave: 0.75, throwRate: 0.1, jump: 0.05 } },
-  grappler: { label: "Grappler", pitch: "Lent mais lourd : chaque projection fait mal.", ease: 3, walk: 0.9, backWalk: 0.85, jump: 0.92, damage: 1.08, lightStun: 0, projectile: 0.85, ai: { range: 26, press: 0.65, wave: 0.05, throwRate: 0.6, jump: 0.08 } },
+  zoner: { label: "Zoner", pitch: "Tient à distance avec ses projectiles et punit l'approche.", ease: 2, walk: 0.94, backWalk: 1.05, jump: 0.96, damage: 0.94, lightStun: 0, projectile: 1.12, ai: { range: 150, press: 0.3, wave: 0.5, throwRate: 0.1, jump: 0.05 } },
+  grappler: { label: "Grappler", pitch: "Lent mais lourd : chaque projection fait mal.", ease: 3, walk: 0.9, backWalk: 0.85, jump: 0.92, damage: 1.02, lightStun: 0, projectile: 0.85, ai: { range: 26, press: 0.65, wave: 0.05, throwRate: 0.6, jump: 0.08 } },
   shoto: { label: "Shoto", pitch: "Équilibré : projectile, anti-air, coups francs.", ease: 1, walk: 1, backWalk: 1, jump: 1, damage: 1, lightStun: 1, projectile: 1.05, ai: { range: 80, press: 0.55, wave: 0.35, throwRate: 0.2, jump: 0.1 } },
   speedster: { label: "Speedster", pitch: "Très rapide, frappe peu fort mais souvent.", ease: 3, walk: 1.2, backWalk: 1.12, jump: 1.06, damage: 0.92, lightStun: 2, projectile: 1, ai: { range: 40, press: 0.8, wave: 0.15, throwRate: 0.2, jump: 0.25 } },
   contre: { label: "Contre-attaquant", pitch: "Attend l'erreur et la punit sèchement.", ease: 3, walk: 0.98, backWalk: 1.08, jump: 1, damage: 1.04, lightStun: 1, projectile: 1, ai: { range: 70, press: 0.3, wave: 0.2, throwRate: 0.15, jump: 0.04 } },
-  technique: { label: "Technique", pitch: "Enchaînements longs et précis, jauge qui monte vite.", ease: 3, walk: 1, backWalk: 1, jump: 1, damage: 0.98, lightStun: 2, projectile: 1.1, ai: { range: 60, press: 0.6, wave: 0.3, throwRate: 0.2, jump: 0.1 } },
+  technique: { label: "Technique", pitch: "Enchaînements longs et précis, jauge qui monte vite.", ease: 3, walk: 1.04, backWalk: 1, jump: 1, damage: 1.04, lightStun: 2, projectile: 1.1, ai: { range: 60, press: 0.6, wave: 0.3, throwRate: 0.2, jump: 0.1 } },
   polyvalent: { label: "Polyvalent", pitch: "Sans faiblesse ni point fort marqué.", ease: 1, walk: 1, backWalk: 1, jump: 1, damage: 1, lightStun: 0, projectile: 1, ai: { range: 70, press: 0.5, wave: 0.3, throwRate: 0.2, jump: 0.1 } },
 };
 
@@ -66,11 +66,34 @@ export function applyArchetype(c: CharacterDef, a: Archetype): CharacterDef {
     hitstun: m.hitstun + (light ? A.lightStun : 0),
     ...(m.projectile ? { projectile: { ...m.projectile, speed: +(m.projectile.speed * A.projectile).toFixed(2) } } : {}),
   });
-  const normals = Object.fromEntries((Object.keys(c.normals) as NormalId[]).map((k) => [k, k === "throw" && a === "grappler" ? { ...c.normals[k], damage: Math.round(c.normals[k].damage * 1.25) } : tune(c.normals[k], LIGHT.includes(k))])) as Record<NormalId, MoveDef>;
+  const normals = Object.fromEntries((Object.keys(c.normals) as NormalId[]).map((k) => [k, k === "throw" && a === "grappler" ? { ...c.normals[k], damage: Math.round(c.normals[k].damage * 1.15) } : tune(c.normals[k], LIGHT.includes(k))])) as Record<NormalId, MoveDef>;
   return {
     ...c,
     walk: +(c.walk * A.walk).toFixed(2), backWalk: +(c.backWalk * A.backWalk).toFixed(2), jumpV: +(c.jumpV * A.jump).toFixed(2),
     normals,
-    specials: c.specials.map((sp) => ({ ...sp, move: tune(sp.move, false) })),
+    specials: [...c.specials.map((sp) => ({ ...sp, move: tune(sp.move, false) })), ...(SIGNATURES[a] ? [SIGNATURES[a]!] : [])],
   };
 }
+
+/**
+ * Technique signature de chaque style (quart de cercle arrière + poing). Ce n'est pas un pouvoir
+ * de membre : c'est une manière de se battre, avec un vrai rôle tactique distinct.
+ * Toutes restent punissables en garde (sauf la prise, imparable mais très risquée si elle rate).
+ */
+export const SIGNATURES: Partial<Record<Archetype, SpecialDef>> = {
+  rushdown: { id: "sig", name: "Ruée", motion: "qcb", button: "p", provisional: false,
+    move: N({ id: "sig", anim: "s_hp", startup: 6, active: 4, recovery: 18, damage: 70, guard: "mid", hit: { x: 8, y: 32, w: 30, h: 18 }, hitstun: 22, blockstun: 10, push: 3, lunge: 7, cancel: ["special"] }) },
+  grappler: { id: "sig", name: "Prise du colosse", motion: "qcb", button: "p", provisional: false,
+    move: N({ id: "sig", anim: "throw", startup: 5, active: 3, recovery: 34, damage: 135, guard: "throw", hit: { x: 6, y: 20, w: 22, h: 34 }, hitstun: 0, blockstun: 0, push: 8, knockdown: true }) },
+  zoner: { id: "sig", name: "Orbe lente", motion: "qcb", button: "p", provisional: false,
+    move: N({ id: "sig", anim: "special", startup: 14, active: 1, recovery: 22, damage: 0, guard: "mid", hit: { x: 0, y: 0, w: 0, h: 0 }, hitstun: 0, blockstun: 0, push: 0,
+      projectile: { speed: 2.1, damage: 60, hitstun: 26, blockstun: 16, ttl: 210, sprite: "orb", h: 40 } }) },
+  speedster: { id: "sig", name: "Glissade éclair", motion: "qcb", button: "p", provisional: false,
+    move: N({ id: "sig", anim: "c_hk", startup: 5, active: 6, recovery: 20, damage: 60, guard: "low", hit: { x: 6, y: 6, w: 34, h: 12 }, hitstun: 20, blockstun: 9, push: 3, lunge: 8, knockdown: true }) },
+  shoto: { id: "sig", name: "Coup tourbillon", motion: "qcb", button: "p", provisional: false,
+    move: N({ id: "sig", anim: "s_hk", startup: 9, active: 6, recovery: 22, damage: 90, guard: "mid", hit: { x: 4, y: 30, w: 34, h: 22 }, hitstun: 24, blockstun: 12, push: 5, lunge: 4, knockdown: true }) },
+  contre: { id: "sig", name: "Riposte", motion: "qcb", button: "p", provisional: false,
+    move: N({ id: "sig", anim: "s_hp", startup: 14, active: 4, recovery: 20, damage: 110, guard: "mid", hit: { x: 6, y: 30, w: 30, h: 26 }, hitstun: 26, blockstun: 12, push: 4, knockdown: true, invuln: [1, 14] }) },
+  technique: { id: "sig", name: "Enchaînement", motion: "qcb", button: "p", provisional: false,
+    move: N({ id: "sig", anim: "s_lp", startup: 5, active: 3, recovery: 15, damage: 55, guard: "mid", hit: { x: 8, y: 36, w: 26, h: 14 }, hitstun: 20, blockstun: 10, push: 2, cancel: ["special"] }) },
+};

@@ -88,6 +88,24 @@ export default function JeuxClient() {
           <p className="gk-body gk-hero-lede">Devine les génériques, mesure ta compatibilité avec les autres membres, débloque des badges. Pas de compte : dis juste qui tu es.</p>
         </header>
 
+        <nav className="jx-menu" aria-label="Jeux">
+          {MENU.map(({ id, label, sub, Icon, color }) => (
+            <button key={id} type="button" aria-pressed={tab === id} className="jx-tile" style={{ "--c": color } as React.CSSProperties} onClick={() => setTab(id)}>
+              <span className="jx-tile-icon" aria-hidden="true"><Icon size={20} /></span>
+              <strong>{label}</strong>
+              <small>{sub}</small>
+            </button>
+          ))}
+        </nav>
+
+        {/* Réglages du joueur, repliés en une bande : les jeux restent au centre. */}
+        <details className="jx-prefs">
+          <summary>
+            <span className="jx-prefs-face">{meMember?.animeChar || meMember?.photo ? <Image src={(meMember.animeChar || meMember.photo)!} alt="" width={32} height={32} sizes="32px" /> : <User size={18} aria-hidden="true" />}</span>
+            <span className="jx-prefs-who">{meMember?.name ?? (player.name || "Invité")}</span>
+            <span className={`jx-prefs-level is-${level}`}>{LEVEL_LABEL[level]}</span>
+            <span className="jx-prefs-edit">Changer</span>
+          </summary>
         {/* Qui joue ? */}
         <section className="jx-who" aria-label="Qui joue ?">
           <span className="jx-who-face">
@@ -123,15 +141,7 @@ export default function JeuxClient() {
           <p className="jx-note">{level === "facile" ? "Animes très connus, plus de temps, indices offerts." : level === "expert" ? "Animes et persos pointus, extraits courts, pièges et réponses à taper." : "Le juste milieu : les grands classiques et un peu plus."} S&apos;applique à tous les jeux, sauf le Défi du jour, la Tier list et les Duels.</p>
         </section>
 
-        <nav className="jx-menu" aria-label="Jeux">
-          {MENU.map(({ id, label, sub, Icon, color }) => (
-            <button key={id} type="button" aria-pressed={tab === id} className="jx-tile" style={{ "--c": color } as React.CSSProperties} onClick={() => setTab(id)}>
-              <span className="jx-tile-icon" aria-hidden="true"><Icon size={20} /></span>
-              <strong>{label}</strong>
-              <small>{sub}</small>
-            </button>
-          ))}
-        </nav>
+        </details>
 
         <div id="jx-stage" className="jx-stage" />
         {tab === "defi-jour" && <DefiJour player={player} names={names} onRanking={showRanking} />}

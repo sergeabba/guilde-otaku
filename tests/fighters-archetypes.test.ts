@@ -38,3 +38,15 @@ describe("archétypes de combat", () => {
     expect(NO_INPUT).toBeDefined();
   });
 });
+
+import { SIGNATURES } from "../lib/fighters/archetypes";
+describe("techniques signature", () => {
+  it("chaque style (sauf polyvalent) en a une, punissable en garde quand elle n'est pas une prise", () => {
+    for (const [a, sp] of Object.entries(SIGNATURES)) {
+      expect(sp).toBeDefined();
+      if (sp!.move.guard !== "throw" && !sp!.move.projectile) expect(onBlock(sp!.move)).toBeLessThan(-6);
+      expect(applyArchetype(characterFor(4), a as keyof typeof ARCHETYPES).specials.some((s) => s.id === "sig")).toBe(true);
+    }
+    expect(applyArchetype(characterFor(4), "polyvalent").specials.some((s) => s.id === "sig")).toBe(false);
+  });
+});

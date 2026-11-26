@@ -104,3 +104,16 @@
   .ch-num { order: 1; font-size: 2.4rem !important; text-shadow: 3px 3px 0 var(--ch-acc) !important; -webkit-text-stroke: 0 !important; }
   .ch-special { grid-column: 1 / -1; justify-items: start !important; rotate: 0deg !important; margin-top: 4px !important; }
 }
+/* Nom lisible sur tout portrait (clair ou sombre) : chaque ligne posée sur une dalle d'encre. */
+@media (min-width: 900px) {
+  .ch-name { display: inline; padding: .04em .22em .02em; background: var(--gu-ink); -webkit-box-decoration-break: clone; box-decoration-break: clone; text-shadow: none !important; box-shadow: .12em .12em 0 var(--ch-acc); line-height: 1.18 !important; }
+  .ch-id { z-index: 3; }
+}
+/* Barre de la fiche sur téléphone : une seule ligne (retour et partage en icônes). */
+@media (max-width: 599px) {
+  .pf-bar { flex-wrap: nowrap !important; gap: 6px !important; padding-block: 6px !important; }
+  .pf-bar > a.gk-btn, .pf-bar-right > button.gk-btn { min-width: 44px; padding-inline: 10px !important; font-size: 0 !important; gap: 0 !important; }
+  .pf-bar > a.gk-btn svg, .pf-bar-right > button.gk-btn svg { width: 18px; height: 18px; }
+  .pf-bar-right { width: auto !important; flex-wrap: nowrap !important; margin-left: auto; }
+  .pf-bar-right .pf-face { display: none; }
+}
