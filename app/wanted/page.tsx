@@ -452,17 +452,19 @@ export default function WantedPage() {
               <h2 id="wt-wall-title">Le tableau d&apos;affichage</h2>
               <span className="wt-board-count">{list.length} {list.length > 1 ? "avis placardés" : "avis placardé"}</span>
             </div>
-            <div className="wt-wall">
+            <div className={`wt-wall${sort === "prime-desc" && !searchTerm ? " is-ranked" : ""}`}>
               {list.map((m) => (
                 <button
                   key={m.id}
                   type="button"
-                  className="wt-wall-item"
+                  className={`wt-wall-item${rankOf(m) <= 3 ? ` is-top is-top-${rankOf(m)}` : ""}`}
                   onClick={() => pick(m.id)}
                   aria-current={m.id === member?.id ? "true" : undefined}
                   aria-label={`Afficher l'avis de ${m.name}, prime de ${sayBounty(primeOf(m))} de berrys`}
                   style={{ "--tilt": `${((m.id * 37) % 5) - 2}deg` } as React.CSSProperties}
                 >
+                  {/* Rang de la prime dans le registre (calculé depuis les fiches). */}
+                  <span className="wt-hunt-no" aria-hidden="true"><small>Rang</small>{rankOf(m)}</span>
                   <Poster member={m} viewMode={viewMode} />
                 </button>
               ))}

@@ -201,3 +201,15 @@
   .wt-waves i, .wt-main-poster, .wt-lightbox-poster, .wp-photo img.is-swap { animation: none; }
   .wt-wall-item, .wt-fan-item { transition: none; }
 }
+
+/* ═══ Registre des chasseurs de primes (DA v3) ═══════════════════════════════════
+   Chaque affiche porte son rang de prime gravé ; en tri « prime décroissante », les trois
+   têtes les plus chères dominent le mur (plus grandes, épinglées en premier). */
+.wt-hunt-no { position: absolute; z-index: 3; left: -10px; top: 18%; display: grid; justify-items: center; padding: 4px 8px 2px; background: #0d0c10; color: #e2b33c; transform: rotate(-8deg); box-shadow: 4px 4px 0 #8a1c12; font: 400 clamp(1.4rem, 3vw, 2.2rem)/1 var(--gk-font-impact, "Anton"); }
+.wt-hunt-no small { font: 800 .55rem var(--gk-font-ui); letter-spacing: .18em; text-transform: uppercase; color: #fffaf0; }
+.wt-wall-item.is-top .wt-hunt-no { background: #e2b33c; color: #0d0c10; box-shadow: 4px 4px 0 #0d0c10; }
+.wt-wall-item.is-top .wt-hunt-no small { color: #0d0c10; }
+@media (min-width: 700px) {
+  .wt-wall.is-ranked { grid-auto-flow: dense; }
+  .wt-wall.is-ranked .is-top-1 { grid-column: span 2; grid-row: span 2; }
+}

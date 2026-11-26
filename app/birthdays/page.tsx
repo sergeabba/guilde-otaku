@@ -6,12 +6,15 @@ import { CalendarDays, ChevronLeft, ChevronRight, List, PartyPopper, Share2, Swo
 import { Member, Rank } from "../../data/members";
 import MemberQuickView from "../components/MemberQuickView";
 import GuildeHeader from "../components/GuildeHeader";
-import { rankAccents } from "../config/ranks";
+import { rankAccents, rankRomaji } from "../config/ranks";
 import { parseBirthday } from "../types";
 import { fetchMembers } from "../utils/dataAdapter";
 import { countdownTo, daysUntil, nextOccurrence, occurrenceIn } from "../utils/birthdays";
 import { useShare } from "../hooks/useShare";
 import "./birthdays.css";
+import "./birthdays-v3.css";
+import Sceau from "../components/guilde/Sceau";
+import { starTile } from "../components/guilde/textures";
 import RubricMark from "../components/guilde/RubricMark";
 
 type ViewMode = "real" | "anime";
@@ -200,7 +203,11 @@ export default function BirthdaysPage() {
         ) : (
           <>
             {/* ── À L'HONNEUR ─────────────────────────────────────────── */}
-            <section data-gk-motion="reveal" className={`gk-panel bd-spot${isToday ? " is-today" : ""}`} aria-label={isToday ? "Anniversaire du jour" : "Prochain anniversaire"}>
+            <section data-gk-motion="reveal" className={`gk-panel bd-spot${isToday ? " is-today" : ""}`} aria-label={isToday ? "Anniversaire du jour" : "Prochain anniversaire"}
+              style={{ "--bd-acc": rankAccents[soonest[0].rank as Rank] ?? "#c9a84c", "--bd-tile": starTile("rgba(255,255,255,.55)", 34) } as React.CSSProperties}>
+              {/* Invitation d'événement spécial : grande date gravée, sceau du grade de l'invité. */}
+              <span className="bd-spot-day" aria-hidden="true">{soonest[0].day}</span>
+              <Sceau className="bd-spot-seal" rank={soonest[0].rank} text={rankRomaji[soonest[0].rank as Rank]} tone="gold" size={120} />
               <div className="bd-spot-media">
                 {soonest.map((m) => (
                   <button key={m.id} type="button" onClick={() => setSelectedMember(m)} aria-label={`Ouvrir la fiche de ${m.name}`}>
