@@ -56,7 +56,10 @@ function useReducedMotion() {
 }
 
 /** Portrait d'un membre : version anime ou réelle, avec repli lisible si l'image manque. */
-function Portrait({ m, kind = "anime", className = "" }: { m: RosterMember; kind?: "anime" | "real"; className?: string }) {
+function Portrait({ m, kind: asked, className = "" }: { m: RosterMember; kind?: "anime" | "real"; className?: string }) {
+  // Sans choix explicite, le portrait suit la préférence Anime / Réel du site.
+  const pref = useFace();
+  const kind = asked ?? pref;
   const [broken, setBroken] = useState<string | null>(null);
   const src = kind === "real" ? (m.photo ?? m.anime) : (m.anime ?? m.photo);
   const pos = src === m.photo ? m.photoPos : m.animePos;
@@ -695,6 +698,7 @@ function SelectScreen({ roster, mode, versus, reduced, onBack, onReady }: {
 
 // ─── Écran VS ─────────────────────────────────────────────────────────────────
 function VsScreen({ teams, labels, onDone, reduced }: { teams: [RosterMember[], RosterMember[]]; labels: [string, string]; onDone: () => void; reduced: boolean }) {
+  const face = useFace();
   useEffect(() => {
     const t = setTimeout(onDone, reduced ? 1800 : 2800);
     const onKey = (e: KeyboardEvent) => { if (e.key === "Enter" || e.key === " " || e.key === "Escape") onDone(); };
@@ -708,8 +712,12 @@ function VsScreen({ teams, labels, onDone, reduced }: { teams: [RosterMember[], 
           <span className={`fx-player fx-player--${side}`}>{labels[side]}</span>
           <div className="fx-vs-team">
             {teams[side].map((m, i) => (
-              <figure key={m.id} className={`fx-vs-card${i === 0 ? " is-lead" : ""}`} style={{ "--fx-c": accentOf(m), "--i": i } as React.CSSProperties}>
-                <Portrait m={m} />
+              <figure key={m.id} className={`fx-vs-card${i === 0 ? " is-lead" : ""}${i === 0 && face === "anime" && m.cut ? " has-cut" : ""}`} style={{ "--fx-c": accentOf(m), "--i": i } as React.CSSProperties}>
+                {/* Chef d'équipe détouré (préférence Anime) : il sort de sa carte au moment de l'impact. */}
+                {i === 0 && face === "anime" && m.cut
+                  // eslint-disable-next-line @next/next/no-img-element
+                  ? <img className="fx-vs-cut" src={m.cut.src} alt="" decoding="async" />
+                  : <Portrait m={m} kind={face} />}
                 <figcaption><b>{m.name}</b><span>{m.rank}</span></figcaption>
               </figure>
             ))}

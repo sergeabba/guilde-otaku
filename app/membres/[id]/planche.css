@@ -119,3 +119,16 @@
 .pl-music { grid-column: 1 / -1; padding: 16px; color: var(--pl-ink); }
 .pl-music h2 { margin: 0 0 12px; color: var(--pl-ink); }
 .pl-more-links { display: flex; justify-content: center; margin: 18px 0 0; }
+
+/* Palmarès : cérémonie sobre, un titre à la fois, tamponné quand il entre à l'écran
+   (défilement piloté par le navigateur, aucune attente imposée). */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .pl-awards li { animation: pl-rite linear both; animation-timeline: view(); animation-range: entry 15% entry 85%; }
+  }
+}
+@keyframes pl-rite {
+  0% { opacity: 0; transform: rotate(-6deg) scale(1.35); }
+  60% { opacity: 1; transform: rotate(-1deg) scale(.97); }
+  100% { opacity: 1; transform: none; }
+}

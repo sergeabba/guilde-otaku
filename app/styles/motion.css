@@ -475,3 +475,12 @@ html[data-vt="list"]::view-transition-old(root), html[data-vt="list"]::view-tran
 /* Boucles décoratives en pause hors écran (OffscreenPause.tsx). */
 [data-offscreen], [data-offscreen] *, [data-offscreen]::before, [data-offscreen]::after,
 [data-offscreen] *::before, [data-offscreen] *::after { animation-play-state: paused !important; }
+
+/* Bascule Anime / Réel (lib/face.ts) : la nouvelle version s'étend en tache d'encre depuis
+   le bouton touché ; un liseré d'encre suit le bord. Moment signature, 560 ms, jamais bloquant. */
+html[data-vt="face"]::view-transition-old(root) { animation: none; }
+html[data-vt="face"]::view-transition-new(root) { animation: gk-face-ink 560ms cubic-bezier(.7, 0, .2, 1) both; filter: drop-shadow(0 0 0 #0d0c10); }
+@keyframes gk-face-ink {
+  from { clip-path: circle(0 at var(--ink-x, 50%) var(--ink-y, 50%)); }
+  to { clip-path: circle(150vmax at var(--ink-x, 50%) var(--ink-y, 50%)); }
+}

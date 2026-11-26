@@ -38,8 +38,19 @@ s'applique à l'accueil (couverture, annuaire, aperçu rapide), aux fiches en pl
 | `/admin*` | Déjà en Barlow Condensed italique (interface d'administration sobre) |
 | `/vote/[slug]`, `/f/[slug]`, 404 | Typographie commune ; `/f` redirige vers l'atelier |
 
+## Moments signature (lot 2)
+
+- **Bascule Anime / Réel** : la nouvelle version s'étend en tache d'encre depuis le point touché
+  (`lib/face.ts`, transition de vue `face`, 560 ms ; immédiat sans prise en charge ou en
+  mouvement réduit). Vaut pour toutes les bascules du site.
+- **Écran VS** : éclair, arrêt sur image de 80 ms, secousse limitée aux cartes ; chef d'équipe
+  détouré qui sort de sa carte. Les portraits de Fighters suivent la préférence Anime / Réel.
+- **Palmarès des planches** : chaque titre est tamponné à son entrée à l'écran.
+- **En-têtes des pages internes** (`.gk-hero`, Bibliothèque, Calendrier) : lignes de vitesse,
+  gouttière d'encre doublée de l'accent du rang.
+
 ## Reste à faire
 
 - Teams : les équipes ne s'affichent pas faute de données publiées (« Les équipes arrivent bientôt »).
 - Cinéma : le catalogue TMDB demande la clé `TMDB_API_KEY` dans les variables Vercel.
-- Mouvement (plan de `motion-system.md`) : hit-stop des écrans VS et cérémonies du palmarès.
+- Compositions en cases propres à Teams, aux Futilités et à l'administration (aujourd'hui : typographie et en-tête communs).
