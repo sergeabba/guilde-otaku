@@ -65,8 +65,9 @@ export default function FilmPoll({ slug, compact = false, initial, frame }: { sl
     } catch (e) { setError(e instanceof Error ? e.message : "Vote non enregistré."); } finally { setBusy(null); }
   }, [s]);
 
-  if (!s) return compact ? null : <p className="fp-note" role="status">Chargement du vote…</p>;
-  if (!s.poll) return compact ? null : <p className="fp-note">Ce vote n&apos;existe pas ou n&apos;est plus disponible.</p>;
+  // Sans slug (accueil, page du film), le dernier vote s'affiche s'il existe ; sinon rien.
+  if (!s) return compact || !slug ? null : <p className="fp-note" role="status">Chargement du vote…</p>;
+  if (!s.poll) return compact || !slug ? null : <p className="fp-note">Ce vote n&apos;existe pas ou n&apos;est plus disponible.</p>;
   const { poll } = s;
   const t = s.tally ?? { counts: {}, pct: {}, total: 0, leaders: [] };
   const clock = now + skew.current;

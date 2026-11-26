@@ -1,0 +1,33 @@
+/* ═══ FILM DE LA SEMAINE v4 : L'ÉVÉNEMENT DE LA GUILDE ═══════════════════════
+   La séance comme une avant-première : date en grand comme sur une affiche d'événement,
+   sceau « Élu » sur l'affiche, bulletin numéroté pour les candidats, vote intégré. */
+.fs-event { display: inline-grid; grid-template-columns: auto; gap: 0; margin: 0; }
+.fs-event-k { justify-self: start; display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px 4px; background: var(--gk-accent); color: #111; font: 900 .8rem var(--gk-font-ui); letter-spacing: .14em; text-transform: uppercase; transform: skewX(-8deg); }
+.fs-event-d { margin-top: 6px; font: 400 clamp(1.4rem, 3.6vw, 2.4rem)/1 var(--gk-font-impact, "Anton"); text-transform: uppercase; letter-spacing: .01em; color: #fff7e6; text-shadow: 3px 3px 0 #000; }
+.fs-title { font-family: var(--gk-font-impact, "Anton") !important; font-weight: 400; text-transform: uppercase; letter-spacing: -.005em; line-height: .9 !important; text-shadow: 5px 5px 0 rgba(0, 0, 0, .55); }
+
+/* Sceau « Élu » à l'encre rouge sur le coin de l'affiche. */
+.fs-poster { overflow: visible !important; }
+.fs-poster > img, .fs-poster > .fs-poster-empty { overflow: hidden; }
+.fs-seal { position: absolute; z-index: 2; right: -18px; top: -18px; display: grid; place-items: center; width: clamp(64px, 9vw, 88px); aspect-ratio: 1; border-radius: 50%; background: #c8102e; color: #fff7e6; border: 3px solid #fff7e6; outline: 3px solid #0a0806; font: 400 clamp(1.1rem, 2.2vw, 1.5rem)/1 var(--gk-font-impact, "Anton"); text-transform: uppercase; rotate: 12deg; box-shadow: 4px 4px 0 rgba(0, 0, 0, .5); animation: fs-stamp 520ms 400ms cubic-bezier(.2, 1.4, .4, 1) both; }
+@keyframes fs-stamp { from { scale: 1.8; opacity: 0; } }
+
+/* Bulletin : chaque candidat porte un numéro de vote. */
+.fs-ballot { position: relative; }
+.fs-ballot-no { position: absolute; z-index: 2; left: -6px; top: -12px; padding: 0 8px; background: #0a0806; color: var(--gk-accent); border: 2px solid var(--gk-accent); font: 400 1.4rem/1.2 var(--gk-font-impact, "Anton"); transform: rotate(-4deg); pointer-events: none; }
+.fs-grid.gk-stagger { row-gap: clamp(22px, 3vw, 30px); padding-top: 8px; }
+
+/* Le vote dans la page : même cadre de section que le reste. */
+.fs-vote { border-top: 2px solid rgba(240, 160, 48, .25); }
+
+/* Téléphone : l'affiche et la date côte à côte, puis le titre sur toute la largeur. */
+@media (max-width: 759px) {
+  .fs-page .fs-lead { grid-template-columns: minmax(0, 40vw) minmax(0, 1fr); align-items: end; column-gap: 16px; }
+  .fs-lead > .gk-reveal { display: contents; }
+  .fs-lead > .gk-reveal > * { grid-column: 1 / -1; min-width: 0; }
+  .fs-page .fs-poster { grid-column: 1; grid-row: 1; width: 100%; }
+  .fs-lead > .gk-reveal > .fs-event { grid-column: 2; grid-row: 1; align-self: end; padding-bottom: 4px; }
+  .fs-event-d { font-size: clamp(1.3rem, 6.4vw, 1.8rem); }
+  .fs-seal { right: -12px; top: -12px; width: 58px; font-size: 1rem; }
+}
+@media (prefers-reduced-motion: reduce) { .fs-seal { animation: none; } }

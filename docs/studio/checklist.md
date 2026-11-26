@@ -17,7 +17,7 @@
 | Bibliothèque | Validé sur mobile | Fiches réelles : la lecture publique de la table renvoie 0 fiche, collection vérifiée avec données factices de dev (`?demo=fiches`) |
 | Chronique du Bash | Validé sur mobile | Couverture de numéro, dossier en cases, programme par date, numéros précédents, article avec bandeau et lettrine |
 | Cinéma | Validé sur mobile | Deux états testés (relâche sans TMDB ; catalogue factice de dev `?demo=catalogue`). En production : ajouter `TMDB_API_KEY` dans Vercel |
-| Film de la semaine | Non commencé | — |
+| Film de la semaine | Validé sur mobile | Vote intégré à la page (s'affiche quand un vote existe ; aucun vote ouvert dans les données actuelles) |
 | Calendrier | Non commencé | — |
 | Futilités / Atelier | Non commencé | — |
 | Bons Plans | Non commencé | — |

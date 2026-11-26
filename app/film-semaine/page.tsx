@@ -8,7 +8,9 @@ import GuildeHeader from "../components/GuildeHeader";
 import { useShare } from "../hooks/useShare";
 import { normalize } from "../utils/text";
 import { hasJapanese } from "../../lib/member-extras";
+import FilmPoll from "../components/FilmPoll";
 import "./film.css";
+import "./film-v4.css";
 
 interface FilmEntry {
   id: number;
@@ -214,6 +216,7 @@ export default function FilmSemainePage() {
                 </div>
                 <div className="gk-wrap fs-lead">
                   <div className="fs-poster">
+                    <span className="fs-seal" aria-hidden="true">Élu</span>
                     {poster ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={poster} alt={`Affiche de ${chosen.title}`} />
@@ -222,13 +225,10 @@ export default function FilmSemainePage() {
                     )}
                   </div>
                   <div className="gk-reveal" style={{ minWidth: 0 }}>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
-                      <p className="gk-chapter"><b>05</b><span>FILM DE LA SEMAINE</span></p>
-                      <p className="fs-ticket">
-                        <span><Trophy size={14} aria-hidden="true" /> Film élu</span>
-                        <span>{current[0]}</span>
-                      </p>
-                    </div>
+                    <p className="fs-event">
+                      <span className="fs-event-k"><Trophy size={14} aria-hidden="true" /> La séance de la Guilde</span>
+                      <span className="fs-event-d">{current[0].replace(/^Semaine du /i, "")}</span>
+                    </p>
                     <h1 id="fs-title" className="gk-display fs-title">{chosen.title}</h1>
                     <Meta film={chosen} />
                     {chosen.genres && (
@@ -266,6 +266,9 @@ export default function FilmSemainePage() {
               </section>
             )}
 
+            {/* Le vote en cours (même composant que l'accueil) : rien ne s'affiche sans vote ouvert. */}
+            <FilmPoll frame="gk-wrap fs-section fs-vote" />
+
             {candidates.length > 0 && (
               <section className="gk-wrap fs-section" data-gk-motion="reveal" aria-labelledby="fs-cand">
                 <div className="fs-section-head">
@@ -274,7 +277,8 @@ export default function FilmSemainePage() {
                 </div>
                 <div className="fs-grid gk-stagger">
                   {candidates.map((f, i) => (
-                    <div key={f.id} style={{ "--i": i, display: "flex" } as React.CSSProperties}>
+                    <div key={f.id} className="fs-ballot" style={{ "--i": i, display: "flex" } as React.CSSProperties}>
+                      <span className="fs-ballot-no" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
                       <FilmCard film={f} onClick={() => setSelectedFilm(f)} />
                     </div>
                   ))}
