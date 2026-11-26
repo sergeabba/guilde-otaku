@@ -7,7 +7,7 @@
 | Chantier | État | Ce qui manque |
 |---|---|---|
 | Accueil (couverture, entrées, mobile) | Validé sur mobile | Interactions entrées/personnages plus riches ; sections sous la couverture |
-| Fiches membres (vue Personnage) | Validé sur mobile | Composition du nom sans plaque (Godwin) ; tests portraits clairs/sombres/non détourés |
+| Fiches membres (vue Personnage) | Validé sur mobile | Nom recomposé sans plaque (colonne d'identité, portrait décalé, nom réel en second plan) ; reste : distinctions et personnalisation des illustrations |
 | Scènes de pouvoir (spéciale, bankai, territoire) | Fonctionnel | Qualité d'illustration (illustrations dédiées, shader de matière) |
 | Admin : réglages des scènes de pouvoir | Fonctionnel | Aperçu en direct ; test de sauvegarde avec données factices |
 | Annuaire (arcanes, liste) | Validé sur mobile | — |

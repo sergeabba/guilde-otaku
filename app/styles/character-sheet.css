@@ -117,3 +117,22 @@
   .pf-bar-right { width: auto !important; flex-wrap: nowrap !important; margin-left: auto; }
   .pf-bar-right .pf-face { display: none; }
 }
+
+/* ═══ Recomposition du héros (ordinateur) : plus de dalle sur le visage ══════════
+   Trois zones qui ne se recouvrent plus : l'identité dans la colonne d'encre à gauche,
+   le portrait décalé au centre-droit (le visage reste dégagé), les statistiques à droite.
+   Le nom se lit sur l'encre de la colonne, sans plaque ajoutée. */
+.ch-name-main, .ch-name-sub { display: block; }
+.ch-name-sub { text-shadow: none; margin-top: .18em; font: italic 500 .42em/1 "Fraunces Edit", "Fraunces Variable", Georgia, serif; text-transform: none; letter-spacing: 0; color: color-mix(in srgb, var(--ch-acc) 55%, #fff); }
+.ch-name-sub::before { content: "dit "; opacity: .7; }
+@media (min-width: 900px) {
+  .ch-hero { grid-template-columns: minmax(0, 30vw) minmax(0, 1fr); }
+  .ch-name { display: block !important; padding: 0 !important; background: none !important; box-shadow: none !important; text-shadow: 4px 4px 0 var(--ch-acc) !important; font-size: clamp(2.4rem, 4.6vw, 5.2rem) !important; line-height: .95 !important; max-width: 28vw !important; overflow-wrap: break-word; hyphens: none; }
+  .ch-id { max-width: 30vw; }
+  .ch-art { left: 27vw; width: min(50vw, 760px); }
+  .ch-echo { translate: -26px 12px; }
+  /* La colonne d'identité reste sur l'encre : la dalle colorée commence après elle. */
+  .ch-slab { clip-path: polygon(46% 0, 100% 0, 100% 100%, 64% 100%, 34% 100%); }
+  .ch-slab::after { clip-path: polygon(44% 0, 47% 0, 35% 100%, 32% 100%); }
+}
+.ch-name .ch-name-sub { text-shadow: none !important; }

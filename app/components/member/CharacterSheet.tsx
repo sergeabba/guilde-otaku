@@ -34,7 +34,16 @@ export default function CharacterSheet({ m }: { m: ExploMember }) {
         </div>
         <header className="ch-id">
           <p className="ch-no">N°{String(m.id).padStart(3, "0")}</p>
-          <h1 id="ch-name" className="ch-name">{m.name}</h1>
+          {/* Composition du nom : le nom d'usage en grand, ce qui suit entre parenthèses
+              (nom réel, surnom) en second plan, sur sa propre ligne. */}
+          {(() => {
+            const mm = m.name.match(/^(.*?)\s*\((.+)\)\s*$/);
+            return (
+              <h1 id="ch-name" className="ch-name">
+                {mm ? <><span className="ch-name-main">{mm[1]}</span><span className="ch-name-sub">{mm[2]}</span></> : <span className="ch-name-main">{m.name}</span>}
+              </h1>
+            );
+          })()}
           <p className="ch-rank"><b>{m.rank}</b>{romaji && <span>{romaji}</span>}</p>
           {m.alias && <p className="ch-alias">« {m.alias} »</p>}
         </header>
