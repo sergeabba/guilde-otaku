@@ -183,3 +183,22 @@ html[data-vt="at-filter"]::view-transition-old(root), html[data-vt="at-filter"]:
 @media (hover: hover) { .at-plate:hover .at-video-badge { transform: scale(1.08); } }
 .at-art--video { background: #000; }
 .at-art--video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+/* ═══ FUTILITÉS v4 : LES SALLES D'EXPOSITION ═════════════════════════════════
+   La galerie se visite par salles (univers) : chaque salle est une pile de trois
+   tirages. Le cartel sous chaque planche signale les œuvres dont le prompt est lisible. */
+.at-salles { display: grid; gap: 10px 22px; margin-top: 18px; padding: 14px 0; border-block: 2px solid rgba(246,240,228,.14); }
+@media (min-width: 900px) { .at-salles { grid-template-columns: auto minmax(0, 1fr); align-items: center; } }
+.at-salles-label { font: 400 1.4rem/1 var(--gk-font-impact, "Anton"); text-transform: uppercase; color: #dfb75b; }
+.at-salles-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.at-salle { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; gap: 0 12px; align-items: center; min-height: 64px; padding: 8px 12px 8px 8px; text-align: left; color: #f6f0e6; background: rgba(255,255,255,.04); border: 2px solid rgba(246,240,228,.22); cursor: pointer; transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease; }
+.at-salle[aria-pressed="true"] { background: #f6f0e6; color: #101014; box-shadow: 5px 5px 0 #dfb75b; transform: translate(-2px, -2px); }
+.at-salle-stack { grid-row: span 2; position: relative; width: 58px; height: 52px; }
+.at-salle-stack > span { position: absolute; top: 4px; width: 34px; height: 44px; overflow: hidden; border: 2px solid currentColor; background: #1d1a22; }
+.at-salle-stack > span:nth-child(1) { left: 0; rotate: -8deg; }
+.at-salle-stack > span:nth-child(2) { left: 12px; rotate: 2deg; z-index: 1; }
+.at-salle-stack > span:nth-child(3) { left: 24px; rotate: 10deg; z-index: 2; }
+.at-salle strong { font: 900 italic 1rem/1.05 var(--gk-font-ui); text-transform: uppercase; overflow-wrap: anywhere; align-self: end; }
+.at-salle small { font: 700 .74rem var(--gk-font-ui); opacity: .7; align-self: start; }
+@media (hover: hover) { .at-salle:not([aria-pressed="true"]):hover { border-color: #dfb75b; } }
+.at-plate-prompt { display: inline-block; margin-top: 6px; padding: 1px 7px; font: 800 .66rem var(--gk-font-ui); font-style: normal; letter-spacing: .1em; text-transform: uppercase; color: #101014; background: color-mix(in oklab, var(--pv, #dfb75b) 70%, #fff8ec); }

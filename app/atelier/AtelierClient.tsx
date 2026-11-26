@@ -83,6 +83,7 @@ export default function AtelierClient() {
   const [fan, setFan] = useState<AtelierImage[]>([]);
   const [error, setError] = useState(false);
   const [activeFilter, setActiveFilter] = useState("Tout");
+  const [salle, setSalle] = useState<string | null>(null);
   const [favOnly, setFavOnly] = useState(false);
   const [open, setOpenState] = useState<{ key: string; ratio: number | null } | null>(null);
   const { toggle, isFavorite, count: favCount } = useFavorites("atelier");
@@ -96,8 +97,10 @@ export default function AtelierClient() {
     setImages(null);
     // Les vidéos Drive sont un bonus : si Drive ne répond pas, les images s'affichent quand même.
     const videos = fetch("/api/atelier/videos").then((r) => (r.ok ? r.json() : { videos: [] })).then((d) => ((d.videos ?? []) as DriveVideo[]).map(fromDrive)).catch(() => [] as AtelierImage[]);
-    fetch("/api/atelier")
-      .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
+    // Dev uniquement : galerie factice tirée de public/atelier (/atelier?demo=galerie).
+    const demo = process.env.NODE_ENV !== "production" && window.location.search.includes("demo=galerie");
+    (demo ? import("../../lib/dev/atelier-demo").then((m) => ({ images: m.ATELIER_DEMO })) : fetch("/api/atelier")
+      .then((r) => { if (!r.ok) throw new Error(); return r.json(); }))
       .then(async (data) => { const list: AtelierImage[] = data.images ?? []; // Ordre aléatoire à chaque visite (images et vidéos mêlées).
         setImages(shuffled([...list, ...(await videos)])); setFan(pick(list, 3)); })
       .catch(() => { setError(true); setImages([]); });
@@ -109,6 +112,13 @@ export default function AtelierClient() {
     load();
   }, [load]);
 
+  // Les salles d'exposition : une par univers renseigné (au moins deux œuvres).
+  const salles = useMemo(() => {
+    const map = new Map<string, AtelierImage[]>();
+    for (const w of images ?? []) if (w.universe && !w.video) map.set(w.universe, [...(map.get(w.universe) ?? []), w]);
+    return [...map.entries()].filter(([, l]) => l.length > 1).sort((a, b) => b[1].length - a[1].length);
+  }, [images]);
+
   const indexOf = useMemo(() => new Map((images ?? []).map((w, i) => [keyOf(w), i])), [images]);
 
   const categories = useMemo(() => {
@@ -117,8 +127,8 @@ export default function AtelierClient() {
   }, [images]);
 
   const filtered = useMemo(
-    () => (images ?? []).filter((w) => (activeFilter === "Tout" || w.category === activeFilter) && (!favOnly || isFavorite(keyOf(w)))),
-    [images, activeFilter, favOnly, isFavorite]
+    () => (images ?? []).filter((w) => (activeFilter === "Tout" || w.category === activeFilter) && (!salle || w.universe === salle) && (!favOnly || isFavorite(keyOf(w)))),
+    [images, activeFilter, salle, favOnly, isFavorite]
   );
 
   // Lien court de chaque futilité (titre, sans nom de fichier) : /f/<slug>, ou ?f=<slug> ici.
@@ -223,7 +233,7 @@ export default function AtelierClient() {
 
   const loading = images === null;
   const total = images?.length ?? 0;
-  const hasFilters = activeFilter !== "Tout" || favOnly;
+  const hasFilters = activeFilter !== "Tout" || favOnly || !!salle;
   const columns = Array.from({ length: cols }, (_, c) => filtered.map((w, i) => ({ w, i })).filter(({ i }) => i % cols === c));
 
   return (
@@ -280,6 +290,23 @@ export default function AtelierClient() {
           </div>
         )}
 
+        {!loading && salles.length > 1 && (
+          <nav className="at-salles" aria-label="Les salles d'exposition">
+            <span className="at-salles-label">Les salles</span>
+            <div className="at-salles-list">
+              {salles.map(([name, list]) => (
+                <button key={name} type="button" className="at-salle" aria-pressed={salle === name} onClick={() => refilter(() => setSalle(salle === name ? null : name))}>
+                  <span className="at-salle-stack" aria-hidden="true">
+                    {list.slice(0, 3).map((w) => <span key={keyOf(w)}><Image src={w.url} alt="" fill sizes="64px" /></span>)}
+                  </span>
+                  <strong>{name}</strong>
+                  <small>{list.length} œuvres</small>
+                </button>
+              ))}
+            </div>
+          </nav>
+        )}
+
         {loading ? (
           <div className="at-wall" role="status" aria-label="Chargement de la galerie">
             {Array.from({ length: cols }, (_, c) => (
@@ -306,7 +333,7 @@ export default function AtelierClient() {
                   ? "Touche le cœur d'une œuvre pour la garder ici. Tes favoris restent sur cet appareil."
                   : "Aucune œuvre ne correspond à ces filtres."}
             </p>
-            {hasFilters && <button type="button" className="gk-btn" onClick={() => refilter(() => { setActiveFilter("Tout"); setFavOnly(false); })}>Tout réafficher</button>}
+            {hasFilters && <button type="button" className="gk-btn" onClick={() => refilter(() => { setActiveFilter("Tout"); setFavOnly(false); setSalle(null); })}>Tout réafficher</button>}
           </div>
         ) : (
           <div className="at-wall">
@@ -354,7 +381,8 @@ export default function AtelierClient() {
                           </div>
                           <div className="at-plate-cap">
                             <strong>{w.title}</strong>
-                            <small>{[w.category, w.universe].filter(Boolean).join(", ")}</small>
+                            <small>{[w.category, w.universe].filter(Boolean).join(" · ")}</small>
+                            {w.prompt && <em className="at-plate-prompt">Prompt disponible</em>}
                           </div>
                         </button>
                       </div>
