@@ -43,18 +43,18 @@ body.fx-ingame::before { display: none; }
 
 /* ── Célébrations ─────────────────────────────────────────────────────────── */
 .gk-confetti { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 13500; pointer-events: none; }
-.gk-stamp { position: fixed; left: 50%; top: 42%; z-index: 13600; display: grid; justify-items: center; gap: 4px; padding: 14px 28px 12px; pointer-events: none;
+.gk-stamp[role="status"] { position: fixed; left: 50%; top: 42%; z-index: 13600; display: grid; justify-items: center; gap: 4px; padding: 14px 28px 12px; pointer-events: none;
   color: #d7332b; border: 6px solid #d7332b; outline: 2px solid #d7332b; outline-offset: 4px; background: rgba(255, 250, 240, .9);
   transform: translate(-50%, -50%) rotate(-8deg); font-family: var(--gk-font-display); text-transform: uppercase; box-shadow: 0 10px 40px rgba(0,0,0,.35); }
-.gk-stamp b { font-size: clamp(2.2rem, 9vw, 4.4rem); line-height: .9; letter-spacing: .04em; }
-.gk-stamp small { font: 800 clamp(.8rem, 2.6vw, 1rem) var(--gk-font-ui); letter-spacing: .1em; color: #0d0c10; }
-.gk-stamp.is-big b { font-size: clamp(2.6rem, 11vw, 5.4rem); }
+.gk-stamp[role="status"] b { font-size: clamp(2.2rem, 9vw, 4.4rem); line-height: .9; letter-spacing: .04em; }
+.gk-stamp[role="status"] small { font: 800 clamp(.8rem, 2.6vw, 1rem) var(--gk-font-ui); letter-spacing: .1em; color: #0d0c10; }
+.gk-stamp[role="status"].is-big b { font-size: clamp(2.6rem, 11vw, 5.4rem); }
 @media (prefers-reduced-motion: no-preference) {
-  .gk-stamp { animation: gk-stamp-in 420ms cubic-bezier(.2, 1.6, .4, 1) both, gk-stamp-out 300ms ease-in 1600ms both; }
-  .gk-stamp.is-big { animation: gk-stamp-in 460ms cubic-bezier(.2, 1.6, .4, 1) both, gk-stamp-out 320ms ease-in 2300ms both; }
+  .gk-stamp[role="status"] { animation: gk-cstamp-in 420ms cubic-bezier(.2, 1.6, .4, 1) both, gk-cstamp-out 300ms ease-in 1600ms both; }
+  .gk-stamp[role="status"].is-big { animation: gk-cstamp-in 460ms cubic-bezier(.2, 1.6, .4, 1) both, gk-cstamp-out 320ms ease-in 2300ms both; }
 }
-@keyframes gk-stamp-in { from { transform: translate(-50%, -50%) rotate(-20deg) scale(2.6); opacity: 0; } 60% { opacity: 1; } }
-@keyframes gk-stamp-out { to { transform: translate(-50%, -50%) rotate(-8deg) scale(.9); opacity: 0; } }
+@keyframes gk-cstamp-in { from { transform: translate(-50%, -50%) rotate(-20deg) scale(2.6); opacity: 0; } 60% { opacity: 1; } }
+@keyframes gk-cstamp-out { to { transform: translate(-50%, -50%) rotate(-8deg) scale(.9); opacity: 0; } }
 
 /* ── Changement de page : bande d'encre et traits de vitesse qui balaient l'écran ── */
 /* Posée hors écran à droite (aucun flash) ; la transition de vue la fait traverser. */

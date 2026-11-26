@@ -58,7 +58,8 @@ const neighbor = (m: { id: number; name: string; rank: string; animeChar: string
 
 export default async function MemberPage({ params, searchParams }: Props) {
   const found = await load(params);
-  const planche = (await searchParams)?.vue === "planche";
+  // La planche de manga est la vue par défaut ; ?vue=fiche donne la fiche classique.
+  const planche = (await searchParams)?.vue !== "fiche";
   if (!found) notFound();
 
   const { member, prev, next } = found;

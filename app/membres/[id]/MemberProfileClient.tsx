@@ -24,6 +24,7 @@ import { useShare } from "../../hooks/useShare";
 import { featuredWorks, memberAwards, objectPosition, workKey, workSubtitle, workTitle, type FavoriteWork } from "../../../lib/member-extras";
 import MemberAwards from "../../components/MemberAwards";
 import MemberMusic from "../../components/MemberMusic";
+import FaceToggle from "../../components/FaceToggle";
 import TrailerReel from "../../components/works/TrailerReel";
 import MemberBadges from "../../components/MemberBadges";
 import MemberActivity from "../../components/MemberActivity";
@@ -50,7 +51,7 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
   backdrop?: string | null;
   /** Bankai et extension du territoire (data/pouvoirs.ts) */
   pouvoirs?: Pouvoirs | null;
-  /** Fiche classique ou planche de manga (?vue=planche) */
+  /** Planche de manga (par défaut) ou fiche classique (?vue=fiche) */
   initialMode?: "fiche" | "planche";
   prev: ProfileNeighbor | null;
   next: ProfileNeighbor | null;
@@ -65,7 +66,7 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
     if (m === mode) return;
     viewTransition({ kind: "swap", update: () => flushSync(() => setMode(m)) });
     const url = new URL(location.href);
-    if (m === "planche") url.searchParams.set("vue", "planche"); else url.searchParams.delete("vue");
+    if (m === "fiche") url.searchParams.set("vue", "fiche"); else url.searchParams.delete("vue");
     history.replaceState(history.state, "", url);
     window.scrollTo({ top: 0 });
   };
@@ -191,6 +192,7 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
             <ArrowLeft size={16} aria-hidden="true" /> L&apos;annuaire
           </Link>
           <div className="pf-bar-right">
+            {mode === "planche" && <FaceToggle className="pf-face" />}
             <div className="gk-switch pf-mode" role="group" aria-label="Style de la fiche">
               <button type="button" aria-pressed={mode === "fiche"} onClick={() => changeMode("fiche")}><IdCard size={15} aria-hidden="true" /> Fiche</button>
               <button type="button" aria-pressed={mode === "planche"} onClick={() => changeMode("planche")}><BookOpen size={15} aria-hidden="true" /> <span className="pf-mode-long">Lire en </span>planche</button>
@@ -205,6 +207,19 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
           <>
             <h1 className="gk-sr">{member.name}, planche de manga</h1>
             <MemberPlanche member={member} pouvoirs={pouvoirs} next={next} />
+            {music.length > 0 && (
+              <section className="pl-page pl-more" aria-labelledby="pl-music-title">
+                <div className="pl-p pl-music">
+                  <h2 id="pl-music-title" className="gk-display gk-h4">Sa playlist</h2>
+                  <MemberMusic tracks={music} owner={member.name.split(" ")[0]} />
+                </div>
+              </section>
+            )}
+            <p className="pl-more-links">
+              <button type="button" className="gk-btn gk-btn--ghost gk-btn--sm" onClick={() => { changeMode("fiche"); window.setTimeout(() => document.getElementById("pf-univers")?.scrollIntoView(), 450); }}>
+                Tous ses favoris et le détail de la fiche
+              </button>
+            </p>
             <div className="pf-cta pl-cta">
               <button ref={cardBtn} type="button" className="gk-btn" onClick={downloadCard} aria-busy={downloading}>
                 <Download size={17} aria-hidden="true" /> {downloading ? "Préparation…" : "Télécharger la planche"}

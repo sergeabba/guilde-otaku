@@ -1,0 +1,90 @@
+/* ═══ TYPOGRAPHIE « PERSONA » : SIGNATURE DE TOUT LE SITE ═══════════════════
+   Une seule famille de titres, reprise du grand menu (écran titre de Fighters) :
+   Barlow Condensed 900 italique, capitales, serrée, légèrement inclinée, avec un
+   aplat d'encre décalé. Anton pour les chiffres géants, Barlow pour la lecture.
+   Polices auto-hébergées (app/styles/fonts.css, typo-directions.css), licence OFL.
+
+   Rôles :
+   - --gk-font-title   titres de page et de section (.gk-display, .gk-title)
+   - --gk-font-ui      petits titres, onglets, boutons, étiquettes (.gk-kicker, .gk-btn)
+   - --gk-font-impact  chiffres géants, numéros (.gk-num)
+   - --gk-font-body    corps de texte, formulaires, informations denses
+   Le lettrage découpé (composant Ransom) est réservé aux titres d'accueil et aux
+   entrées choisies d'un menu : son nom accessible reste le texte complet. */
+:root {
+  --gk-font-title: var(--font-barlow-condensed), "Barlow Condensed", "Arial Narrow", sans-serif;
+  --gk-font-impact: "Anton", var(--font-barlow-condensed), "Barlow Condensed", sans-serif;
+  /* Voix d'impact (chiffres, tampons, onomatopées) : Anton, de la même famille que le
+     logo du grand menu, à la place de Dela Gothic. Les directions de test (data-typo) gardent la leur. */
+  --gk-font-display: "Anton", var(--font-barlow-condensed), "Barlow Condensed", sans-serif;
+  --gk-title-lh: .9;
+  --gk-title-track: -.005em;
+  --gk-kicker-track: .16em;
+  --gk-tilt: -2deg;
+  --gk-title-xl: clamp(2.9rem, 1.2rem + 8.4vw, 8.4rem);
+  --gk-title-l:  clamp(2.3rem, 1.3rem + 5vw, 5.4rem);
+  --gk-title-m:  clamp(1.8rem, 1.3rem + 2.6vw, 3.4rem);
+  --gk-title-s:  clamp(1.3rem, 1.1rem + 1vw, 1.9rem);
+}
+
+/* Titres : la voix du grand menu. */
+.gk-display, .gk-title {
+  font-family: var(--gk-font-title);
+  font-weight: 900;
+  font-style: italic;
+  text-transform: uppercase;
+  line-height: var(--gk-title-lh);
+  letter-spacing: var(--gk-title-track);
+  font-synthesis: none;
+  overflow-wrap: anywhere;
+  hyphens: manual;
+}
+.gk-display.gk-h1, .gk-title.is-xl { font-size: var(--gk-title-xl); }
+.gk-display.gk-h2, .gk-title.is-l { font-size: var(--gk-title-l); }
+.gk-display.gk-h3, .gk-title.is-m { font-size: var(--gk-title-m); }
+.gk-display.gk-h4, .gk-title.is-s { font-size: var(--gk-title-s); }
+
+/* Mot encré dans un titre : découpé dans un aplat incliné, comme une barre de menu. */
+.gk-display .gk-inked, .gk-title .gk-inked {
+  display: inline-block;
+  margin: .04em 0;
+  padding: .02em .16em .04em .12em;
+  color: var(--gk-bg);
+  background: var(--gk-text);
+  text-shadow: none;
+  box-shadow: .09em .09em 0 var(--gk-accent);
+  transform: rotate(var(--gk-tilt)) skewX(-6deg);
+  clip-path: polygon(2% 0, 100% 4%, 98% 100%, 0 94%);
+}
+
+/* Repère de chapitre : étiquette inclinée, numéro sur l'accent. */
+.gk-chapter {
+  border: 0;
+  background: var(--gk-text);
+  color: var(--gk-bg);
+  font-style: italic;
+  font-weight: 900;
+  letter-spacing: var(--gk-kicker-track);
+  transform: skewX(-12deg);
+  box-shadow: 4px 4px 0 var(--gk-accent);
+}
+.gk-chapter > b { background: var(--gk-accent); color: var(--pf-on, #0d0c10); }
+
+/* Petit titre et chiffres. */
+.gk-kicker {
+  display: inline-block;
+  padding: 3px 10px;
+  background: var(--gk-text);
+  color: var(--gk-bg);
+  font: 900 italic .8rem/1.2 var(--gk-font-ui);
+  letter-spacing: var(--gk-kicker-track);
+  text-transform: uppercase;
+  transform: skewX(-12deg);
+}
+.gk-num { font-family: var(--gk-font-impact); font-weight: 400; font-style: normal; letter-spacing: 0; line-height: .9; }
+
+/* Actions : même voix que les titres, plus courte. */
+.gk-btn { font-weight: 900; font-style: italic; letter-spacing: .06em; }
+
+/* Lecture : la police de texte reste droite et aérée. */
+.gk-body, .gk-hero-lede { font-family: var(--gk-font-body); font-style: normal; text-transform: none; }

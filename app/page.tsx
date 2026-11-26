@@ -4,6 +4,7 @@ import HomePageClient from "./components/HomePageClient";
 import { fetchFeaturedFilm } from "../lib/hebdo";
 import { getAtelierTiles } from "../lib/atelier-server";
 import { getAnimeSong, SONG_COUNT, todayIndex } from "../lib/anime-song";
+import { cutoutFor } from "../lib/cutout";
 
 export async function generateMetadata() {
   const m = pageMetadata("accueil", "/", "Le registre des membres", "Une bande d'amis qui débat d'animes, élit ses films et se décerne des titres depuis 2020.");
@@ -17,5 +18,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   const [members, featuredFilm, atelierTiles, song] = await Promise.all([
     getPublicMembers(), fetchFeaturedFilm(), getAtelierTiles().catch(() => []), getAnimeSong(songIndex).catch(() => null),
   ]);
-  return <HomePageClient initialMembers={members} featuredFilm={featuredFilm} atelierTiles={atelierTiles} song={song} songIsToday={songIndex === todayIndex()} />;
+  // Détourages fiables des portraits anime (couverture), envoyés seulement pour ces membres.
+  const cuts = Object.fromEntries(members.flatMap((m) => { const c = cutoutFor(m.animeChar); return c ? [[m.id, { src: c.src, w: c.w, h: c.h }]] : []; }));
+  return <HomePageClient initialMembers={members} cuts={cuts} featuredFilm={featuredFilm} atelierTiles={atelierTiles} song={song} songIsToday={songIndex === todayIndex()} />;
 }

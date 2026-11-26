@@ -5,7 +5,7 @@
    enfermés : ils sortent de leur case. */
 .xa {
   --ink: #0b0b0d; --paper: #ffffff; --red: #e4322b; --tone: #b9b9bf; --nav: 76px;
-  --f-big: var(--font-dela), "Dela Gothic One", sans-serif; --f-cap: var(--font-barlow-condensed), "Barlow Condensed", sans-serif;
+  --f-big: var(--gk-font-impact, "Anton"), "Anton", sans-serif; --f-cap: var(--font-barlow-condensed), "Barlow Condensed", sans-serif;
   --f-hand: "Caveat", cursive;
   position: relative; background: var(--paper); color: var(--ink); overflow-x: clip;
   padding-right: var(--nav); font-family: var(--font-barlow), system-ui, sans-serif;

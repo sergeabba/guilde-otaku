@@ -99,3 +99,9 @@
   .xn-rank { grid-area: r; font-size: .68rem; }
   .xn-meta { grid-area: m; font-size: .8rem; }
 }
+
+/* Fond d'attente : l'initiale du membre, encrée, tant que l'image n'est pas arrivée
+   (la case a déjà sa taille définitive : rien ne bouge au chargement). */
+.xn-ph { position: absolute; inset: 0; display: grid; place-items: center; z-index: 1; font: 900 italic clamp(4rem, 9vw, 7rem)/1 var(--gk-font-title, sans-serif); color: color-mix(in srgb, var(--ink) 16%, transparent); text-transform: uppercase; clip-path: var(--clip); }
+@media (prefers-reduced-motion: no-preference) { .xn-ph { animation: xn-wait 1.4s ease-in-out infinite alternate; } }
+@keyframes xn-wait { to { color: color-mix(in srgb, var(--ink) 6%, transparent); } }

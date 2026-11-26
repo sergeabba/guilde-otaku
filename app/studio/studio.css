@@ -21,14 +21,14 @@
 
 .st {
   --ink: #0d0c10; --ink-2: #17151c; --paper: #f4efe4; --paper-2: #ebe3d2; --white: #fffdf8; --hanko: #d7332b; --hanko-ink: #ad2620; --gold: #c9a84c;
-  --f-logo: var(--font-dela), "Dela Gothic One", sans-serif;
+  --f-logo: var(--gk-font-impact, "Anton"), "Anton", sans-serif;
   --f-body: var(--font-barlow), "Barlow", system-ui, sans-serif;
   --f-cond: var(--font-barlow-condensed), "Barlow Condensed", sans-serif;
   --ease-out: cubic-bezier(.22, 1, .36, 1); --ease-snap: cubic-bezier(.2, 1.4, .4, 1);
   font-family: var(--f-body); color: var(--ink); background: var(--paper);
   -webkit-font-smoothing: antialiased; overflow-x: clip;
 }
-.r-hebdo { --f-display: var(--font-dela), "Dela Gothic One", sans-serif; --f-edit: "Fraunces Edit", "Fraunces Variable", Georgia, serif; --f-ui: var(--f-cond); --f-data: var(--f-cond); }
+.r-hebdo { --f-display: var(--gk-font-impact, "Anton"), "Anton", sans-serif; --f-edit: "Fraunces Edit", "Fraunces Variable", Georgia, serif; --f-ui: var(--f-cond); --f-data: var(--f-cond); }
 .r-kiri  { --f-display: "Anton", var(--f-cond), sans-serif; --f-edit: var(--f-body); --f-ui: "Archivo Kiri", var(--f-cond), sans-serif; --f-data: "Chakra Petch", var(--f-cond), sans-serif; }
 .r-dense { --f-display: "Cinzel", Georgia, serif; --f-edit: "Cormorant Garamond", Georgia, serif; --f-ui: var(--f-cond); --f-data: var(--font-dela), "Dela Gothic One", sans-serif; }
 

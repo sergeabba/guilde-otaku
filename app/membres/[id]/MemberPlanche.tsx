@@ -12,6 +12,7 @@ import { optimizedSrc } from "../../../lib/img";
 import { rankRomaji, type Rank } from "../../config/ranks";
 import { COUNTRIES } from "../../config/countries";
 import type { ProfileNeighbor } from "./MemberProfileClient";
+import { useFace } from "../../../lib/face";
 import "./planche.css";
 
 const STATS: [keyof Member["stats"], string][] = [["force", "Force"], ["vitesse", "Vitesse"], ["technique", "Technique"]];
@@ -24,16 +25,21 @@ export default function MemberPlanche({ member, pouvoirs, next }: { member: Memb
   const fav = featuredWorks(extras.favoriteAnime ?? [], 1)[0] ?? featuredWorks(extras.favoriteManga ?? [], 1)[0];
   const country = COUNTRIES.find((c) => c.code === member.country);
   const romaji = rankRomaji[member.rank as Rank];
-  const hero = member.animeChar || member.photo;
-  const real = member.animeChar && member.photo ? member.photo : null;
+  // Préférence Anime / Réel du site : le grand portrait suit le choix, la case secondaire
+  // montre l'autre version quand elle existe (sinon une seule image, cadrage stable).
+  const face = useFace();
+  const wantReal = face === "real" && !!member.photo;
+  const hero = wantReal ? member.photo : (member.animeChar || member.photo);
+  const heroIsAnime = hero === member.animeChar;
+  const real = member.animeChar && member.photo ? (heroIsAnime ? member.photo : member.animeChar) : null;
   const caption = [member.birthday && `Anniversaire : ${member.birthday}`, country?.label].filter(Boolean).join(" · ");
 
   return (
     <article className="pl-page" aria-label={`Planche de ${member.name}`}>
       {hero && (
         <section className="pl-p pl-hero pl-tone">
-          <Image src={hero} alt={`${member.name}, version anime`} fill priority sizes="(max-width: 699px) 100vw, 620px"
-            style={{ objectFit: "cover", objectPosition: objectPosition(member.animeChar ? extras.animeFocus : extras.photoFocus, "50% 15%") }} />
+          <Image src={hero} alt={`${member.name}, ${heroIsAnime ? "version anime" : "photo"}`} fill priority sizes="(max-width: 699px) 100vw, 620px"
+            style={{ objectFit: "cover", objectPosition: objectPosition(heroIsAnime ? extras.animeFocus : extras.photoFocus, "50% 15%") }} />
           <span className="pl-chap">Chapitre {String(member.id).padStart(2, "0")}</span>
           <div className="pl-name">
             <small>{member.rank}{romaji ? ` · ${romaji}` : ""}{extras.displayNameRomaji ? ` · ${extras.displayNameRomaji}` : ""}</small>
@@ -49,9 +55,9 @@ export default function MemberPlanche({ member, pouvoirs, next }: { member: Memb
 
       {real && (
         <section className="pl-p pl-real">
-          <Image src={real} alt={`${member.name}, photo`} fill sizes="(max-width: 699px) 50vw, 320px"
-            style={{ objectFit: "cover", objectPosition: objectPosition(extras.photoFocus, "50% 20%") }} />
-          <span className="pl-box">Dans la vraie vie…</span>
+          <Image src={real} alt={`${member.name}, ${heroIsAnime ? "photo" : "version anime"}`} fill sizes="(max-width: 699px) 50vw, 320px"
+            style={{ objectFit: "cover", objectPosition: objectPosition(heroIsAnime ? extras.photoFocus : extras.animeFocus, heroIsAnime ? "50% 20%" : "50% 15%") }} />
+          <span className="pl-box">{heroIsAnime ? "Dans la vraie vie…" : "Version anime…"}</span>
         </section>
       )}
 

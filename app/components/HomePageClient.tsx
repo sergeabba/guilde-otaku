@@ -5,12 +5,13 @@ import { useState, useMemo, useEffect, useRef, useCallback, useSyncExternalStore
 import { createPortal, flushSync } from "react-dom";
 import Image from "./GImage";
 import Link from "next/link";
-import { ArrowDown, Search, Sword, User, X } from "lucide-react";
+import { Search, Sword, User, X } from "lucide-react";
 import { Rank, Member, RANK_FILTER_ORDER } from "../../data/members";
 import MemberCard from "./MemberCard";
 import MemberQuickView from "./MemberQuickView";
 import FilmPoll from "./FilmPoll";
-import CoverFx from "./CoverFx";
+import HomeCover, { type CoverCut } from "./HomeCover";
+import { setFace, useFace } from "../../lib/face";
 import GuildeHeader from "./GuildeHeader";
 import ChapterStory from "./ChapterStory";
 import WordReveal from "./WordReveal";
@@ -54,8 +55,9 @@ function pickTrio<T>(list: T[], slot: number): T[] {
   return idx.slice(0, 3).map((i) => list[i]);
 }
 
-export default function HomePageClient({ initialMembers, featuredFilm, atelierTiles = [], song = null, songIsToday = true }: {
+export default function HomePageClient({ initialMembers, featuredFilm, atelierTiles = [], song = null, songIsToday = true, cuts = {} }: {
   initialMembers: Member[];
+  cuts?: Record<number, CoverCut>;
   featuredFilm?: FeaturedFilm | null;
   atelierTiles?: AtelierTile[];
   song?: AnimeSong | null;
@@ -90,7 +92,8 @@ export default function HomePageClient({ initialMembers, featuredFilm, atelierTi
       },
     });
   }, [selectedMember]);
-  const [viewMode, setViewMode] = useState<ViewMode>("anime");
+  const viewMode: ViewMode = useFace();
+  const setViewMode = setFace;
   const [mounted, setMounted] = useState(false);
   const [showFloat, setShowFloat] = useState(false);
   const directoryRef = useRef<HTMLElement>(null);
@@ -170,6 +173,7 @@ export default function HomePageClient({ initialMembers, featuredFilm, atelierTi
     if (coverSlot === null || ordered.length <= 3) return ordered.slice(0, 3);
     return pickTrio(ordered, coverSlot);
   }, [initialMembers, coverSlot]);
+  const coverLead = coverMembers.find((m) => cuts[m.id]) ?? coverMembers[0] ?? null;
 
   // À la une : anniversaire du jour, sinon le prochain. Calculé côté client
   // (fuseau du visiteur), donc seulement après montage.
@@ -203,62 +207,22 @@ export default function HomePageClient({ initialMembers, featuredFilm, atelierTi
         <GuildeHeader activePage="membres" accentColor={accent} tone={isDark ? "dark" : "light"} />
 
         <main>
-          {/* ── COUVERTURE ─────────────────────────────────────────────── */}
-          <section className="gk-wrap hm-cover" aria-labelledby="hm-title">
-            <div className="gk-speed hm-cover-speed" aria-hidden="true" />
-            <CoverFx />
-
-            <div className="hm-cover-copy gk-reveal">
-              <p className="gk-chapter"><b>01</b><span>LE REGISTRE DES MEMBRES</span></p>
-              <h1 id="hm-title" className="gk-display hm-title">
-                <span>GUILDE</span>
-                <span className="hm-title-2 gk-inked">OTAKU</span>
-              </h1>
-              <p className="hm-lede">
-                Depuis 2020, une bande d&apos;amis qui débat d&apos;animes, élit ses films et se décerne des titres.
-                Voici qui la compose.
-              </p>
-              <dl className="hm-facts">
-                <div><dt>Membres</dt><dd>{initialMembers.length}</dd></div>
-                <div><dt>Grades</dt><dd>{activeRankCount}</dd></div>
-                {availableCountries.length > 0 && <div><dt>Pays</dt><dd>{availableCountries.length}</dd></div>}
-              </dl>
-              <div className="hm-cta">
-                <button type="button" className="gk-btn" onClick={scrollToDirectory}>
-                  Ouvrir l&apos;annuaire <ArrowDown size={17} aria-hidden="true" />
-                </button>
-                <Link href="/bibliotheque" className="gk-btn gk-btn--ghost">Lire la Chronique du Bash</Link>
-              </div>
-            </div>
-
-            {coverMembers.length === 3 && (
-              <div className="hm-board">
-                <span className="gk-vertical hm-board-jp" aria-hidden="true">Densetsu no nakama</span>
-                {coverMembers.map((m, i) => (
-                  <button
-                    key={`${coverSlot ?? "x"}-${m.id}`}
-                    type="button"
-                    className="hm-case hm-case-swap"
-                    onClick={(e) => openMember(m, e.currentTarget)}
-                    aria-label={`Ouvrir la fiche de ${m.name}, ${m.rank}`}
-                    style={{ padding: 0, cursor: "pointer" }}
-                  >
-                    <Image
-                      src={m.animeChar || m.photo}
-                      alt=""
-                      fill
-                      priority={i === 0}
-                      sizes={i === 0 ? "(max-width: 979px) 56vw, 380px" : "(max-width: 979px) 44vw, 300px"}
-                    />
-                    <span className="hm-case-cap">
-                      {m.name}
-                      <small>{m.rank}</small>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </section>
+          {/* ── COUVERTURE (grand menu) ─────────────────────────────────── */}
+          <HomeCover
+            lead={coverLead}
+            side={coverMembers.filter((m) => m.id !== coverLead?.id).slice(0, 2)}
+            cuts={cuts}
+            facts={[{ label: "Membres", value: initialMembers.length }, { label: "Grades", value: activeRankCount }, ...(availableCountries.length ? [{ label: "Pays", value: availableCountries.length }] : [])]}
+            entries={[
+              { href: "/#annuaire", label: "L'annuaire", hint: `${initialMembers.length} membres`, onClick: scrollToDirectory },
+              { href: "/fighters", label: "Fighters", hint: "Choisis ton combattant" },
+              { href: "/bibliotheque", label: "Bibliothèque", hint: "La Chronique du Bash" },
+              { href: "/film-semaine", label: "Film de la semaine", hint: featuredFilm?.title ?? "La séance élue" },
+              { href: "/teams", label: "Teams", hint: "Basket et foot" },
+              { href: "/jeux", label: "Jeux", hint: "Quiz et badges" },
+            ]}
+            onOpen={(m, el) => openMember(m, el)}
+          />
 
           <div className="gk-motion-ticker" aria-hidden="true">
             <div className="gk-motion-ticker-track">

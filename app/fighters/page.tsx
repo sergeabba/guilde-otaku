@@ -6,6 +6,7 @@ import "./fighters-v2.css";
 import "./fighters-select.css";
 import "./fighters-mugen.css";
 import "./fighters-persona.css";
+import "./fighters-arcade.css";
 
 // Les données des membres sont lues à chaque visite (comme les fiches profils).
 export const dynamic = "force-dynamic";

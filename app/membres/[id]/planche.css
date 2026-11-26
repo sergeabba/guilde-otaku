@@ -113,3 +113,9 @@
 .pl-hero { animation-name: pl-in-hero !important; }
 @keyframes pl-in-hero { from { opacity: 0; } }
 .pl-cta { justify-content: center; margin-top: 18px; }
+
+/* Suite de la planche : la playlist dans une case pleine largeur, puis le lien vers la fiche détaillée. */
+.pl-more { margin-top: 14px; }
+.pl-music { grid-column: 1 / -1; padding: 16px; color: var(--pl-ink); }
+.pl-music h2 { margin: 0 0 12px; color: var(--pl-ink); }
+.pl-more-links { display: flex; justify-content: center; margin: 18px 0 0; }

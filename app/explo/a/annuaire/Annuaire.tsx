@@ -73,7 +73,7 @@ export default function Annuaire({ members }: { members: ExploMember[] }) {
               {c.ms.map((m, k) => (
                 <li key={m.id} className={`xn-cell xn-s${k % 5}${k % 7 === 0 && c.ms.length > 2 ? " is-big" : ""}`} style={{ "--acc": m.accent } as React.CSSProperties}>
                   <TurnLink href={`/explo/a/membre/${m.id}`} kind="xa-turn" className="xn-link" label={`${m.name}, ${m.rank}`} morph=".xa-cut">
-                    <span className="xn-bg" aria-hidden="true"><span className="xa-speed" /><span className="xa-tone" /></span>
+                    <span className="xn-bg" aria-hidden="true"><span className="xa-speed" /><span className="xa-tone" /><span className="xn-ph">{m.first.slice(0, 1)}</span></span>
                     <Cut m={m} className={`xa-cut xa-inked${m.cut ? "" : " xn-plain"}`} />
                     <span className="xn-tag"><b>{m.first}</b><small>{no(m.id)}</small></span>
                   </TurnLink>

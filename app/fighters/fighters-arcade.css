@@ -1,0 +1,72 @@
+/* ═══ SÉLECTION ARCADE · COMPOSITION « DEUX COMBATTANTS » ═══════════════════
+   Hiérarchie d'un écran de sélection de jeu de combat : roster compact en haut,
+   les deux combattants en grand dessous, noms lisibles de loin, « VS » au centre.
+   Décor et typographie de la Guilde (voix du grand menu). Chargé après
+   fighters-select.css, dont il réarrange la grille sur ordinateur. */
+.fxs { --fxs-title: var(--gk-font-title, "Barlow Condensed", sans-serif); }
+.fxs-title { font-family: var(--fxs-title); }
+
+/* Détourage dans le grand portrait : le personnage pose en pied, sur la couleur du membre. */
+.fxs-art-cut { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 104%; object-fit: contain; object-position: bottom center;
+  filter: drop-shadow(5px 0 0 #fff) drop-shadow(-5px 0 0 #fff) drop-shadow(0 -5px 0 #fff) drop-shadow(8px 8px 0 #050509); }
+.fxs-side--1 .fxs-art-cut { transform: scaleX(-1); }
+@media (prefers-reduced-motion: no-preference) {
+  .fxs-art-cut, .fxs-art-img { animation: fxs-pose 260ms cubic-bezier(.2, .9, .3, 1) both; }
+  .fxs-side--1 .fxs-art-cut { animation-name: fxs-pose-r; }
+}
+@keyframes fxs-pose { from { translate: -28px 0; opacity: .3; } }
+@keyframes fxs-pose-r { from { translate: 28px 0; opacity: .3; } }
+
+/* Nom : très grand, incliné, sur un aplat à la couleur du joueur. */
+.fxs-name { font: 900 italic clamp(1.5rem, 3.4vw, 3.6rem)/.9 var(--fxs-title); letter-spacing: -.005em; text-shadow: 3px 3px 0 #000, 6px 6px 0 var(--fx-c); }
+.fxs-status { display: inline-block; justify-self: start; padding: 2px 10px; background: #050509; transform: skewX(-12deg); }
+.fxs-side--1 .fxs-status { justify-self: end; }
+.fxs-side.is-active .fxs-status { background: var(--fx-p1); color: #fff; }
+.fxs-side--1.is-active .fxs-status { background: var(--fx-p2); }
+
+/* « VS » entre les deux combattants. */
+.fxs-vs { grid-area: vs; align-self: center; justify-self: center; z-index: 3; font: 900 italic clamp(3rem, 7vw, 6.4rem)/1 var(--fxs-title); color: var(--fx-gold, #e8b931);
+  -webkit-text-stroke: 3px #050509; paint-order: stroke fill; text-shadow: 6px 6px 0 #050509; transform: rotate(-8deg); pointer-events: none; }
+
+/* Retour à portée du pouce : seulement sur téléphone (l'en-tête le garde sur ordinateur). */
+.fxs-back-thumb { display: none; }
+
+/* ─── Ordinateur : roster en haut, combattants en grand dessous. ─── */
+@media (min-width: 900px) and (min-height: 521px) {
+  .fxs {
+    grid-template-columns: minmax(0, 1fr) clamp(90px, 10vw, 160px) minmax(0, 1fr);
+    grid-template-rows: auto clamp(170px, 31vh, 300px) minmax(0, 1fr) auto;
+    grid-template-areas: "top top top" "center center center" "p1 vs p2" "bar bar bar";
+  }
+  .fxs-center { width: min(1240px, 100%); justify-self: center; padding: 0 16px; grid-template-rows: auto minmax(0, 1fr); }
+  .fxs-center .fxs-legend { display: none; }
+  .fxs-grid { background: rgba(5, 5, 9, .55); border: 3px solid #050509; box-shadow: 0 0 0 2px rgba(255, 255, 255, .25); padding-top: 12px; }
+  .fxs-side--0 .fxs-art { clip-path: polygon(0 6%, 100% 0, 92% 100%, 0 100%); }
+  .fxs-side--1 .fxs-art { clip-path: polygon(0 0, 100% 6%, 100% 100%, 8% 100%); }
+  .fxs-plate { grid-template-columns: minmax(0, 1fr); padding: 0 28px 16px; }
+  .fxs-side { margin-top: 10px; }
+  .fxs-tag { top: 22px; z-index: 2; }
+  .fxs-kind { top: 56px; z-index: 2; }
+  .fxs-order { grid-template-columns: 1fr 1fr; }
+}
+
+/* ─── Téléphone (portrait) : aperçus au-dessus du roster, actions en bas. ─── */
+@media (max-width: 899px) { .fxs-vs { display: none; } .fxs-name { text-shadow: 2px 2px 0 #000, 4px 4px 0 var(--fx-c); } }
+@media (max-width: 899px) and (min-height: 521px) {
+  .fxs-vs { display: none; }
+  .fxs { grid-template-rows: auto clamp(170px, 30dvh, 280px) minmax(0, 1fr) auto; }
+  .fxs-name { font-size: clamp(1.1rem, 6.2vw, 1.8rem); }
+  .fxs-back-thumb { display: inline-flex; }
+  .fxs-top .fxs-back { display: none; }
+  .fxs-top { grid-template-columns: 1fr; }
+  .fxs-title { justify-self: center; }
+  .fxs-art-cut { height: 100%; }
+}
+/* Téléphone à l'horizontale : miroir compact, retour dans la barre. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .fxs-vs { display: none; }
+  .fxs-back-thumb { display: inline-flex; }
+  .fxs-top .fxs-back { display: none; }
+  .fxs-actions > * { min-height: 40px; }
+  .fxs-name { font-size: 1.15rem; }
+}

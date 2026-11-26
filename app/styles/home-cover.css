@@ -1,0 +1,123 @@
+/* ═══ ACCUEIL · COUVERTURE « GRAND MENU » ═════════════════════════════════════
+   Nuit indigo, étoile à la couleur du grade du membre en couverture, barres
+   inclinées. Téléphone : une pile en défilement naturel (aucune hauteur imposée).
+   Ordinateur : grille éditoriale sur un écran. */
+.hc {
+  --night: #0d0b24; --ink: #050509; --paper: #fff;
+  --rn-hot: var(--hc-acc); --rn-ink: var(--ink); --rn-paper: var(--paper);
+  --f-cond: var(--gk-font-title, "Barlow Condensed", sans-serif);
+  position: relative; isolation: isolate; overflow: hidden;
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px;
+  padding: 22px 16px 26px;
+  background: var(--night); color: var(--paper);
+}
+.hc :focus-visible { outline: 3px solid var(--paper); outline-offset: 4px; }
+
+/* Fond : deux étoiles fixes en couleur et en encre, rayures. Rotation lente seulement
+   sur ordinateur et sans « réduire les animations ». */
+.hc-bg { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.hc-star { position: absolute; left: 50%; top: 42%; width: 150vmax; aspect-ratio: 1; translate: -50% -50%; contain: strict; background: var(--hc-acc);
+  clip-path: polygon(50% 0, 56% 38%, 85% 15%, 63% 45%, 100% 50%, 63% 55%, 85% 85%, 56% 62%, 50% 100%, 44% 62%, 15% 85%, 37% 55%, 0 50%, 37% 45%, 15% 15%, 44% 38%); }
+.hc-star.is-2 { background: var(--ink); scale: .5; }
+.hc-stripes { position: absolute; inset: 0; background: repeating-linear-gradient(-24deg, rgba(255, 255, 255, .06) 0 16px, transparent 16px 42px); }
+
+/* Titre. */
+.hc-copy { position: relative; z-index: 3; display: grid; justify-items: start; gap: 12px; min-width: 0; }
+.hc-kicker { margin: 0; display: flex; flex-wrap: wrap; transform: rotate(-3deg); transform-origin: left; }
+.hc-kicker b { padding: 3px 10px; background: var(--hc-acc); color: var(--ink); font: 900 italic .78rem/1.3 var(--f-cond); letter-spacing: .14em; text-transform: uppercase; }
+.hc-kicker span { padding: 3px 10px; background: var(--ink); font: 800 .78rem/1.3 var(--f-cond); letter-spacing: .14em; text-transform: uppercase; }
+.hc-title { font-size: clamp(2.6rem, 15vw, 4.4rem); transform: rotate(-4deg); transform-origin: left; max-width: 100%; }
+.hc-lede { margin: 0; max-width: 34ch; padding: 8px 12px; background: var(--ink); font: 500 .98rem/1.45 var(--gk-font-body, sans-serif); }
+.hc-facts { margin: 0; display: flex; flex-wrap: wrap; gap: 0; transform: skewX(-10deg); }
+.hc-facts div { display: flex; align-items: baseline; gap: 6px; padding: 4px 12px; background: var(--paper); color: var(--ink); }
+.hc-facts div:nth-child(2) { background: var(--hc-acc); }
+.hc-facts div:nth-child(3) { background: var(--ink); color: var(--paper); }
+.hc-facts dt { font: 800 .72rem var(--f-cond); letter-spacing: .14em; text-transform: uppercase; }
+.hc-facts dd { margin: 0; font: 400 1.5rem/1 var(--gk-font-impact, "Anton", sans-serif); }
+
+/* Membre en couverture : place réservée (ratio fixe), détourage doublé de deux silhouettes. */
+.hc-stage { position: relative; z-index: 2; display: block; width: 100%; aspect-ratio: 4 / 3.6; padding: 0; border: 0; background: none; color: inherit; cursor: pointer; }
+.hc-host { position: absolute; inset: 0; }
+.hc-host img, .hc-sil { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: bottom center; }
+.hc-sil { -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: bottom center; mask-position: bottom center; }
+.hc-sil.is-paper { background: var(--paper); translate: 12px -6px; }
+.hc-sil.is-ink { background: var(--ink); translate: -10px 6px; }
+.hc-host.is-frame { inset: 4% 8%; }
+.hc-host.is-frame::before { content: ""; position: absolute; inset: -8px -10px -4px -4px; background: var(--paper); clip-path: polygon(6% 0, 100% 4%, 94% 100%, 0 96%); translate: 10px 8px; }
+.hc-host.is-frame img { object-fit: cover; object-position: 50% 20%; clip-path: polygon(6% 0, 100% 4%, 94% 100%, 0 96%); }
+.hc-host.is-empty { display: grid; place-items: center; background: var(--ink); clip-path: polygon(6% 0, 100% 4%, 94% 100%, 0 96%); font: 900 italic 4rem var(--f-cond); text-transform: uppercase; }
+.hc-cap { position: absolute; z-index: 3; left: 0; bottom: 8%; display: grid; justify-items: start; transform: rotate(-4deg); }
+.hc-cap b { padding: 2px 12px; background: var(--paper); color: var(--ink); font: 900 italic 1.25rem/1.2 var(--f-cond); text-transform: uppercase; }
+.hc-cap small { padding: 2px 10px; background: var(--ink); font: 800 .72rem/1.4 var(--f-cond); letter-spacing: .14em; text-transform: uppercase; }
+
+/* Entrées : barres inclinées en escalier, chacune un vrai lien (≥ 48 px). */
+.hc-menu { position: relative; z-index: 3; }
+.hc-menu ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.hc-menu li { transform: rotate(-2.5deg); }
+.hc-menu a { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 50px; padding: 4px 16px 4px 18px; color: var(--paper); text-decoration: none; background: var(--ink); clip-path: polygon(0 6%, 100% 0, 98.5% 100%, 1% 94%); transition: background 160ms, color 160ms; }
+.hc-menu a::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: var(--hc-acc); }
+.hc-item { font: 900 italic clamp(1.35rem, 6.4vw, 1.8rem)/1 var(--f-cond); text-transform: uppercase; letter-spacing: -.005em; }
+.hc-menu small { flex: none; max-width: 46%; font: 700 .72rem/1.2 var(--f-cond); letter-spacing: .1em; text-transform: uppercase; text-align: right; opacity: .8; }
+.hc-menu a:hover, .hc-menu a:focus-visible { background: var(--paper); color: var(--ink); }
+.hc-menu li:first-child a { background: var(--paper); color: var(--ink); }
+.hc-menu li:first-child a::after { content: ""; position: absolute; right: 10px; top: 50%; width: 18px; height: 14px; translate: 0 -50%; background: var(--hc-acc); clip-path: polygon(0 0, 100% 50%, 0 100%, 22% 50%); }
+.hc-menu li:first-child small { margin-right: 22px; }
+
+/* Les deux autres membres de la couverture. */
+.hc-side { position: relative; z-index: 3; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.hc-mini { position: relative; display: block; aspect-ratio: 1 / 1; padding: 0; border: 3px solid var(--ink); background: var(--hc-c, var(--hc-acc)); overflow: hidden; cursor: pointer; transform: skewX(-6deg); color: inherit; }
+.hc-mini .hc-host { inset: 6% 0 0; }
+.hc-mini .hc-sil { display: none; }
+.hc-mini .hc-host.is-frame { inset: 0; }
+.hc-mini .hc-host.is-frame::before { display: none; }
+.hc-mini .hc-host.is-frame img { clip-path: none; }
+.hc-mini > span { position: absolute; left: 0; right: 0; bottom: 0; padding: 3px 8px; background: var(--ink); font: 900 italic .9rem var(--f-cond); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.hc-face { position: absolute; z-index: 5; right: 12px; top: 14px; }
+.hc-face .face-toggle button { min-width: 54px; min-height: 36px; padding: 0 8px; font-size: .74rem; }
+
+/* Téléphone : la bascule passe en tête, dans le flux (rien ne se superpose). */
+@media (max-width: 979px) {
+  .hc-face { position: relative; right: auto; top: auto; order: -1; justify-self: end; margin-bottom: -6px; }
+}
+@media (max-width: 359px) {
+  .hc { padding-inline: 12px; }
+  .hc-menu small { display: none; }
+}
+
+/* ═══ Ordinateur : couverture éditoriale sur un écran ═══
+   Le membre occupe la moitié gauche en grand, derrière le titre ; les entrées en
+   escalier à droite ; les deux autres membres en bas à droite. */
+@media (min-width: 980px) {
+  .hc {
+    grid-template-columns: minmax(0, 1fr) minmax(0, .9fr);
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas: "copy menu" ". menu" ". side";
+    gap: 18px 3vw;
+    min-height: clamp(640px, calc(100svh - 110px), 920px);
+    padding: clamp(28px, 4vh, 48px) clamp(24px, 4vw, 64px) 30px;
+  }
+  .hc-star { left: 30%; top: 58%; }
+  .hc-copy { grid-area: copy; padding-top: 18px; }
+  .hc-title { font-size: clamp(4rem, 7vw, 7.4rem); }
+  .hc-lede { max-width: 30ch; }
+  .hc-stage { position: absolute; z-index: 1; left: 4vw; bottom: 0; width: 48%; height: 78%; aspect-ratio: auto; }
+  .hc-cap { left: auto; right: 4%; bottom: 14%; }
+  .hc-menu { grid-area: menu; align-self: center; }
+  .hc-menu ul { gap: 8px; justify-items: end; }
+  .hc-menu li { width: calc(100% - var(--k) * 1.6vw); transform: rotate(-6deg); }
+  .hc-menu a { min-height: 58px; }
+  .hc-item { font-size: clamp(1.7rem, 2.5vw, 2.5rem); }
+  .hc-side { grid-area: side; align-self: end; grid-template-columns: repeat(2, minmax(0, 140px)); justify-content: end; }
+  .hc-face { right: clamp(24px, 4vw, 64px); top: 18px; }
+}
+@media (min-width: 980px) and (max-height: 760px) { .hc-side { display: none; } }
+@media (min-width: 980px) and (prefers-reduced-motion: no-preference) {
+  .hc-star { will-change: rotate; animation: hc-rot 120s linear infinite; }
+  .hc-star.is-2 { animation-duration: 80s; animation-direction: reverse; }
+}
+@keyframes hc-rot { to { rotate: 360deg; } }
+@media (prefers-reduced-motion: no-preference) {
+  .hc-menu li { animation: hc-in 420ms cubic-bezier(.8, 0, .2, 1) both; animation-delay: calc(var(--k) * 45ms + 80ms); }
+}
+@keyframes hc-in { from { translate: 30% 0; opacity: 0; } }

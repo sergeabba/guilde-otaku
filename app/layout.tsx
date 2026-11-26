@@ -5,6 +5,7 @@ import "./styles/fonts.css";
 import "./styles/typo-directions.css";
 import "./globals.css";
 import "./styles/shonen.css";
+import "./styles/persona-type.css";
 import "./styles/motion.css";
 import "./styles/music.css";
 import "./styles/works-public.css";
@@ -90,6 +91,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {/* Police de l'interface et du texte courant, visibles dès le premier écran. */}
         <link rel="preload" href="/fonts/barlow-condensed/barlow-condensed-latin-700-normal.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         <link rel="preload" href="/fonts/barlow/barlow-latin-400-normal.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+        {/* Voix des titres (typographie commune) : préchargée pour éviter le saut au premier affichage. */}
+        <link rel="preload" href="/fonts/barlow-condensed/barlow-condensed-latin-900-italic.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+        <link rel="preload" href="/fonts/anton/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
       </head>
       <body>
         <a href="#contenu" className="gk-skip">Aller au contenu</a>

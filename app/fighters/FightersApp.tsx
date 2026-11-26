@@ -373,7 +373,11 @@ function BigPortrait({ side, label, m, team, size, order, active, status }: {
   return (
     <aside className={`fxs-side fxs-side--${side}${active ? " is-active" : ""}`} style={{ "--fx-c": m ? accentOf(m) : side === 0 ? "#e8463a" : "#3a8de8" } as React.CSSProperties} aria-label={`${label} : ${m ? m.name : "aucun membre"}`}>
       <div className="fxs-art">
-        {m ? <Portrait key={`${m.id}-${kind}`} m={m} kind={kind} className="fxs-art-img" /> : <span className="fxs-art-empty" aria-hidden="true">?</span>}
+        {/* Détourage du portrait anime quand il est fiable (le personnage sort du cadre), sinon le portrait entier. */}
+        {m ? (kind === "anime" && m.cut
+          // eslint-disable-next-line @next/next/no-img-element
+          ? <img key={`${m.id}-cut`} className="fxs-art-cut" src={m.cut.src} alt="" decoding="async" />
+          : <Portrait key={`${m.id}-${kind}`} m={m} kind={kind} className="fxs-art-img" />) : <span className="fxs-art-empty" aria-hidden="true">?</span>}
         <span className="fxs-art-shade" aria-hidden="true" />
         <span className={`fx-player fx-player--${side} fxs-tag`}>{label}</span>
         {m?.photo && m.anime && (
@@ -606,11 +610,15 @@ function SelectScreen({ roster, mode, versus, reduced, onBack, onReady }: {
                         style={{ "--fx-c": accentOf(m) } as React.CSSProperties}
                         aria-label={`${m.name}, ${m.rank}${hasSprite(m) ? ", sprite personnalisé" : ""}${by.length ? `, choisi par ${by.map((b) => labels[b]).join(" et ")}` : ""}`}
                         onPointerEnter={(e) => { if (e.pointerType === "mouse" && pointerSide !== null) setCursors((c) => { const n: [number, number] = [...c]; n[pointerSide] = i; return n; }); }}
-                        onClick={() => {
+                        // Au toucher : un premier appui place le curseur (portrait et nom suivent),
+                        // un second appui ou « Confirmer » valide. À la souris, le survol sert de curseur
+                        // et le clic valide directement. « Annuler » retire le dernier choix.
+                        onPointerDown={(e) => { e.currentTarget.dataset.touch = e.pointerType === "mouse" ? "" : "1"; e.currentTarget.dataset.was = pointerSide !== null && cursors[pointerSide] === i ? "1" : ""; }}
+                        onClick={(e) => {
                           if (pointerSide === null) return;
-                          // Un appui (ou un clic) choisit directement : « Annuler » le retire.
+                          const touch = e.currentTarget.dataset.touch === "1", was = e.currentTarget.dataset.was === "1";
                           setCursors((c) => { const n: [number, number] = [...c]; n[pointerSide] = i; return n; });
-                          pickFor(pointerSide, m);
+                          if (!touch || was) pickFor(pointerSide, m);
                         }}
                       >
                         <span className="fxs-hx-frame"><span className="fxs-hx-img"><Portrait m={m} /></span></span>
@@ -624,7 +632,7 @@ function SelectScreen({ roster, mode, versus, reduced, onBack, onReady }: {
               ))}
               {list.length === 0 && <p className="fx-muted">Aucun membre ne correspond.</p>}
             </div>
-            <p className="fxs-legend"><span aria-hidden="true">★</span> sprite dédié · {CUSTOM_IDS.length} apparences dessinées · glisse pour parcourir le roster</p>
+            <p className="fxs-legend"><span aria-hidden="true">★</span> sprite dédié · {CUSTOM_IDS.length} apparences dessinées · au toucher, un appui vise, un second confirme</p>
           </>
         )}
 
@@ -655,6 +663,8 @@ function SelectScreen({ roster, mode, versus, reduced, onBack, onReady }: {
         )}
       </div>
 
+      <span className="fxs-vs" aria-hidden="true">VS</span>
+
       <BigPortrait side={1} label={labels[1]} m={focusOf(1)} team={teams[1]} size={size} order={ord(1)} active={pointerSide === 1 || (isAi && rolling)} status={statusOf(1)} />
 
       <footer className="fxs-bar">
@@ -663,13 +673,14 @@ function SelectScreen({ roster, mode, versus, reduced, onBack, onReady }: {
             : phase === "order" ? "Choisis qui combat en premier, en deuxième, puis en troisième." : "Tout est prêt. Lance le combat !"}
         </p>
         <div className="fxs-actions">
+          <button type="button" className="fx-ghost fxs-icon fxs-back-thumb" onClick={onBack} aria-label="Retour aux modes de jeu"><ArrowLeft size={16} aria-hidden="true" /> <span>Retour</span></button>
           {phase === "pick" && (
             <>
               <button type="button" className="fx-ghost fxs-icon" onClick={() => undoFor(pointerSide ?? 1)} disabled={!teams[0].length} aria-label="Annuler le dernier choix"><Undo2 size={16} aria-hidden="true" /> <span>Annuler</span></button>
               {pointerSide !== null && <button type="button" className="fx-ghost fxs-icon" onClick={() => randomFor(pointerSide)} aria-label="Compléter au hasard"><Dices size={16} aria-hidden="true" /> <span>Aléatoire</span></button>}
               {pointerSide !== null && (
                 <button type="button" className={`fx-cta fx-cta--sm fxs-pick fxs-pick--${pointerSide}`} onClick={() => pickFor(pointerSide, at(pointerSide))} disabled={!at(pointerSide) || teams[pointerSide].some((x) => x.id === at(pointerSide)?.id)}>
-                  Choisir {at(pointerSide)?.name ?? ""}
+                  Confirmer {at(pointerSide)?.name ?? ""}
                 </button>
               )}
             </>
