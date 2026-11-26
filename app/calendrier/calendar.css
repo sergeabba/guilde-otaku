@@ -78,3 +78,66 @@
 @keyframes cal-hero-in { from { opacity: 0; transform: translateY(20px) scale(.985); } }
 @keyframes cal-ken { to { transform: scale(1.14) translate(-1.5%, -1%); } }
 @media (prefers-reduced-motion: reduce) { .cal-card, .cal-hero, .cal-hero-bg { animation: none; } .cal-day, .cal-card, .cal-cr { transition: none; } }
+
+/* ═══ CALENDRIER v4 : LA GRILLE DES PROGRAMMES ═══════════════════════════════
+   Références : grilles de programmation des chaînes japonaises (colonnes par jour,
+   heure en gros chiffres à gauche, couleur de la série en liseré), repère « maintenant »
+   rouge comme dans un guide télé. Pas de défilement horizontal : les jours tiennent dans
+   une grille. */
+@media (max-width: 699px) {
+  .cal-title { font-size: clamp(2.2rem, 11vw, 3.2rem); }
+  .cal-lede { font-size: .95rem; }
+}
+.cal-days { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; overflow: visible; padding-bottom: 0; }
+@media (min-width: 700px) { .cal-days { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); grid-auto-flow: column; } }
+.cal-day { min-width: 0; justify-items: center; text-align: center; padding: 8px 4px 7px; gap: 0; min-height: 64px; }
+.cal-day b { font-size: .82rem; letter-spacing: .08em; }
+.cal-day span { font: 400 1.7rem/1 var(--gk-font-impact, "Anton"); }
+.cal-day small { font-size: .68rem; }
+.cal-day.is-today:not([aria-pressed="true"]) { border-color: #f47521; }
+.cal-tools { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; }
+.cal-view { display: none !important; }
+@media (min-width: 900px) { .cal-view { display: inline-flex !important; } }
+
+/* Vue jour : ligne horaire. */
+.cal-tl { list-style: none; margin: 0; padding: 0; display: grid; }
+.cal-slot { position: relative; display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 0 14px; padding-block: 12px; border-top: 1px solid rgba(246,240,228,.12); animation: cal-card-in 420ms calc(var(--i, 0) * 40ms) cubic-bezier(.16,1,.3,1) both; }
+@media (min-width: 700px) { .cal-slot { grid-template-columns: 110px minmax(0, 1fr); gap: 0 22px; } }
+.cal-slot-time { font: 400 clamp(1.4rem, 4.4vw, 2.2rem)/1 var(--gk-font-impact, "Anton"); color: #fff9ed; padding-top: 4px; border-right: 4px solid var(--c, #f47521); padding-right: 10px; text-align: right; }
+.cal-slot.is-aired .cal-slot-time { color: rgba(246,240,228,.45); }
+.cal-slot-card { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 12px; align-items: start; min-width: 0; }
+@media (min-width: 700px) { .cal-slot-card { grid-template-columns: 86px minmax(0, 1fr); } }
+.cal-slot .cal-card-poster { position: relative; aspect-ratio: 2 / 3; overflow: hidden; border: 2px solid rgba(246,240,228,.8); background: #1d1a22; }
+.cal-slot .cal-card-body { min-width: 0; display: grid; gap: 6px; }
+.cal-slot h3 { font: 900 italic clamp(1.05rem, 2.6vw, 1.35rem)/1.05 var(--gk-font-ui); text-transform: uppercase; overflow-wrap: anywhere; }
+.cal-slot .cal-chips { margin-top: 0; }
+.cal-slot .cal-card-syn { color: #bdb5a9; font-size: .92rem; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.cal-slot .cal-card-foot { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.cal-slot.is-followed { background: linear-gradient(90deg, rgba(244,117,33,.08), transparent 60%); }
+.cal-slot.is-focus { outline: 3px solid #f47521; outline-offset: 4px; }
+.cal-slot.has-now { padding-top: 30px; }
+.cal-now { position: absolute; left: 0; right: 0; top: -1px; display: flex; align-items: center; gap: 8px; font: 900 .72rem var(--gk-font-ui); letter-spacing: .16em; text-transform: uppercase; color: #ff3b3b; }
+.cal-now::after { content: ""; flex: 1; height: 3px; background: #ff3b3b; box-shadow: 0 0 10px rgba(255,59,59,.6); }
+
+/* Vue semaine : grille de programmation (ordinateur). */
+.cal-week { margin-top: 22px; display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); grid-auto-flow: column; border: 3px solid #f6f0e6; background: #121016; }
+.cal-week-col { display: grid; align-content: start; gap: 0; min-width: 0; border-left: 1px solid rgba(246,240,228,.2); }
+.cal-week-col:first-child { border-left: 0; }
+.cal-week-col.is-today { background: rgba(244,117,33,.07); }
+.cal-week-head { position: sticky; top: 110px; z-index: 1; display: grid; padding: 10px 8px; background: #f6f0e6; color: #0f0e13; text-align: center; }
+.cal-week-col.is-today .cal-week-head { background: #f47521; }
+.cal-week-head b { font: 900 .95rem var(--gk-font-ui); text-transform: uppercase; }
+.cal-week-head small { font: 700 .72rem var(--gk-font-ui); text-transform: uppercase; letter-spacing: .06em; }
+.cal-week-item { display: grid; gap: 2px; text-align: left; padding: 9px 8px 9px 10px; min-height: 64px; color: #f6f0e6; background: none; border: 0; border-top: 1px solid rgba(246,240,228,.12); border-left: 4px solid var(--c, #f47521); cursor: pointer; }
+.cal-week-item time { font: 400 1.05rem/1 var(--gk-font-impact, "Anton"); }
+.cal-week-item strong { font: 800 .86rem/1.12 var(--gk-font-ui); text-transform: uppercase; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.cal-week-item small { font: 700 .7rem var(--gk-font-ui); color: #bdb5a9; }
+.cal-week-item.is-aired { opacity: .55; }
+.cal-week-item.is-followed small { color: #f47521; }
+@media (hover: hover) { .cal-week-item:hover { background: rgba(255,255,255,.06); } }
+.cal-week-empty { padding: 12px 8px; color: #6f6a62; font: 700 .8rem var(--gk-font-ui); text-align: center; }
+@media (prefers-reduced-motion: reduce) { .cal-slot { animation: none; } }
+@keyframes cal-card-in { from { opacity: 0; transform: translateY(12px); } }
+/* Ligne horaire : bouton Crunchyroll discret, la ligne reste compacte au pouce. */
+.cal-slot .cal-cr.is-sm { padding: 7px 12px; min-height: 40px; font-size: .82rem; border-width: 2px; box-shadow: 3px 3px 0 #f6f0e6; }
+@media (max-width: 699px) { .cal-slot-card { grid-template-columns: 54px minmax(0, 1fr); gap: 10px; } .cal-slot-time { font-size: 1.3rem; padding-right: 8px; } }

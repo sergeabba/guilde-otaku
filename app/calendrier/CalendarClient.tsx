@@ -14,6 +14,7 @@ import "./calendar.css";
 import RubricMark from "../components/guilde/RubricMark";
 
 const DAY = new Intl.DateTimeFormat("fr-FR", { weekday: "long" });
+const DAY_S = new Intl.DateTimeFormat("fr-FR", { weekday: "short" });
 const DATE = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" });
 const TIME = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit" });
 const dayKey = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
@@ -44,6 +45,7 @@ export default function CalendarClient({ episodes }: { episodes: AiringEpisode[]
   const [day, setDay] = useState<string | null>(null);
   const [mine, setMine] = useState(false);
   const [focus, setFocus] = useState<number | null>(null);
+  const [view, setView] = useState<"jour" | "semaine">("jour");
 
   useEffect(() => { void Promise.resolve().then(() => {
     const t = Date.now(); setNow(t);
@@ -90,21 +92,31 @@ export default function CalendarClient({ episodes }: { episodes: AiringEpisode[]
         ) : (
           <>
             <nav className="cal-days" aria-label="Jours de la semaine">
-              {days.map((d) => (
-                <button key={d.key} type="button" className="cal-day" aria-pressed={d.key === current?.key} onClick={() => setDay(d.key)}>
-                  <b>{now !== null && d.key === dayKey(new Date(now)) ? "Aujourd'hui" : DAY.format(d.date)}</b>
-                  <small>{DATE.format(d.date)} · {d.list.length} épisode{d.list.length > 1 ? "s" : ""}</small>
-                </button>
-              ))}
+              {days.map((d) => {
+                const today = now !== null && d.key === dayKey(new Date(now));
+                return (
+                  <button key={d.key} type="button" className={`cal-day${today ? " is-today" : ""}`} aria-pressed={view === "jour" && d.key === current?.key} onClick={() => { setDay(d.key); setView("jour"); }} aria-label={`${today ? "Aujourd'hui" : DAY.format(d.date)} ${DATE.format(d.date)}, ${d.list.length} épisode${d.list.length > 1 ? "s" : ""}`}>
+                    <b>{today ? "Auj." : DAY_S.format(d.date).replace(".", "")}</b>
+                    <span>{d.date.getDate()}</span>
+                    <small>{d.list.length} ép.</small>
+                  </button>
+                );
+              })}
             </nav>
             <div className="cal-tools">
               <div className="gk-switch" role="group" aria-label="Filtrer">
-                <button type="button" aria-pressed={!mine} onClick={() => setMine(false)}>Toute la semaine</button>
+                <button type="button" aria-pressed={!mine} onClick={() => setMine(false)}>Tout</button>
                 <button type="button" aria-pressed={mine} onClick={() => setMine(true)}>Suivis par la Guilde ({followedCount})</button>
+              </div>
+              <div className="gk-switch cal-view" role="group" aria-label="Affichage">
+                <button type="button" aria-pressed={view === "jour"} onClick={() => setView("jour")}>Jour</button>
+                <button type="button" aria-pressed={view === "semaine"} onClick={() => setView("semaine")}>Semaine</button>
               </div>
             </div>
 
-            {!featured ? (
+            {view === "semaine" ? (
+              <WeekGrid days={days} mine={mine} now={now} onPick={(k, id) => { setDay(k); setView("jour"); setFocus(id); setTimeout(() => document.getElementById(`cal-${id}`)?.scrollIntoView({ block: "center", behavior: "smooth" }), 120); }} />
+            ) : !featured ? (
               <p className="cal-empty">{mine ? "Aucune série suivie par la Guilde ce jour-là." : "Aucun épisode ce jour-là."}</p>
             ) : (
               <div key={`${current?.key}-${mine}`} className="cal-day-view">
@@ -130,25 +142,29 @@ export default function CalendarClient({ episodes }: { episodes: AiringEpisode[]
                 </article>
 
                 {rest.length > 0 && (
-                  <ol className="cal-grid">
+                  <ol className="cal-tl" aria-label="Programme du jour">
                     {rest.map((e, i) => {
                       const aired = now !== null && e.at * 1000 <= now;
+                      // Repère « maintenant » : avant le premier épisode encore à venir du jour.
+                      const nowMark = now !== null && !aired && (i === 0 || rest[i - 1].at * 1000 <= now) && dayKey(new Date(now)) === current?.key;
                       return (
-                        <li key={`${e.mediaId}-${e.episode}`} id={`cal-${e.mediaId}`} className={`cal-card${aired ? " is-aired" : ""}${focus === e.mediaId ? " is-focus" : ""}${e.followers.length ? " is-followed" : ""}`}
-                          style={{ "--i": Math.min(i, 14), "--c": e.color ?? "#f47521", "--bn": e.banner ? `url(${JSON.stringify(e.banner)})` : "none" } as React.CSSProperties}>
-                          <div className="cal-card-bn" aria-hidden="true" />
-                          <div className="cal-card-poster">{e.cover && <Image src={e.cover} alt="" fill sizes="120px" />}</div>
-                          <div className="cal-card-body">
-                            <p className="cal-chips">
-                              <span className="cal-chip is-time"><Clock size={13} aria-hidden="true" /> {now === null ? "··:··" : TIME.format(new Date(e.at * 1000))}</span>
-                              <span className="cal-chip is-ep">Ép. {e.episode}</span>
-                              {now !== null && <span className="cal-chip">{aired ? "Disponible" : countdown(e.at, now)}</span>}
-                            </p>
-                            <h3>{e.title}</h3>
-                            <p className="cal-card-syn">{e.synopsis ?? "Synopsis français indisponible."}</p>
-                            <div className="cal-card-foot">
-                              <a className="cal-cr is-sm" href={e.crunchyroll} target="_blank" rel="noopener noreferrer" aria-label={`Regarder ${e.title} sur Crunchyroll`}><Play size={14} aria-hidden="true" /> Crunchyroll</a>
-                              <Fans e={e} />
+                        <li key={`${e.mediaId}-${e.episode}`} id={`cal-${e.mediaId}`} className={`cal-slot${aired ? " is-aired" : ""}${focus === e.mediaId ? " is-focus" : ""}${e.followers.length ? " is-followed" : ""}${nowMark ? " has-now" : ""}`}
+                          style={{ "--i": Math.min(i, 14), "--c": e.color ?? "#f47521" } as React.CSSProperties}>
+                          {nowMark && <span className="cal-now" aria-label="Maintenant">Maintenant</span>}
+                          <time className="cal-slot-time" dateTime={new Date(e.at * 1000).toISOString()}>{now === null ? "··:··" : TIME.format(new Date(e.at * 1000))}</time>
+                          <div className="cal-slot-card">
+                            <div className="cal-card-poster">{e.cover && <Image src={e.cover} alt="" fill sizes="80px" />}</div>
+                            <div className="cal-card-body">
+                              <h3>{e.title}</h3>
+                              <p className="cal-chips">
+                                <span className="cal-chip is-ep">Ép. {e.episode}{e.total ? ` / ${e.total}` : ""}</span>
+                                {now !== null && <span className="cal-chip">{aired ? "Disponible" : countdown(e.at, now)}</span>}
+                              </p>
+                              {e.synopsis && <p className="cal-card-syn">{e.synopsis}</p>}
+                              <div className="cal-card-foot">
+                                <a className="cal-cr is-sm" href={e.crunchyroll} target="_blank" rel="noopener noreferrer" aria-label={`Regarder ${e.title} sur Crunchyroll`}><Play size={14} aria-hidden="true" /> Crunchyroll</a>
+                                <Fans e={e} />
+                              </div>
                             </div>
                           </div>
                         </li>
@@ -162,6 +178,32 @@ export default function CalendarClient({ episodes }: { episodes: AiringEpisode[]
           </>
         )}
       </main>
+    </div>
+  );
+}
+
+/** Vue semaine : la grille de programmation, une colonne par jour, les épisodes dans
+ *  l'ordre de diffusion (comme un programme télé). Toucher un titre ouvre le jour. */
+function WeekGrid({ days, mine, now, onPick }: { days: { key: string; date: Date; list: AiringEpisode[] }[]; mine: boolean; now: number | null; onPick: (day: string, id: number) => void }) {
+  const today = now !== null ? dayKey(new Date(now)) : null;
+  return (
+    <div className="cal-week" role="table" aria-label="Programme de la semaine">
+      {days.map((d) => {
+        const list = d.list.filter((e) => !mine || e.followers.length);
+        return (
+          <div key={d.key} className={`cal-week-col${d.key === today ? " is-today" : ""}`} role="rowgroup">
+            <div className="cal-week-head" role="row"><b>{d.key === today ? "Aujourd'hui" : DAY.format(d.date)}</b><small>{DATE.format(d.date)}</small></div>
+            {list.length === 0 && <p className="cal-week-empty">Rien</p>}
+            {list.map((e) => (
+              <button key={`${e.mediaId}-${e.episode}`} type="button" role="row" className={`cal-week-item${now !== null && e.at * 1000 <= now ? " is-aired" : ""}${e.followers.length ? " is-followed" : ""}`} style={{ "--c": e.color ?? "#f47521" } as React.CSSProperties} onClick={() => onPick(d.key, e.mediaId)}>
+                <time role="cell">{now === null ? "··:··" : TIME.format(new Date(e.at * 1000))}</time>
+                <strong role="cell">{e.title}</strong>
+                <small role="cell">Ép. {e.episode}{e.followers.length ? ` · ${e.followers.length} fan${e.followers.length > 1 ? "s" : ""}` : ""}</small>
+              </button>
+            ))}
+          </div>
+        );
+      })}
     </div>
   );
 }
