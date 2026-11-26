@@ -10,9 +10,24 @@ import { onColor } from "../utils/color";
 import VideoPlayer from "./VideoPlayer";
 import { objectPosition } from "../../lib/member-extras";
 import { rescuedByFallback } from "../../lib/local-image";
+import Sceau from "./guilde/Sceau";
+import { starTile } from "./guilde/textures";
+import "../styles/arcane-card.css";
 
-export default function MemberCard({ member, index, viewMode, onClick }: {
+const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX", "XXI"];
+const roman = (n: number) => (n <= 21 ? ROMAN[n - 1] : String(n));
+const TILE = starTile("rgba(0,0,0,.2)", 26);
+
+/**
+ * Carte de membre en arcane : cadre de papier, champ étoilé à la couleur du grade, numéro
+ * romain gravé, sceau du grade, nom sur ruban. Avec un détourage fiable (vue Anime), le
+ * personnage sort de sa carte par le haut ; sinon le portrait remplit le champ (anime ou
+ * photo réelle, cadrage gardé).
+ */
+export default function MemberCard({ member, index, viewMode, onClick, cut }: {
   member: Member;
+  /** Détourage du portrait anime (lib/cutouts.json), si fiable. */
+  cut?: { src: string; w: number; h: number };
   index: number;
   viewMode: ViewMode;
   /** Reçoit l'élément de la carte (point de départ de la transition vers la fiche). */
@@ -30,7 +45,7 @@ export default function MemberCard({ member, index, viewMode, onClick }: {
 
   return (
     <div
-      className="mc"
+      className={`mc is-arcane${cut && viewMode === "anime" ? " has-cut" : ""}`}
       role="button"
       tabIndex={0}
       data-member-id={member.id}
@@ -40,10 +55,14 @@ export default function MemberCard({ member, index, viewMode, onClick }: {
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(e.currentTarget); }
       }}
       aria-label={`Ouvrir la fiche de ${member.name}, ${member.rank}`}
-      style={{ "--rk": accent, "--rk-on": onColor(accent), "--i": index } as React.CSSProperties}
+      style={{ "--rk": accent, "--rk-on": onColor(accent), "--i": index, "--mc-tile": TILE } as React.CSSProperties}
     >
+      <span className="mc-field" aria-hidden="true" />
       <div key={viewMode} className="mc-media is-swap">
-        {videoSrc ? (
+        {isAnime && cut && !videoSrc ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img className="mc-cut" src={cut.src} width={cut.w} height={cut.h} alt="" decoding="async" loading={index < 6 ? "eager" : "lazy"} />
+        ) : videoSrc ? (
           <VideoPlayer src={videoSrc} fit="cover" objectPosition="smart" fullscreenBtn />
         ) : !hasError ? (
           <Image
@@ -63,7 +82,8 @@ export default function MemberCard({ member, index, viewMode, onClick }: {
       <span className="mc-holo" aria-hidden="true" />
 
       <span className="mc-rank">{member.rank}</span>
-      <span className="mc-no" aria-hidden="true">{String(member.id).padStart(2, "0")}</span>
+      <span className="mc-no" aria-hidden="true">{roman(member.id)}</span>
+      <Sceau className="mc-seal" rank={member.rank} tone="rank" accent={accent} size={40} />
 
       <div className="mc-plate">
         {member.badge && (

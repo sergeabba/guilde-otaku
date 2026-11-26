@@ -8,6 +8,7 @@ import TeamBoard, { type TeamMember } from "./TeamBoard";
 import type { GuildTeam, Sport } from "../../lib/teams-logic";
 import "./teams.css";
 import RubricMark from "../components/guilde/RubricMark";
+import TeamsEmpty from "./TeamsEmpty";
 
 type Filter = "tout" | Sport;
 
@@ -43,7 +44,7 @@ export default function TeamsClient({ teams, members, available }: { teams: Guil
         </header>
         <div className="gk-wrap tm-list">
           {shown.length === 0 ? (
-            <p className="tm-empty">{available ? "Les équipes arrivent bientôt : la Guilde prépare ses compositions." : "Les équipes arrivent bientôt."}</p>
+            <TeamsEmpty available={available} />
           ) : shown.map((t) => <TeamBoard key={t.id} team={t} members={byId} faceMode={faceMode} />)}
         </div>
       </main>

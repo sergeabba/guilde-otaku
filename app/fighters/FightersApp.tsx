@@ -15,9 +15,18 @@ import { celebrate } from "../../lib/fx";
 import type { MatchResult } from "./FightScreen";
 import { useMusicDock } from "../components/MusicDock";
 import Ransom from "../components/Ransom";
+import Sceau from "../components/guilde/Sceau";
 import FaceToggle from "../components/FaceToggle";
 import { setFace, useFace } from "../../lib/face";
 import { directSrc } from "../../lib/image-loader";
+import { uiSound } from "../../lib/fighters/ui-sound";
+import { startMenuPad } from "../../lib/fighters/menu-pad";
+
+/** Petit son de curseur à chaque changement de sélection (pas au premier affichage). */
+function useUiSounds(deps: unknown[]) {
+  const first = useRef(true);
+  useEffect(() => { if (first.current) { first.current = false; return; } uiSound.move(); }, deps); // eslint-disable-line react-hooks/exhaustive-deps
+}
 
 const FightScreen = dynamic(() => import("./FightScreen"), { ssr: false });
 
@@ -93,8 +102,10 @@ function TitleScreen({ roster, game, setGame, versus, setVersus, level, setLevel
   const items = [...MODES.map((m) => m.id), "options"] as const;
   const [cur, setCur] = useState(Math.max(0, items.indexOf(game)));
   const [whoCur, setWhoCur] = useState(versus === "local" ? 1 : 0);
+  useUiSounds([cur, whoCur, stage]);
   const choose = useCallback((i: number) => {
     const id = items[i];
+    uiSound.confirm();
     if (id === "options") { setLevel(LEVELS[(LEVELS.indexOf(level) + 1) % LEVELS.length]); return; }
     setGame(id);
     if (id === "versus" || id === "equipes") { setStage("who"); return; }
@@ -246,6 +257,7 @@ function StageThumb({ stage }: { stage: Stage }) {
 
 function StageScreen({ onPick, onBack }: { onPick: (s: Stage) => void; onBack: () => void }) {
   const [cur, setCur] = useState(0);
+  useUiSounds([cur]);
   const all = STAGES.length + 1; // + « Au hasard »
   const pick = useCallback((i: number) => onPick(i >= STAGES.length ? STAGES[Math.floor(Math.random() * STAGES.length)] : STAGES[i]), [onPick]);
   useEffect(() => {
@@ -393,7 +405,11 @@ function BigPortrait({ side, label, m, team, size, order, active, status }: {
       {m && <FighterPreview memberId={m.id} side={side} />}
       <div className="fxs-plate">
         <p className="fxs-status" aria-live="polite">{status}</p>
-        <h2 className="fxs-name">{m ? m.name : "—"}</h2>
+        <div className="fxs-id">
+          {m && <Sceau className="fxs-seal" rank={m.rank} text={rankRomaji[m.rank as Rank]} tone="rank" accent={accentOf(m)} size={64} />}
+          {m && <span className="fxs-num" aria-hidden="true">N°{String(m.id).padStart(3, "0")}</span>}
+          <h2 className="fxs-name">{m ? m.name : "—"}</h2>
+        </div>
         {m && (
           <p className="fxs-rank">
             <span>{m.rank}</span>{rankRomaji[m.rank as Rank] && <em>{rankRomaji[m.rank as Rank]}</em>}
@@ -433,6 +449,7 @@ function SelectScreen({ roster, mode, versus, reduced, onBack, onReady }: {
   const labels: [string, string] = ["J1", isAi ? "IA" : "J2"];
   const [teams, setTeams] = useState<[RosterMember[], RosterMember[]]>([[], []]);
   const [cursors, setCursors] = useState<[number, number]>([0, Math.max(0, roster.length - 1)]);
+  useUiSounds([cursors[0], cursors[1]]);
   const [orders, setOrders] = useState<[number[], number[]]>([[], []]);
   // Ordre de passage : celui des choix, sauf si le joueur demande à le changer.
   const [customOrder, setCustomOrder] = useState<[boolean, boolean]>([false, false]);
@@ -474,6 +491,7 @@ function SelectScreen({ roster, mode, versus, reduced, onBack, onReady }: {
 
   const pickFor = useCallback((side: 0 | 1, m: RosterMember | null) => {
     if (!m) return;
+    uiSound.confirm();
     setTeams((t) => {
       if (t[side].length >= size || t[side].some((x) => x.id === m.id)) return t;
       const next: [RosterMember[], RosterMember[]] = [[...t[0]], [...t[1]]];
@@ -699,6 +717,8 @@ function SelectScreen({ roster, mode, versus, reduced, onBack, onReady }: {
 // ─── Écran VS ─────────────────────────────────────────────────────────────────
 function VsScreen({ teams, labels, onDone, reduced }: { teams: [RosterMember[], RosterMember[]]; labels: [string, string]; onDone: () => void; reduced: boolean }) {
   const face = useFace();
+  // Le « VS » frappe : son d'impact synchronisé avec l'éclair (fighters-vs.css, 600 ms).
+  useEffect(() => { const t = setTimeout(() => uiSound.impact(), reduced ? 0 : 600); return () => clearTimeout(t); }, [reduced]);
   useEffect(() => {
     const t = setTimeout(onDone, reduced ? 1800 : 2800);
     const onKey = (e: KeyboardEvent) => { if (e.key === "Enter" || e.key === " " || e.key === "Escape") onDone(); };
@@ -758,6 +778,8 @@ export default function FightersApp({ roster }: { roster: RosterMember[] }) {
 
   useEffect(() => { window.scrollTo({ top: 0 }); }, [screen]);
   const ingame = screen !== "title";
+  // Manette dans les menus (le combat lit déjà les manettes lui-même).
+  useEffect(() => (screen === "fight" ? undefined : startMenuPad()), [screen]);
   // Le lecteur de musique flottant se réduit (en pause) pendant les écrans plein jeu.
   const dock = useMusicDock();
   const dockMinimize = dock?.minimize;

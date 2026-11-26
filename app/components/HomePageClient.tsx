@@ -96,6 +96,10 @@ export default function HomePageClient({ initialMembers, featuredFilm, atelierTi
     });
   }, [selectedMember]);
   const viewMode: ViewMode = useFace();
+  // Annuaire : arcanes (découverte) ou liste (consultation rapide), gardé sur l'appareil.
+  const [dirView, setDirView] = useState<"arcanes" | "liste">("arcanes");
+  useEffect(() => { try { if (localStorage.getItem("gk-annuaire") === "liste") void Promise.resolve().then(() => setDirView("liste")); } catch { /* stockage indisponible */ } }, []);
+  const changeDirView = (v: "arcanes" | "liste") => { setDirView(v); try { localStorage.setItem("gk-annuaire", v); } catch { /* stockage indisponible */ } };
   const setViewMode = setFace;
   const [mounted, setMounted] = useState(false);
   const [showFloat, setShowFloat] = useState(false);
@@ -393,6 +397,10 @@ export default function HomePageClient({ initialMembers, featuredFilm, atelierTi
                   </button>
                 )}
               </div>
+              <div className="gk-switch hm-viewmode" role="group" aria-label="Affichage de l'annuaire">
+                <button type="button" aria-pressed={dirView === "arcanes"} onClick={() => changeDirView("arcanes")}>Arcanes</button>
+                <button type="button" aria-pressed={dirView === "liste"} onClick={() => changeDirView("liste")}>Liste</button>
+              </div>
               <div className="gk-switch" role="group" aria-label="Type de portrait">
                 <button type="button" aria-pressed={viewMode === "real"} onClick={() => setViewMode("real")}>
                   <User size={16} aria-hidden="true" /> Réel
@@ -467,17 +475,36 @@ export default function HomePageClient({ initialMembers, featuredFilm, atelierTi
                         <span className="gk-tag">{rankMembers.length} {rankMembers.length > 1 ? "membres" : "membre"}</span>
                         <span className="hm-rank-line" aria-hidden="true" />
                       </div>
-                      <div className="hm-grid gk-stagger">
-                        {rankMembers.map((member) => (
-                          <MemberCard
-                            key={member.id}
-                            member={member}
-                            index={cardIndex++}
-                            viewMode={viewMode}
-                            onClick={(el) => openMember(member, el)}
-                          />
-                        ))}
-                      </div>
+                      {dirView === "liste" ? (
+                        <ul className="hm-list">
+                          {rankMembers.map((member) => {
+                            const src = viewMode === "anime" ? (member.animeChar || member.photo) : (member.photo || member.animeChar);
+                            return (
+                              <li key={member.id} data-member-id={member.id}>
+                                <button type="button" onClick={(e) => openMember(member, e.currentTarget)} aria-label={`Ouvrir la fiche de ${member.name}, ${member.rank}`}>
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <span className="hm-list-face mc-media">{src && <img src={optimizedSrc(src, 128)} alt="" loading="lazy" decoding="async" />}</span>
+                                  <span><b>{member.name}</b><small>{[member.birthday, COUNTRIES.find((c) => c.code === member.country)?.label].filter(Boolean).join(" · ")}</small></span>
+                                  <span className="hm-list-rank">{member.rank}</span>
+                                </button>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      ) : (
+                        <div className="hm-grid gk-stagger">
+                          {rankMembers.map((member) => (
+                            <MemberCard
+                              key={member.id}
+                              member={member}
+                              index={cardIndex++}
+                              viewMode={viewMode}
+                              cut={cuts[member.id]}
+                              onClick={(el) => openMember(member, el)}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </section>
                   );
                 })}

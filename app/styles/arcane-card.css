@@ -1,0 +1,43 @@
+/* ═══ CARTE DE MEMBRE EN ARCANE (annuaire) ═══════════════════════════════════
+   Remplace la vignette « photo + cartouche ». Cadre de papier incliné, champ étoilé à la
+   couleur du grade, numéro romain en Cinzel, sceau du grade, nom sur ruban. */
+.mc.is-arcane { aspect-ratio: 5 / 8; overflow: visible; background: #fffaf0; border: 3px solid #0d0c10; box-shadow: 6px 6px 0 #0d0c10;
+  clip-path: none; rotate: calc((var(--i) % 3 - 1) * .8deg); transition: rotate 220ms var(--gu-ease-snap, ease), translate 220ms var(--gu-ease-snap, ease), box-shadow 220ms; }
+.mc.is-arcane .mc-field { position: absolute; inset: 8% 7% 22%; background: var(--rk) var(--mc-tile); border: 2px solid #0d0c10; }
+.mc.is-arcane .mc-media { inset: 8% 7% 22%; overflow: hidden; }
+.mc.is-arcane .mc-media img { object-position: 50% 15%; }
+.mc.is-arcane.has-cut .mc-media { overflow: visible; inset: -6% 0 22%; }
+.mc.is-arcane .mc-cut { position: absolute; left: 50%; bottom: 0; width: auto; max-width: 118%; height: 100%; translate: -50% 0; object-fit: contain; object-position: bottom;
+  filter: drop-shadow(3px 0 0 #fff) drop-shadow(-3px 0 0 #fff) drop-shadow(0 -3px 0 #fff) drop-shadow(0 0 1px #0d0c10); transition: translate 260ms var(--gu-ease-snap, ease); }
+.mc.is-arcane .mc-tone { display: none; }
+.mc.is-arcane .mc-rank { top: auto; bottom: 17%; left: -4px; z-index: 3; font-size: .62rem; border-left: 2px solid #121016; rotate: -3deg; }
+.mc.is-arcane .mc-no { left: 50%; right: auto; top: .4%; translate: -50% 0; z-index: 3; font: 400 clamp(.9rem, 2vw, 1.15rem)/1.2 "Cinzel", Georgia, serif; color: #0d0c10; -webkit-text-stroke: 0; letter-spacing: .08em; }
+.mc.is-arcane .mc-seal { position: absolute; z-index: 3; right: -12px; bottom: 15%; width: 40px; height: 40px; }
+.mc.is-arcane .mc-plate { left: 6%; right: 6%; bottom: 3%; z-index: 3; display: grid; justify-items: center; gap: 2px; padding: 0; background: none; border: 0; box-shadow: none; text-align: center; }
+.mc.is-arcane .mc-name { padding: 3px 10px 2px; background: #0d0c10; color: #fffaf0; clip-path: polygon(0 0, 100% 0, 96% 50%, 100% 100%, 0 100%, 4% 50%); font: 400 clamp(.78rem, 2.4vw, .98rem)/1.15 "Cinzel", Georgia, serif; letter-spacing: .04em; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc.is-arcane .mc-meta { justify-content: center; color: #4c463e; }
+.mc.is-arcane .mc-badge { position: absolute; top: -58%; left: 50%; translate: -50% 0; }
+@media (hover: hover) {
+  .mc.is-arcane:hover { rotate: 0deg; translate: 0 -8px; box-shadow: 10px 12px 0 #0d0c10; }
+  .mc.is-arcane.has-cut:hover .mc-cut { translate: -50% -5%; }
+}
+.mc.is-arcane:focus-visible { outline: 3px solid var(--rk); outline-offset: 5px; }
+@media (max-width: 420px) { .mc.is-arcane .mc-seal { width: 32px; height: 32px; right: -8px; } }
+/* Plus d'air entre les cartes : le personnage dépasse par le haut. */
+.hm-grid:has(.mc.is-arcane) { row-gap: clamp(30px, 4vw, 46px); padding-top: 18px; }
+
+/* ── Mode liste (annuaire pratique) ── */
+.hm-list { list-style: none; margin: 0; padding: 0; border-top: 3px solid var(--gk-text); }
+.hm-list li { border-bottom: 1.5px solid var(--gk-rule, rgba(127,127,127,.4)); }
+.hm-list button { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 6px 4px; border: 0; background: none; color: inherit; text-align: left; cursor: pointer; }
+.hm-list button:hover, .hm-list button:focus-visible { background: color-mix(in srgb, var(--rk) 18%, transparent); }
+.hm-list-face { position: relative; width: 52px; height: 52px; overflow: hidden; background: var(--rk); clip-path: polygon(8% 0, 100% 0, 92% 100%, 0 100%); }
+.hm-list-face img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; }
+.hm-list b { display: block; font: 900 italic 1.1rem/1.1 var(--gk-font-title); text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hm-list small { font: 600 .82rem var(--gk-font-body); opacity: .7; }
+.hm-list-rank { padding: 2px 10px; background: #0d0c10; color: #fffaf0; font: 800 .72rem var(--gk-font-ui); letter-spacing: .08em; text-transform: uppercase; box-shadow: 3px 3px 0 var(--rk); white-space: nowrap; }
+.hm-viewmode { display: inline-flex; }
+/* Outils de l'annuaire : recherche, vue (arcanes / liste), portrait (anime / réel). */
+.hm-tools { grid-template-columns: 1fr 1fr; }
+.hm-tools > .gk-field { grid-column: 1 / -1; }
+@media (min-width: 760px) { .hm-tools { grid-template-columns: minmax(0, 420px) auto auto; } .hm-tools > .gk-field { grid-column: auto; } }

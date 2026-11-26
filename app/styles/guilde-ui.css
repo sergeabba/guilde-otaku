@@ -93,3 +93,13 @@ a.lame:active .lame-shadow, button.lame:active .lame-shadow { translate: .05em .
 .rm-big.rm-teams { right: -6%; top: 0; opacity: .14; }
 @media (max-width: 699px) { .rm-big { width: 70vw; right: -20%; top: -6%; opacity: .1; } }
 :is(.gk-hero, .bb-masthead, .cal-head, .tm-hero, .wt-hero) { overflow-x: clip; }
+
+/* ── Filtres, onglets, sélecteurs : la voix des lames partout ───────────────────
+   Puces et groupes de boutons en capitales italiques, coupés en biais ; l'état choisi
+   devient une dalle d'encre avec l'ombre de l'accent (comme une entrée de menu). */
+.gk-chip, .gk-switch button { font-family: var(--gk-font-title, "Barlow Condensed", sans-serif) !important; font-weight: 900 !important; font-style: italic; text-transform: uppercase; letter-spacing: .03em; }
+.gk-chip { clip-path: polygon(4% 0, 100% 0, 96% 100%, 0 100%); }
+.gk-chip[aria-pressed="true"] { background: var(--gk-text) !important; color: var(--gk-bg) !important; box-shadow: 3px 3px 0 var(--gk-accent) !important; }
+.gk-switch { transform: skewX(-8deg); }
+.gk-switch button > * { transform: skewX(8deg); }
+.gk-switch button[aria-pressed="true"] { box-shadow: inset 0 -4px 0 var(--gk-accent); }

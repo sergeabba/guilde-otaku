@@ -70,3 +70,12 @@
   .fxs-actions > * { min-height: 40px; }
   .fxs-name { font-size: 1.15rem; }
 }
+
+/* Identité du combattant : sceau du grade (bibliothèque de la Guilde), numéro en contour, nom. */
+.fxs-id { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; align-items: end; column-gap: 10px; }
+.fxs-side--1 .fxs-id { grid-template-columns: 1fr auto; justify-items: end; }
+.fxs-seal { grid-row: span 2; width: clamp(44px, 5vw, 64px); height: auto; rotate: -10deg; filter: drop-shadow(3px 3px 0 #050509); }
+.fxs-side--1 .fxs-seal { grid-column: 2; grid-row: 1 / span 2; rotate: 10deg; }
+.fxs-num { font: 400 clamp(1rem, 1.8vw, 1.6rem)/1 var(--gk-font-impact, "Anton"); color: transparent; -webkit-text-stroke: 1.5px var(--fx-paper, #f3ecdc); }
+.fxs-side--1 .fxs-num, .fxs-side--1 .fxs-name { grid-column: 1; }
+@media (max-width: 899px) { .fxs-seal { width: 34px; } .fxs-num { font-size: .8rem; } }
