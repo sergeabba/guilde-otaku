@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { exploData } from "../../../lib/explo-data";
+import CharacterSheet from "../../components/member/CharacterSheet";
 import MemberProfileClient, { type ProfileNeighbor } from "./MemberProfileClient";
 import { getPublicMember, parseMemberId } from "../../../lib/members-server";
 import { memberCardUrl, memberOgUrl, memberProfilePath } from "../../../lib/share";
@@ -58,12 +60,14 @@ const neighbor = (m: { id: number; name: string; rank: string; animeChar: string
 
 export default async function MemberPage({ params, searchParams }: Props) {
   const found = await load(params);
-  // La planche de manga est la vue par défaut ; ?vue=fiche donne la fiche classique.
-  const planche = (await searchParams)?.vue !== "fiche";
+  // Vue par défaut : la fiche de personnage ; ?vue=planche (planche de manga), ?vue=fiche (classique).
+  const vue = (await searchParams)?.vue;
+  const mode = vue === "fiche" ? "fiche" : vue === "planche" ? "planche" : "perso";
   if (!found) notFound();
 
   const { member, prev, next } = found;
-  const backdrop = await tinyImage(member.animeChar || member.photo);
+  const [backdrop, explo] = await Promise.all([tinyImage(member.animeChar || member.photo), exploData().catch(() => null)]);
+  const em = explo?.members.find((x) => x.id === member.id);
   const works = [...(member.extras?.favoriteAnime ?? []), ...(member.extras?.favoriteManga ?? [])];
 
   return (
@@ -74,7 +78,8 @@ export default async function MemberPage({ params, searchParams }: Props) {
       cardUrl={memberCardUrl(member)}
       chroniques={chroniqueLinks(works)}
       pouvoirs={POUVOIRS[member.id] ?? null}
-      initialMode={planche ? "planche" : "fiche"}
+      initialMode={em ? mode : mode === "perso" ? "planche" : mode}
+      sheet={em ? <CharacterSheet m={em} /> : null}
       backdrop={backdrop}
     />
   );

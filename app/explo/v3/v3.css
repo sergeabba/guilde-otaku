@@ -1,0 +1,65 @@
+/* Prototypes de la DA v3 (/explo/v3). */
+.v3-spec { min-height: 100svh; padding: clamp(24px, 5vw, 64px); display: grid; gap: 22px; align-content: start; }
+.v3-spec-h { margin: 0; font-size: clamp(2.4rem, 7vw, 5.6rem); }
+.v3-spec-p { max-width: 60ch; margin: 0; font: 500 1rem/1.5 var(--gk-font-body); opacity: .85; }
+.v3-spec-h2 { margin: 18px 0 0; font-size: 1.2rem; }
+.v3-spec-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 18px; }
+.v3-spec-grid li { display: grid; justify-items: center; gap: 8px; text-align: center; font: 800 .8rem var(--gk-font-ui); letter-spacing: .08em; text-transform: uppercase; }
+.v3-spec-lames { display: flex; flex-wrap: wrap; gap: 26px; align-items: center; }
+.v3-spec-brush { width: min(100%, 420px); aspect-ratio: 3 / 4; object-fit: cover; }
+
+/* ═══ Scènes suivantes (prototype) ═══════════════════════════════════════════ */
+.v3-scene-head { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 8px 16px; width: min(1180px, 100% - 32px); margin: 0 auto 26px; }
+.v3-scene-head h2 { margin: 0; font-size: clamp(1.8rem, 4.6vw, 3.6rem); }
+.v3-scene-head p { grid-column: 2; margin: 0; max-width: 56ch; font: 500 1rem/1.5 var(--gk-font-body); }
+.v3-arc-fan { list-style: none; margin: 0 auto; padding: 40px 16px 10px; width: min(1240px, 100%); display: flex; justify-content: center; }
+.v3-arc-fan li { width: clamp(130px, 15vw, 200px); margin-inline: -1.4vw; rotate: calc((var(--i) - (var(--n) - 1) / 2) * 4deg); translate: 0 calc(abs(var(--i) - (var(--n) - 1) / 2) * 10px); transition: translate 220ms var(--gu-ease-snap), rotate 220ms var(--gu-ease-snap); }
+.v3-arc-fan li:hover, .v3-arc-fan li:focus-within { translate: 0 -26px; rotate: 0deg; z-index: 2; }
+@media (max-width: 899px) {
+  .v3-scene-head { grid-template-columns: auto 1fr; }
+  .v3-scene-head p { grid-column: 1 / -1; }
+  .v3-arc-fan { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px 14px; }
+  .v3-arc-fan li { width: auto; margin: 0; rotate: calc((var(--i) % 2 * 2 - 1) * 2deg); translate: 0 calc(var(--i) % 2 * 16px); }
+}
+.v3-redscene { min-height: 40vh; }
+
+/* ═══ H2 · GRIMOIRE ═══════════════════════════════════════════════════════════ */
+.gr { min-height: 100svh; padding: clamp(14px, 3vw, 40px); display: grid; place-items: center; }
+.gr-book { position: relative; width: min(1320px, 100%); display: grid; grid-template-columns: 1fr 1fr; box-shadow: 0 0 0 2px #000, 14px 14px 0 var(--gu-red); clip-path: polygon(0 1%, 100% 0, 99.6% 100%, .4% 99%); }
+.gr-book::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 60px; translate: -50% 0; background: linear-gradient(90deg, transparent, rgba(60, 40, 10, .28) 45%, rgba(60, 40, 10, .4) 50%, rgba(60, 40, 10, .28) 55%, transparent); pointer-events: none; }
+.gr-page { position: relative; padding: clamp(36px, 5vw, 70px) clamp(28px, 4vw, 64px); display: grid; align-content: start; gap: 18px; min-width: 0; }
+.gr-kicker { margin: 0; font: 800 .78rem var(--gk-font-ui); letter-spacing: .2em; text-transform: uppercase; color: var(--gu-red); }
+.gr-title { margin: 0; display: grid; font: 400 clamp(2.2rem, 4.4vw, 4.4rem)/.95 "Cinzel", Georgia, serif; text-transform: uppercase; letter-spacing: .02em; }
+.gr-title span:last-child { font-family: var(--gk-font-title); font-weight: 900; font-style: italic; color: var(--gu-red); font-size: .9em; }
+.gr-figure { position: relative; margin: 0; aspect-ratio: 1; width: min(100%, 520px); justify-self: center; }
+.gr-seal { position: absolute; inset: 0; width: 100% !important; height: 100% !important; opacity: .95; }
+.gr-portrait { position: absolute; inset: 16%; width: 68%; height: 68%; object-fit: cover; object-position: 50% 18%; }
+.gr-figure figcaption { position: absolute; left: 50%; bottom: 4%; translate: -50% 0; display: grid; justify-items: center; gap: 4px; font-size: 1.05rem; white-space: nowrap; }
+.gr-figure figcaption small { font: 800 .72rem var(--gk-font-ui); letter-spacing: .2em; text-transform: uppercase; padding: 2px 8px; background: var(--gu-ink); color: var(--gu-gold); }
+.gr-lede { margin: 0; font: italic 500 1.1rem/1.5 "Fraunces Edit", Georgia, serif; }
+.gr-toc-h { margin: 0; font-size: 1.1rem; justify-self: center; }
+.gr-tree { position: relative; aspect-ratio: 1 / 1.08; }
+.gr-lines { position: absolute; inset: 0; width: 100%; height: 100%; }
+.gr-lines line { stroke: var(--gu-gold-deep); stroke-width: .5; stroke-dasharray: 1.4 1; vector-effect: non-scaling-stroke; stroke-width: 2; }
+.gr-tree ol { list-style: none; margin: 0; padding: 0; }
+.gr-tree li { position: absolute; left: var(--x); top: var(--y); translate: -50% -50%; width: max-content; max-width: 150px; }
+.gr-tree a { display: grid; justify-items: center; gap: 4px; color: var(--gu-ink); text-decoration: none; text-align: center; }
+.gr-tree a .sceau { width: clamp(64px, 7vw, 100px); height: auto; transition: scale 200ms var(--gu-ease-snap), rotate 300ms var(--gu-ease-snap); }
+.gr-tree a:hover .sceau, .gr-tree a:focus-visible .sceau { scale: 1.08; rotate: -8deg; }
+.gr-node-label { font: 400 .95rem/1 "Cinzel", serif; text-transform: uppercase; letter-spacing: .06em; padding: 3px 8px; background: var(--gu-paper); }
+.gr-tree small { font: 600 .68rem/1.2 var(--gk-font-ui); max-width: 15ch; opacity: .75; }
+.gr-count { margin: 0; justify-self: center; font: 800 .8rem var(--gk-font-ui); letter-spacing: .16em; text-transform: uppercase; }
+@media (max-width: 899px) {
+  .gr { padding: 10px; }
+  .gr-book { grid-template-columns: 1fr; box-shadow: 0 0 0 2px #000, 8px 8px 0 var(--gu-red); }
+  .gr-book::after { display: none; }
+  .gr-page { padding: 34px 20px; }
+  .gr-tree { aspect-ratio: auto; }
+  .gr-lines { display: none; }
+  .gr-tree ol { display: grid; gap: 10px; padding-left: 26px; border-left: 2px dashed var(--gu-gold-deep); }
+  .gr-tree li { position: relative; left: auto; top: auto; translate: none; width: auto; }
+  .gr-tree a { grid-template-columns: 58px 1fr; justify-items: start; text-align: left; column-gap: 12px; min-height: 58px; }
+  .gr-tree a .sceau { grid-row: span 2; width: 58px; }
+  .gr-tree li::before { content: ""; position: absolute; left: -33px; top: 26px; width: 12px; height: 12px; background: var(--gu-gold); rotate: 45deg; }
+}
+

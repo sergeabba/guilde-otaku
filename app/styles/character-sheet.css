@@ -1,0 +1,78 @@
+/* ═══ FICHE DE PERSONNAGE ════════════════════════════════════════════════════ */
+.ch { --acc: var(--ch-acc); }
+.ch-hero { position: relative; isolation: isolate; min-height: max(100svh, 720px); overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; padding: clamp(20px, 4vw, 56px); }
+.ch-slab { position: absolute; inset: 0; z-index: -3; background: var(--ch-acc) var(--ch-tile); clip-path: polygon(40% 0, 100% 0, 100% 100%, 62% 100%, 28% 100%); }
+.ch-slab::after { content: ""; position: absolute; inset: 0; background: var(--gu-ink); clip-path: polygon(38% 0, 41% 0, 29% 100%, 26% 100%); }
+.ch-seal { position: absolute; z-index: -2; left: -6vw; top: 50%; translate: 0 -50%; width: min(86svh, 56vw) !important; height: auto !important; rotate: -14deg; opacity: .55; }
+.ch-art { position: absolute; z-index: -1; left: 18vw; bottom: 0; width: min(54vw, 780px); height: 100%; }
+.ch-art .ch-img, .ch-echo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: bottom center; }
+.ch-echo { background: var(--gu-ink); translate: -22px 10px; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: bottom center; mask-position: bottom center; }
+.ch-art .ch-img:not(.is-photo) { filter: drop-shadow(5px 0 0 var(--gu-white)) drop-shadow(0 -5px 0 var(--gu-white)) drop-shadow(-5px 0 0 var(--gu-white)); }
+.ch-art .ch-img.is-photo { inset: 12% 10% 8%; width: 80%; height: 80%; object-fit: cover; clip-path: polygon(6% 0, 100% 4%, 94% 100%, 0 96%); }
+.ch-id { position: relative; z-index: 2; align-self: start; display: grid; justify-items: start; gap: 10px; padding-top: 4vh; }
+.ch-no { margin: 0; font: 400 clamp(3rem, 6vw, 5.4rem)/.8 var(--gk-font-impact); color: transparent; -webkit-text-stroke: 2px var(--gu-white); }
+.ch-name { margin: 0; font: 400 clamp(2.6rem, 6.4vw, 6.6rem)/.92 "Cinzel", Georgia, serif; letter-spacing: .01em; text-transform: uppercase; color: var(--gu-white); text-shadow: 5px 5px 0 var(--gu-ink), 9px 9px 0 var(--ch-acc); max-width: 11ch; overflow-wrap: anywhere; }
+.ch-rank { font-size: 1rem; }
+.ch-alias { margin: 0; font: italic 500 1.2rem "Fraunces Edit", serif; }
+.ch-face { position: absolute; z-index: 4; right: clamp(16px, 3vw, 40px); top: 18px; }
+.ch-status { position: relative; z-index: 2; grid-column: 2; justify-self: end; align-self: center; display: grid; gap: 10px; justify-items: end; }
+.ch-stat { margin: 0; display: flex; align-items: center; gap: 12px; font-size: 1.4rem; rotate: -6deg; translate: calc(var(--i) * -2vw) 0; }
+.ch-num { font: 400 clamp(3.6rem, 7vw, 6rem)/.8 var(--gk-font-impact); color: var(--gu-white); -webkit-text-stroke: 3px var(--gu-ink); paint-order: stroke fill; text-shadow: 6px 6px 0 var(--gu-ink); }
+.ch-special { margin: 12px 0 0; display: grid; justify-items: end; rotate: -4deg; }
+.ch-special small { padding: 2px 10px; background: var(--gu-ink); font: 800 .78rem var(--gk-font-ui); letter-spacing: .16em; text-transform: uppercase; }
+.ch-special b { padding: 4px 14px; background: var(--gu-white); color: var(--gu-ink); font: 900 italic 1.4rem var(--gk-font-title); text-transform: uppercase; }
+.ch-stat-none { margin: 0; font: 800 .9rem var(--gk-font-ui); text-transform: uppercase; }
+
+.ch-sheet { position: relative; width: min(1000px, 100% - 32px); margin: 0 auto; padding: clamp(30px, 5vw, 60px); display: grid; gap: 22px; }
+.ch-bio { margin: 0; font: 500 1.15rem/1.6 "Fraunces Edit", Georgia, serif; }
+.ch-facts { margin: 0; display: flex; flex-wrap: wrap; gap: 8px 22px; }
+.ch-facts div { display: grid; }
+.ch-facts dt { font: 800 .72rem var(--gk-font-ui); letter-spacing: .16em; text-transform: uppercase; color: var(--gu-red); }
+.ch-facts dd { margin: 0; font: 400 1.1rem "Cinzel", serif; }
+.ch-awards h2 { margin: 0 0 10px; font-size: 1rem; }
+.ch-awards ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px 14px; }
+.ch-awards li { font-size: .82rem; rotate: calc(var(--r, 0) * 1deg); }
+.ch-awards li:nth-child(odd) { --r: -2; } .ch-awards li:nth-child(even) { --r: 1.5; }
+@media (prefers-reduced-motion: no-preference) { @supports (animation-timeline: view()) {
+  .ch-awards li { animation: ch-rite linear both; animation-timeline: view(); animation-range: entry 10% entry 80%; }
+} }
+
+.ch-bankai { background: var(--ch-acc) var(--ch-tile); color: var(--gu-ink); overflow: hidden; min-height: 80svh; display: grid; align-content: center; justify-items: start; gap: 16px; padding-inline: clamp(20px, 6vw, 90px); }
+.ch-bk-sil { position: absolute; z-index: -1; right: -4vw; bottom: 0; width: 60vw; height: 100%; background: var(--gu-ink); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: bottom right; mask-position: bottom right; }
+.ch-bk-kicker { margin: 0; font-size: 1.4rem; }
+.ch-bk-name { font-size: clamp(2.6rem, 8vw, 7rem); max-width: 14ch; --rn-hot: var(--gu-white); --rn-ink: var(--gu-ink); --rn-paper: var(--gu-white); }
+.ch-bk-sens { margin: 0; font-size: 1rem; }
+.ch-bk-effet { margin: 0; max-width: 46ch; padding: 12px 16px; background: var(--gu-paper) var(--gu-grain); color: var(--gu-ink); font: 500 1.05rem/1.5 "Fraunces Edit", serif; clip-path: polygon(0 3%, 100% 0, 98% 100%, 1% 97%); }
+.ch-domain { background: var(--gu-night); color: var(--gu-gold); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 30px; padding-inline: clamp(20px, 6vw, 90px); }
+.ch-dom-ring { position: relative; aspect-ratio: 1; }
+.ch-dom-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ch-dom-ring img { position: absolute; inset: 22%; width: 56%; height: 56%; object-fit: contain; object-position: bottom; }
+@media (prefers-reduced-motion: no-preference) { .ch-dom-ring svg { animation: ch-spin 60s linear infinite; } }
+@keyframes ch-spin { to { rotate: 360deg; } }
+.ch-dom-name { margin: 0; font: 400 clamp(2rem, 5vw, 4.4rem)/.95 "Cinzel", serif; text-transform: uppercase; color: var(--gu-gold); }
+.ch-dom-text { display: grid; gap: 14px; justify-items: start; }
+
+@media (max-width: 899px) {
+  .ch-hero { grid-template-columns: 1fr; min-height: 0; padding: 16px; align-items: start; }
+  .ch-slab { clip-path: polygon(0 32%, 100% 16%, 100% 70%, 0 84%); }
+  .ch-seal { width: 110vw !important; left: -20vw; top: 34%; }
+  .ch-art { position: relative; left: auto; width: 100%; height: auto; aspect-ratio: 1 / 1.05; order: 2; margin-top: -40px; }
+  .ch-id { order: 1; padding-top: 30px; }
+  .ch-name { font-size: 11vw; }
+  .ch-face { top: 12px; }
+  .ch-status { order: 3; grid-column: 1; justify-self: stretch; justify-items: start; margin-top: -30px; }
+  .ch-stat { translate: none; }
+  .ch-bk-sil { width: 100vw; opacity: .5; }
+  .ch-domain { grid-template-columns: 1fr; }
+}
+@keyframes ch-rite { 0% { opacity: 0; transform: rotate(-6deg) scale(1.35); } 60% { opacity: 1; transform: rotate(-1deg) scale(.97); } 100% { opacity: 1; transform: none; } }
+/* Intégrée à la page de profil : pleine largeur, sous la barre de navigation de la fiche. */
+.pf-sheet-bleed { width: 100vw; margin-left: calc(50% - 50vw); margin-top: 14px; }
+.pf-sheet-bleed .ch-hero { min-height: max(calc(100svh - 170px), 640px); }
+/* Barre de la fiche sur téléphone : trois vues + partage, sans débordement. */
+@media (max-width: 599px) {
+  .pf-bar { flex-wrap: wrap; row-gap: 8px; }
+  .pf-bar-right { width: 100%; flex-wrap: wrap; justify-content: flex-start; gap: 8px; }
+  .pf-mode button { padding-inline: 9px; font-size: .78rem; }
+  .pf-mode-long { display: none; }
+}

@@ -19,6 +19,7 @@ import { saveImage, saveMessage } from "../../lib/save-image";
 import { fileSlug } from "../../lib/share";
 import "./wanted.css";
 import { rescuedByFallback } from "../../lib/local-image";
+import RubricMark from "../components/guilde/RubricMark";
 
 type ViewMode = "real" | "anime";
 type SortMode = "prime-desc" | "registre" | "prime-asc";
@@ -310,7 +311,7 @@ export default function WantedPage() {
         <div className="wt-sky" aria-hidden="true" />
         <div className="gk-wrap wt-hero">
           <div className="wt-hero-text">
-            <p className="gk-chapter"><b>03</b><span>TEHAISHO · AVIS DE RECHERCHE</span></p>
+            <RubricMark rubric="wanted" no="03" label="Avis de recherche" romaji="Tehaisho" tone="red" />
             <h1 id="wt-title" className="wt-title">WANTED</h1>
             <p className="wt-doa"><Scroll /><span>DEAD OR ALIVE</span><Scroll flip /></p>
             <p className="wt-lede">Chaque membre de la Guilde a sa tête mise à prix. Les primes ne tombent pas du ciel : elles se calculent à partir de la fiche de chacun, et le détail est juste en dessous.</p>

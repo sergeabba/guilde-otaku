@@ -1,0 +1,82 @@
+/* ═══ H1 · MENU DE PAUSE ═══════════════════════════════════════════════════════ */
+.v3 { overflow-x: clip; }
+.pm { --pm-red: var(--gu-red); background: var(--gu-night) var(--gu-grain); position: relative; isolation: isolate; height: calc(100svh - 105px); min-height: 600px; overflow: hidden; color: var(--gu-white); }
+.pm :focus-visible { outline: 3px solid var(--gu-gold); outline-offset: 4px; }
+/* Bande rouge : la diagonale qui porte la lecture. */
+.pm-band { position: absolute; inset: 0; z-index: -3; background: var(--pm-red); clip-path: polygon(0 74%, 58% 18%, 100% 0, 100% 34%, 40% 100%, 0 100%); }
+.pm-band::after { content: ""; position: absolute; inset: 0; background-image: radial-gradient(rgba(0,0,0,.28) 2px, transparent 2.6px); background-size: 14px 14px; }
+/* Mot géant en contour, derrière le personnage. */
+.pm-word { position: absolute; z-index: -2; left: -2vw; bottom: -4vh; margin: 0; font: 400 clamp(8rem, 24vw, 26rem)/.8 var(--gk-font-impact); text-transform: uppercase; color: transparent; -webkit-text-stroke: 2px rgba(255, 250, 240, .22); letter-spacing: -.02em; transform: rotate(-8deg); white-space: nowrap; }
+/* Sceau du grade de l'hôte, coupé par le bord, derrière le personnage. */
+.pm-seal { position: absolute; z-index: -2; left: 6vw; top: 8vh; width: min(70vh, 46vw) !important; height: auto !important; opacity: .9; rotate: -12deg; }
+/* Personnage : traverse la bande et le mot, coupé par le bas de l'écran. */
+.pm-host { position: absolute; z-index: -1; left: 2vw; bottom: 0; width: 52vw; height: 96svh; }
+.pm-host img, .pm-echo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: bottom center; }
+.pm-echo { background: var(--pm-acc); translate: 26px -14px; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: bottom center; mask-position: bottom center; }
+.pm-host img { filter: drop-shadow(-6px 0 0 var(--gu-ink)) drop-shadow(0 -6px 0 var(--gu-ink)); }
+.pm-host.is-photo { left: 8vw; bottom: 10vh; width: 34vw; height: 70svh; }
+.pm-host.is-photo img { object-fit: cover; clip-path: polygon(6% 0, 100% 5%, 92% 100%, 0 94%); filter: none; }
+@media (prefers-reduced-motion: no-preference) { .pm-host { animation: pm-in 380ms var(--gu-ease-cut) both; } }
+@keyframes pm-in { from { clip-path: polygon(100% 0, 130% 0, 100% 100%, 70% 100%); translate: 40px 0; } to { clip-path: polygon(-30% 0, 130% 0, 100% 100%, -60% 100%); translate: 0 0; } }
+
+/* Bloc date (haut gauche) et titre. */
+.pm-date { position: absolute; z-index: 3; left: clamp(16px, 3vw, 48px); top: clamp(14px, 3vh, 36px); display: grid; justify-items: start; transform: rotate(-5deg); transform-origin: left top; }
+.pm-date p { margin: 0; }
+.pm-date-num { display: flex; align-items: flex-end; gap: 6px; }
+.pm-date-num span { font: 400 clamp(4.2rem, 8vw, 7rem)/.8 var(--gk-font-impact); color: var(--gu-white); -webkit-text-stroke: 3px var(--gu-ink); paint-order: stroke fill; text-shadow: 7px 7px 0 var(--pm-red); }
+.pm-date-num small { padding: 2px 10px; background: var(--gu-ink); font: 900 italic 1.2rem var(--gk-font-ui); text-transform: uppercase; }
+.pm-date-day { padding: 2px 14px; background: var(--gu-white); color: var(--gu-ink); font: 900 italic 1.5rem var(--gk-font-ui); text-transform: uppercase; }
+.pm-date-hebdo { margin-top: 6px !important; padding: 2px 10px; background: var(--gu-ink); font: 800 .78rem var(--gk-font-ui); letter-spacing: .14em; text-transform: uppercase; }
+.pm-title { position: absolute; z-index: 3; left: clamp(16px, 3vw, 48px); bottom: clamp(18px, 5vh, 56px); font-size: clamp(2.4rem, 5vw, 5rem); transform: rotate(-6deg); --rn-hot: var(--pm-red); --rn-ink: var(--gu-ink); --rn-paper: var(--gu-white); }
+.pm-face { position: absolute; z-index: 4; right: clamp(16px, 3vw, 48px); top: clamp(14px, 3vh, 30px); }
+
+/* Entrées déstructurées : chacune sa place, sa taille, son angle. */
+.pm-menu ul { list-style: none; margin: 0; padding: 0; }
+.pm-menu li { position: absolute; z-index: 2; left: var(--x); top: var(--y); font-size: var(--s); rotate: var(--r); }
+.pm-menu a { display: inline-flex; align-items: center; gap: .2em; color: inherit; text-decoration: none; }
+.pm-menu .lame-face { padding: .12em .45em .14em; }
+.pm-menu li:not(.is-on) .lame-face { background: transparent; color: var(--gu-white); -webkit-text-stroke: .045em var(--gu-ink); paint-order: stroke fill; text-shadow: .06em .06em 0 var(--gu-ink); }
+.pm-item-seal { width: 1.25em; height: 1.25em; transition: scale 160ms var(--gu-ease-snap); }
+.pm-menu li.is-on .pm-item-seal { scale: 1.25; }
+@media (prefers-reduced-motion: no-preference) {
+  .pm-menu li { animation: pm-li 360ms var(--gu-ease-cut) both; animation-delay: calc(var(--i, 0) * 40ms); }
+}
+@keyframes pm-li { from { translate: 30vw 0; } }
+.pm-why { position: absolute; z-index: 3; right: clamp(16px, 3vw, 48px); top: clamp(70px, 10vh, 96px); margin: 0; display: flex; transform: rotate(-4deg); }
+.pm-why span { padding: 4px 12px; background: var(--gu-ink); font: 800 .82rem var(--gk-font-ui); letter-spacing: .1em; text-transform: uppercase; }
+.pm-why b { padding: 4px 14px; background: var(--pm-acc); color: var(--gu-ink); font: 900 italic 1rem var(--gk-font-ui); text-transform: uppercase; }
+
+/* Téléphone : la scène devient une pile, sans hauteur imposée. */
+@media (max-width: 899px) {
+  .pm { height: auto; min-height: 0; display: grid; padding: 14px 14px 22px; gap: 10px; }
+  .pm-band { clip-path: polygon(0 30%, 100% 8%, 100% 44%, 0 64%); }
+  .pm-word { font-size: 38vw; bottom: auto; top: 30%; }
+  .pm-seal { width: 74vw !important; left: auto; right: -18vw; top: 12%; }
+  .pm-date, .pm-title, .pm-face, .pm-why { position: relative; inset: auto; }
+  .pm-face { order: 0; justify-self: end; margin-bottom: -40px; }
+  .pm-date { order: 1; justify-self: start; }
+  .pm-title { order: 2; font-size: 13vw; margin: 6px 0 0; }
+  .pm-host { order: 3; position: relative; inset: auto; width: 100%; height: auto; aspect-ratio: 4 / 4.2; margin-top: -10px; }
+  .pm-menu { order: 4; }
+  .pm-why { order: 5; }
+  .pm-host.is-photo { width: 84%; height: auto; justify-self: center; }
+  .pm-echo { translate: 14px -8px; }
+  .pm-menu { margin-top: -16px; position: relative; z-index: 3; }
+  .pm-menu ul { display: grid; gap: 6px; }
+  .pm-menu li { position: relative; left: auto; top: auto; font-size: clamp(1.4rem, 7.4vw, 2rem); rotate: -3deg; }
+  .pm-menu li:nth-child(even) { margin-left: 8vw; }
+  .pm-menu a { min-height: 48px; }
+  .pm-why { justify-self: start; }
+}
+
+
+/* Arcane */
+.arc { position: relative; display: block; aspect-ratio: 5 / 8; color: var(--gu-ink); text-decoration: none; }
+.arc-frame { position: absolute; inset: 0; background: var(--gu-white); border: 3px solid var(--gu-ink); box-shadow: 6px 6px 0 var(--gu-ink); clip-path: polygon(0 1%, 100% 0, 99% 100%, 1% 99%); }
+.arc-field { position: absolute; inset: 7% 7% 18%; background: var(--arc-c) var(--arc-tile); border: 2px solid var(--gu-ink); }
+.arc-n { position: absolute; z-index: 2; left: 50%; top: 2%; translate: -50% 0; font: 400 1.1rem "Cinzel", serif; letter-spacing: .1em; }
+.arc-img { position: absolute; z-index: 1; left: 50%; bottom: 18%; width: 112%; height: 92%; object-fit: contain; object-position: bottom; translate: -50% 0; filter: drop-shadow(3px 0 0 #fff) drop-shadow(-3px 0 0 #fff) drop-shadow(0 -3px 0 #fff); }
+.arc.is-plain .arc-img { inset: 7% 7% 18%; width: auto; height: auto; translate: none; left: 7%; object-fit: cover; filter: none; }
+.arc-name { position: absolute; z-index: 3; left: 50%; bottom: 5%; translate: -50% 0; font-size: .78rem; white-space: nowrap; }
+.arc-seal { position: absolute; z-index: 3; right: -10px; bottom: 14%; }
+

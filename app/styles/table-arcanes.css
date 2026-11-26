@@ -1,0 +1,24 @@
+/* Table des arcanes (sommaire en arbre enluminé). */
+.ta { position: relative; width: min(1180px, 100% - 24px); margin: 0 auto; padding: clamp(40px, 6vw, 80px) clamp(18px, 4vw, 60px); display: grid; gap: 20px; clip-path: polygon(0 1.5%, 100% 0, 99.4% 100%, .6% 98.5%); box-shadow: 0 0 0 2px #000; }
+.ta-h { margin: 0; justify-self: center; font-size: 1.15rem; }
+.ta-tree { position: relative; aspect-ratio: 16 / 10; }
+.ta-lines { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ta-lines line { stroke: var(--gu-gold-deep); stroke-width: 2; stroke-dasharray: 5 4; vector-effect: non-scaling-stroke; }
+.ta-tree ol { list-style: none; margin: 0; padding: 0; }
+.ta-tree li { position: absolute; left: var(--x); top: var(--y); translate: -50% -50%; width: max-content; max-width: 170px; }
+.ta-tree a { display: grid; justify-items: center; gap: 4px; color: var(--gu-ink); text-decoration: none; text-align: center; }
+.ta-tree .sceau { width: clamp(58px, 6.4vw, 88px); height: auto; transition: scale 200ms var(--gu-ease-snap), rotate 300ms var(--gu-ease-snap); }
+.ta-tree a:hover .sceau, .ta-tree a:focus-visible .sceau { scale: 1.1; rotate: -10deg; }
+.ta-tree a:focus-visible { outline: 3px solid var(--gu-red); outline-offset: 4px; }
+.ta-label { padding: 3px 8px; background: var(--gu-paper); font: 400 .95rem/1 "Cinzel", Georgia, serif; text-transform: uppercase; letter-spacing: .06em; }
+.ta-tree small { max-width: 18ch; font: 600 .7rem/1.25 var(--gk-font-ui); opacity: .75; }
+@media (max-width: 899px) {
+  .ta-tree { aspect-ratio: auto; }
+  .ta-lines { display: none; }
+  .ta-tree ol { display: grid; gap: 8px; padding-left: 26px; border-left: 2px dashed var(--gu-gold-deep); }
+  .ta-tree li { position: relative; left: auto; top: auto; translate: none; width: auto; max-width: none; }
+  .ta-tree li::before { content: ""; position: absolute; left: -33px; top: 24px; width: 12px; height: 12px; background: var(--gu-gold); rotate: 45deg; }
+  .ta-tree a { grid-template-columns: 56px 1fr; justify-items: start; text-align: left; column-gap: 12px; min-height: 56px; align-items: center; }
+  .ta-tree .sceau { grid-row: span 2; width: 56px; }
+  .ta-tree small { max-width: none; }
+}

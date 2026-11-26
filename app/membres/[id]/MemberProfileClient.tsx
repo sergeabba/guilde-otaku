@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { viewTransition, waitFor } from "../../../lib/view-transition";
 import Image from "../../components/GImage";
 import Link from "next/link";
-import { ArrowLeft, BookOpen, Cake, ChevronLeft, ChevronRight, Download, Flame, IdCard, Play, Share2, Trophy, Zap } from "lucide-react";
+import { ArrowLeft, BookOpen, Cake, ChevronLeft, ChevronRight, Download, Flame, IdCard, Play, Share2, Swords, Trophy, Zap } from "lucide-react";
 import type { Member } from "../../../data/members";
 import GuildeHeader from "../../components/GuildeHeader";
 import RomajiLabel from "../../components/RomajiLabel";
@@ -45,14 +45,16 @@ type View = "duo" | "real" | "anime";
 
 const STAT_LABELS: [keyof Member["stats"], string][] = [["force", "Force"], ["vitesse", "Vitesse"], ["technique", "Technique"]];
 
-export default function MemberProfileClient({ member, prev, next, cardUrl, chroniques, pouvoirs = null, initialMode = "fiche", backdrop = null }: {
+export default function MemberProfileClient({ member, prev, next, cardUrl, chroniques, pouvoirs = null, initialMode = "fiche", backdrop = null, sheet = null }: {
   member: Member;
   /** Miniature floue du portrait (lib/tiny-image.ts), agrandie en fond de page. */
   backdrop?: string | null;
   /** Bankai et extension du territoire (data/pouvoirs.ts) */
   pouvoirs?: Pouvoirs | null;
-  /** Planche de manga (par défaut) ou fiche classique (?vue=fiche) */
-  initialMode?: "fiche" | "planche";
+  /** Fiche de personnage (par défaut), planche de manga (?vue=planche) ou fiche classique (?vue=fiche) */
+  initialMode?: "fiche" | "planche" | "perso";
+  /** Fiche de personnage composée côté serveur. */
+  sheet?: React.ReactNode;
   prev: ProfileNeighbor | null;
   next: ProfileNeighbor | null;
   cardUrl: string;
@@ -62,11 +64,11 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
   const [view, setView] = useState<View>("duo");
   const [mode, setMode] = useState(initialMode);
   // Fiche ou planche : gardé dans l'adresse (lien partageable), sans recharger la page.
-  const changeMode = (m: "fiche" | "planche") => {
+  const changeMode = (m: "fiche" | "planche" | "perso") => {
     if (m === mode) return;
     viewTransition({ kind: "swap", update: () => flushSync(() => setMode(m)) });
     const url = new URL(location.href);
-    if (m === "fiche") url.searchParams.set("vue", "fiche"); else url.searchParams.delete("vue");
+    if (m === "perso") url.searchParams.delete("vue"); else url.searchParams.set("vue", m);
     history.replaceState(history.state, "", url);
     window.scrollTo({ top: 0 });
   };
@@ -194,6 +196,7 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
           <div className="pf-bar-right">
             {mode === "planche" && <FaceToggle className="pf-face" />}
             <div className="gk-switch pf-mode" role="group" aria-label="Style de la fiche">
+              {sheet && <button type="button" aria-pressed={mode === "perso"} onClick={() => changeMode("perso")}><Swords size={15} aria-hidden="true" /> Personnage</button>}
               <button type="button" aria-pressed={mode === "fiche"} onClick={() => changeMode("fiche")}><IdCard size={15} aria-hidden="true" /> Fiche</button>
               <button type="button" aria-pressed={mode === "planche"} onClick={() => changeMode("planche")}><BookOpen size={15} aria-hidden="true" /> <span className="pf-mode-long">Lire en </span>planche</button>
             </div>
@@ -203,7 +206,22 @@ export default function MemberProfileClient({ member, prev, next, cardUrl, chron
           </div>
         </nav>
 
-        {mode === "planche" ? (
+        {mode === "perso" && sheet ? (
+          <>
+            <div className="pf-sheet-bleed">{sheet}</div>
+            {music.length > 0 && (
+              <section className="pf-section pf-music-sec" aria-labelledby="pf-music-title2">
+                <h2 id="pf-music-title2" className="gk-display gk-h3">Sa playlist</h2>
+                <MemberMusic tracks={music} owner={member.name.split(" ")[0]} />
+              </section>
+            )}
+            <p className="pl-more-links">
+              <button type="button" className="gk-btn gk-btn--ghost gk-btn--sm" onClick={() => { changeMode("fiche"); window.setTimeout(() => document.getElementById("pf-univers")?.scrollIntoView(), 450); }}>
+                Tous ses favoris et le détail de la fiche
+              </button>
+            </p>
+          </>
+        ) : mode === "planche" ? (
           <>
             <h1 className="gk-sr">{member.name}, planche de manga</h1>
             <MemberPlanche member={member} pouvoirs={pouvoirs} next={next} />

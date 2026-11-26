@@ -9,6 +9,7 @@ import { useShare } from "../hooks/useShare";
 import { normalize } from "../utils/text";
 import { onColor } from "../utils/color";
 import "../bons-plans/bons-plans.css";
+import RubricMark from "./guilde/RubricMark";
 
 // Ordre d'affichage des catégories connues ; les autres suivent, telles que saisies.
 const KNOWN_ORDER = ["Animes", "Scans", "Films/Séries", "Utiles"];
@@ -85,8 +86,7 @@ export default function BonsPlansClient({ initialLinks }: { initialLinks: Supaba
       <main className="gk-wrap" style={{ paddingBottom: "clamp(56px, 9vw, 110px)" }}>
         <div className="gk-hero gk-reveal">
           <div className="gk-hero-kicker">
-            <p className="gk-chapter"><b>07</b><span>LES PETITES ANNONCES</span></p>
-            <span className="gk-jp" aria-hidden="true">Otoku jōhō</span>
+            <RubricMark rubric="bons-plans" no="07" label="Les petites annonces" romaji="Otoku" />
           </div>
           <h1 className="gk-display gk-h1" style={{ fontSize: "clamp(2.4rem, 10.4vw, 6.6rem)" }}>
             Les Bons Plans <span className="gk-inked">Otaku</span>

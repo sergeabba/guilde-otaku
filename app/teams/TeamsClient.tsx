@@ -7,6 +7,7 @@ import GuildeHeader from "../components/GuildeHeader";
 import TeamBoard, { type TeamMember } from "./TeamBoard";
 import type { GuildTeam, Sport } from "../../lib/teams-logic";
 import "./teams.css";
+import RubricMark from "../components/guilde/RubricMark";
 
 type Filter = "tout" | Sport;
 
@@ -23,7 +24,7 @@ export default function TeamsClient({ teams, members, available }: { teams: Guil
       <GuildeHeader activePage="teams" accentColor="#4d7dff" tone="dark" />
       <main>
         <header className="gk-wrap tm-hero">
-          <p className="tm-kicker">Chīmu · les équipes de la Guilde</p>
+          <RubricMark rubric="teams" no="04" label="Les équipes de la Guilde" romaji="Chīmu" />
           <h1 className="tm-title">Teams <span>Guilde</span></h1>
           <p className="tm-lead">Les cinq de basket et les onze de foot de la Guilde. Touche un joueur pour voir son poste, son numéro, ses stats et son arme.</p>
           <div className="tm-controls">

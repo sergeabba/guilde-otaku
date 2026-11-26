@@ -22,6 +22,7 @@ import { useFavorites } from "../hooks/useFavorites";
 import { useShare } from "../hooks/useShare";
 import { normalize } from "../utils/text";
 import "./biblio.css";
+import RubricMark from "../components/guilde/RubricMark";
 
 type Category = "Tout" | BiblioCategory;
 type Tier = BiblioTier;
@@ -312,8 +313,7 @@ export default function BibliothequePage() {
         <header className="bb-masthead gk-reveal">
           <div>
             <div className="gk-hero-kicker">
-              <p className="gk-chapter"><b>06</b><span>LE MAGAZINE DE LA GUILDE</span></p>
-              <span className="gk-jp" aria-hidden="true">Toshokan</span>
+              <RubricMark rubric="bibliotheque" no="06" label="Le magazine de la Guilde" romaji="Toshokan" tone="gold" />
             </div>
             <h1 className="gk-display bb-title">La <span className="gk-inked">Bibliothèque</span></h1>
             <p className="gk-body" style={{ marginTop: 16 }}>

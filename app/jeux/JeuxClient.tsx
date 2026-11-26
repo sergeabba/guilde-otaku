@@ -21,6 +21,7 @@ import { DevineAnime, DevinePerso, EmojiQuiz } from "./Dle";
 import Qcm from "./Qcm";
 import Clips from "./Clips";
 import "./jeux.css";
+import RubricMark from "../components/guilde/RubricMark";
 
 type Tab = "defi-jour" | "devine-anime" | "devine-perso" | "emoji" | "themes" | "createur" | "studio" | "voix" | "generiques" | "direct" | "quiz" | "nostalgie" | "affiche" | "plus-moins" | "tier" | "duel" | "badges" | "classement";
 
@@ -81,7 +82,7 @@ export default function JeuxClient() {
       <GuildeHeader activePage="jeux" tone="dark" accentColor="#e8412c" bgColor="#0f0e13" />
       <main className="gk-wrap jx-main">
         <header className="gk-hero gk-reveal jx-hero">
-          <div className="gk-hero-kicker"><p className="gk-chapter"><b>✦</b><span>ASOBI · LA SALLE DE JEUX</span></p></div>
+          <div className="gk-hero-kicker"><RubricMark rubric="jeux" no="11" label="La salle de jeux" romaji="Asobi" tone="red" /></div>
           <h1 className="gk-display jx-title">Jeux <span className="gk-inked">de la Guilde</span></h1>
           <p className="gk-body gk-hero-lede">Devine les génériques, mesure ta compatibilité avec les autres membres, débloque des badges. Pas de compte : dis juste qui tu es.</p>
         </header>

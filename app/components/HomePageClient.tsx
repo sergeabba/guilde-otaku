@@ -11,6 +11,7 @@ import MemberCard from "./MemberCard";
 import MemberQuickView from "./MemberQuickView";
 import FilmPoll from "./FilmPoll";
 import HomeCover, { type CoverCut } from "./HomeCover";
+import TableArcanes from "./home/TableArcanes";
 import { setFace, useFace } from "../../lib/face";
 import GuildeHeader from "./GuildeHeader";
 import ChapterStory from "./ChapterStory";
@@ -21,7 +22,7 @@ import type { AnimeSong } from "../../lib/anime-song";
 import type { AtelierTile } from "../../lib/atelier-server";
 import { rankAccents, rankLogos, darkRanks, rankRomaji } from "../config/ranks";
 import { COUNTRIES, flagUrl } from "../config/countries";
-import { NAV, chapterNo } from "../config/nav";
+import { NAV } from "../config/nav";
 import { useTheme } from "../context/ThemeContext";
 import { getDaysUntil, type ViewMode } from "../types";
 import { normalize } from "../utils/text";
@@ -55,9 +56,11 @@ function pickTrio<T>(list: T[], slot: number): T[] {
   return idx.slice(0, 3).map((i) => list[i]);
 }
 
-export default function HomePageClient({ initialMembers, featuredFilm, atelierTiles = [], song = null, songIsToday = true, cuts = {} }: {
+export default function HomePageClient({ initialMembers, featuredFilm, atelierTiles = [], song = null, songIsToday = true, cuts = {}, cover }: {
   initialMembers: Member[];
   cuts?: Record<number, CoverCut>;
+  /** Couverture composée côté serveur (menu de pause) ; à défaut, la couverture simple. */
+  cover?: React.ReactNode;
   featuredFilm?: FeaturedFilm | null;
   atelierTiles?: AtelierTile[];
   song?: AnimeSong | null;
@@ -208,7 +211,8 @@ export default function HomePageClient({ initialMembers, featuredFilm, atelierTi
 
         <main>
           {/* ── COUVERTURE (grand menu) ─────────────────────────────────── */}
-          <HomeCover
+          {cover ?? (
+            <HomeCover
             lead={coverLead}
             side={coverMembers.filter((m) => m.id !== coverLead?.id).slice(0, 2)}
             cuts={cuts}
@@ -223,19 +227,19 @@ export default function HomePageClient({ initialMembers, featuredFilm, atelierTi
             ]}
             onOpen={(m, el) => openMember(m, el)}
           />
+          )}
 
-          <div className="gk-motion-ticker" aria-hidden="true">
-            <div className="gk-motion-ticker-track">
-              <span>LA GUILDE ✦ LA LÉGENDE ✦ LES CHAPITRES ✦ LA GUILDE ✦ LA LÉGENDE ✦ LES CHAPITRES ✦</span>
-              <span>LA GUILDE ✦ LA LÉGENDE ✦ LES CHAPITRES ✦ LA GUILDE ✦ LA LÉGENDE ✦ LES CHAPITRES ✦</span>
-            </div>
+          {/* Les sections s'enchaînent en scènes coupées en biais (plus de bandes rectangulaires). */}
+          {song && <div className="gu-scene is-clip"><SongOfTheDay initial={song} today={songIsToday} /></div>}
+
+          <div className="gu-scene is-clip is-flip"><ChapterStory /></div>
+
+          <div className="gu-scene is-clip"><AtelierWall tiles={atelierTiles} /></div>
+
+          {/* Le sommaire devient la table des arcanes (sceaux reliés). */}
+          <div className="gu-scene is-clip is-flip hm-arcanes">
+            <TableArcanes links={NAV.map((n) => ({ href: n.href === "/" ? "/#annuaire" : n.href, label: n.label, rubric: n.id, blurb: n.blurb }))} />
           </div>
-
-          {song && <SongOfTheDay initial={song} today={songIsToday} />}
-
-          <ChapterStory />
-
-          <AtelierWall tiles={atelierTiles} />
 
           <hr className="gk-rule" />
 
@@ -243,30 +247,8 @@ export default function HomePageClient({ initialMembers, featuredFilm, atelierTi
           <FilmPoll compact frame="gk-wrap hm-section hm-vote" />
 
           {/* ── SOMMAIRE + À LA UNE ────────────────────────────────────── */}
-          <section className="gk-wrap hm-section" aria-labelledby="hm-toc-title" data-gk-motion="reveal">
+          <section className="gk-wrap hm-section" aria-label="À la une" data-gk-motion="reveal">
             <div className="hm-split">
-              <div>
-                <div className="hm-section-head">
-                  <h2 id="hm-toc-title" className="gk-display gk-h3">
-                    <WordReveal>Au sommaire</WordReveal> <span className="gk-jp" aria-hidden="true">Mokuji</span>
-                  </h2>
-                </div>
-                <ol className="hm-toc">
-                  {NAV.slice(1).map((n, i) => (
-                    <li key={n.id}>
-                      <Link href={n.href}>
-                        <b aria-hidden="true">{chapterNo(i + 1)}</b>
-                        <span>
-                          <strong>{n.label}</strong>
-                          <em>{n.blurb}</em>
-                        </span>
-                        <i aria-hidden="true">{n.jp}</i>
-                      </Link>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-
               <div>
                 <div className="hm-section-head">
                   <h2 className="gk-display gk-h3"><WordReveal>À la une</WordReveal></h2>

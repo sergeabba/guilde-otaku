@@ -12,6 +12,7 @@ import { useShare } from "../hooks/useShare";
 import { viewTransition } from "../../lib/view-transition";
 import { applyPalette, paletteOf } from "../../lib/palette";
 import "./atelier.css";
+import RubricMark from "../components/guilde/RubricMark";
 
 interface AtelierImage {
   id: string | number | null;
@@ -233,8 +234,7 @@ export default function AtelierClient() {
         <div className="at-hero">
           <div className="gk-hero gk-reveal">
             <div className="gk-hero-kicker">
-              <p className="gk-chapter"><b>08</b><span>L&apos;ARTBOOK DE LA GUILDE</span></p>
-              <span className="gk-jp" aria-hidden="true">Kōbō</span>
+              <RubricMark rubric="atelier" no="08" label="L'artbook de la Guilde" romaji="Kōbō" tone="gold" />
             </div>
             <h1 className="gk-display at-title">Les futilités <span className="gk-inked">de la Guilde</span></h1>
             <p className="gk-body gk-hero-lede">

@@ -11,6 +11,7 @@ import GuildeHeader from "../components/GuildeHeader";
 import WordReveal from "../components/WordReveal";
 import type { AiringEpisode } from "../../lib/airing";
 import "./calendar.css";
+import RubricMark from "../components/guilde/RubricMark";
 
 const DAY = new Intl.DateTimeFormat("fr-FR", { weekday: "long" });
 const DATE = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" });
@@ -79,7 +80,7 @@ export default function CalendarClient({ episodes }: { episodes: AiringEpisode[]
       <GuildeHeader activePage="calendrier" tone="dark" />
       <main className="gk-wrap cal-main">
         <header className="cal-head">
-          <span className="gk-chapter"><b>✦</b><span>HŌSŌ · SIMULCAST</span></span>
+          <RubricMark rubric="calendrier" no="10" label="Simulcast" romaji="Hōsō" />
           <h1 className="gk-display cal-title"><WordReveal>Les sorties <em>Crunchyroll.</em></WordReveal></h1>
           <p className="cal-lede">Les épisodes de la semaine sur Crunchyroll, jour par jour et à ton heure (heure de diffusion au Japon ; la mise en ligne suit en général de près).</p>
         </header>

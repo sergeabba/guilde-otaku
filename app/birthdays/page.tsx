@@ -12,6 +12,7 @@ import { fetchMembers } from "../utils/dataAdapter";
 import { countdownTo, daysUntil, nextOccurrence, occurrenceIn } from "../utils/birthdays";
 import { useShare } from "../hooks/useShare";
 import "./birthdays.css";
+import RubricMark from "../components/guilde/RubricMark";
 
 type ViewMode = "real" | "anime";
 type Layout = "liste" | "calendrier";
@@ -177,8 +178,7 @@ export default function BirthdaysPage() {
       <main className="gk-wrap" style={{ maxWidth: 1120, paddingBottom: "clamp(56px, 9vw, 110px)" }}>
         <div className="gk-hero gk-reveal">
           <div className="gk-hero-kicker">
-            <p className="gk-chapter"><b>02</b><span>LE CALENDRIER DE LA GUILDE</span></p>
-            <span className="gk-jp" aria-hidden="true">Tanjōbi</span>
+            <RubricMark rubric="birthdays" no="02" label="Le calendrier de la Guilde" romaji="Tanjōbi" tone="red" />
           </div>
           <h1 className="gk-display gk-h1" style={{ fontSize: "clamp(1.6rem, 8.6vw, 6.4rem)" }}>Anniversaires</h1>
           <p className="gk-body gk-hero-lede">

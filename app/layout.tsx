@@ -6,6 +6,7 @@ import "./styles/typo-directions.css";
 import "./globals.css";
 import "./styles/shonen.css";
 import "./styles/persona-type.css";
+import "./styles/guilde-ui.css";
 import "./styles/motion.css";
 import "./styles/music.css";
 import "./styles/works-public.css";

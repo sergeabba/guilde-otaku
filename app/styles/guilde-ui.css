@@ -1,0 +1,95 @@
+/* ═══ BIBLIOTHÈQUE GRAPHIQUE DE LA GUILDE (DA v3 « Le Sceau et la Lame ») ═════════
+   Composants : app/components/guilde/ (Lame, Sceau, Phylactere, textures).
+   Règles complètes : DESIGN.md. Rien ici n'est un rectangle par défaut. */
+
+:root {
+  --gu-night: #0b0a12; --gu-ink: #0d0c10; --gu-paper: #f2eadb; --gu-white: #fffaf0;
+  --gu-red: #c8102e; --gu-gold: #e9c46a; --gu-gold-deep: #9a7428;
+  --gu-ease-snap: cubic-bezier(.2, 1.4, .4, 1);
+  --gu-ease-cut: cubic-bezier(.8, 0, .2, 1);
+  --gu-grain: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27220%27%20height%3D%27220%27%3E%3Cfilter%20id%3D%27n%27%3E%3CfeTurbulence%20type%3D%27fractalNoise%27%20baseFrequency%3D%27.85%27%20numOctaves%3D%272%27%20stitchTiles%3D%27stitch%27%2F%3E%3CfeColorMatrix%20values%3D%270%200%200%200%200%20%200%200%200%200%200%20%200%200%200%200%200%20%200%200%200%20.22%200%27%2F%3E%3C%2Ffilter%3E%3Crect%20width%3D%27100%25%27%20height%3D%27100%25%27%20filter%3D%27url%28%23n%29%27%2F%3E%3C%2Fsvg%3E");
+}
+
+/* ── La lame ─────────────────────────────────────────────────────────────── */
+.lame { position: relative; display: inline-grid; isolation: isolate; rotate: var(--lame-rot, 0deg); line-height: 1; }
+.lame-face, .lame-shadow { grid-area: 1 / 1; clip-path: var(--lame-clip); }
+.lame-face { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: .4em; padding: .28em .7em .3em .62em; font: 900 italic 1em/1 var(--gk-font-title, "Barlow Condensed", sans-serif); text-transform: uppercase; letter-spacing: .005em; }
+.lame-shadow { clip-path: var(--lame-clip-s); translate: .16em .16em; z-index: 0; }
+.lame.is-ink .lame-face { background: var(--gu-ink); color: var(--gu-white); }
+.lame.is-paper .lame-face { background: var(--gu-white); color: var(--gu-ink); }
+.lame.is-red .lame-face { background: var(--gu-red); color: var(--gu-white); }
+.lame.is-gold .lame-face { background: var(--gu-gold); color: var(--gu-ink); }
+.lame.is-acc .lame-face { background: var(--gu-acc, var(--gk-accent, var(--gu-red))); color: var(--gu-ink); }
+.lame-shadow.is-ink { background: var(--gu-ink); } .lame-shadow.is-paper { background: var(--gu-white); }
+.lame-shadow.is-red { background: var(--gu-red); } .lame-shadow.is-gold { background: var(--gu-gold); }
+.lame-shadow.is-acc { background: var(--gu-acc, var(--gk-accent, var(--gu-red))); }
+a.lame, button.lame { cursor: pointer; border: 0; padding: 0; background: none; color: inherit; text-decoration: none; font-size: inherit; }
+a.lame:focus-visible, button.lame:focus-visible { outline: 3px solid var(--gu-gold); outline-offset: 6px; }
+@media (hover: hover) {
+  a.lame .lame-shadow, button.lame .lame-shadow { transition: translate 160ms var(--gu-ease-snap); }
+  a.lame:hover .lame-shadow, button.lame:hover .lame-shadow { translate: .3em .3em; }
+}
+a.lame:active .lame-shadow, button.lame:active .lame-shadow { translate: .05em .05em; }
+
+/* ── Le phylactère ───────────────────────────────────────────────────────── */
+.phyl { display: inline-flex; align-items: stretch; font: 400 1em/1 "Cinzel", Georgia, serif; letter-spacing: .12em; text-transform: uppercase; }
+.phyl-body { position: relative; z-index: 1; padding: .42em 1.1em .36em; background: var(--phyl-bg); color: var(--phyl-fg); clip-path: polygon(0 0, 100% 0, 97% 50%, 100% 100%, 0 100%, 3% 50%); }
+.phyl-tail { width: 1.1em; margin: .35em -.35em -.35em; background: var(--phyl-tail); clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 40% 50%); }
+.phyl-tail.is-r { clip-path: polygon(0 0, 100% 0, 60% 50%, 100% 100%, 0 100%); }
+.phyl.is-paper { --phyl-bg: var(--gu-paper); --phyl-fg: var(--gu-ink); --phyl-tail: #b9ac93; }
+.phyl.is-gold { --phyl-bg: var(--gu-gold); --phyl-fg: var(--gu-ink); --phyl-tail: var(--gu-gold-deep); }
+.phyl.is-red { --phyl-bg: var(--gu-red); --phyl-fg: var(--gu-white); --phyl-tail: #7d0a1d; }
+.phyl.is-ink { --phyl-bg: var(--gu-ink); --phyl-fg: var(--gu-gold); --phyl-tail: #000; }
+
+/* ── Le sceau ────────────────────────────────────────────────────────────── */
+.sceau { display: block; flex: none; overflow: visible; }
+
+/* ── Lettrine (registre « prestige ») ────────────────────────────────────── */
+.gu-lettrine::first-letter { float: left; margin: .02em .12em 0 0; padding: .06em .14em; font: 400 3.4em/.8 "Cinzel", Georgia, serif; color: var(--gu-ink); background: var(--gu-gold); }
+
+/* ── Textures ────────────────────────────────────────────────────────────── */
+.gu-paper { background-color: var(--gu-paper); color: var(--gu-ink); background-image: var(--gu-grain); }
+.gu-night { background-color: var(--gu-night); color: var(--gu-white); background-image: var(--gu-grain); }
+.gu-dots { background-image: radial-gradient(currentColor 1.3px, transparent 1.7px); background-size: 9px 9px; }
+
+/* ── La scène : remplace la « section rectangulaire ». Bords coupés en biais,
+      les scènes se chevauchent ; atmosphère au choix. ───────────────────────── */
+.gu-scene { position: relative; isolation: isolate; margin-block: calc(-1 * var(--gu-cut, 5vw)) 0; padding-block: calc(var(--gu-cut, 5vw) + clamp(28px, 5vw, 64px)) clamp(36px, 6vw, 80px);
+  clip-path: polygon(0 var(--gu-cut, 5vw), 100% 0, 100% 100%, 0 100%); }
+.gu-scene.is-flip { clip-path: polygon(0 0, 100% var(--gu-cut, 5vw), 100% 100%, 0 100%); }
+.gu-scene.is-night { background: var(--gu-night); color: var(--gu-white); }
+.gu-scene.is-paper { background: var(--gu-paper); color: var(--gu-ink); }
+.gu-scene.is-red { background: var(--gu-red); color: var(--gu-white); }
+/* Coupe seule : la section garde son fond, seuls ses bords deviennent obliques. */
+.gu-scene.is-clip { --gu-cut: 3vw; padding-block: 0; background: transparent; }
+.gu-scene.is-clip > * { margin-top: 0; }
+@media (max-width: 699px) { .gu-scene { --gu-cut: 9vw; } }
+
+@media (prefers-reduced-motion: reduce) { .lame-shadow { transition: none !important; } }
+
+/* ── Ornements ───────────────────────────────────────────────────────────── */
+.orn-cadre { position: absolute; inset: 10px; pointer-events: none; color: var(--orn-c, var(--gu-gold-deep)); }
+.orn-coin { position: absolute; width: clamp(44px, 6vw, 80px); height: auto; }
+.orn-coin.is-tl { left: 0; top: 0; } .orn-coin.is-tr { right: 0; top: 0; transform: scaleX(-1); }
+.orn-coin.is-bl { left: 0; bottom: 0; transform: scaleY(-1); } .orn-coin.is-br { right: 0; bottom: 0; transform: scale(-1, -1); }
+@media (max-width: 699px) { .gu-scene.is-clip { --gu-cut: 6vw; } }
+.hm-arcanes { padding-block: 4vw 6vw !important; background: var(--gu-night) !important; }
+
+/* ── Marque de rubrique : grand sceau placé selon la rubrique, étiquette en lame ── */
+.rm-tag { position: relative; z-index: 1; margin: 0 0 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: 1rem; }
+.rm-tag .lame { --gu-acc: var(--gk-accent, var(--gu-red)); }
+.rm-no { margin-right: .5em; padding-right: .5em; border-right: 2px solid currentColor; font-style: normal; }
+.rm-romaji { font: 700 italic .9rem var(--gk-font-ui); letter-spacing: .12em; color: var(--gk-faint, currentColor); }
+.rm-big { position: absolute; z-index: -1; pointer-events: none; width: clamp(220px, 34vw, 460px); aspect-ratio: 1; opacity: .16; right: -4%; top: -14%; rotate: -12deg; }
+.rm-big .sceau { width: 100%; height: 100%; }
+/* Chaque rubrique place son emblème autrement (composition propre). */
+.rm-big.rm-birthdays { right: 2%; top: -30%; rotate: 8deg; opacity: .2; }
+.rm-big.rm-jeux { left: auto; right: -8%; top: 10%; rotate: 18deg; width: clamp(260px, 40vw, 560px); }
+.rm-big.rm-bibliotheque { right: 18%; top: -40%; rotate: -4deg; opacity: .12; }
+.rm-big.rm-atelier { right: -10%; top: -6%; rotate: -24deg; }
+.rm-big.rm-bons-plans { right: 4%; top: 6%; rotate: 30deg; width: clamp(180px, 26vw, 360px); }
+.rm-big.rm-calendrier { right: -2%; top: -50%; rotate: 0deg; opacity: .14; }
+.rm-big.rm-wanted { right: auto; left: 52%; top: -10%; opacity: .1; }
+.rm-big.rm-teams { right: -6%; top: 0; opacity: .14; }
+@media (max-width: 699px) { .rm-big { width: 70vw; right: -20%; top: -6%; opacity: .1; } }
+:is(.gk-hero, .bb-masthead, .cal-head, .tm-hero, .wt-hero) { overflow-x: clip; }
