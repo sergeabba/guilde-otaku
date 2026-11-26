@@ -3,6 +3,7 @@
 // Inspiré des principes de MUGEN : données par personnage (coups, zones d'attaque,
 // commandes), états, tampon de commandes directionnelles. Aucun fichier MUGEN repris.
 import { characterFor, type CharacterDef, type MoveDef, type NormalId, type SpecialDef, type ProjectileDef, type Motion } from "./characters";
+import { applyArchetype, archetypeOf } from "./archetypes";
 
 export const STAGE_W = 384;
 export const STAGE_H = 216;
@@ -130,7 +131,7 @@ export function tuning(p: FighterProfile) {
 
 function spawn(profile: FighterProfile, side: 0 | 1, hp = MAX_HP, meter = 0, reviveUsed = false): Fighter {
   return {
-    profile, char: characterFor(profile.id, profile.specialName), side,
+    profile, char: applyArchetype(characterFor(profile.id, profile.specialName), archetypeOf(profile.stats)), side,
     x: side === 0 ? 120 : STAGE_W - 120, y: 0, vx: 0, vy: 0, facing: side === 0 ? 1 : -1,
     hp, meter, state: "ready", move: null, moveName: null, t: 0, hitDone: false, connected: false,
     stun: 0, comboTaken: 0, bestCombo: 0, reviveUsed, invuln: 0, kd: false, thrownBy: null, backThrow: false, dirs: [], press: {}, prev: NO_INPUT,

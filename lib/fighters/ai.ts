@@ -2,6 +2,7 @@
 // Il ne fait qu'appuyer sur les mêmes touches qu'un joueur : aucune triche sur le moteur.
 // Il exécute de vraies commandes (quart de cercle, enchaînements) image par image.
 import { MAX_METER, NO_INPUT, type Input, type MatchState } from "./engine";
+import { ARCHETYPES, archetypeOf } from "./archetypes";
 
 export type Rng = () => number;
 
@@ -20,9 +21,11 @@ export function makeRng(seed: number): Rng {
 export type AiLevel = "facile" | "normal" | "difficile";
 
 const LEVEL = {
-  facile: { think: 18, aggression: 0.35, guard: 0.2, antiProjectile: 0.3, combo: 0.2 },
-  normal: { think: 11, aggression: 0.55, guard: 0.45, antiProjectile: 0.6, combo: 0.5 },
-  difficile: { think: 6, aggression: 0.7, guard: 0.7, antiProjectile: 0.85, combo: 0.85 },
+  // Les niveaux diffèrent par la lecture du jeu (réaction, garde, punition, anti-air),
+  // jamais par des dégâts ou des avantages cachés : l'IA appuie sur les mêmes touches.
+  facile: { think: 18, aggression: 0.35, guard: 0.2, antiProjectile: 0.3, combo: 0.2, punish: 0.05, antiAir: 0.05 },
+  normal: { think: 11, aggression: 0.55, guard: 0.45, antiProjectile: 0.6, combo: 0.5, punish: 0.35, antiAir: 0.3 },
+  difficile: { think: 6, aggression: 0.7, guard: 0.7, antiProjectile: 0.85, combo: 0.85, punish: 0.8, antiAir: 0.7 },
 };
 
 /** Une étape du plan : directions relatives (f avant, b arrière) et boutons, tenue n images. */
@@ -75,9 +78,35 @@ export function aiInput(s: MatchState, side: 0 | 1, mem: AiMemory, rng: Rng, lev
     mem.plan = [hold({ b: true, d: low }, 16)];
   }
 
+  // Anti-air : l'adversaire saute vers lui à courte distance → coup accroupi lourd.
+  if (!busy && me.y === 0 && foe.y < -10 && dist < 70 && Math.sign(foe.vx) === Math.sign(me.x - foe.x) && rng() < L.antiAir / 4) {
+    mem.plan = [hold({ d: true }, 2), hold({ d: true, btn: ["hp"] }, 1), hold({ d: true }, 10)];
+  }
+  // Punition : un coup adverse raté ou paré, encore en récupération, à portée.
+  const recovering = foe.state === "attack" && foe.move && !foe.move.projectile && foe.t > foe.move.startup + foe.move.active;
+  if (!busy && recovering && dist < 56 && me.y === 0 && rng() < L.punish / 3) {
+    mem.plan = [hold({ btn: ["lp"] }, 1), hold({}, 5), hold({ btn: ["lp"] }, 1), hold({}, 5), ...QCF("hp")];
+  }
+
   if (mem.plan.length) return run();
   if (s.frame < mem.until) return NO_INPUT;
   mem.until = s.frame + L.think;
+
+  // Style de combat (archétype de la fiche) : distance préférée, pression, projectiles, projections.
+  const P = ARCHETYPES[archetypeOf(me.profile.stats)].ai;
+  if (dist < 36 && me.y === 0 && foe.y === 0 && rng() < P.throwRate * L.aggression) {
+    mem.plan = [hold({ f: true, btn: ["hp"] }, 1), hold({}, 12)];
+    return run();
+  }
+  if (P.range >= 120 && dist < P.range * 0.6 && rng() < 0.5) {
+    // Le zoner recule pour retrouver sa distance, puis relance un projectile.
+    mem.plan = [hold({ b: true }, 14), ...(rng() < P.wave ? QCF("lp") : [])];
+    return run();
+  }
+  if (dist > P.range + 40 && rng() < P.press) {
+    mem.plan = rng() < P.jump ? [hold({ u: true, f: true }, 2), hold({}, 14), hold({ btn: ["hk"] }, 1), hold({}, 16)] : [hold({ f: true }, L.think + 4)];
+    return run();
+  }
 
   const r = rng();
   const canWave = !s.projectiles.some((p) => p.owner === side);

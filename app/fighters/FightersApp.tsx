@@ -16,6 +16,7 @@ import type { MatchResult } from "./FightScreen";
 import { useMusicDock } from "../components/MusicDock";
 import Ransom from "../components/Ransom";
 import Sceau from "../components/guilde/Sceau";
+import { ARCHETYPES, archetypeOf } from "../../lib/fighters/archetypes";
 import FaceToggle from "../components/FaceToggle";
 import { setFace, useFace } from "../../lib/face";
 import { directSrc } from "../../lib/image-loader";
@@ -416,6 +417,9 @@ function BigPortrait({ side, label, m, team, size, order, active, status }: {
             <b className={hasSprite(m) ? "fxs-sprite is-custom" : "fxs-sprite"}>{hasSprite(m) ? "Sprite dédié" : "Sprite provisoire"}</b>
           </p>
         )}
+        {m && (() => { const a = ARCHETYPES[archetypeOf(m.stats)]; return (
+          <p className="fxs-style"><b>{a.label}</b><span className="fxs-ease" aria-label={`Prise en main ${["facile", "moyenne", "exigeante"][a.ease - 1]}`}>{[1, 2, 3].map((k) => <i key={k} className={k <= a.ease ? "is-on" : ""} />)}</span><small>{a.pitch}</small></p>
+        ); })()}
         {m && (m.stats ? (
           <dl className="fxs-stats">
             {(["force", "vitesse", "technique"] as const).map((k) => (

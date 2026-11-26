@@ -27,3 +27,19 @@
   0%, 26% { translate: 0 0; }
   36% { translate: 7px -2px; } 48% { translate: -6px 2px; } 60% { translate: 4px -1px; } 74% { translate: -2px 0; } 100% { translate: 0 0; }
 }
+
+/* ═══ Incrustation de super (coupe d'écran) ═══════════════════════════════════════
+   Pendant l'arrêt sur image de la super : bandes noires, bande diagonale à la couleur du
+   grade portant le regard du personnage, nom de la super en lettres découpées. 900 ms,
+   jamais bloquant (le combat continue derrière), absent en mouvement réduit. */
+.fx-cutin { position: absolute; inset: 0; z-index: 30; pointer-events: none; display: grid; place-items: center; overflow: hidden;
+  background: linear-gradient(#000 0 12%, transparent 12% 88%, #000 88%); animation: fx-cut-life 900ms linear both; }
+.fx-cutin-band { position: absolute; left: -10%; right: -10%; top: 30%; height: 34%; background: var(--fx-c) var(--cut-src) no-repeat; background-size: 130% auto; background-position: 50% var(--cut-y, 22%);
+  clip-path: polygon(0 18%, 100% 0, 100% 82%, 0 100%); border-block: 4px solid #050509; animation: fx-cut-band 900ms cubic-bezier(.2, .9, .3, 1) both; }
+.fx-cutin.is-side-1 .fx-cutin-band { clip-path: polygon(0 0, 100% 18%, 100% 100%, 0 82%); animation-name: fx-cut-band-r; }
+.fx-cutin-name { position: relative; z-index: 1; margin-top: 22%; font-size: clamp(1.6rem, 5vw, 3.6rem); --rn-hot: var(--fx-c); --rn-ink: #050509; --rn-paper: #fff; animation: fx-cut-name 900ms cubic-bezier(.2, 1.4, .4, 1) both; }
+.fx-cutin-kicker { position: absolute; z-index: 1; top: 31%; left: 6%; padding: 2px 10px; background: #050509; color: #fff; font: 900 italic .9rem var(--gk-font-title, sans-serif); letter-spacing: .1em; text-transform: uppercase; }
+@keyframes fx-cut-life { 0% { opacity: 0; } 8%, 82% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes fx-cut-band { from { translate: -60% 0; } 30% { translate: 0 0; } to { translate: 4% 0; } }
+@keyframes fx-cut-band-r { from { translate: 60% 0; } 30% { translate: 0 0; } to { translate: -4% 0; } }
+@keyframes fx-cut-name { 0%, 20% { scale: 1.8; opacity: 0; } 40% { scale: 1; opacity: 1; } }

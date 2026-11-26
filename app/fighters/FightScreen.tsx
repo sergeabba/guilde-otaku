@@ -9,6 +9,9 @@ import { FightAudio, audioPrefs, saveAudioPrefs, type AudioPrefs } from "../../l
 import { aiInput, makeRng, newAiMemory, type AiLevel } from "../../lib/fighters/ai";
 import { ArenaRenderer, lookFor, type Look } from "../../lib/fighters/render";
 import type { Mode, RosterMember, Versus } from "./FightersApp";
+import Ransom from "../components/Ransom";
+import { rankAccents, type Rank } from "../config/ranks";
+const accentOf = (m: RosterMember) => rankAccents[m.rank as Rank] ?? m.color ?? "#e8b931";
 
 // Touches physiques (e.code) : elles restent au même endroit en AZERTY comme en QWERTY.
 const KEYS: [Record<string, keyof Input>, Record<string, keyof Input>] = [
@@ -115,6 +118,8 @@ export default function FightScreen({ teams, mode, versus, level, labels, reduce
   const [showKeys, setShowKeys] = useState(false);
   const [hud, setHud] = useState<Hud | null>(null);
   const [banner, setBanner] = useState<{ text: string; sub?: string; id: number; kind?: "round" | "fight" | "ko" } | null>(null);
+  // Incrustation cinématique d'une super : regard du personnage en bande, nom découpé.
+  const [cutin, setCutin] = useState<{ m: RosterMember; name: string; side: 0 | 1; id: number } | null>(null);
   const [combo, setCombo] = useState<{ side: 0 | 1; n: number; dmg: number; id: number } | null>(null);
   const [first, setFirst] = useState<{ side: 0 | 1; id: number } | null>(null);
   const keyLabel = useKeyLabels();
@@ -147,7 +152,14 @@ export default function FightScreen({ teams, mode, versus, level, labels, reduce
         else setBanner({ text: other.hp >= MAX_HP ? "Parfait !" : "K.-O. !", sub: `${s.fighters[e.side].profile.name} est à terre`, id, kind: "ko" });
       }
       if (e.type === "timeOver") setBanner({ text: "Temps écoulé", id });
-      if (e.type === "special") setBanner({ text: e.name, sub: e.super ? "Super" : "Attaque spéciale", id });
+      if (e.type === "special") {
+        if (e.super && !reduced) {
+          const f = s.fighters[e.side];
+          const m = teams[e.side].find((x) => x.id === f.profile.id);
+          if (m) setCutin({ m, name: e.name, side: e.side, id });
+          else setBanner({ text: e.name, sub: "Super", id });
+        } else setBanner({ text: e.name, sub: e.super ? "Super" : "Attaque spéciale", id });
+      }
       if (e.type === "revive") setBanner({ text: e.name, sub: `${s.fighters[e.side].profile.name} se relève`, id });
       if (e.type === "dizzy") setBanner({ text: "Étourdi !", sub: s.fighters[e.side].profile.name, id });
       if (e.type === "throw") setBanner({ text: "Projection", id });
@@ -301,6 +313,14 @@ export default function FightScreen({ teams, mode, versus, level, labels, reduce
         <canvas ref={canvasRef} width={viewW} height={STAGE_H} className="fx-canvas" aria-label="Arène de combat en pixel art" role="img" />
         {combo && !ended && <div key={`c${combo.id}`} className={`fx-combo fx-combo--${combo.side}`} aria-live="polite"><b>{combo.n}</b><span>coups</span><small>{combo.dmg} % de dégâts</small></div>}
         {first && !ended && <div key={`f${first.id}`} className={`fx-first fx-first--${first.side}`} aria-hidden="true">Premier coup</div>}
+        {cutin && !ended && (
+          <div key={cutin.id} className={`fx-cutin is-side-${cutin.side}`} aria-live="assertive" onAnimationEnd={(ev) => { if (ev.target === ev.currentTarget) setCutin(null); }}
+            style={{ "--fx-c": accentOf(cutin.m), "--cut-src": `url(${JSON.stringify(cutin.m.cut?.src ?? cutin.m.anime ?? cutin.m.photo ?? "")})`, "--cut-y": `${cutin.m.cut ? cutin.m.cut.box[1] + (cutin.m.cut.box[3] - cutin.m.cut.box[1]) * 0.16 : 22}%` } as React.CSSProperties}>
+            <span className="fx-cutin-band" aria-hidden="true" />
+            <Ransom text={cutin.name} as="p" className="fx-cutin-name" />
+            <span className="fx-cutin-kicker">Super · {cutin.m.name}</span>
+          </div>
+        )}
         {banner && !ended && <div key={banner.id} className={`fx-banner${banner.kind ? ` is-${banner.kind}` : ""}`} aria-live="assertive"><b>{banner.text}</b>{banner.sub && <span>{banner.sub}</span>}</div>}
         <button type="button" className="fx-pausebtn" onClick={() => setPause(true)} aria-label="Pause" disabled={ended}><Pause size={18} aria-hidden="true" /></button>
 
