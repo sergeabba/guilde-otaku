@@ -30,6 +30,7 @@ export default async function TeamsTest() {
     id: m.id, name: m.name, rank: m.rank, anime: m.animeChar || null, real: m.photo || null,
     animePos: objectPosition(m.extras?.animeFocus, "50% 15%"), realPos: objectPosition(m.extras?.photoFocus, "50% 20%"),
     logo: seriesLogoSrc(m) ?? rankLogos[m.rank as Rank] ?? null,
+    logoFallback: rankLogos[m.rank as Rank] ?? null,
     stats: m.stats && (m.stats.force || m.stats.vitesse || m.stats.technique) ? m.stats : null,
     special: m.special?.name && !["—", "Inconnu"].includes(m.special.name) ? m.special.name : null,
     bankai: POUVOIRS[m.id]?.bankai.nom ?? null,

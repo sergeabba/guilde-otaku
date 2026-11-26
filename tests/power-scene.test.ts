@@ -24,3 +24,11 @@ describe("scènes de pouvoir", () => {
     expect(Object.keys(counts).length).toBeGreaterThanOrEqual(10);
   });
 });
+
+import { parseMemberExtras } from "../lib/member-extras";
+describe("réglages des scènes de pouvoir (extras)", () => {
+  it("garde une famille connue et une illustration sûre, rejette le reste", () => {
+    const e = parseMemberExtras({ powerScenes: { domaine: { family: "vegetation", art: "/anime/godwin_anime.jpg" }, bankai: { family: "inconnue", art: "javascript:alert(1)" }, special: { art: "https://evil.example.com/x.png" } } });
+    expect(e?.powerScenes).toEqual({ domaine: { family: "vegetation", art: "/anime/godwin_anime.jpg" } });
+  });
+});

@@ -3,7 +3,7 @@
 import type { Member, Rank } from "../data/members";
 import { RANK_FILTER_ORDER } from "../data/members";
 import { getPublicMembers } from "./members-server";
-import { objectPosition, memberAwards, featuredWorks, workTitle, sameWork, type FavoriteWork, type MemberTrack, type CardMotif } from "./member-extras";
+import { objectPosition, memberAwards, featuredWorks, workTitle, sameWork, type FavoriteWork, type MemberTrack, type CardMotif, type PowerScenes } from "./member-extras";
 import { POUVOIRS } from "../data/pouvoirs";
 import { rankAccents, rankRomaji } from "../app/config/ranks";
 import { COUNTRIES } from "../app/config/countries";
@@ -24,6 +24,8 @@ export const GENERATIONS: { id: string; label: string; romaji: string; ranks: Ra
 export interface StudioWork { key: string; title: string; cover: string | null; year: number | null; kind: string; note: string | null; raw: FavoriteWork }
 
 export interface StudioMember {
+  /** Réglages manuels des scènes de pouvoir (admin). */
+  powerScenes?: PowerScenes;
   id: number; name: string; first: string; rank: Rank; romaji: string; accent: string;
   anime: string | null; real: string | null; animePos: string; realPos: string;
   animeVideo: string | null; realVideo: string | null;
@@ -81,6 +83,7 @@ export function toStudio(m: Member): StudioMember {
   const edition = editionOf(m.rank);
   const s = portraitSeries(m);
   return {
+    powerScenes: x.powerScenes,
     id: m.id, name: m.name, first: shortName(m.name), rank: m.rank,
     romaji: rankRomaji[m.rank] ?? "", accent: x.card?.color ?? rankAccents[m.rank] ?? "#c9a84c",
     anime: m.animeChar || null, real: m.photo || null,

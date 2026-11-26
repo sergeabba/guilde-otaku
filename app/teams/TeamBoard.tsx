@@ -16,6 +16,8 @@ export interface TeamMember {
   anime: string | null; real: string | null; animePos: string; realPos: string;
   /** Écusson de la carte : logo de la série du portrait anime, sinon logo du grade. */
   logo: string | null;
+  /** Logo du grade, si le logo de série ne charge pas. */
+  logoFallback?: string | null;
   stats: { force?: number; vitesse?: number; technique?: number } | null;
   special: string | null; bankai: string | null;
 }
@@ -56,7 +58,7 @@ export default function TeamBoard({ team, members, faceMode = "anime", preview =
       <div className="tm-stage">
         <span className="tm-stage-fx" aria-hidden="true"><i /><i /><i /></span>
         <header className="tm-banner">
-          <span className="tm-crest" aria-hidden="true"><b>{initials(team.name)}</b></span>
+          <Crest name={team.name} color={color} sport={team.sport} />
           <div className="tm-banner-text">
             <p className="tm-sport">{SPORT_LABEL[team.sport]}{team.sport === "foot" ? ` · ${team.formation}` : ""}</p>
             <h2 id={`tm-${team.id}`} className="tm-name">{team.name}</h2>
@@ -84,7 +86,7 @@ export default function TeamBoard({ team, members, faceMode = "anime", preview =
                       <button type="button" className="tm-card" aria-pressed={current?.m.id === p.m.id} onClick={() => setPicked(p.m.id)} aria-label={label(p)}>
                         <span className="tm-card-no" aria-hidden="true">{p.slot.number ?? ""}</span>
                         <span className="tm-card-img"><Portrait m={p.m} f={faceMode} sizes="220px" /></span>
-                        {p.m.logo && <Logo className="tm-card-logo" src={p.m.logo} />}
+                        {p.m.logo && <Logo className="tm-card-logo" src={p.m.logo} fallback={p.m.logoFallback} />}
                         <span className="tm-card-pos">{p.def.id}</span>
                         {p.slot.captain && <span className="tm-cap" title="Capitaine"><Crown size={14} aria-hidden="true" /></span>}
                         <span className="tm-card-name">{first(p.m.name)}</span>
@@ -109,7 +111,7 @@ export default function TeamBoard({ team, members, faceMode = "anime", preview =
                     style={{ left: `${p.def.x}%`, top: `${p.def.y}%`, "--i": i } as React.CSSProperties} aria-label={label(p)}>
                     <span className="tm-player-card">
                       <Portrait m={p.m} f={faceMode} sizes="140px" />
-                      {p.m.logo && <Logo className="tm-player-logo" src={p.m.logo} />}
+                      {p.m.logo && <Logo className="tm-player-logo" src={p.m.logo} fallback={p.m.logoFallback} />}
                       {p.slot.number !== undefined && <b className="tm-player-no">{p.slot.number}</b>}
                     </span>
                     <span className="tm-player-name">{p.slot.captain && <Crown size={11} aria-hidden="true" />}{first(p.m.name)}</span>
@@ -126,11 +128,39 @@ export default function TeamBoard({ team, members, faceMode = "anime", preview =
   );
 }
 
-/** Logo de club du joueur : retiré s'il ne charge pas (Safari affiche sinon un « ? » bleu). */
-function Logo({ src, className }: { src: string; className: string }) {
-  const [ok, setOk] = useState(true);
+/**
+ * Écusson original de l'équipe : forme selon le sport (blason pour le foot, médaillon pour le
+ * basket), couleur de l'équipe, motif choisi de façon stable d'après son nom, initiales.
+ */
+function Crest({ name, color, sport }: { name: string; color: string; sport: string }) {
+  let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  const motif = h % 3, ink = "#050509";
+  const clip = sport === "foot" ? "M50 4 L92 16 V52 C92 76 72 90 50 98 C28 90 8 76 8 52 V16 Z" : "M50 4 A46 46 0 1 1 49.9 4 Z";
+  return (
+    <svg className="tm-crest-svg" viewBox="0 0 100 102" aria-hidden="true">
+      <defs><clipPath id={`cr-${h}`}><path d={clip} /></clipPath></defs>
+      <path d={clip} fill={ink} transform="translate(4 4)" />
+      <g clipPath={`url(#cr-${h})`}>
+        <rect width="100" height="102" fill={color} />
+        {motif === 0 && <path d="M-10 70 L110 20 V44 L-10 94 Z" fill={ink} opacity=".85" />}
+        {motif === 1 && [0, 1, 2].map((i) => <rect key={i} x={18 + i * 26} y="0" width="12" height="102" fill={ink} opacity=".8" />)}
+        {motif === 2 && <path d="M50 0 L100 50 L50 102 L0 50 Z" fill={ink} opacity=".8" />}
+      </g>
+      <path d={clip} fill="none" stroke="#fff" strokeWidth="4" />
+      <text x="50" y="62" textAnchor="middle" fontSize="30" fill="#fff" stroke={ink} strokeWidth="5" paintOrder="stroke" style={{ fontFamily: "Anton, sans-serif" }}>{initials(name)}</text>
+    </svg>
+  );
+}
+
+/**
+ * Logo de série du joueur. Cause des échecs : /api/series-logo répond 502 quand TMDB n'est pas
+ * configuré ou ne répond pas, 404 quand la série n'a pas de logo. On passe alors au logo du
+ * grade, puis on retire l'image (Safari afficherait sinon un « ? » bleu).
+ */
+function Logo({ src, fallback, className }: { src: string; fallback?: string | null; className: string }) {
+  const [cur, setCur] = useState<string | null>(src);
   // eslint-disable-next-line @next/next/no-img-element
-  return ok ? <img className={className} src={src} alt="" loading="lazy" onError={() => setOk(false)} /> : null;
+  return cur ? <img className={className} src={cur} alt="" loading="lazy" onError={() => setCur(cur !== fallback && fallback ? fallback : null)} /> : null;
 }
 
 /** Le capitaine mis en avant, comme une présentation de titulaire : numéro géant, portrait. */

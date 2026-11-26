@@ -76,4 +76,38 @@
   .ps.is-domaine .ps-art { height: 44%; bottom: 40%; }
   .ps.is-bankai .ps-art { height: 50%; bottom: 40%; }
 }
-.ps-art { -webkit-mask-image: linear-gradient(transparent, #000 14%, #000 86%, transparent); mask-image: linear-gradient(transparent, #000 14%, #000 86%, transparent); }
+.ps-art { -webkit-mask-image: linear-gradient(#000 84%, transparent); mask-image: linear-gradient(#000 84%, transparent); }
+
+/* ═══ Profondeur et caméra ═══ */
+.ps-depth { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; pointer-events: none; }
+/* Caméra : lente poussée vers l'avant pendant que la scène traverse l'écran (défilement). */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .ps-world { animation: ps-dolly linear both; animation-timeline: view(); animation-range: cover 0% cover 100%; }
+    .ps-art { animation: ps-dolly-art linear both; animation-timeline: view(); animation-range: cover 0% cover 100%; }
+  }
+}
+@keyframes ps-dolly { from { scale: 1.12; translate: 0 -3%; } to { scale: 1; translate: 0 3%; } }
+@keyframes ps-dolly-art { from { translate: 0 6%; } to { translate: 0 -2%; } }
+.ps.is-domaine .ps-art { animation-name: ps-dolly-art; }
+
+/* ═══ Attaque spéciale : impact bref, rapide, expressif (pas un monde, pas une libération) ═══
+   Bande étroite, personnage décentré, lignes de vitesse focales, éclair d'impact, nom en
+   capitales italiques qui file. */
+.ps.is-special { min-height: clamp(340px, 52svh, 520px); clip-path: polygon(0 0, 100% 8%, 100% 100%, 0 92%); }
+.ps.is-special .ps-art { left: 4%; right: auto; height: 100%; max-width: 46%; }
+.ps.is-special .ps-text { right: clamp(18px, 5vw, 64px); left: auto; top: 50%; translate: 0 -50%; max-width: min(40ch, 52%); text-align: right; justify-items: end; }
+.ps.is-special .ps-name { font: 900 italic clamp(2rem, 5vw, 4rem)/.92 var(--gk-font-title); text-transform: uppercase; transform: skewX(-10deg); color: #fff; }
+.ps.is-special .ps-sens { display: none; }
+.ps-impact { position: absolute; z-index: 1; left: 30%; top: 50%; width: 140%; aspect-ratio: 1; translate: -50% -50%; pointer-events: none;
+  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--ps-glow) 60%, transparent) 0 1.2deg, transparent 1.2deg 7deg);
+  -webkit-mask-image: radial-gradient(circle, transparent 14%, #000 22%, #000 46%, transparent 62%); mask-image: radial-gradient(circle, transparent 14%, #000 22%, #000 46%, transparent 62%); }
+@media (prefers-reduced-motion: no-preference) {
+  .ps-impact { animation: ps-impact 1.6s cubic-bezier(.2, 1, .3, 1) infinite; }
+}
+@keyframes ps-impact { 0% { scale: .7; opacity: 1; } 70%, 100% { scale: 1.1; opacity: .5; } }
+@media (max-width: 699px) {
+  .ps.is-special { min-height: 460px; }
+  .ps.is-special .ps-art { left: 50%; translate: -50% 0; bottom: 38%; height: 52%; max-width: 80%; }
+  .ps.is-special .ps-text { left: 16px; right: 16px; top: auto; bottom: 22px; translate: none; text-align: left; justify-items: start; max-width: none; }
+}

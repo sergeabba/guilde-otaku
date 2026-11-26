@@ -68,8 +68,9 @@ export default function CharacterSheet({ m }: { m: ExploMember }) {
         </div>
       </section>
 
-      {m.bankai && <PowerScene kind="bankai" id="ch-bk" seed={m.id} nom={m.bankai.nom} sens={m.bankai.sens} effet={m.bankai.effet} art={m.cut?.src ?? art} />}
-      {m.domaine && <PowerScene kind="domaine" id="ch-dom" seed={m.id} nom={m.domaine.nom} sens={m.domaine.sens} effet={m.domaine.effet} art={m.cut?.src ?? art} />}
+      {m.special && <PowerScene kind="special" id="ch-sp" seed={m.id} nom={m.special.name} sens="Attaque spéciale" effet={m.special.effect} family={m.powerScenes?.special?.family} art={m.powerScenes?.special?.art ?? m.cut?.src ?? art} />}
+      {m.bankai && <PowerScene kind="bankai" id="ch-bk" seed={m.id} nom={m.bankai.nom} sens={m.bankai.sens} effet={m.bankai.effet} family={m.powerScenes?.bankai?.family} art={m.powerScenes?.bankai?.art ?? m.cut?.src ?? art} />}
+      {m.domaine && <PowerScene kind="domaine" id="ch-dom" seed={m.id} nom={m.domaine.nom} sens={m.domaine.sens} effet={m.domaine.effet} family={m.powerScenes?.domaine?.family} art={m.powerScenes?.domaine?.art ?? m.cut?.src ?? art} />}
     </div>
   );
 }

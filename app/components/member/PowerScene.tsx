@@ -7,6 +7,7 @@
 import type { ReactNode } from "react";
 import { familiesOf, PALETTE, rng, type Family } from "../../../lib/power-scene";
 import Ransom from "../Ransom";
+import SceneDepth from "./SceneDepth";
 import "../../styles/power-scene.css";
 
 type R = () => number;
@@ -86,14 +87,17 @@ function layer(f: Family, r: R, front: boolean, burst: boolean): ReactNode[] {
   }
 }
 
-export default function PowerScene({ kind, nom, sens, effet, art, seed, id }: {
-  kind: "bankai" | "domaine"; nom: string; sens: string; effet: string; art?: string | null; seed: number; id: string;
+export default function PowerScene({ kind, nom, sens, effet, art, seed, id, family }: {
+  /** Famille choisie à la main dans l'admin (sinon déduite du texte). */
+  family?: Family;
+  kind: "bankai" | "domaine" | "special"; nom: string; sens: string; effet: string; art?: string | null; seed: number; id: string;
 }) {
-  const fam = familiesOf(`${nom} ${sens} ${effet}`);
+  const auto = familiesOf(`${nom} ${sens} ${effet}`);
+  const fam: Family[] = family ? [family, ...auto.filter((f) => f !== family)].slice(0, 2) : auto;
   const [a, b] = fam;
   const P = PALETTE[a];
   const r = rng(seed * 31 + (kind === "bankai" ? 7 : 3));
-  const burst = kind === "bankai";
+  const burst = kind !== "domaine";
   return (
     <section className={`ps is-${kind} ps-${a}${b ? ` ps2-${b}` : ""}`} aria-labelledby={id}
       style={{ "--ps-bg": P.bg, "--ps-hue": P.hue, "--ps-ink": P.ink, "--ps-glow": P.glow, "--ps-slow": fam.includes("temps") ? 3.2 : 1 } as React.CSSProperties}>
@@ -111,9 +115,11 @@ export default function PowerScene({ kind, nom, sens, effet, art, seed, id }: {
       <svg className="ps-front" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid slice" aria-hidden="true">
         {layer(a, r, true, burst)}
       </svg>
+      <SceneDepth family={a} slow={fam.includes("temps") ? 3 : 1} burst={kind !== "domaine"} />
+      {kind === "special" && <span className="ps-impact" aria-hidden="true" />}
       <div className="ps-text">
-        <p className="ps-kind">{kind === "bankai" ? "Bankai" : "Extension du territoire"}</p>
-        {burst ? <Ransom text={nom} as="h2" className="ps-name" /> : <h2 className="ps-name">{nom}</h2>}
+        <p className="ps-kind">{kind === "bankai" ? "Bankai" : kind === "special" ? "Attaque spéciale" : "Extension du territoire"}</p>
+        {kind === "bankai" ? <Ransom text={nom} as="h2" className="ps-name" /> : <h2 className="ps-name">{nom}</h2>}
         <span id={id} hidden>{nom}</span>
         <p className="ps-sens">{sens}</p>
         <p className="ps-effet">{effet}</p>

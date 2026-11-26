@@ -6,7 +6,7 @@ import { ExternalLink, Eye, EyeOff, Trash2, X } from "lucide-react";
 import { RANK_FILTER_ORDER, type Rank } from "../../data/members";
 import { COUNTRIES } from "../config/countries";
 import { adminDb } from "../../lib/admin-db-client";
-import { CARD_MOTIFS, CARD_MOTIF_LABEL, EXTRAS_KEYS, hasJapanese, memberAwards, parseMemberExtras, type FocusPoint, type MemberExtras } from "../../lib/member-extras";
+import { POWER_FAMILIES, type PowerFamilyId, CARD_MOTIFS, CARD_MOTIF_LABEL, EXTRAS_KEYS, hasJapanese, memberAwards, parseMemberExtras, type FocusPoint, type MemberExtras } from "../../lib/member-extras";
 import type { SupabaseMemberRow } from "../types";
 import PortraitPanel from "./PortraitPanel";
 import WorkSearch from "../components/works/WorkSearch";
@@ -14,6 +14,8 @@ import { portraitSeries } from "../../lib/series-logo";
 import UniverseEditor from "./UniverseEditor";
 import AwardsEditor, { awardsIssue } from "./AwardsEditor";
 import { useConfirm } from "../admin-ui/ui";
+import { POUVOIRS } from "../../data/pouvoirs";
+import { FAMILY_LABEL, familiesOf } from "../../lib/power-scene";
 
 type Tab = "identite" | "portraits" | "combat" | "univers";
 
@@ -80,7 +82,7 @@ export default function MemberEditor({ member, extrasSupported, onClose, onSaved
     const parsed = (parseMemberExtras(raw) ?? {}) as Record<string, unknown>;
     return EXTRAS_KEYS.filter((k) => (raw as Record<string, unknown>)[k] !== undefined && parsed[k] === undefined);
   })();
-  const UNREADABLE_LABEL: Record<string, string> = { displayNameRomaji: "surnom", favoriteAnime: "anime préférés", favoriteManga: "mangas préférés", music: "musique", awards: "palmarès", photoFocus: "cadrage réel", animeFocus: "cadrage anime", card: "style de carte", animeSeries: "série du portrait anime" };
+  const UNREADABLE_LABEL: Record<string, string> = { displayNameRomaji: "surnom", favoriteAnime: "anime préférés", favoriteManga: "mangas préférés", music: "musique", awards: "palmarès", photoFocus: "cadrage réel", animeFocus: "cadrage anime", card: "style de carte", animeSeries: "série du portrait anime", powerScenes: "scènes de pouvoir" };
 
   const errors = identityErrors(form);
   const dirty = JSON.stringify([form, extras]) !== savedSnapshot;
@@ -332,6 +334,42 @@ export default function MemberEditor({ member, extrasSupported, onClose, onSaved
                       </div>
                     ) : <p className="am-intro" style={{ margin: 0 }}>Aucune série pour l&apos;instant.</p>}
                     <WorkSearch kind="ANIME" pickLabel="Choisir cette série" onPick={(w) => { if (/^(tv|movie):\d+$/.test(w.sourceId)) patchExtras({ animeSeries: { title: (w.titleFr || w.title).slice(0, 120), tmdb: w.sourceId } }); }} />
+                  </fieldset>
+                );
+              })()}
+              {extrasSupported && (() => {
+                // Scènes de pouvoir : famille visuelle choisie à la main (sinon déduite du texte)
+                // et illustration dédiée (chemin du site ou image du stockage Supabase).
+                const ps = extras.powerScenes ?? {};
+                const pw = POUVOIRS[row.id];
+                const setScene = (k: "special" | "bankai" | "domaine", v: { family?: PowerFamilyId; art?: string }) => {
+                  const next = { ...ps, [k]: { ...ps[k], ...v } };
+                  for (const kk of Object.keys(next) as (keyof typeof next)[]) { const it = next[kk]; if (it && !it.family && !it.art) delete next[kk]; }
+                  patchExtras({ powerScenes: Object.keys(next).length ? next : undefined });
+                };
+                const rows: { k: "special" | "bankai" | "domaine"; label: string; text: string }[] = [
+                  { k: "special", label: "Attaque spéciale", text: [form.specialName, form.specialEffect].filter(Boolean).join(" ") },
+                  ...(pw ? [{ k: "bankai" as const, label: `Bankai · ${pw.bankai.nom}`, text: `${pw.bankai.nom} ${pw.bankai.sens} ${pw.bankai.effet}` }, { k: "domaine" as const, label: `Territoire · ${pw.domaine.nom}`, text: `${pw.domaine.nom} ${pw.domaine.sens} ${pw.domaine.effet}` }] : []),
+                ];
+                return (
+                  <fieldset className="am-fieldset">
+                    <legend>Scènes de pouvoir</legend>
+                    <p className="am-intro" style={{ margin: 0 }}>La famille visuelle est déduite du texte du pouvoir. Choisis-la à la main quand la description est ambiguë ou humoristique, et ajoute si besoin une illustration dédiée.</p>
+                    {rows.map(({ k, label, text }) => (
+                      <div key={k} className="am-row" style={{ flexWrap: "wrap", gap: 10, alignItems: "end" }}>
+                        <label className="am-field" style={{ minWidth: 220 }}>
+                          <span>{label}</span>
+                          <select className="am-input" value={ps[k]?.family ?? ""} onChange={(e) => setScene(k, { family: (e.target.value || undefined) as PowerFamilyId | undefined })}>
+                            <option value="">Automatique ({FAMILY_LABEL[familiesOf(text || "force")[0]]})</option>
+                            {POWER_FAMILIES.map((f) => <option key={f} value={f}>{FAMILY_LABEL[f]}</option>)}
+                          </select>
+                        </label>
+                        <label className="am-field" style={{ flex: 1, minWidth: 220 }}>
+                          <span>Illustration (facultative)</span>
+                          <input className="am-input" placeholder="/anime/… ou URL du stockage" defaultValue={ps[k]?.art ?? ""} onBlur={(e) => setScene(k, { art: e.target.value.trim() || undefined })} />
+                        </label>
+                      </div>
+                    ))}
                   </fieldset>
                 );
               })()}

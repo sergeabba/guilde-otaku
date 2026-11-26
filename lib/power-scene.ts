@@ -73,3 +73,10 @@ export function rng(seed: number) {
   let a = seed >>> 0 || 1;
   return () => { a ^= a << 13; a ^= a >>> 17; a ^= a << 5; return ((a >>> 0) % 10000) / 10000; };
 }
+
+export const FAMILY_LABEL: Record<Family, string> = {
+  vegetation: "Végétation", temps: "Temps et ralenti", nuit: "Nuit et étoiles", lumiere: "Lumière", feu: "Feu", glace: "Glace",
+  foudre: "Foudre", ombre: "Encre et ombres", miroir: "Miroirs et illusions", voix: "Voix et ondes", savoir: "Savoir et énigmes",
+  spectacle: "Spectacle et cinéma", sport: "Sport", couleur: "Couleurs et peinture", pierre: "Pierres et cristaux", fete: "Fête",
+  royaute: "Royauté et sacré", fantome: "Fantômes et peur", vitesse: "Vitesse", vent: "Vent", vide: "Vide et distorsion", force: "Force brute",
+};

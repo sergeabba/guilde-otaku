@@ -17,6 +17,7 @@ export interface ExploMember {
   awards: { title: string; year?: number }[];
   works: { title: string; cover: string | null }[];
   edition: string; generation: string; series: string | null;
+  powerScenes?: import("./member-extras").PowerScenes;
 }
 
 
@@ -25,7 +26,7 @@ export function toExplo(m: StudioMember): ExploMember {
     id: m.id, name: m.name, first: m.first, rank: m.rank, romaji: m.romaji, accent: m.accent, alias: m.alias,
     anime: m.anime, real: m.real, animePos: m.animePos, realPos: m.realPos, cut: cutoutFor(m.anime),
     bio: m.bio, lede: m.lede, country: m.country, flag: m.flag, birthday: m.birthday,
-    stats: m.stats, special: m.special, bankai: m.bankai, domaine: m.domaine,
+    stats: m.stats, special: m.special, bankai: m.bankai, domaine: m.domaine, powerScenes: m.powerScenes,
     awards: m.awards.map((a) => ({ title: a.title, year: a.year })),
     works: m.works.slice(0, 6).map((w) => ({ title: w.title, cover: w.cover })),
     edition: m.edition, generation: m.generation, series: m.series?.title ?? null,

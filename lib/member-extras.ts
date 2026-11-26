@@ -76,7 +76,15 @@ export interface MemberExtras {
   card?: CardStyle;
   /** Série dont vient le personnage du portrait anime (son logo remplace celui du grade). */
   animeSeries?: AnimeSeries;
+  /** Réglages des scènes de pouvoir : famille visuelle choisie à la main et illustration dédiée. */
+  powerScenes?: PowerScenes;
 }
+
+/** Familles visuelles des scènes de pouvoir (voir lib/power-scene.ts). */
+export const POWER_FAMILIES = ["vegetation", "temps", "nuit", "lumiere", "feu", "glace", "foudre", "ombre", "miroir", "voix", "savoir", "spectacle", "sport", "couleur", "pierre", "fete", "royaute", "fantome", "vitesse", "vent", "vide", "force"] as const;
+export type PowerFamilyId = (typeof POWER_FAMILIES)[number];
+export interface PowerSceneSetting { family?: PowerFamilyId; art?: string }
+export interface PowerScenes { special?: PowerSceneSetting; bankai?: PowerSceneSetting; domaine?: PowerSceneSetting }
 
 /** Série d'un portrait anime : titre affiché et identifiant TMDB (« tv:57041 »). */
 export interface AnimeSeries { title: string; tmdb: string }
@@ -103,7 +111,7 @@ const SUPABASE_HOST = /\.supabase\.(co|in)$/;
 
 const MAX_WORKS = 30;
 /** Rubriques de `extras` gérées par l'admin (toute autre clé est conservée telle quelle). */
-export const EXTRAS_KEYS = ["displayNameRomaji", "favoriteAnime", "favoriteManga", "music", "awards", "photoFocus", "animeFocus", "card", "animeSeries"] as const;
+export const EXTRAS_KEYS = ["displayNameRomaji", "favoriteAnime", "favoriteManga", "music", "awards", "photoFocus", "animeFocus", "card", "animeSeries", "powerScenes"] as const;
 
 const MAX_TRACKS = 10;
 const MAX_AWARDS = 20;
@@ -278,6 +286,27 @@ function animeSeries(v: unknown): AnimeSeries | undefined {
   return title && !hasJapanese(title) && TMDB_REF.test(tmdb) ? { title, tmdb } : undefined;
 }
 
+/** Illustration d'une scène : chemin local du site ou image du stockage Supabase, en https. */
+function sceneArt(v: unknown): string | undefined {
+  if (typeof v !== "string") return undefined;
+  const t = v.trim();
+  if (/^\/[\w\-./]{1,200}\.(png|jpe?g|webp|avif)$/i.test(t)) return t;
+  try { const u = new URL(t); return u.protocol === "https:" && SUPABASE_HOST.test(u.hostname) ? u.toString() : undefined; } catch { return undefined; }
+}
+function powerScenes(v: unknown): PowerScenes | undefined {
+  if (!v || typeof v !== "object") return undefined;
+  const o = v as Record<string, unknown>;
+  const out: PowerScenes = {};
+  for (const k of ["special", "bankai", "domaine"] as const) {
+    const it = o[k] as Record<string, unknown> | undefined;
+    if (!it || typeof it !== "object") continue;
+    const family = POWER_FAMILIES.includes(it.family as PowerFamilyId) ? (it.family as PowerFamilyId) : undefined;
+    const art = sceneArt(it.art);
+    if (family || art) out[k] = { ...(family ? { family } : {}), ...(art ? { art } : {}) };
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+
 export function parseMemberExtras(raw: unknown): MemberExtras | undefined {
   let v = raw;
   if (typeof v === "string") {
@@ -295,6 +324,7 @@ export function parseMemberExtras(raw: unknown): MemberExtras | undefined {
     animeFocus: focus(o.animeFocus),
     card: cardStyle(o.card),
     animeSeries: animeSeries(o.animeSeries),
+    powerScenes: powerScenes(o.powerScenes),
   };
   const clean = Object.fromEntries(Object.entries(extras).filter(([, val]) => val !== undefined)) as MemberExtras;
   return Object.keys(clean).length ? clean : undefined;
