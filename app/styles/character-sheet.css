@@ -76,3 +76,31 @@
   .pf-mode button { padding-inline: 9px; font-size: .78rem; }
   .pf-mode-long { display: none; }
 }
+
+/* ═══ Finition (retours sur téléphone) ═══════════════════════════════════════════
+   Nom lisible (une seule ombre), grade en ligne simple, sceau en filigrane discret,
+   statistiques compactes, distinctions en tampons (plus de rubans partout). */
+.ch-name { text-shadow: 4px 4px 0 var(--gu-ink) !important; line-height: .98 !important; text-wrap: balance; }
+.ch-rank { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font: 900 italic 1rem var(--gk-font-title); text-transform: uppercase; letter-spacing: .04em; }
+.ch-rank b { padding: 2px 10px; background: var(--ch-acc); color: var(--gu-ink); }
+.ch-rank span { font: italic 600 1rem "Fraunces Edit", serif; text-transform: none; color: color-mix(in srgb, var(--ch-acc) 55%, #fff); }
+.ch-seal { opacity: .32 !important; }
+.ch-awards-h { margin: 0 0 10px; font: 900 italic 1.1rem var(--gk-font-title); text-transform: uppercase; letter-spacing: .06em; color: var(--gu-red); }
+.ch-awards ul { gap: 10px !important; }
+.ch-award { display: inline-grid; justify-items: center; padding: 8px 12px 6px; border: 2.5px solid var(--gu-red); color: var(--gu-red); rotate: var(--r, -2deg); font: 800 .82rem/1.15 var(--gk-font-ui); text-transform: uppercase; letter-spacing: .04em; text-align: center; max-width: 26ch; }
+.ch-award small { font: 400 1rem/1 var(--gk-font-impact); letter-spacing: .06em; }
+@media (max-width: 899px) {
+  .ch-hero { padding-bottom: 10px; }
+  .ch-seal { display: none; }
+  .ch-no { font-size: 1.1rem !important; -webkit-text-stroke: 0 !important; color: color-mix(in srgb, var(--ch-acc) 70%, #fff) !important; letter-spacing: .12em; }
+  .ch-name { font-size: clamp(2rem, 9.6vw, 2.8rem) !important; max-width: none !important; }
+  .ch-art { aspect-ratio: 1 / .95 !important; margin-top: -8px !important; }
+  /* Statistiques : une rangée de trois, chiffres mis en scène mais compacts. */
+  .ch-status { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px !important; margin-top: -24px !important; justify-items: stretch !important; position: relative; z-index: 3; }
+  .ch-stat { display: grid !important; justify-items: center; gap: 2px !important; rotate: 0deg !important; translate: none !important; padding: 8px 4px 6px; background: var(--gu-ink); border-top: 4px solid var(--ch-acc); font-size: .8rem !important; }
+  .ch-stat .lame { order: 2; font-size: .72rem; }
+  .ch-stat .lame-shadow { display: none; }
+  .ch-stat .lame-face { background: transparent !important; color: #fff !important; padding: 0 !important; }
+  .ch-num { order: 1; font-size: 2.4rem !important; text-shadow: 3px 3px 0 var(--ch-acc) !important; -webkit-text-stroke: 0 !important; }
+  .ch-special { grid-column: 1 / -1; justify-items: start !important; rotate: 0deg !important; margin-top: 4px !important; }
+}

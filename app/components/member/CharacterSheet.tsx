@@ -7,10 +7,9 @@
 import type { ExploMember } from "../../../lib/explo-data";
 import Sceau from "../guilde/Sceau";
 import Lame from "../guilde/Lame";
-import Phylactere from "../guilde/Phylactere";
+import PowerScene from "./PowerScene";
 import { Cadre } from "../guilde/Ornement";
 import { starTile } from "../guilde/textures";
-import Ransom from "../Ransom";
 import FaceToggle from "../FaceToggle";
 import { directSrc } from "../../../lib/image-loader";
 import { rankRomaji, type Rank } from "../../config/ranks";
@@ -36,7 +35,7 @@ export default function CharacterSheet({ m }: { m: ExploMember }) {
         <header className="ch-id">
           <p className="ch-no">N°{String(m.id).padStart(3, "0")}</p>
           <h1 id="ch-name" className="ch-name">{m.name}</h1>
-          <Phylactere tone="gold" className="ch-rank">{m.rank} · {romaji}</Phylactere>
+          <p className="ch-rank"><b>{m.rank}</b>{romaji && <span>{romaji}</span>}</p>
           {m.alias && <p className="ch-alias">« {m.alias} »</p>}
         </header>
         <div className="ch-face"><FaceToggle /></div>
@@ -62,43 +61,15 @@ export default function CharacterSheet({ m }: { m: ExploMember }) {
           </dl>
           {m.awards.length > 0 && (
             <div className="ch-awards">
-              <h2><Phylactere tone="red">Distinctions</Phylactere></h2>
-              <ul>{m.awards.slice(0, 6).map((a, i) => <li key={i}><Phylactere tone="gold">{a.title}{a.year ? ` · ${a.year}` : ""}</Phylactere></li>)}</ul>
+              <h2 className="ch-awards-h">Distinctions</h2>
+              <ul>{m.awards.slice(0, 6).map((a, i) => <li key={i} className="ch-award"><b>{a.title}</b>{a.year && <small>{a.year}</small>}</li>)}</ul>
             </div>
           )}
         </div>
       </section>
 
-      {m.bankai && (
-        <section className="gu-scene is-flip ch-bankai" aria-labelledby="ch-bk">
-          {m.cut && <span className="ch-bk-sil" aria-hidden="true" style={{ WebkitMaskImage: `url(${m.cut.src})`, maskImage: `url(${m.cut.src})` }} />}
-          <p className="ch-bk-kicker"><Lame tone="ink" shadow="paper" seed="bankai">Bankai</Lame></p>
-          <Ransom text={m.bankai.nom} as="h2" className="ch-bk-name" />
-          <span id="ch-bk" hidden>{m.bankai.nom}</span>
-          <p className="ch-bk-sens"><Phylactere tone="ink">{m.bankai.sens}</Phylactere></p>
-          <p className="ch-bk-effet">{m.bankai.effet}</p>
-        </section>
-      )}
-
-      {m.domaine && (
-        <section className="gu-scene ch-domain" aria-label="Extension du territoire">
-          <div className="ch-dom-ring">
-            <svg viewBox="0 0 200 200" aria-hidden="true">
-              <defs><path id="ch-dom-p" d="M100 100 m-86 0 a86 86 0 1 1 172 0 a86 86 0 1 1 -172 0" /></defs>
-              {[86, 70, 54].map((r) => <circle key={r} cx="100" cy="100" r={r} fill="none" stroke="currentColor" strokeWidth={r === 86 ? 1.5 : .8} strokeDasharray={r === 70 ? "2 3" : undefined} />)}
-              <text fontSize="9" letterSpacing="3" fill="currentColor"><textPath href="#ch-dom-p">{`${m.domaine.nom} · `.repeat(4).toUpperCase()}</textPath></text>
-            </svg>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            {art && <img src={m.cut ? art : directSrc(art, 640)} alt="" loading="lazy" />}
-          </div>
-          <div className="ch-dom-text">
-            <p className="ch-bk-kicker"><Lame tone="gold" shadow="red" seed="domaine">Extension du territoire</Lame></p>
-            <h2 className="ch-dom-name">{m.domaine.nom}</h2>
-            <p className="ch-bk-sens"><Phylactere tone="gold">{m.domaine.sens}</Phylactere></p>
-            <p className="ch-bk-effet">{m.domaine.effet}</p>
-          </div>
-        </section>
-      )}
+      {m.bankai && <PowerScene kind="bankai" id="ch-bk" seed={m.id} nom={m.bankai.nom} sens={m.bankai.sens} effet={m.bankai.effet} art={m.cut?.src ?? art} />}
+      {m.domaine && <PowerScene kind="domaine" id="ch-dom" seed={m.id} nom={m.domaine.nom} sens={m.domaine.sens} effet={m.domaine.effet} art={m.cut?.src ?? art} />}
     </div>
   );
 }

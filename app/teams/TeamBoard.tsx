@@ -62,6 +62,7 @@ export default function TeamBoard({ team, members, faceMode = "anime", preview =
             <h2 id={`tm-${team.id}`} className="tm-name">{team.name}</h2>
             {team.motto && <p className="tm-motto">« {team.motto} »</p>}
           </div>
+          {(() => { const cap = players.find((p) => p.slot.captain); return cap ? <Captain p={cap} f={faceMode} /> : null; })()}
           {power !== null && (
             <div className="tm-power" title="Moyenne des stats des titulaires">
               <span>Puissance</span><b>{power}</b>
@@ -74,7 +75,7 @@ export default function TeamBoard({ team, members, faceMode = "anime", preview =
           <p className="tm-empty">Effectif à venir : aucun titulaire choisi pour l&apos;instant.</p>
         ) : (
           <div className="tm-body">
-            {team.sport === "basket" ? (
+            {false ? (
               <div className="tm-court">
                 <span className="tm-court-lines" aria-hidden="true"><i /><i /></span>
                 <ol className="tm-five" aria-label="Cinq majeur">
@@ -83,8 +84,7 @@ export default function TeamBoard({ team, members, faceMode = "anime", preview =
                       <button type="button" className="tm-card" aria-pressed={current?.m.id === p.m.id} onClick={() => setPicked(p.m.id)} aria-label={label(p)}>
                         <span className="tm-card-no" aria-hidden="true">{p.slot.number ?? ""}</span>
                         <span className="tm-card-img"><Portrait m={p.m} f={faceMode} sizes="220px" /></span>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        {p.m.logo && <img className="tm-card-logo" src={p.m.logo} alt="" loading="lazy" />}
+                        {p.m.logo && <Logo className="tm-card-logo" src={p.m.logo} />}
                         <span className="tm-card-pos">{p.def.id}</span>
                         {p.slot.captain && <span className="tm-cap" title="Capitaine"><Crown size={14} aria-hidden="true" /></span>}
                         <span className="tm-card-name">{first(p.m.name)}</span>
@@ -99,7 +99,7 @@ export default function TeamBoard({ team, members, faceMode = "anime", preview =
                 </ol>
               </div>
             ) : (
-              <div className="tm-pitch" aria-label={`Onze de départ en ${team.formation}`} role="group">
+              <div className={`tm-pitch${team.sport === "basket" ? " is-court" : ""}`} aria-label={team.sport === "basket" ? "Cinq majeur sur le terrain" : `Onze de départ en ${team.formation}`} role="group">
                 <span className="tm-lines" aria-hidden="true"><i className="tm-box is-top" /><i className="tm-box is-bottom" /><i className="tm-circle" /><i className="tm-half" /></span>
                 {empty.map((d) => (
                   <span key={d.id} className="tm-ghost" style={{ left: `${d.x}%`, top: `${d.y}%` }} title={`${d.label} : poste à pourvoir`}><b>{d.code}</b></span>
@@ -109,8 +109,7 @@ export default function TeamBoard({ team, members, faceMode = "anime", preview =
                     style={{ left: `${p.def.x}%`, top: `${p.def.y}%`, "--i": i } as React.CSSProperties} aria-label={label(p)}>
                     <span className="tm-player-card">
                       <Portrait m={p.m} f={faceMode} sizes="140px" />
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      {p.m.logo && <img className="tm-player-logo" src={p.m.logo} alt="" loading="lazy" />}
+                      {p.m.logo && <Logo className="tm-player-logo" src={p.m.logo} />}
                       {p.slot.number !== undefined && <b className="tm-player-no">{p.slot.number}</b>}
                     </span>
                     <span className="tm-player-name">{p.slot.captain && <Crown size={11} aria-hidden="true" />}{first(p.m.name)}</span>
@@ -124,6 +123,24 @@ export default function TeamBoard({ team, members, faceMode = "anime", preview =
         )}
       </div>
     </section>
+  );
+}
+
+/** Logo de club du joueur : retiré s'il ne charge pas (Safari affiche sinon un « ? » bleu). */
+function Logo({ src, className }: { src: string; className: string }) {
+  const [ok, setOk] = useState(true);
+  // eslint-disable-next-line @next/next/no-img-element
+  return ok ? <img className={className} src={src} alt="" loading="lazy" onError={() => setOk(false)} /> : null;
+}
+
+/** Le capitaine mis en avant, comme une présentation de titulaire : numéro géant, portrait. */
+function Captain({ p, f }: { p: Player; f: Face }) {
+  return (
+    <div className="tm-captain" aria-label={`Capitaine : ${p.m.name}`}>
+      <span className="tm-captain-no" aria-hidden="true">{p.slot.number ?? "C"}</span>
+      <span className="tm-captain-img"><Portrait m={p.m} f={f} sizes="200px" /></span>
+      <span className="tm-captain-txt"><small>Capitaine</small><b>{p.m.name}</b><i>{p.def.label}</i></span>
+    </div>
   );
 }
 

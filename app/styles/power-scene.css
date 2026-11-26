@@ -1,0 +1,79 @@
+/* ═══ SCÈNES DE POUVOIR ═══════════════════════════════════════════════════════
+   Territoire : un monde (plans arrière, personnage dedans, plans avant). Le texte est posé
+   dans le monde, en bas à gauche, sur une ombre portée, jamais dans un cadre.
+   Bankai : coupe diagonale, éclat de la famille autour du personnage, nom découpé.
+   --ps-slow multiplie toutes les durées (famille « temps » : tout ralentit). */
+.ps { position: relative; isolation: isolate; overflow: hidden; min-height: clamp(520px, 88svh, 820px); color: #fff; background: var(--ps-bg); }
+.ps-world, .ps-front { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ps-world { z-index: 0; }
+.ps-art { position: absolute; z-index: 1; bottom: 0; height: 82%; width: auto; max-width: 70%; object-fit: contain; object-position: bottom; filter: drop-shadow(0 0 0 var(--ps-ink)) drop-shadow(-6px 0 0 var(--ps-ink)); }
+.ps-front { z-index: 2; pointer-events: none; }
+.ps-text { position: absolute; z-index: 3; display: grid; gap: 10px; max-width: min(46ch, 88%); }
+.ps-kind { margin: 0; justify-self: start; padding: 3px 10px; background: var(--ps-glow); color: var(--ps-ink); font: 900 italic .8rem var(--gk-font-title); letter-spacing: .14em; text-transform: uppercase; }
+.ps-name { margin: 0; line-height: .95; text-shadow: 0 2px 0 var(--ps-ink), 0 0 24px var(--ps-ink); }
+.ps-sens { margin: 0; font: italic 500 1.05rem "Fraunces Edit", Georgia, serif; color: var(--ps-glow); }
+.ps-effet { margin: 0; font: 500 1.02rem/1.55 var(--gk-font-body); color: #fff; text-shadow: 0 1px 2px #000, 0 0 12px var(--ps-ink); }
+
+/* Territoire : personnage au centre-droit, texte en bas à gauche. */
+.ps.is-domaine .ps-art { right: 6%; }
+.ps.is-domaine .ps-text { left: clamp(18px, 5vw, 64px); bottom: clamp(24px, 6vh, 60px); }
+.ps.is-domaine .ps-name { font: 400 clamp(2.4rem, 6vw, 5.2rem)/.92 "Cinzel", Georgia, serif; text-transform: uppercase; color: var(--ps-glow); }
+/* Bankai : coupe diagonale franche, personnage à droite, nom découpé en haut à gauche. */
+.ps.is-bankai { clip-path: polygon(0 5%, 100% 0, 100% 95%, 0 100%); margin-block: -3vw; }
+.ps.is-bankai::before { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(115deg, var(--ps-ink) 0 38%, transparent 38.2%); opacity: .82; }
+.ps.is-bankai .ps-art { right: 0; height: 96%; max-width: 62%; }
+.ps.is-bankai .ps-text { left: clamp(18px, 5vw, 64px); top: clamp(60px, 12vh, 120px); }
+.ps.is-bankai .ps-name { font-size: clamp(2.4rem, 7vw, 6rem); --rn-hot: var(--ps-hue); --rn-ink: var(--ps-ink); --rn-paper: #fff; text-shadow: none; }
+
+/* Typographie selon la famille principale. */
+.ps-temps .ps-name { letter-spacing: .18em; }
+.ps-vitesse .ps-name, .ps-foudre .ps-name { font-style: italic; transform: skewX(-12deg); }
+.ps-glace .ps-name { color: #eafaff; -webkit-text-stroke: 1px #7fd3f2; }
+.ps-feu .ps-name { color: #ffd27a; }
+.ps-ombre .ps-effet { color: #d9d3e8; }
+
+/* Mouvement : lent, continu, jamais bloquant ; arrêté en mouvement réduit. */
+@media (prefers-reduced-motion: no-preference) {
+  .ps-float { animation: ps-float calc(9s * var(--ps-slow)) ease-in-out infinite alternate; animation-delay: calc(-1 * var(--d, 0s)); }
+  .ps-turn { animation: ps-turn calc(60s * var(--ps-slow)) linear infinite; } .ps-turn.is-rev { animation-direction: reverse; }
+  .ps-twinkle { animation: ps-twinkle calc(3s * var(--ps-slow)) ease-in-out infinite; animation-delay: calc(-1 * var(--d, 0s)); }
+  .ps-flicker { animation: ps-flicker calc(.9s * var(--ps-slow)) ease-in-out infinite alternate; animation-delay: calc(-1 * var(--d, 0s)); }
+  .ps-rise { animation: ps-rise calc(4s * var(--ps-slow)) linear infinite; animation-delay: calc(-1 * var(--d, 0s)); }
+  .ps-flash { animation: ps-flash calc(2.4s * var(--ps-slow)) steps(1) infinite; animation-delay: calc(-1 * var(--d, 0s)); }
+  .ps-spread { animation: ps-spread calc(7s * var(--ps-slow)) ease-in-out infinite alternate; animation-delay: calc(-1 * var(--d, 0s)); }
+  .ps-pulse { animation: ps-pulse calc(2.6s * var(--ps-slow)) ease-out infinite; animation-delay: var(--d, 0s); }
+  .ps-sweep { animation: ps-sweep calc(6s * var(--ps-slow)) ease-in-out infinite alternate; animation-delay: calc(-1 * var(--d, 0s)); }
+  .ps-dash { animation: ps-dash calc(1.6s * var(--ps-slow)) linear infinite; animation-delay: calc(-1 * var(--d, 0s)); }
+  .ps-fall { animation: ps-fall calc(5s * var(--ps-slow)) linear infinite; animation-delay: calc(-1 * var(--d, 0s)); }
+  .ps-ray { transform-box: view-box; }
+}
+@keyframes ps-float { from { translate: 0 -6px; rotate: -6deg; } to { translate: 4px 8px; rotate: 6deg; } }
+@keyframes ps-turn { to { rotate: 360deg; } }
+@keyframes ps-twinkle { 50% { opacity: .2; } }
+@keyframes ps-flicker { to { scale: 1 1.12; } }
+@keyframes ps-rise { from { translate: 0 0; opacity: 1; } to { translate: 0 -260px; opacity: 0; } }
+@keyframes ps-flash { 0%, 6% { opacity: 1; } 7%, 100% { opacity: 0; } }
+@keyframes ps-spread { to { scale: 1.25; } }
+@keyframes ps-pulse { from { scale: .6; opacity: .8; } to { scale: 1.5; opacity: 0; } }
+@keyframes ps-sweep { from { rotate: -10deg; } to { rotate: 10deg; } }
+@keyframes ps-dash { from { translate: -160px 0; } to { translate: 480px 0; } }
+@keyframes ps-fall { from { translate: 0 0; } to { translate: 20px 320px; } }
+
+/* Téléphone : le personnage passe derrière le texte, plus petit ; texte lisible en bas. */
+@media (max-width: 699px) {
+  .ps { min-height: 620px; }
+  .ps-art { height: 58%; max-width: 92%; right: 50% !important; translate: 50% 0; bottom: 34%; }
+  .ps.is-bankai .ps-art { height: 56%; bottom: 36%; }
+  .ps-text { left: 16px !important; right: 16px; bottom: 22px !important; top: auto !important; max-width: none; }
+  .ps.is-bankai::before { background: linear-gradient(0deg, var(--ps-ink) 0 40%, transparent 70%); }
+  .ps.is-domaine::after { content: ""; position: absolute; inset: 0; z-index: 2; background: linear-gradient(0deg, color-mix(in srgb, var(--ps-ink) 92%, transparent) 0 34%, transparent 62%); pointer-events: none; }
+}
+/* Territoire : le personnage est dans le monde, pas devant lui (plus petit, posé au sol,
+   recouvert par le plan avant). */
+.ps.is-domaine .ps-art { height: 62%; right: 10%; }
+.ps.is-domaine::before { content: ""; position: absolute; inset: auto 0 0 0; height: 22%; z-index: 1; background: linear-gradient(transparent, var(--ps-ink)); }
+@media (max-width: 699px) {
+  .ps.is-domaine .ps-art { height: 44%; bottom: 40%; }
+  .ps.is-bankai .ps-art { height: 50%; bottom: 40%; }
+}
+.ps-art { -webkit-mask-image: linear-gradient(transparent, #000 14%, #000 86%, transparent); mask-image: linear-gradient(transparent, #000 14%, #000 86%, transparent); }

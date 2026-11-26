@@ -207,3 +207,19 @@
 }
 @keyframes te-in { from { scale: .4; opacity: 0; } }
 @media (max-width: 799px) { .te-boards { grid-template-columns: 1fr; } .te-slot .sceau { width: 30px; height: 30px; } }
+
+/* ── Le capitaine, présenté comme un titulaire d'anime sportif : numéro géant derrière
+      le portrait, nom en capitales, poste. ── */
+.tm-captain { position: relative; display: grid; grid-template-columns: auto 1fr; align-items: end; gap: 10px; min-width: 0; }
+.tm-captain-no { position: absolute; z-index: 0; left: -6px; bottom: -14px; font: 400 clamp(4rem, 9vw, 7rem)/.8 var(--gk-font-impact, "Anton"); color: transparent; -webkit-text-stroke: 2px var(--tm); opacity: .9; }
+.tm-captain-img { position: relative; z-index: 1; width: clamp(64px, 8vw, 96px); aspect-ratio: 3 / 4; overflow: hidden; border: 3px solid #050509; box-shadow: 5px 5px 0 var(--tm); clip-path: polygon(0 4%, 100% 0, 100% 100%, 0 100%); }
+.tm-captain-img img { width: 100%; height: 100%; object-fit: cover; }
+.tm-captain-txt { position: relative; z-index: 1; display: grid; gap: 2px; min-width: 0; }
+.tm-captain-txt small { justify-self: start; padding: 1px 8px; background: var(--tm); color: var(--tm-on, #000); font: 900 italic .7rem var(--gk-font-title, sans-serif); letter-spacing: .14em; text-transform: uppercase; }
+.tm-captain-txt b { font: 900 italic clamp(1rem, 2vw, 1.4rem)/1 var(--gk-font-title, sans-serif); text-transform: uppercase; overflow-wrap: anywhere; }
+.tm-captain-txt i { font: 600 .8rem var(--gk-font-body); opacity: .75; }
+/* Cinq de basket sur le demi-terrain (parquet, raquette, arc), comme le onze de foot. */
+.tm-pitch.is-court { aspect-ratio: 1 / 1; background: repeating-linear-gradient(90deg, #b9783c 0 6%, #c4844a 6% 12%) !important; }
+.tm-pitch.is-court .tm-lines .tm-box.is-top, .tm-pitch.is-court .tm-lines .tm-half { display: none; }
+.tm-pitch.is-court .tm-lines .tm-circle { top: auto; bottom: -18%; width: 80%; height: 60%; border-radius: 50% 50% 0 0; }
+.tm-pitch.is-court .tm-lines .tm-box.is-bottom { width: 30%; height: 34%; }
