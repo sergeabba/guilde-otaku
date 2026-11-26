@@ -1,0 +1,43 @@
+/* ═══ JEUX v4 : UNE IDENTITÉ PAR BORNE ═══════════════════════════════════════
+   Chaque jeu a son emblème (dessin original), un motif d'écran (rayons, trame, rayures,
+   grille, ondes, balayage, damier) et une police d'enseigne. Au lancement, un écran-titre
+   reprend l'emblème en grand. */
+.jx-tile .jx-tile-icon svg { width: 46px !important; height: 46px !important; filter: drop-shadow(0 0 8px var(--c)) !important; }
+.jx-tile .jx-tile-icon { position: relative; overflow: hidden; }
+.jx-tile .jx-tile-icon > svg { position: relative; z-index: 1; }
+.jx-tile .jx-tile-icon::before, .jx-title-card::before { content: ""; position: absolute; inset: 0; opacity: .35; pointer-events: none; }
+.is-rays .jx-tile-icon::before, .jx-title-card.is-rays::before { background: repeating-conic-gradient(from 0deg at 50% 60%, color-mix(in srgb, var(--c) 60%, transparent) 0 6deg, transparent 6deg 18deg); }
+.is-dots .jx-tile-icon::before, .jx-title-card.is-dots::before { background: radial-gradient(circle, var(--c) 1.4px, transparent 1.8px) 0 0 / 8px 8px; }
+.is-stripes .jx-tile-icon::before, .jx-title-card.is-stripes::before { background: repeating-linear-gradient(-35deg, color-mix(in srgb, var(--c) 55%, transparent) 0 4px, transparent 4px 12px); }
+.is-grid .jx-tile-icon::before, .jx-title-card.is-grid::before { background: linear-gradient(var(--c) 1px, transparent 1px) 0 0 / 12px 12px, linear-gradient(90deg, var(--c) 1px, transparent 1px) 0 0 / 12px 12px; opacity: .22; }
+.is-waves .jx-tile-icon::before, .jx-title-card.is-waves::before { background: radial-gradient(circle at 50% 120%, transparent 30%, color-mix(in srgb, var(--c) 50%, transparent) 31% 33%, transparent 34% 44%, color-mix(in srgb, var(--c) 50%, transparent) 45% 47%, transparent 48% 58%, color-mix(in srgb, var(--c) 50%, transparent) 59% 61%, transparent 62%); }
+.is-scan .jx-tile-icon::before, .jx-title-card.is-scan::before { background: repeating-linear-gradient(0deg, color-mix(in srgb, var(--c) 45%, transparent) 0 1px, transparent 1px 4px); }
+.is-checker .jx-tile-icon::before, .jx-title-card.is-checker::before { background: conic-gradient(color-mix(in srgb, var(--c) 40%, transparent) 25%, transparent 0 50%, color-mix(in srgb, var(--c) 40%, transparent) 0 75%, transparent 0) 0 0 / 16px 16px; opacity: .25; }
+
+/* Polices d'enseigne, une famille par borne. */
+.f-anton strong { font-family: "Anton", var(--gk-font-ui) !important; }
+.f-dela strong { font-family: var(--font-dela), "Dela Gothic One", sans-serif !important; letter-spacing: 0 !important; }
+.f-cinzel strong { font-family: "Cinzel", Georgia, serif !important; font-weight: 700 !important; }
+.f-orbitron strong { font-family: "Orbitron", sans-serif !important; font-weight: 700 !important; letter-spacing: .04em !important; }
+.f-bebas strong { font-family: "Bebas Neue", "Anton", sans-serif !important; letter-spacing: .06em !important; }
+.f-black-ops strong { font-family: "Black Ops One", "Anton", sans-serif !important; letter-spacing: .02em !important; }
+.jx-tile.f-dela strong, .jx-tile.f-orbitron strong, .jx-tile.f-cinzel strong { font-size: clamp(.78rem, 1.3vw, .95rem) !important; }
+
+/* Écran-titre au lancement. */
+.jx-title-card { position: relative; isolation: isolate; overflow: hidden; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px 22px; align-items: center; margin-top: 18px; padding: clamp(14px, 3vw, 26px) clamp(16px, 3.4vw, 30px); background: #05040a; color: #fffaf0; border: 3px solid var(--c); box-shadow: 6px 6px 0 #0d0c10, inset 0 0 60px color-mix(in srgb, var(--c) 25%, transparent); clip-path: polygon(0 0, 100% 0, 100% 82%, 97% 100%, 0 100%); animation: jx-tc-in 520ms cubic-bezier(.16, 1, .3, 1) both; }
+.jx-title-card::before { z-index: -1; }
+.jx-tc-emblem { display: grid; place-items: center; width: clamp(72px, 16vw, 110px); aspect-ratio: 1; color: var(--c); background: color-mix(in srgb, var(--c) 14%, #05040a); border: 3px solid var(--c); border-radius: 12px / 18px; }
+.jx-tc-emblem svg { width: 78%; height: 78%; filter: drop-shadow(0 0 10px var(--c)); animation: jx-tc-glow 2.4s ease-in-out infinite alternate; }
+.jx-tc-text { display: grid; gap: 4px; min-width: 0; }
+.jx-tc-text small { font: 800 .74rem var(--gk-font-ui); letter-spacing: .18em; text-transform: uppercase; color: var(--c); }
+.jx-tc-text strong { font: 400 clamp(1.8rem, 6vw, 3.6rem)/.95 "Anton", var(--gk-font-ui); text-transform: uppercase; overflow-wrap: anywhere; text-shadow: 4px 4px 0 color-mix(in srgb, var(--c) 70%, #000); }
+.jx-tc-text em { font: 600 1rem/1.35 var(--gk-font-body); font-style: normal; color: #cfc6b4; }
+@keyframes jx-tc-in { from { opacity: 0; transform: translateY(10px) scale(.98); } }
+@keyframes jx-tc-glow { to { filter: drop-shadow(0 0 18px var(--c)); } }
+@media (prefers-reduced-motion: reduce) { .jx-title-card, .jx-tc-emblem svg { animation: none; } }
+/* L'écran de la borne garde ses proportions (les anciennes règles le réduisaient à 36 px). */
+.jx-tile .jx-tile-icon { height: auto !important; aspect-ratio: 4 / 3; transform: none !important; clip-path: none !important; }
+@media (hover: hover) { .jx-tile:hover .jx-tile-icon svg { transform: scale(1.08) rotate(-3deg); transition: transform 200ms cubic-bezier(.2, 1.6, .4, 1); } }
+.jx-title-card.f-dela strong, .jx-title-card.f-orbitron strong, .jx-title-card.f-cinzel strong { font-size: clamp(1.3rem, 5vw, 2.6rem) !important; line-height: 1.05; }
+@media (max-width: 599px) { .jx-title-card { grid-template-columns: 1fr; } .jx-tc-emblem { width: 72px; } }
+@media (max-width: 599px) { .jx-tile .jx-tile-icon { aspect-ratio: 2 / 1; margin-top: 8px; } .jx-tile { min-height: 0 !important; } }

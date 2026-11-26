@@ -22,7 +22,7 @@
 | Futilités / Atelier | Validé sur mobile | Salles par univers, cartels ; galerie réelle non lisible ici (clé de service), testée avec `?demo=galerie` (images de public/atelier) |
 | Bons Plans | Validé sur mobile | Accès direct par nom, rayons numérotés, affiche typographique du dernier ajout |
 | Administration (ergonomie mobile) | Non commencé | — |
-| Jeux (salle, lancement) | Fonctionnel | Logos et identités par jeu ; parties complètes testées |
+| Jeux (salle, lancement) | Validé sur mobile | Emblème original, motif d'écran et police par borne ; écran-titre au lancement. Parties complètes : dépendent d'AniList et des sources externes, non jouables entièrement ici |
 | Fighters : styles, techniques signature, IA | Fonctionnel | Tests de jouabilité réels |
 | Fighters : équilibrage | Fonctionnel | Plus de simulations ; matrice avantages/faiblesses |
 | Fighters : interface de combat v2 | Validé visuellement | Mobile paysage à confirmer sur Safari |

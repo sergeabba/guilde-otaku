@@ -1,5 +1,7 @@
 "use client";
 
+import { Emblem, GAME_ART } from "./game-art";
+
 // Page Jeux : quiz des génériques, duel de goûts, badges automatiques, classement.
 // Sans compte : identifiant aléatoire de l'appareil (le même que pour le sondage du
 // Bash) + « qui es-tu ? » (membre) ou un pseudo. Les scores sont calculés par le serveur ;
@@ -22,6 +24,7 @@ import Qcm from "./Qcm";
 import Clips from "./Clips";
 import "./jeux.css";
 import "./jeux-v3.css";
+import "./jeux-v4.css";
 import RubricMark from "../components/guilde/RubricMark";
 
 type Tab = "defi-jour" | "devine-anime" | "devine-perso" | "emoji" | "themes" | "createur" | "studio" | "voix" | "generiques" | "direct" | "quiz" | "nostalgie" | "affiche" | "plus-moins" | "tier" | "duel" | "badges" | "classement";
@@ -90,8 +93,8 @@ export default function JeuxClient() {
 
         <nav className="jx-menu" aria-label="Jeux">
           {MENU.map(({ id, label, sub, Icon, color }) => (
-            <button key={id} type="button" aria-pressed={tab === id} className="jx-tile" style={{ "--c": color } as React.CSSProperties} onClick={() => setTab(id)}>
-              <span className="jx-tile-icon" aria-hidden="true"><Icon size={20} /></span>
+            <button key={id} type="button" aria-pressed={tab === id} className={`jx-tile is-${GAME_ART[id]?.pattern ?? "dots"} f-${GAME_ART[id]?.font ?? "anton"}`} style={{ "--c": color } as React.CSSProperties} onClick={() => setTab(id)}>
+              <span className="jx-tile-icon" aria-hidden="true">{GAME_ART[id] ? <Emblem id={id} size={46} /> : <Icon size={20} />}</span>
               <strong>{label}</strong>
               <small>{sub}</small>
             </button>
@@ -144,6 +147,21 @@ export default function JeuxClient() {
         </details>
 
         <div id="jx-stage" className="jx-stage" />
+        {/* Écran-titre du jeu choisi : son emblème, son nom en police d'enseigne, son principe. */}
+        {(() => {
+          const g = MENU.find((x) => x.id === tab);
+          if (!g || !GAME_ART[g.id]) return null;
+          return (
+            <header key={g.id} className={`jx-title-card is-${GAME_ART[g.id].pattern} f-${GAME_ART[g.id].font}`} style={{ "--c": g.color } as React.CSSProperties}>
+              <span className="jx-tc-emblem"><Emblem id={g.id} size={96} /></span>
+              <span className="jx-tc-text">
+                <small>Borne {String(MENU.indexOf(g) + 1).padStart(2, "0")} · {LEVEL_LABEL[level]}</small>
+                <strong>{g.label}</strong>
+                <em>{g.sub}</em>
+              </span>
+            </header>
+          );
+        })()}
         {tab === "defi-jour" && <DefiJour player={player} names={names} onRanking={showRanking} />}
         {tab === "devine-anime" && <DevineAnime key={level} level={level} player={player} onRanking={showRanking} />}
         {tab === "devine-perso" && <DevinePerso key={level} level={level} player={player} onRanking={showRanking} />}
