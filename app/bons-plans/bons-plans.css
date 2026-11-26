@@ -40,3 +40,32 @@
   .bp-mini:hover { border-color: var(--gk-text); }
 }
 .bp-legal { margin-top: clamp(30px, 5vw, 52px); padding-top: 16px; border-top: 2px dashed var(--gk-rule); font: 500 0.86rem/1.5 var(--gk-font-body); color: var(--gk-faint); max-width: 70ch; }
+
+/* ═══ BONS PLANS v4 : LE CARNET D'ADRESSES ═══════════════════════════════════
+   Consultation rapide d'abord (accès direct par nom), puis les rayons numérotés comme
+   un carnet ; le dernier ajout sans capture devient une affiche typographique. */
+.bp-index { display: grid; gap: 8px 18px; margin-top: 16px; padding-block: 12px; border-block: 2px dashed var(--gk-rule); }
+@media (min-width: 900px) { .bp-index { grid-template-columns: auto minmax(0, 1fr); align-items: center; } }
+.bp-index > span { font: 400 1.2rem/1 var(--gk-font-impact, "Anton"); text-transform: uppercase; color: var(--gk-accent-text, #c9a84c); }
+.bp-index ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.bp-index a { display: inline-flex; align-items: center; min-height: 36px; padding: 4px 10px 4px 8px; border-left: 5px solid var(--bp); background: var(--gk-surface); color: var(--gk-text); text-decoration: none; font: 800 .86rem var(--gk-font-ui); text-transform: uppercase; letter-spacing: .03em; }
+@media (hover: hover) { .bp-index a:hover { background: var(--bp); color: #111; } }
+.bp-coupon { scroll-margin-top: 120px; }
+.bp-coupon:target { outline: 3px solid var(--bp); outline-offset: 4px; }
+
+.bp-rayon { margin-top: clamp(30px, 5vw, 52px); }
+.bp-rayon .bp-grid { margin-top: 16px; }
+.bp-rayon-head { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; align-items: center; gap: 0 12px; padding-bottom: 10px; border-bottom: 4px solid var(--gk-text); }
+.bp-rayon-no { font: 400 clamp(2.2rem, 7vw, 3.4rem)/.85 var(--gk-font-impact, "Anton"); color: transparent; -webkit-text-stroke: 2px var(--gk-text); }
+.bp-rayon-icon { display: grid; place-items: center; width: 40px; height: 40px; background: var(--gk-text); color: var(--gk-bg); transform: rotate(-6deg); }
+.bp-rayon-head h2 { font: 900 italic clamp(1.6rem, 5vw, 2.6rem)/1 var(--gk-font-ui); text-transform: uppercase; overflow-wrap: anywhere; }
+.bp-rayon-head small { font: 800 .8rem var(--gk-font-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--gk-dim); }
+
+/* Affiche du dernier ajout quand le site ne fournit pas de capture. */
+.bp-poster { position: absolute; inset: 0; display: grid; align-content: center; justify-items: start; gap: 10px; padding: clamp(18px, 4vw, 40px); background:
+    repeating-linear-gradient(-45deg, rgba(0,0,0,.12) 0 10px, transparent 10px 20px), var(--bp); color: #111; overflow: hidden; }
+.bp-poster-no { font: 900 .8rem var(--gk-font-ui); letter-spacing: .2em; text-transform: uppercase; }
+.bp-poster .bp-logo { width: 64px; height: 64px; }
+.bp-poster-name { font: 400 clamp(3rem, 11vw, 7rem)/.85 var(--gk-font-impact, "Anton"); text-transform: uppercase; letter-spacing: -.01em; overflow-wrap: anywhere; color: #fff8ec; text-shadow: 5px 5px 0 #111; }
+.bp-poster-host { font: 800 .9rem var(--gk-font-ui); letter-spacing: .08em; text-transform: uppercase; padding: 3px 8px; background: #111; color: #fff8ec; }
+@media (max-width: 819px) { .bp-lead-media { min-height: 230px; } }

@@ -79,6 +79,41 @@ export default function BonsPlansClient({ initialLinks }: { initialLinks: Supaba
   const shareLink = (l: SupabaseBonPlanRow) => share({ title: `${l.title} | Bons plans de la Guilde`, text: l.desc, url: l.url });
   const showLead = lead && !hasFilters;
 
+  const coupon = (l: SupabaseBonPlanRow, i: number) => {
+    const color = safeColor(l.color);
+    const fav = isFavorite(l.id);
+    return (
+      <article key={l.id} id={`bp-${l.id}`} className="bp-coupon" style={{ "--bp": color, "--bp-on": onColor(color), "--i": i } as React.CSSProperties}>
+        <div className="bp-stub">
+          <Logo link={l} />
+          <span className="bp-stub-cat">{l.category}</span>
+        </div>
+        <div className="bp-body">
+          <h3>{l.title}</h3>
+          <p className="bp-domain">{hostOf(l.url)}</p>
+          <p className="bp-desc">{l.desc}</p>
+          <div className="bp-actions">
+            <a className="gk-btn gk-btn--sm" href={l.url} target="_blank" rel="noopener noreferrer">
+              Ouvrir le site <ExternalLink size={14} aria-hidden="true" /><span className="gk-sr"> {l.title} (nouvel onglet)</span>
+            </a>
+            <button type="button" className="bp-mini no-min" onClick={() => shareLink(l)} aria-label={`Partager ${l.title}`}>
+              <Share2 size={16} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              className="bp-mini no-min"
+              aria-pressed={fav}
+              onClick={() => toggle(l.id)}
+              aria-label={fav ? `Retirer ${l.title} des favoris` : `Ajouter ${l.title} aux favoris`}
+            >
+              <Heart size={16} fill={fav ? "currentColor" : "none"} aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+      </article>
+    );
+  };
+
   return (
     <div className="gk-page tone-dark bp-page">
       <GuildeHeader activePage="bons-plans" tone="dark" />
@@ -124,6 +159,17 @@ export default function BonsPlansClient({ initialLinks }: { initialLinks: Supaba
           ))}
         </div>
 
+        {!hasFilters && initialLinks.length > 4 && (
+          <nav className="bp-index" aria-label="Accès direct aux adresses">
+            <span>Accès direct</span>
+            <ul>
+              {[...initialLinks].sort((a, b) => a.title.localeCompare(b.title, "fr")).map((l) => (
+                <li key={l.id}><a href={`#bp-${l.id}`} style={{ "--bp": safeColor(l.color) } as React.CSSProperties}>{l.title}</a></li>
+              ))}
+            </ul>
+          </nav>
+        )}
+
         {showLead && (
           <section data-gk-motion="reveal" className="gk-panel bp-lead" aria-label="Dernier ajout" style={{ "--bp": safeColor(lead.color) } as React.CSSProperties}>
             <div className="bp-lead-media">
@@ -131,7 +177,12 @@ export default function BonsPlansClient({ initialLinks }: { initialLinks: Supaba
                 // eslint-disable-next-line @next/next/no-img-element
                 <img className="bp-shot" src={leadShot} alt="" referrerPolicy="no-referrer" onError={() => setLeadShot(null)} />
               ) : (
-                <Logo link={lead} />
+                <div className="bp-poster" aria-hidden="true">
+                  <span className="bp-poster-no">N° {String(initialLinks.length).padStart(2, "0")}</span>
+                  <Logo link={lead} />
+                  <span className="bp-poster-name">{lead.title}</span>
+                  <span className="bp-poster-host">{hostOf(lead.url)}</span>
+                </div>
               )}
             </div>
             <div className="bp-lead-body">
@@ -139,7 +190,8 @@ export default function BonsPlansClient({ initialLinks }: { initialLinks: Supaba
                 <span className="gk-tag gk-tag--solid">Dernier ajout</span>
                 <span className="gk-tag">{lead.category}</span>
               </div>
-              <h2>{lead.title}</h2>
+              {/* Sans capture, le nom est déjà en grand sur l'affiche : le titre reste pour les lecteurs d'écran. */}
+              <h2 className={leadShot ? undefined : "gk-sr"}>{lead.title}</h2>
               <p className="gk-body">{lead.desc}</p>
               <p className="bp-domain">{hostOf(lead.url)}</p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 4 }}>
@@ -172,42 +224,29 @@ export default function BonsPlansClient({ initialLinks }: { initialLinks: Supaba
             {hasFilters && <button type="button" className="gk-btn" onClick={reset}>Tout réafficher</button>}
           </div>
         ) : (
-          <div data-gk-motion="reveal" className="bp-grid gk-stagger" key={`${activeCategory}-${favOnly}`}>
-            {filtered.map((l, i) => {
-              const color = safeColor(l.color);
-              const fav = isFavorite(l.id);
+          hasFilters ? (
+            <div data-gk-motion="reveal" className="bp-grid gk-stagger" key={`${activeCategory}-${favOnly}`}>
+              {filtered.map((l, i) => coupon(l, i))}
+            </div>
+          ) : (
+            // Sans filtre : les adresses rangées par rayon, chaque rayon numéroté.
+            categories.map((cat, n) => {
+              const list = filtered.filter((l) => l.category === cat);
+              if (!list.length) return null;
+              const Icon = CATEGORY_ICON[cat] ?? Globe;
               return (
-                <article key={l.id} className="bp-coupon" style={{ "--bp": color, "--bp-on": onColor(color), "--i": i } as React.CSSProperties}>
-                  <div className="bp-stub">
-                    <Logo link={l} />
-                    <span className="bp-stub-cat">{l.category}</span>
-                  </div>
-                  <div className="bp-body">
-                    <h3>{l.title}</h3>
-                    <p className="bp-domain">{hostOf(l.url)}</p>
-                    <p className="bp-desc">{l.desc}</p>
-                    <div className="bp-actions">
-                      <a className="gk-btn gk-btn--sm" href={l.url} target="_blank" rel="noopener noreferrer">
-                        Ouvrir le site <ExternalLink size={14} aria-hidden="true" /><span className="gk-sr"> {l.title} (nouvel onglet)</span>
-                      </a>
-                      <button type="button" className="bp-mini no-min" onClick={() => shareLink(l)} aria-label={`Partager ${l.title}`}>
-                        <Share2 size={16} aria-hidden="true" />
-                      </button>
-                      <button
-                        type="button"
-                        className="bp-mini no-min"
-                        aria-pressed={fav}
-                        onClick={() => toggle(l.id)}
-                        aria-label={fav ? `Retirer ${l.title} des favoris` : `Ajouter ${l.title} aux favoris`}
-                      >
-                        <Heart size={16} fill={fav ? "currentColor" : "none"} aria-hidden="true" />
-                      </button>
-                    </div>
-                  </div>
-                </article>
+                <section key={cat} className="bp-rayon" data-gk-motion="reveal" aria-labelledby={`bp-r-${n}`}>
+                  <header className="bp-rayon-head">
+                    <span className="bp-rayon-no" aria-hidden="true">{String(n + 1).padStart(2, "0")}</span>
+                    <span className="bp-rayon-icon" aria-hidden="true"><Icon size={22} /></span>
+                    <h2 id={`bp-r-${n}`}>{cat}</h2>
+                    <small>{list.length} {list.length > 1 ? "adresses" : "adresse"}</small>
+                  </header>
+                  <div className="bp-grid gk-stagger">{list.map((l, i) => coupon(l, i))}</div>
+                </section>
               );
-            })}
-          </div>
+            })
+          )
         )}
 
         <p className="bp-legal">

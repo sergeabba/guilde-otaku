@@ -20,7 +20,7 @@
 | Film de la semaine | Validé sur mobile | Vote intégré à la page (s'affiche quand un vote existe ; aucun vote ouvert dans les données actuelles) |
 | Calendrier | Validé sur mobile | Vue jour en ligne horaire (repère « maintenant »), vue semaine en grille de programmation (ordinateur) |
 | Futilités / Atelier | Validé sur mobile | Salles par univers, cartels ; galerie réelle non lisible ici (clé de service), testée avec `?demo=galerie` (images de public/atelier) |
-| Bons Plans | Non commencé | — |
+| Bons Plans | Validé sur mobile | Accès direct par nom, rayons numérotés, affiche typographique du dernier ajout |
 | Administration (ergonomie mobile) | Non commencé | — |
 | Jeux (salle, lancement) | Fonctionnel | Logos et identités par jeu ; parties complètes testées |
 | Fighters : styles, techniques signature, IA | Fonctionnel | Tests de jouabilité réels |
