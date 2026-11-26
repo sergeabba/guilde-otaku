@@ -14,8 +14,8 @@
 | Teams (terrain, capitaine, écussons, annonce) | Validé visuellement (données de test) | Confrontations, affiches de match, fiches joueurs |
 | Wanted | Validé sur mobile | Finition |
 | Anniversaires | Validé visuellement | — |
-| Bibliothèque | En cours (habillage) | Recomposition éditoriale complète |
-| Chronique du Bash | Non commencé | Identité magazine |
+| Bibliothèque | Validé sur mobile | Fiches réelles : la lecture publique de la table renvoie 0 fiche, collection vérifiée avec données factices de dev (`?demo=fiches`) |
+| Chronique du Bash | Validé sur mobile | Couverture de numéro, dossier en cases, programme par date, numéros précédents, article avec bandeau et lettrine |
 | Cinéma | En cours | Tester l'état « catalogue indisponible » ; recomposition |
 | Film de la semaine | Non commencé | — |
 | Calendrier | Non commencé | — |

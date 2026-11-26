@@ -1,0 +1,213 @@
+/* ═══ BIBLIOTHÈQUE v4 : LE MAGAZINE DU BASH ═══════════════════════════════════
+   Références : couvertures de magazines de prépublication (titre de revue énorme, numéro,
+   titres d'appel empilés), sommaires numérotés, cases de manga à gouttières obliques,
+   menus de collection de Persona (numéros en Anton, lames inclinées), papier et encre.
+   Typographie : Anton pour le titre de revue et les numéros, Barlow Condensed italique
+   pour l'interface, Fraunces pour la lecture (accroches, chapeaux, articles). */
+.bb-page, .bb-reader {
+  --bb4-paper: #f1e9d8; --bb4-ink: #0d0c10; --bb4-red: #d7332b;
+  --bb4-serif: "Fraunces Variable", Georgia, serif;
+  --bb4-anton: "Anton", var(--gk-font-ui);
+}
+
+/* ─── Couverture du numéro ───────────────────────────────────────────────── */
+.bb4-cover {
+  position: relative; isolation: isolate; color: #fff8ec;
+  margin-inline: calc(var(--gk-gutter) * -1); padding: clamp(18px, 4vw, 44px) var(--gk-gutter) clamp(26px, 5vw, 56px);
+  overflow: hidden; background: var(--bb4-ink);
+}
+@media (min-width: 1400px) { .bb4-cover { margin-inline: calc((100vw - var(--gk-max)) / -2 - var(--gk-gutter)); padding-inline: calc((100vw - var(--gk-max)) / 2 + var(--gk-gutter)); } }
+.bb4-cover-bd { position: absolute; inset: 0; z-index: -2; }
+.bb4-cover-bd > * { position: absolute !important; inset: 0; width: 100% !important; height: 100% !important; }
+.bb4-cover-bd img { filter: saturate(1.15) contrast(1.05); }
+/* Encre : dégradé vers la gauche (texte lisible), trame de points et grain de papier. */
+.bb4-cover::before { content: ""; position: absolute; inset: 0; z-index: -1;
+  background:
+    radial-gradient(circle, rgba(0,0,0,.55) 1.1px, transparent 1.4px) 0 0 / 5px 5px,
+    linear-gradient(100deg, rgba(13,12,16,.96) 0 34%, rgba(13,12,16,.72) 58%, rgba(13,12,16,.35) 80%, rgba(13,12,16,.6)),
+    linear-gradient(0deg, rgba(13,12,16,.95), transparent 40%);
+}
+/* Une bande de couleur de la une, coupée en biais, en bas de couverture. */
+.bb4-cover::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 12px; background: var(--tag, var(--gk-gold)); clip-path: polygon(0 40%, 100% 0, 100% 100%, 0 100%); }
+
+.bb4-cover-grid { display: grid; gap: 18px 28px; grid-template-columns: minmax(0, 1fr) minmax(0, .72fr); grid-template-areas: "mast mast" "text une" "lines lines"; align-items: start; }
+@media (min-width: 900px) {
+  .bb4-cover-grid { grid-template-columns: minmax(0, 1.25fr) minmax(0, .8fr) minmax(0, .55fr); grid-template-areas: "mast mast une" "text text une" "lines lines une"; min-height: min(78svh, 760px); }
+}
+
+.bb4-mast { grid-area: mast; min-width: 0; }
+.bb4-mast-title { margin: 12px 0 0; line-height: 1; }
+.bb4-mast-small { display: block; font: 900 italic clamp(1.05rem, 3vw, 1.7rem)/1 var(--gk-font-ui); text-transform: uppercase; letter-spacing: .04em; color: var(--tag, var(--gk-gold)); }
+/* Le titre de revue : énorme, serré, coupé par la bande rouge comme sur une couverture. */
+.bb4-mast-big { position: relative; display: inline-block; font: 400 clamp(5.4rem, 24vw, 13rem)/.92 var(--bb4-anton); margin-top: .04em; letter-spacing: -.02em; text-transform: uppercase; color: #fff8ec; transform: skewX(-7deg); text-shadow: 6px 6px 0 var(--bb4-red); }
+
+.bb4-issue { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; margin-top: 12px; font: 800 .8rem var(--gk-font-ui); letter-spacing: .12em; text-transform: uppercase; color: rgba(255, 248, 236, .75); }
+.bb4-issue b { font: 400 1.25rem/1 var(--bb4-anton); letter-spacing: .02em; color: #fff8ec; padding: 3px 10px 2px; background: var(--bb4-red); transform: skewX(-8deg); }
+
+/* L'affiche de la une, inclinée, avec un sceau rond « À la une ». */
+.bb4-une { grid-area: une; position: relative; align-self: center; justify-self: center; width: 100%; max-width: 360px; padding: 0; border: 0; background: none; cursor: pointer; rotate: 2.5deg; transition: rotate var(--gk-med) var(--gk-ease), translate var(--gk-med) var(--gk-ease); }
+.bb4-une-poster { position: relative; display: block; aspect-ratio: 2 / 3; border: 4px solid #fff8ec; box-shadow: 10px 10px 0 var(--tag, var(--gk-gold)), 10px 10px 0 4px var(--bb4-ink); background: #221f2a; overflow: hidden; }
+.bb4-une-poster > * { position: absolute !important; inset: 0; width: 100% !important; height: 100% !important; }
+.bb4-une-seal { position: absolute; left: -16px; top: -14px; display: grid; place-items: center; width: clamp(64px, 16vw, 92px); aspect-ratio: 1; border-radius: 50%; background: var(--bb4-red); color: #fff8ec; border: 3px solid #fff8ec; outline: 3px solid var(--bb4-ink); font: 400 clamp(.85rem, 2.6vw, 1.15rem)/.95 var(--bb4-anton); text-transform: uppercase; text-align: center; rotate: -14deg; }
+@media (hover: hover) { .bb4-une:hover { rotate: 0deg; translate: 0 -6px; } }
+.bb4-une:focus-visible { outline: 3px solid var(--gk-gold); outline-offset: 6px; }
+
+.bb4-une-text { grid-area: text; min-width: 0; display: grid; gap: 12px; align-content: start; }
+.bb4-une-kicker { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; font: 800 .82rem var(--gk-font-ui); letter-spacing: .06em; color: rgba(255, 248, 236, .8); }
+.bb4-une-title { font: 900 italic clamp(1.9rem, 6.4vw, 4.4rem)/.9 var(--gk-font-ui); text-transform: uppercase; letter-spacing: -.01em; text-wrap: balance; overflow-wrap: anywhere; }
+.bb4-une-lede { max-width: 46ch; font: 400 clamp(1rem, 2vw, 1.18rem)/1.55 var(--bb4-serif); color: rgba(255, 248, 236, .92); display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.bb4-une-cta { justify-self: start; }
+
+/* Titres d'appel : la colonne de gauche d'une couverture de magazine. */
+.bb4-lines { grid-area: lines; list-style: none; display: grid; gap: 0; grid-template-columns: minmax(0, 1fr); border-top: 2px solid rgba(255, 248, 236, .35); margin-top: 6px; }
+@media (min-width: 620px) { .bb4-lines { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 24px; } }
+.bb4-lines button { display: grid; gap: 2px; width: 100%; min-height: 56px; padding: 10px 0 10px 14px; text-align: left; color: inherit; background: none; border: 0; border-bottom: 1px solid rgba(255, 248, 236, .18); border-left: 5px solid var(--tag, var(--gk-gold)); cursor: pointer; }
+.bb4-lines small { font: 800 .7rem var(--gk-font-ui); letter-spacing: .12em; text-transform: uppercase; color: var(--tag, var(--gk-gold)); }
+.bb4-lines strong { font: 900 italic 1.12rem/1.05 var(--gk-font-ui); text-transform: uppercase; overflow-wrap: anywhere; }
+@media (hover: hover) { .bb4-lines button:hover strong { text-decoration: underline 3px var(--tag, var(--gk-gold)); text-underline-offset: 4px; } }
+
+/* ─── Sommaire ───────────────────────────────────────────────────────────── */
+.bb4-toc { display: grid; gap: 10px 26px; margin-block: clamp(22px, 4vw, 40px) 0; padding-block: 14px; border-block: var(--gk-stroke) solid var(--gk-border); }
+@media (min-width: 900px) { .bb4-toc { grid-template-columns: auto minmax(0, 1fr); align-items: center; } }
+.bb4-toc-label { font: 400 1.5rem/1 var(--bb4-anton); text-transform: uppercase; letter-spacing: .02em; color: var(--gk-accent-text, var(--gk-gold)); }
+.bb4-toc ol { list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 16px; }
+@media (min-width: 900px) { .bb4-toc ol { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.bb4-toc a { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 10px; align-items: baseline; min-height: 48px; padding: 6px 2px; color: var(--gk-text); text-decoration: none; }
+.bb4-toc b { grid-row: span 2; font: 400 1.9rem/1 var(--bb4-anton); color: var(--gk-faint); transition: color var(--gk-fast) var(--gk-ease); }
+.bb4-toc span { font: 900 italic 1.02rem/1.05 var(--gk-font-ui); text-transform: uppercase; }
+.bb4-toc small { font: 700 .78rem var(--gk-font-ui); color: var(--gk-dim); }
+@media (hover: hover) { .bb4-toc a:hover b { color: var(--gk-accent-text, var(--gk-gold)); } }
+
+/* ─── En-têtes de section : numéro géant + titre en lame ──────────────────── */
+.bb4-head { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 14px; align-items: end; margin-bottom: clamp(18px, 3vw, 32px); }
+.bb4-head-no { font: 400 clamp(3.4rem, 11vw, 6.4rem)/.78 var(--bb4-anton); color: transparent; -webkit-text-stroke: 2px var(--gk-text); letter-spacing: -.03em; }
+.bb4-head-kicker { display: block; font: 800 .78rem var(--gk-font-ui); letter-spacing: .14em; text-transform: uppercase; color: var(--gk-accent-text, var(--gk-gold)); }
+.bb4-head-title { display: inline-block; margin-top: 6px; padding: .06em .4em .1em .25em; font: 900 italic clamp(1.8rem, 5.6vw, 3.4rem)/.95 var(--gk-font-ui); text-transform: uppercase; background: var(--gk-text); color: var(--gk-bg); clip-path: polygon(0 8%, 100% 0, 98% 100%, 1% 92%); }
+.bb4-anchor { scroll-margin-top: 120px; }
+.bb4-dossier, .bb4-back, .bb4-collection { scroll-margin-top: 110px; }
+.bb4-head + * { min-width: 0; }
+
+/* ─── Le dossier : deux cases de manga à gouttière oblique ────────────────── */
+.bb4-panels { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 760px) { .bb4-panels.n2 { grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: 0; } }
+.bb4-panel { position: relative; display: block; min-height: clamp(300px, 64vw, 460px); padding: 0; border: 0; color: #fff8ec; background: var(--bb4-ink); text-align: left; cursor: pointer; overflow: hidden; isolation: isolate; outline: var(--gk-stroke) solid var(--gk-border); outline-offset: -2px; }
+@media (min-width: 760px) {
+  .bb4-panels.n2 .p0 { clip-path: polygon(0 0, 100% 0, 92% 100%, 0 100%); }
+  .bb4-panels.n2 .p1 { clip-path: polygon(10% 0, 100% 0, 100% 100%, 0 100%); margin-left: -6%; }
+  .bb4-panels.n2 .p1 .bb4-panel-text { padding-left: 16%; }
+  .bb4-panels.n2 .p1 .bb4-panel-no { left: 15%; }
+}
+.bb4-panel-art { position: absolute; inset: 0; z-index: -2; }
+.bb4-panel-art > * { position: absolute !important; inset: 0; width: 100% !important; height: 100% !important; }
+.bb4-panel-art img { object-position: center 22% !important; transition: scale 600ms var(--gk-ease); }
+.bb4-panel::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(13,12,16,0) 30%, rgba(13,12,16,.92) 78%); }
+@media (hover: hover) { .bb4-panel:hover .bb4-panel-art img { scale: 1.04; } }
+.bb4-panel-no { position: absolute; top: 12px; left: 14px; font: 400 clamp(2.6rem, 8vw, 4.2rem)/.8 var(--bb4-anton); color: #fff8ec; text-shadow: 4px 4px 0 var(--tag, var(--bb4-red)); }
+.bb4-panel-text { position: absolute; left: 0; right: 0; bottom: 0; display: grid; gap: 8px; padding: clamp(14px, 3vw, 26px); }
+.bb4-panel-text small { justify-self: start; padding: 2px 8px; font: 900 .72rem var(--gk-font-ui); letter-spacing: .12em; text-transform: uppercase; background: var(--tag, var(--gk-gold)); color: var(--bb4-ink); }
+.bb4-panel-text strong { font: 900 italic clamp(1.6rem, 4.4vw, 2.6rem)/.92 var(--gk-font-ui); text-transform: uppercase; text-wrap: balance; overflow-wrap: anywhere; }
+.bb4-panel-text em { max-width: 48ch; font: 400 .98rem/1.5 var(--bb4-serif); font-style: normal; color: rgba(255, 248, 236, .88); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* ─── Programme de la saison : grille de diffusion par date ───────────────── */
+.bb4-prog { margin-top: clamp(28px, 5vw, 54px); }
+.bb4-prog-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; font: 400 clamp(1.5rem, 4vw, 2.2rem)/1 var(--bb4-anton); text-transform: uppercase; letter-spacing: .01em; padding-bottom: 12px; border-bottom: 4px solid var(--gk-text); }
+.bb4-prog-title small { font: 700 .85rem var(--gk-font-ui); letter-spacing: .04em; text-transform: none; color: var(--gk-dim); }
+.bb4-day { display: grid; grid-template-columns: minmax(0, 1fr); border-bottom: 1px solid var(--gk-rule); }
+@media (min-width: 760px) { .bb4-day { grid-template-columns: 150px minmax(0, 1fr); } }
+.bb4-day-date { padding: 12px 0 4px; font: 900 italic 1rem/1.05 var(--gk-font-ui); text-transform: uppercase; color: var(--gk-accent-text, var(--gk-gold)); }
+@media (min-width: 760px) { .bb4-day-date { padding: 16px 12px 16px 0; border-right: 1px solid var(--gk-rule); position: sticky; top: 120px; align-self: start; } }
+.bb4-day ul { list-style: none; display: grid; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1100px) { .bb4-day ul { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 18px; } }
+.bb4-brief { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 0 14px; align-items: center; width: 100%; min-height: 92px; padding: 10px 4px 10px 0; text-align: left; color: var(--gk-text); background: none; border: 0; cursor: pointer; position: relative; }
+@media (min-width: 760px) { .bb4-brief { padding-left: 14px; } }
+.bb4-brief-thumb { position: relative; width: 56px; aspect-ratio: 2 / 3; overflow: hidden; border: 2px solid var(--gk-border); box-shadow: 3px 3px 0 var(--tag, var(--gk-gold)); background: var(--gk-surface-2); }
+.bb4-brief-thumb > * { position: absolute !important; inset: 0; width: 100% !important; height: 100% !important; }
+.bb4-brief-text { display: grid; gap: 3px; min-width: 0; }
+.bb4-brief-text strong { font: 900 italic 1.14rem/1 var(--gk-font-ui); text-transform: uppercase; overflow-wrap: anywhere; }
+.bb4-brief-text small { font: 800 .7rem var(--gk-font-ui); letter-spacing: .12em; text-transform: uppercase; color: var(--tag, var(--gk-gold)); }
+html[data-theme="light"] .bb4-brief-text small { filter: brightness(.62) saturate(1.3); }
+.bb4-brief-text em { font: 400 .9rem/1.4 var(--bb4-serif); font-style: normal; color: var(--gk-dim); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+@media (hover: hover) { .bb4-brief:hover strong { color: var(--gk-accent-text, var(--gk-gold)); } }
+.bb4-more { margin-top: 18px; }
+
+/* ─── Numéros précédents ─────────────────────────────────────────────────── */
+.bb4-issues { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-bottom: 22px; }
+.bb4-issue-btn { display: grid; gap: 4px; justify-items: start; min-height: 64px; padding: 12px 12px 10px; text-align: left; color: var(--gk-text); background: var(--gk-surface); border: var(--gk-stroke) solid var(--gk-border); cursor: pointer; transition: transform var(--gk-fast) var(--gk-ease), box-shadow var(--gk-fast) var(--gk-ease); }
+.bb4-issue-btn[aria-pressed="true"] { background: var(--gk-text); color: var(--gk-bg); box-shadow: 5px 5px 0 var(--bb4-red); transform: translate(-2px, -2px); }
+.bb4-issue-btn strong { font: 400 1.25rem/1 var(--bb4-anton); text-transform: uppercase; }
+.bb4-issue-btn small { font: 700 .78rem var(--gk-font-ui); opacity: .75; }
+.bb4-issue-stack { display: flex; height: 54px; margin-bottom: 4px; }
+.bb4-issue-stack > span { position: relative; width: 38px; height: 54px; overflow: hidden; border: 2px solid currentColor; background: var(--gk-surface-2); rotate: -5deg; }
+.bb4-issue-stack > span + span { margin-left: -14px; rotate: 3deg; }
+.bb4-issue-stack > span:nth-child(3) { rotate: 9deg; }
+.bb4-issue-stack > span > * { position: absolute !important; inset: 0; width: 100% !important; height: 100% !important; }
+.bb4-back-grid { list-style: none; display: grid; gap: 18px 12px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (min-width: 620px) { .bb4-back-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (min-width: 900px) { .bb4-back-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+@media (min-width: 1240px) { .bb4-back-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); } }
+.bb4-back-card { display: grid; gap: 5px; width: 100%; padding: 0; text-align: left; color: var(--gk-text); background: none; border: 0; cursor: pointer; }
+.bb4-back-cover { position: relative; aspect-ratio: 2 / 3; overflow: hidden; border: 2px solid var(--gk-border); background: var(--gk-surface-2); box-shadow: 4px 4px 0 var(--tag, var(--gk-gold)); transition: translate var(--gk-fast) var(--gk-ease), box-shadow var(--gk-fast) var(--gk-ease); }
+.bb4-back-cover > * { position: absolute !important; inset: 0; width: 100% !important; height: 100% !important; }
+@media (hover: hover) { .bb4-back-card:hover .bb4-back-cover { translate: -2px -3px; box-shadow: 7px 7px 0 var(--tag, var(--gk-gold)); } }
+.bb4-back-card strong { font: 900 italic .92rem/1.02 var(--gk-font-ui); text-transform: uppercase; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.bb4-back-card small { font: 800 .64rem var(--gk-font-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--gk-dim); }
+
+/* ─── La collection : verdicts en registre, pas en étagère ────────────────── */
+.bb4-tier { margin-top: clamp(30px, 5vw, 56px); display: grid; gap: 16px; }
+@media (min-width: 900px) { .bb4-tier { grid-template-columns: 220px minmax(0, 1fr); gap: 0 26px; align-items: start; } .bb4-tier > :not(.bb4-tier-head) { grid-column: 2; } }
+/* L'étiquette du verdict : une lame de couleur, verticale sur ordinateur. */
+.bb4-tier-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 10px 14px 9px; background: var(--tier); color: var(--bb4-ink); clip-path: polygon(0 0, 100% 0, 98% 100%, 0 100%); }
+@media (min-width: 900px) { .bb4-tier-head { grid-row: span 2; flex-direction: column; align-items: flex-start; position: sticky; top: 120px; min-height: 180px; padding: 16px 16px 14px; clip-path: polygon(0 0, 100% 0, 100% 92%, 88% 100%, 0 100%); } }
+.bb4-tier-head h3 { font: 400 clamp(1.6rem, 4.6vw, 2.5rem)/.9 var(--bb4-anton); text-transform: uppercase; letter-spacing: .01em; overflow-wrap: anywhere; }
+.bb4-tier-head span { font: 800 .82rem var(--gk-font-ui); letter-spacing: .1em; text-transform: uppercase; }
+.bb4-tier.t-top .bb4-tier-head { background: linear-gradient(135deg, #f6d77a, #c9a84c 60%, #8f6d1f); }
+.bb4-tier.t-surcote .bb4-tier-head h3 { text-decoration: line-through 4px; }
+.bb4-tier.t-attente .bb4-tier-head { background: var(--gk-surface-2); color: var(--gk-text); border: 2px dashed var(--gk-dim); }
+
+/* L'œuvre en tête du rayon chef-d'œuvre : couverture et extrait de l'avis. */
+.bb4-lead { position: relative; margin-bottom: 26px; }
+.bb4-lead-cover { overflow: visible !important; }
+.bb4-lead-cover > :first-child { overflow: hidden; }
+.bb4-collection .bb4-head > .gk-chip { grid-column: 1 / -1; justify-self: start; margin-top: 14px; }
+.bb4-lead-open { position: relative; display: grid; grid-template-columns: minmax(110px, .42fr) minmax(0, 1fr); gap: 16px; width: 100%; padding: 0; text-align: left; color: var(--gk-text); background: none; border: 0; cursor: pointer; }
+.bb4-lead-cover { position: relative; display: block; aspect-ratio: 2 / 3; overflow: hidden; border: 3px solid var(--gk-border); box-shadow: 8px 8px 0 var(--tier); }
+.bb4-lead-cover > :first-child { position: absolute !important; inset: 0; width: 100% !important; height: 100% !important; }
+.bb4-lead-text { display: grid; gap: 10px; align-content: center; min-width: 0; }
+.bb4-lead-text small { font: 800 .78rem var(--gk-font-ui); letter-spacing: .12em; text-transform: uppercase; color: var(--gk-dim); }
+.bb4-lead-text strong { font: 900 italic clamp(1.6rem, 5vw, 3rem)/.92 var(--gk-font-ui); text-transform: uppercase; text-wrap: balance; overflow-wrap: anywhere; }
+.bb4-lead-text em { font: 400 clamp(.98rem, 1.8vw, 1.1rem)/1.55 var(--bb4-serif); font-style: normal; color: var(--gk-dim); display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
+.bb4-lead .bb-fav { left: 8px; right: auto; top: 8px; }
+/* Sceau de la note, à l'encre rouge, posé sur le coin de la couverture. */
+.bb4-hanko { position: absolute; right: -18px; bottom: -16px; z-index: 2; display: grid; place-items: center; width: 74px; aspect-ratio: 1; border-radius: 50%; background: var(--bb4-red); color: #fff8ec; border: 3px solid #fff8ec; outline: 3px solid var(--bb4-ink); font: 400 1.9rem/1 var(--bb4-anton); rotate: -10deg; }
+.bb4-hanko small { display: block; margin-top: -14px; font: 800 .7rem var(--gk-font-ui); }
+
+.bb4-grid { display: grid; gap: 22px 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 620px) { .bb4-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1100px) { .bb4-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (min-width: 1320px) { .bb4-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+.bb4-card { border: 0 !important; background: none !important; box-shadow: none !important; }
+.bb4-card .bb-card-cover { border: 2px solid var(--gk-border); box-shadow: 5px 5px 0 var(--tier); transition: translate var(--gk-fast) var(--gk-ease), box-shadow var(--gk-fast) var(--gk-ease); }
+@media (hover: hover) { .bb4-card:hover .bb-card-cover { translate: -2px -3px; box-shadow: 8px 8px 0 var(--tier); } }
+.bb4-card .bb-card-body { padding: 10px 2px 2px; background: none !important; }
+.bb4-note { position: absolute; right: 6px; bottom: 6px; display: grid; place-items: center; width: 40px; aspect-ratio: 1; border-radius: 50%; background: var(--bb4-red); color: #fff8ec; border: 2px solid #fff8ec; font: 400 1.1rem/1 var(--bb4-anton); rotate: -8deg; }
+.bb4-tier.t-surcote .bb-card-cover img { filter: grayscale(.55); }
+
+/* ─── Fiche et chronique (lecteur) : article de magazine ──────────────────── */
+.bb-reader .bb-article h2 { font-family: var(--gk-font-ui) !important; font-weight: 900 !important; font-style: italic; text-transform: uppercase; }
+.bb-reader .bb-prose p { font-family: var(--bb4-serif); }
+.bb-reader .bb-prose.is-lead > p:first-child::first-letter { float: left; margin: .06em .1em 0 0; font: 400 3.4em/.8 var(--bb4-anton); color: var(--tier, var(--gk-gold)); }
+
+/* Chronique avec image paysage : bandeau plein cadre, l'affiche chevauche son bas. */
+.bb4-art-hero { position: relative; margin: calc(-1 * clamp(18px, 4vw, 44px)) calc(-1 * clamp(16px, 5vw, 56px)) 0; height: clamp(200px, 44vw, 380px); overflow: hidden; border-bottom: var(--gk-stroke) solid var(--gk-border); }
+.bb4-art-hero > * { position: absolute !important; inset: 0; width: 100% !important; height: 100% !important; }
+.bb4-art-hero::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle, rgba(0,0,0,.35) 1px, transparent 1.3px) 0 0 / 5px 5px, linear-gradient(0deg, var(--gk-bg), transparent 55%); }
+.bb-article.has-hero .bb-article-top { margin-top: clamp(-120px, -14vw, -70px); position: relative; grid-template-columns: clamp(110px, 30%, 210px) minmax(0, 1fr); align-items: end; }
+.bb-article.has-hero .bb-article-cover { width: 100%; justify-self: stretch; }
+.bb-article.has-hero h2 { text-shadow: 3px 3px 0 var(--gk-bg); }
+
+/* ─── Thème clair : la couverture reste à l'encre, le reste passe au papier ── */
+html[data-theme="light"] .bb4-head-no { -webkit-text-stroke-color: var(--gk-text); }
+
+@media (prefers-reduced-motion: reduce) {
+  .bb4-une, .bb4-panel-art img, .bb4-back-cover, .bb4-card .bb-card-cover { transition: none; }
+}

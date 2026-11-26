@@ -82,6 +82,9 @@ export default function OptimizedImage({
           alt={alt}
           loading={priority ? "eager" : "lazy"}
           decoding="async"
+          // Image déjà chargée avant l'hydratation (cache, image prioritaire rendue côté
+          // serveur) : onLoad ne se déclenche plus, on lit son état au montage.
+          ref={(el) => { if (el && el.complete && el.naturalWidth > 0 && !isLoaded) setIsLoaded(true); }}
           onLoad={() => setIsLoaded(true)}
           onError={(e) => { if (!rescuedByFallback(e.currentTarget)) setHasError(true); }}
           style={{

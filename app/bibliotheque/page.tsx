@@ -1,6 +1,5 @@
 "use client";
 
-import { optimizedSrc } from "../../lib/img";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useBackClose } from "../hooks/useBackClose";
 import { createPortal } from "react-dom";
@@ -9,7 +8,7 @@ import { WeeklyRatingsLoader } from "../components/WeeklyRatings";
 import TrendingShelf from "../components/TrendingShelf";
 import NewsFeed from "../components/NewsFeed";
 import BashPoll from "../components/BashPoll";
-import { ArrowRight, Calendar, ChevronLeft, ChevronRight, Eye, EyeOff, Heart, Play, Search, Share2, X } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Eye, EyeOff, Heart, Play, Search, Share2, X } from "lucide-react";
 import GuildeHeader from "../components/GuildeHeader";
 import { flushSync } from "react-dom";
 import { viewTransition } from "../../lib/view-transition";
@@ -22,7 +21,7 @@ import { useFavorites } from "../hooks/useFavorites";
 import { useShare } from "../hooks/useShare";
 import { normalize } from "../utils/text";
 import "./biblio.css";
-import "./biblio-v3.css";
+import "./biblio-v4.css";
 import RubricMark from "../components/guilde/RubricMark";
 
 type Category = "Tout" | BiblioCategory;
@@ -37,9 +36,11 @@ const tierConfig: Record<Tier, { color: string; label: string }> = {
   "A définir":    { color: "#a1a1aa", label: "En attente de verdict" },
 };
 const categoryColor: Record<string, string> = { "Anime": "#a78bfa", "Manga": "#f472b6", "Film/Série": "#60a5fa", "Jeu Vidéo": "#4ade80" };
+const TIER_SLUG: Record<Tier, string> = { "Chef-d'œuvre": "top", "Pépite": "pepite", "Bof": "bof", "Surcoté": "surcote", "A définir": "attente" };
 const TIERS: Tier[] = ["Chef-d'œuvre", "Pépite", "Bof", "Surcoté", "A définir"];
 const CATEGORIES: Category[] = ["Tout", "Anime", "Manga", "Film/Série", "Jeu Vidéo"];
 const SPOILER_KEY = "guilde-anti-spoiler";
+const PROG_LIMIT = 10;
 
 type Chronique = (typeof DOSSIER_BASH_DATA)[number];
 
@@ -97,7 +98,12 @@ export default function BibliothequePage() {
   const fetchOeuvres = useCallback(async () => {
     setLoading(true);
     setLoadError(false);
-    const { data, error } = await supabase.from("bibliotheque").select("*").order("created_at", { ascending: false });
+    const res = await supabase.from("bibliotheque").select("*").order("created_at", { ascending: false });
+    let { data } = res; const { error } = res;
+    // Dev uniquement : fiches factices pour tester la collection (/bibliotheque?demo=fiches).
+    if (process.env.NODE_ENV !== "production" && !data?.length && window.location.search.includes("demo=fiches")) {
+      data = (await import("../../lib/dev/biblio-demo")).BIBLIO_DEMO;
+    }
 
     if (error) setLoadError(true);
     if (!error && data) {
@@ -302,132 +308,184 @@ export default function BibliothequePage() {
   const [une, ...restChroniques] = current;
   const duo = restChroniques.slice(0, 2);
   const briefs = restChroniques.slice(2);
-  const visibleBriefs = showAllBriefs ? briefs : briefs.slice(0, 8);
+  // Programme de la saison : les brèves regroupées par date de sortie (ordre de la Chronique).
+  const programme = useMemo(() => {
+    const shown = showAllBriefs ? briefs : briefs.slice(0, PROG_LIMIT);
+    const map = new Map<string, Reading[]>();
+    for (const c of shown) { const d = c.date || "Date à venir"; map.set(d, [...(map.get(d) ?? []), c]); }
+    return [...map.entries()];
+  }, [briefs, showAllBriefs]);
   const hasFilters = activeCategory !== "Tout" || activeTier !== "Tous" || !!searchTerm || showFavoritesOnly;
   const resetFilters = () => { setActiveCategory("Tout"); setActiveTier("Tous"); setSearchTerm(""); setShowFavoritesOnly(false); };
 
   return (
-    <div className="gk-page tone-dark bb-page">
-      <GuildeHeader activePage="bibliotheque" tone="dark" />
+    <div className="gk-page bb-page">
+      <GuildeHeader activePage="bibliotheque" />
 
       <main className="gk-wrap" style={{ paddingBottom: "clamp(56px, 9vw, 110px)" }}>
-        <header className="bb-masthead gk-reveal">
-          <div>
-            <div className="gk-hero-kicker">
-              <RubricMark rubric="bibliotheque" no="06" label="Le magazine de la Guilde" romaji="Toshokan" tone="gold" />
-            </div>
-            <h1 className="gk-display bb-title">La <span className="gk-inked">Bibliothèque</span></h1>
-            <p className="gk-body" style={{ marginTop: 16 }}>
-              Les verdicts définitifs de la Guilde. Animes, mangas, films, séries et jeux vidéo jugés sans pitié.
-            </p>
-          </div>
-          <p className="bb-issue">
-            Saison {season.school}
-            <b>{season.label}</b>
-            {chroniques.length} chroniques{entries.length > 0 ? `, ${entries.length} fiches` : ""}
-          </p>
-        </header>
-
-        <hr className="gk-rule" />
-
-        {/* ── LA CHRONIQUE DU BASH ───────────────────────────────────── */}
-        {une && (
-          <section className="bb-section" data-gk-motion="reveal" aria-labelledby="bb-bash">
-            <div className="bb-head">
-              <div>
-                <span className="gk-hand">le dossier {season.label.startsWith("Printemps") ? "du " : "de l'"}{season.label.toLowerCase()}</span>
-                <h2 id="bb-bash" className="gk-display gk-h3">La Chronique du Bash</h2>
+        {/* ── COUVERTURE DU NUMÉRO ─────────────────────────────────────
+            Une couverture de magazine manga : titre de revue, numéro de saison, la une en
+            grand (affiche + titre), et les titres d'appel des chroniques suivantes. */}
+        {une ? (
+          <header className="bb4-cover" style={{ "--tag": une.color } as React.CSSProperties}>
+            {une.backdrop && (
+              <div className="bb4-cover-bd" aria-hidden="true">
+                <OptimizedImage src={une.backdrop} alt="" priority width={1280} />
               </div>
-              <span className="gk-stamp" aria-hidden="true">Tokushū</span>
-            </div>
-
-            <button type="button" className={`gk-panel gk-press bb-une${une.backdrop ? " has-bd" : ""}`} onClick={() => open(une, chroniques)} style={{ "--tag": une.color, "--bd": une.backdrop ? `url(${JSON.stringify(optimizedSrc(une.backdrop, 1080))})` : "none" } as React.CSSProperties}>
-              <div className="bb-une-cover">
-                {une.cover && <OptimizedImage src={une.cover} alt="" priority />}
+            )}
+            <div className="bb4-cover-grid">
+              <div className="bb4-mast">
+                <RubricMark rubric="bibliotheque" no="06" label="Le magazine de la Guilde" romaji="Toshokan" tone="gold" />
+                <h1 className="bb4-mast-title">
+                  <span className="bb4-mast-small">La Chronique du</span>
+                  <span className="bb4-mast-big" aria-hidden="true">Bash</span>
+                  <span className="gk-sr">La Chronique du Bash, Bibliothèque de la Guilde</span>
+                </h1>
+                <p className="bb4-issue">
+                  <b>{season.label}</b>
+                  <span>Saison {season.school}</span>
+                  <span>{chroniques.length} chroniques</span>
+                </p>
               </div>
-              <div className="bb-une-body">
-                <div className="bb-kicker">
-                  <span className="gk-tag gk-tag--solid">À la une</span>
+
+              <button type="button" className="bb4-une" onClick={() => open(une, chroniques)} aria-label={`À la une : ${une.title}. Lire la chronique`}>
+                <span className="bb4-une-poster">
+                  {une.cover && <OptimizedImage src={une.cover} alt="" priority width={560} />}
+                </span>
+                <span className="bb4-une-seal" aria-hidden="true">À la<br />une</span>
+              </button>
+
+              <div className="bb4-une-text">
+                <p className="bb4-une-kicker">
                   {une.tag && <span className="bb-colortag">{une.tag}</span>}
-                  {une.date && <span><Calendar size={14} aria-hidden="true" style={{ verticalAlign: "-2px" }} /> {une.date}</span>}
-                </div>
-                <h3>{une.title}</h3>
-                {une.avis && <p className="bb-quote">{une.avis.split("\n\n")[0]}</p>}
-                <span className="bb-readmore">Lire la chronique <ArrowRight size={17} aria-hidden="true" /></span>
+                  {une.date && <span>{une.date}</span>}
+                </p>
+                <h2 className="bb4-une-title">{une.title}</h2>
+                {une.avis && <p className="bb4-une-lede">{une.avis.split("\n\n")[0]}</p>}
+                <button type="button" className="gk-btn gk-btn--red bb4-une-cta" onClick={() => open(une, chroniques)}>
+                  Lire la chronique <ArrowRight size={17} aria-hidden="true" />
+                </button>
               </div>
-            </button>
+
+              {restChroniques.length > 0 && (
+                <ul className="bb4-lines" aria-label="Aussi dans ce numéro">
+                  {restChroniques.slice(0, 4).map((c) => (
+                    <li key={c.key} style={{ "--tag": c.color } as React.CSSProperties}>
+                      <button type="button" onClick={() => open(c, chroniques)}>
+                        <small>{c.tag}</small>
+                        <strong>{c.title}</strong>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </header>
+        ) : (
+          <header className="bb-masthead gk-reveal">
+            <RubricMark rubric="bibliotheque" no="06" label="Le magazine de la Guilde" romaji="Toshokan" tone="gold" />
+            <h1 className="gk-display bb-title">La Bibliothèque</h1>
+          </header>
+        )}
+
+        {/* ── SOMMAIRE ──────────────────────────────────────────────── */}
+        <nav className="bb4-toc" aria-label="Sommaire de la Bibliothèque">
+          <span className="bb4-toc-label">Sommaire</span>
+          <ol>
+            {une && <li><a href="#bb-bash"><b>01</b><span>Le dossier de la saison</span><small>{current.length} chroniques</small></a></li>}
+            {shownArchive && <li><a href="#bb-archives"><b>02</b><span>Numéros précédents</span><small>{archives.length} {archives.length > 1 ? "saisons" : "saison"}</small></a></li>}
+            <li><a href="#bb-tendances"><b>03</b><span>Notes, tendances, actus</span><small>AniList et TMDB</small></a></li>
+            <li><a href="#bb-tiers"><b>04</b><span>La collection</span><small>{entries.length > 0 ? `${entries.length} verdicts` : "les verdicts"}</small></a></li>
+          </ol>
+        </nav>
+
+        {/* ── LE DOSSIER DE LA SAISON ───────────────────────────────── */}
+        {une && (
+          <section className="bb-section bb4-dossier" data-gk-motion="reveal" aria-labelledby="bb-bash">
+            <div className="bb4-head">
+              <span className="bb4-head-no" aria-hidden="true">01</span>
+              <div>
+                <span className="bb4-head-kicker">Tokushū · le dossier {season.label.startsWith("Printemps") ? "du " : "de l'"}{season.label.toLowerCase()}</span>
+                <h2 id="bb-bash" className="bb4-head-title">La Chronique du Bash</h2>
+              </div>
+            </div>
 
             {duo.length > 0 && (
-              <div className="bb-duo">
-                {duo.map((c) => (
-                  <button key={c.key} type="button" className="gk-panel gk-press bb-dossier" onClick={() => open(c, chroniques)} style={{ "--tag": c.color } as React.CSSProperties}>
-                    <div className="bb-dossier-cover">{c.cover && <OptimizedImage src={c.cover} alt="" />}</div>
-                    <div className="bb-dossier-body">
-                      <div className="bb-kicker">
-                        {c.tag && <span className="bb-colortag">{c.tag}</span>}
-                        {c.date && <span>{c.date}</span>}
-                      </div>
-                      <h3>{c.title}</h3>
-                      {c.avis && <p>{c.avis.split("\n\n")[0]}</p>}
-                    </div>
+              <div className={`bb4-panels n${duo.length}`}>
+                {duo.map((c, i) => (
+                  <button key={c.key} type="button" className={`bb4-panel p${i}`} onClick={() => open(c, chroniques)} style={{ "--tag": c.color } as React.CSSProperties}>
+                    <span className="bb4-panel-art">{c.cover && <OptimizedImage src={c.cover} alt="" width={720} />}</span>
+                    <span className="bb4-panel-no" aria-hidden="true">{String(i + 2).padStart(2, "0")}</span>
+                    <span className="bb4-panel-text">
+                      {c.tag && <small>{c.tag}</small>}
+                      <strong>{c.title}</strong>
+                      {c.avis && <em>{c.avis.split("\n\n")[0]}</em>}
+                    </span>
                   </button>
                 ))}
               </div>
             )}
 
             {briefs.length > 0 && (
-              <>
-                <ol className="bb-briefs" start={4}>
-                  {visibleBriefs.map((c, i) => (
-                    <li key={c.key}>
-                      <button type="button" className="bb-brief" onClick={() => open(c, chroniques)} style={{ "--tag": c.color } as React.CSSProperties}>
-                        <b aria-hidden="true">{String(i + 4).padStart(2, "0")}</b>
-                        <span className="bb-brief-thumb">{c.cover && <OptimizedImage src={c.cover} alt="" />}</span>
-                        <span style={{ minWidth: 0 }}>
-                          <strong>{c.title}</strong>
-                          <small>{c.tag}</small>
-                          {c.avis && <em>{c.avis.split("\n\n")[0]}</em>}
-                        </span>
-                      </button>
-                    </li>
-                  ))}
-                </ol>
-                {briefs.length > 8 && (
-                  <div style={{ marginTop: 18 }}>
-                    <button type="button" className="gk-btn gk-btn--ghost" onClick={() => setShowAllBriefs((v) => !v)} aria-expanded={showAllBriefs}>
-                      {showAllBriefs ? "Replier la liste" : `Afficher les ${briefs.length - 8} autres chroniques`}
-                    </button>
-                  </div>
+              <div className="bb4-prog">
+                <h3 className="bb4-prog-title">Le programme de la saison <small>{briefs.length} titres, par date de sortie</small></h3>
+                {programme.map(([date, list]) => (
+                  <section key={date} className="bb4-day" aria-label={date}>
+                    <h4 className="bb4-day-date">{date}</h4>
+                    <ul>
+                      {list.map((c) => (
+                        <li key={c.key}>
+                          <button type="button" className="bb4-brief" onClick={() => open(c, chroniques)} style={{ "--tag": c.color } as React.CSSProperties}>
+                            <span className="bb4-brief-thumb">{c.cover && <OptimizedImage src={c.cover} alt="" width={160} />}</span>
+                            <span className="bb4-brief-text">
+                              <strong>{c.title}</strong>
+                              <small>{c.tag}</small>
+                              {c.avis && <em>{c.avis.split("\n\n")[0]}</em>}
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                ))}
+                {briefs.length > PROG_LIMIT && (
+                  <button type="button" className="gk-btn gk-btn--ghost bb4-more" onClick={() => setShowAllBriefs((v) => !v)} aria-expanded={showAllBriefs}>
+                    {showAllBriefs ? "Replier le programme" : `Voir les ${briefs.length - PROG_LIMIT} autres titres`}
+                  </button>
                 )}
-              </>
+              </div>
             )}
           </section>
         )}
 
-        {/* ── ARCHIVES DE LA CHRONIQUE (saisons précédentes) ─────────── */}
+        {/* ── NUMÉROS PRÉCÉDENTS (saisons d'archives) ───────────────── */}
         {shownArchive && (
-          <section className="bb-section bb-archives" data-gk-motion="reveal" aria-labelledby="bb-archives">
-            <div className="bb-head">
+          <section className="bb-section bb4-back" data-gk-motion="reveal" aria-labelledby="bb-archives">
+            <div className="bb4-head">
+              <span className="bb4-head-no" aria-hidden="true">02</span>
               <div>
-                <span className="gk-hand">les dossiers précédents</span>
-                <h2 id="bb-archives" className="gk-display gk-h3">Archives de la Chronique</h2>
+                <span className="bb4-head-kicker">Bakkunanbā · les anciens numéros</span>
+                <h2 id="bb-archives" className="bb4-head-title">Numéros précédents</h2>
               </div>
             </div>
-            {archives.length > 1 && (
-              <div className="gk-chips bb-archive-tabs" role="group" aria-label="Saison">
-                {archives.map(([k, list]) => (
-                  <button key={k} type="button" className="gk-chip" aria-pressed={k === shownArchive[0]} onClick={() => setArchiveSeason(k)}>{k} · {list.length}</button>
-                ))}
-              </div>
-            )}
-            <p className="bb-archive-sub">{shownArchive[0]} · {shownArchive[1].length} chroniques</p>
-            <ul className="bb-archive-grid">
+            <div className="bb4-issues" role="group" aria-label="Choisir une saison">
+              {archives.map(([k, list]) => (
+                <button key={k} type="button" className="bb4-issue-btn" aria-pressed={k === shownArchive[0]} onClick={() => vtSet(() => setArchiveSeason(k))}>
+                  <span className="bb4-issue-stack" aria-hidden="true">
+                    {list.slice(0, 3).map((c) => <span key={c.key}>{c.cover && <OptimizedImage src={c.cover} alt="" width={120} />}</span>)}
+                  </span>
+                  <strong>{k}</strong>
+                  <small>{list.length} chroniques</small>
+                </button>
+              ))}
+            </div>
+            <ul className="bb4-back-grid">
               {shownArchive[1].map((c) => (
                 <li key={c.key}>
-                  <button type="button" className="bb-archive-card" onClick={() => open(c, chroniques)} style={{ "--tag": c.color } as React.CSSProperties}>
-                    <span className="bb-archive-cover">{c.cover && <OptimizedImage src={c.cover} alt="" />}</span>
+                  <button type="button" className="bb4-back-card" onClick={() => open(c, chroniques)} style={{ "--tag": c.color } as React.CSSProperties}>
+                    <span className="bb4-back-cover">{c.cover && <OptimizedImage src={c.cover} alt="" width={300} />}</span>
                     <strong>{c.title}</strong>
-                    <small>{[c.tag, c.date].filter(Boolean).join(" · ")}</small>
+                    <small>{c.tag}</small>
                   </button>
                 </li>
               ))}
@@ -435,6 +493,7 @@ export default function BibliothequePage() {
           </section>
         )}
 
+        <div id="bb-tendances" className="bb4-anchor" />
         {/* ── LES NOTES DE LA SEMAINE (épisodes d'anime, TMDB) ────────── */}
         <WeeklyRatingsLoader />
 
@@ -444,14 +503,13 @@ export default function BibliothequePage() {
         {/* ── ACTUALITÉS (articles relus et publiés dans l'admin) ─────── */}
         <NewsFeed />
 
-        <hr className="gk-rule" />
-
-        {/* ── LES VERDICTS ───────────────────────────────────────────── */}
-        <section className="bb-section" data-gk-motion="reveal" aria-labelledby="bb-tiers">
-          <div className="bb-head">
+        {/* ── LA COLLECTION (les verdicts) ───────────────────────────── */}
+        <section className="bb-section bb4-collection" data-gk-motion="reveal" aria-labelledby="bb-tiers">
+          <div className="bb4-head">
+            <span className="bb4-head-no" aria-hidden="true">04</span>
             <div>
-              <span className="gk-hand">du chef-d&apos;œuvre au surcoté</span>
-              <h2 id="bb-tiers" className="gk-display gk-h3">Tier list Otaku</h2>
+              <span className="bb4-head-kicker">Korekushon · du chef-d&apos;œuvre au surcoté</span>
+              <h2 id="bb-tiers" className="bb4-head-title">La collection</h2>
             </div>
             <button type="button" className="gk-chip" aria-pressed={antiSpoiler} onClick={toggleSpoiler} title="Masque les avis et synopsis dans les fiches tant que tu ne les dévoiles pas">
               {antiSpoiler ? <EyeOff size={15} aria-hidden="true" /> : <Eye size={15} aria-hidden="true" />}
@@ -544,46 +602,61 @@ export default function BibliothequePage() {
             </div>
           ) : (
             <div key={`${activeCategory}-${activeTier}-${sortBy}-${showFavoritesOnly}`}>
-              {byTier.map(({ tier, items }) => (
-                <section key={tier} data-gk-motion="reveal" className="bb-tier" style={{ "--tier": tierConfig[tier].color } as React.CSSProperties} aria-label={tierConfig[tier].label}>
-                  <div className="bb-tier-head">
+              {byTier.map(({ tier, items }) => {
+                const [lead, ...others] = tier === "Chef-d'œuvre" ? items : [undefined, ...items];
+                return (
+                <section key={tier} data-gk-motion="reveal" className={`bb4-tier t-${TIER_SLUG[tier]}`} style={{ "--tier": tierConfig[tier].color } as React.CSSProperties} aria-label={tierConfig[tier].label}>
+                  <header className="bb4-tier-head">
                     <h3>{tierConfig[tier].label}</h3>
                     <span>{items.length} {items.length > 1 ? "titres" : "titre"}</span>
-                  </div>
-                  <div className={`bb-grid gk-stagger${tier === "Chef-d'œuvre" ? " is-top" : ""}`}>
-                    {items.map((e, i) => {
-                      const fav = isFavorite(e.id);
+                  </header>
+                  {lead && (() => {
+                    const note = numericNote(lead.note);
+                    return (
+                      <article className="bb4-lead" data-reading-key={ficheToReading(lead).key}>
+                        <button type="button" className="bb4-lead-open" onClick={(ev) => openFrom(ficheToReading(lead), filteredReadings, ev.currentTarget)} aria-label={`Ouvrir la fiche de ${lead.title}`}>
+                          <span className="bb-card-cover bb4-lead-cover">
+                            {lead.cover_image ? <OptimizedImage src={lead.cover_image} alt="" width={560} /> : <span className="bb-nocover" aria-hidden="true">{lead.title.slice(0, 1)}</span>}
+                            {note !== undefined && <span className="bb4-hanko" aria-label={`Note ${note} sur 10`}>{note}<small>/10</small></span>}
+                          </span>
+                          <span className="bb4-lead-text">
+                            <small>{[lead.category, lead.year].filter(Boolean).join(" · ")}</small>
+                            <strong>{lead.title}</strong>
+                            {lead.avis_guilde && !antiSpoiler && <em>{lead.avis_guilde.split("\n\n")[0]}</em>}
+                          </span>
+                        </button>
+                        <FavButton id={lead.id} title={lead.title} fav={isFavorite(lead.id)} onToggle={toggle} />
+                      </article>
+                    );
+                  })()}
+                  {others.length > 0 && (
+                  <div className="bb4-grid gk-stagger">
+                    {others.map((e, i) => {
+                      if (!e) return null;
                       const note = numericNote(e.note);
                       return (
-                        <article key={e.id} className="bb-card" data-reading-key={ficheToReading(e).key} style={{ "--i": i, "--cat": categoryColor[e.category] ?? "#f3eee2" } as React.CSSProperties}>
-                          <button
-                            type="button"
-                            className="bb-fav no-min"
-                            aria-pressed={fav}
-                            aria-label={fav ? `Retirer ${e.title} des favoris` : `Ajouter ${e.title} aux favoris`}
-                            onClick={() => toggle(e.id)}
-                          >
-                            <Heart size={17} fill={fav ? "currentColor" : "none"} aria-hidden="true" />
-                          </button>
+                        <article key={e.id} className="bb-card bb4-card" data-reading-key={ficheToReading(e).key} style={{ "--i": i, "--cat": categoryColor[e.category] ?? "#f3eee2" } as React.CSSProperties}>
+                          <FavButton id={e.id} title={e.title} fav={isFavorite(e.id)} onToggle={toggle} />
                           <button type="button" className="bb-card-open" onClick={(ev) => openFrom(ficheToReading(e), filteredReadings, ev.currentTarget)} aria-label={`Ouvrir la fiche de ${e.title}`}>
                             <div className="bb-card-cover">
                               {e.cover_image ? <OptimizedImage src={e.cover_image} alt="" /> : <span className="bb-nocover" aria-hidden="true">{e.title.slice(0, 1)}</span>}
                               <span className="bb-cat">{e.category}</span>
-                              {note !== undefined && <span className="bb-note">{note}<small>/10</small></span>}
+                              {note !== undefined && <span className="bb4-note">{note}</span>}
                             </div>
                             <div className="bb-card-body">
                               <strong>{e.title}</strong>
-                              {/* Court synopsis (masqué en mode anti-spoiler). */}
                               {e.synopsis && !antiSpoiler && <p className="bb-card-syn">{e.synopsis}</p>}
-                              <small>{[e.category, e.status, e.year].filter(Boolean).join(" · ")}</small>
+                              <small>{[e.status, e.year].filter(Boolean).join(" · ")}</small>
                             </div>
                           </button>
                         </article>
                       );
                     })}
                   </div>
+                  )}
                 </section>
-              ))}
+                );
+              })}
             </div>
           )}
         </section>
@@ -609,6 +682,14 @@ export default function BibliothequePage() {
       )}
       <Toast />
     </div>
+  );
+}
+
+function FavButton({ id, title, fav, onToggle }: { id: number | string; title: string; fav: boolean; onToggle: (id: number | string) => void }) {
+  return (
+    <button type="button" className="bb-fav no-min" aria-pressed={fav} aria-label={fav ? `Retirer ${title} des favoris` : `Ajouter ${title} aux favoris`} onClick={() => onToggle(id)}>
+      <Heart size={17} fill={fav ? "currentColor" : "none"} aria-hidden="true" />
+    </button>
   );
 }
 
@@ -724,8 +805,10 @@ function Reader({ item, list, all, antiSpoiler, isFavorite, onToggleFavorite, on
           <div className="bb-progress" role="progressbar" aria-label="Progression de lecture"><i ref={barRef} /></div>
         </div>
 
-        <article className="bb-article">
-          {item.cover && <div className="bb-article-backdrop" aria-hidden="true" style={{ backgroundImage: `url(${JSON.stringify(item.cover)})` }} />}
+        <article className={`bb-article${item.backdrop ? " has-hero" : ""}`}>
+          {item.backdrop ? (
+            <div className="bb4-art-hero" aria-hidden="true"><OptimizedImage src={item.backdrop} alt="" width={1080} priority position="center 25%" /></div>
+          ) : item.cover && <div className="bb-article-backdrop" aria-hidden="true" style={{ backgroundImage: `url(${JSON.stringify(item.cover)})` }} />}
           <div className="bb-article-top">
             <div className="bb-article-cover" style={{ viewTransitionName: "work-cover" }}>{item.cover && <OptimizedImage src={item.cover} alt={`Couverture de ${item.title}`} priority />}</div>
             <div style={{ minWidth: 0 }}>
