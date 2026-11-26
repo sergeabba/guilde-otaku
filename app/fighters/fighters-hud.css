@@ -1,0 +1,70 @@
+/* ═══ COMBAT : INTERFACE V2 ════════════════════════════════════════════════════
+   L'arène occupe tout l'écran disponible ; le HUD est posé dessus (pas une bande à part).
+   Jauges propres à la Guilde : portrait dans un médaillon incliné à la couleur du grade,
+   barre de vie en lame (rouge qui s'écoule derrière), jauge de puissance en segments
+   lumineux, compteur de manches en losanges. */
+.fx-fight { grid-template-rows: 1fr auto !important; background: #000 !important; }
+.fx-stage { width: min(100vw, calc((100dvh - 34px) * 16 / 9)) !important; max-width: none !important; align-self: center !important; aspect-ratio: 16 / 9 !important; }
+.fx-stage .fx-hud { position: absolute; z-index: 5; left: 0; right: 0; top: 0; padding: clamp(6px, 1.2vw, 14px) clamp(8px, 1.6vw, 20px) 0; pointer-events: none;
+  background: linear-gradient(rgba(0, 0, 0, .55), transparent); grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: clamp(6px, 1vw, 14px); }
+.fx-stage .fx-hud-side { position: relative; padding-left: clamp(46px, 6vw, 78px); }
+.fx-stage .fx-hud-side--1 { padding-left: 0; padding-right: clamp(46px, 6vw, 78px); }
+/* Médaillon du portrait, qui déborde de la barre. */
+.fx-stage .fx-hud-face { position: absolute; left: 0; top: 0; width: clamp(42px, 5.6vw, 72px); height: clamp(42px, 5.6vw, 72px); border: 3px solid #fff; background: var(--fx-c);
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); box-shadow: none; }
+.fx-stage .fx-hud-side--1 .fx-hud-face { left: auto; right: 0; }
+.fx-stage .fx-hud-face img { transform: scale(1.15); }
+.fx-stage .fx-hud-name { font: 900 italic clamp(.78rem, 1.5vw, 1.15rem)/1 var(--gk-font-title, sans-serif); text-shadow: 2px 2px 0 #000; letter-spacing: .02em; }
+/* Barre de vie : lame inclinée, bord blanc, couleur de vie franche, fond d'encre. */
+.fx-stage .fx-hp { height: clamp(12px, 1.8vw, 22px) !important; background: #120d14 !important; border: 2px solid #fff !important; transform: skewX(-18deg); box-shadow: 3px 3px 0 #000; }
+.fx-stage .fx-hud-side--1 .fx-hp { transform: skewX(18deg); }
+.fx-stage .fx-hp > span:not(.fx-hp-lag) { background: linear-gradient(#ffe46b, #f2b632 60%, #d98a10) !important; }
+.fx-stage .fx-hp > span.is-low { background: linear-gradient(#ff8a6b, #e8412c) !important; }
+.fx-stage .fx-hp-lag { background: #c8102e !important; }
+/* Jauge de puissance : segments à la couleur du grade, qui s'illuminent au maximum. */
+.fx-stage .fx-power { height: clamp(7px, 1vw, 11px) !important; border: 2px solid #000 !important; background: #1b1422 !important; transform: skewX(-18deg);
+  -webkit-mask-image: repeating-linear-gradient(90deg, #000 0 calc(25% - 2px), transparent calc(25% - 2px) 25%); mask-image: repeating-linear-gradient(90deg, #000 0 calc(25% - 2px), transparent calc(25% - 2px) 25%); }
+.fx-stage .fx-power > span { background: var(--fx-c) !important; }
+.fx-stage .fx-power > span.is-max { background: linear-gradient(90deg, #fff, var(--fx-c), #fff) !important; background-size: 200% 100% !important; }
+@media (prefers-reduced-motion: no-preference) { .fx-stage .fx-power > span.is-max { animation: fx-pow 600ms linear infinite; } }
+@keyframes fx-pow { to { background-position: -200% 0; } }
+.fx-stage .fx-power b { display: none; }
+/* Chrono en médaillon central. */
+.fx-stage .fx-timer-box { align-self: start; }
+.fx-stage .fx-timer { font: 400 clamp(1.6rem, 3.4vw, 2.8rem)/1 var(--gk-font-impact, "Anton") !important; color: #fff; -webkit-text-stroke: 2px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #c8102e; }
+.fx-stage .fx-pausebtn { top: auto; bottom: 8px; }
+/* Compteur de combos : chiffre géant à la couleur du joueur, sur le côté de l'arène. */
+.fx-stage .fx-combo b { font: 400 clamp(2.4rem, 6vw, 4.6rem)/.85 var(--gk-font-impact, "Anton") !important; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+/* Annonces : grand lettrage qui frappe. */
+.fx-stage .fx-banner b { font: 900 italic clamp(2.6rem, 8vw, 6rem)/.9 var(--gk-font-title, sans-serif) !important; -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 6px 6px 0 #c8102e; }
+/* Téléphone en paysage : arène entre les commandes, HUD compact. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .fx-fight { grid-template-rows: 1fr !important; }
+  .fx-stage { width: min(calc(100vw - 120px), calc(100dvh * 16 / 9)) !important; }
+  .fx-controls { opacity: .78; }
+  .fx-stage .fx-pausebtn { bottom: auto; top: 54px; right: 50%; translate: 50% 0; }
+  .fx-keyline { display: none; }
+  .fx-stage .fx-hud-face { width: 34px; height: 34px; }
+  .fx-stage .fx-hud-side { padding-left: 38px; } .fx-stage .fx-hud-side--1 { padding-left: 0; padding-right: 38px; }
+}
+/* Téléphone en portrait : l'arène reste lisible, commandes dessous. */
+@media (max-width: 699px) and (orientation: portrait) {
+  .fx-fight { grid-template-rows: auto 1fr auto !important; }
+  .fx-stage { width: 100vw !important; }
+}
+
+/* ═══ Super : chorégraphie courte (650 ms) qui laisse voir le combat ═══════════════
+   1. anticipation (assombrissement bref) · 2. bande du regard, cadrée sur les yeux grâce au
+   détourage · 3. nom de la super · 4. tout repart, l'impact se joue dans l'arène. */
+.fx-cutin { background: none !important; animation: fx-cut-life2 650ms linear both !important; }
+.fx-cutin::before { content: ""; position: absolute; inset: 0; background: #000; animation: fx-cut-dim 650ms ease-out both; }
+.fx-cutin-band { top: 12% !important; height: 22% !important; left: -5% !important; right: -5% !important;
+  background-color: var(--fx-c) !important; background-image: var(--cut-src) !important; background-repeat: no-repeat !important;
+  background-size: 165% auto !important; background-position: var(--cut-x, 50%) var(--cut-y, 24%) !important;
+  animation: fx-cut-band2 650ms cubic-bezier(.2, .9, .3, 1) both !important; }
+.fx-cutin-name { position: absolute !important; top: 36%; margin: 0 !important; font-size: clamp(1.3rem, 3.6vw, 2.6rem) !important; animation: fx-cut-name2 650ms cubic-bezier(.2, 1.4, .4, 1) both !important; }
+.fx-cutin-kicker { top: 31% !important; left: auto !important; right: 4% !important; }
+@keyframes fx-cut-life2 { 0% { opacity: 0; } 6%, 80% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes fx-cut-dim { 0% { opacity: 0; } 12% { opacity: .45; } 100% { opacity: 0; } }
+@keyframes fx-cut-band2 { from { clip-path: polygon(0 0, 0 0, 0 100%, 0 100%); } 30% { clip-path: polygon(0 12%, 100% 0, 100% 88%, 0 100%); } to { clip-path: polygon(0 12%, 100% 0, 100% 88%, 0 100%); translate: 3% 0; } }
+@keyframes fx-cut-name2 { 0%, 25% { scale: 1.6; opacity: 0; } 45% { scale: 1; opacity: 1; } }

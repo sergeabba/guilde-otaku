@@ -194,8 +194,11 @@ export default function FightScreen({ teams, mode, versus, level, labels, reduce
 
     // Cadrage : en portrait étroit, on montre une portion de l'arène qui suit l'action.
     const fit = () => {
+      // Caméra resserrée : on montre moins de l'arène (le moteur garde ses 384 px), donc les
+      // combattants paraissent plus grands ; la caméra suit le milieu des deux.
       const narrow = window.innerWidth < 700 && window.innerHeight > window.innerWidth;
-      const w = narrow ? 240 : STAGE_W;
+      const land = window.innerHeight <= 520 && window.innerWidth > window.innerHeight;
+      const w = narrow ? 220 : land ? 288 : 304;
       viewRef.current = w; setViewW(w);
     };
     fit(); window.addEventListener("resize", fit);
@@ -271,7 +274,7 @@ export default function FightScreen({ teams, mode, versus, level, labels, reduce
     const pct = Math.max(0, hud.hp[side] / MAX_HP);
     const team = teams[side];
     return (
-      <div className={`fx-hud-side fx-hud-side--${side}`}>
+      <div className={`fx-hud-side fx-hud-side--${side}`} style={{ "--fx-c": m ? accentOf(m) : side === 0 ? "#e8463a" : "#3a8de8" } as React.CSSProperties}>
         <div className="fx-hud-id">
           <span className="fx-hud-face">{m && (m.anime || m.photo) ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -300,22 +303,22 @@ export default function FightScreen({ teams, mode, versus, level, labels, reduce
 
   return (
     <section className="fx-fight" aria-label="Combat">
-      <div className="fx-hud">
-        <Bar side={0} />
-        <div className="fx-timer-box">
-          <div className="fx-timer" aria-label={opts.training ? "Sans limite de temps" : `Temps restant : ${hud?.timer ?? 60} secondes`}>{opts.training ? "∞" : hud?.timer ?? 60}</div>
-          {caption && <small className="fx-caption">{caption}</small>}
-        </div>
-        <Bar side={1} />
-      </div>
-
       <div className="fx-stage" style={{ aspectRatio: `${viewW} / ${STAGE_H}` }}>
         <canvas ref={canvasRef} width={viewW} height={STAGE_H} className="fx-canvas" aria-label="Arène de combat en pixel art" role="img" />
+      <div className="fx-hud">
+          <Bar side={0} />
+          <div className="fx-timer-box">
+            <div className="fx-timer" aria-label={opts.training ? "Sans limite de temps" : `Temps restant : ${hud?.timer ?? 60} secondes`}>{opts.training ? "∞" : hud?.timer ?? 60}</div>
+            {caption && <small className="fx-caption">{caption}</small>}
+          </div>
+          <Bar side={1} />
+        </div>
+
         {combo && !ended && <div key={`c${combo.id}`} className={`fx-combo fx-combo--${combo.side}`} aria-live="polite"><b>{combo.n}</b><span>coups</span><small>{combo.dmg} % de dégâts</small></div>}
         {first && !ended && <div key={`f${first.id}`} className={`fx-first fx-first--${first.side}`} aria-hidden="true">Premier coup</div>}
         {cutin && !ended && (
           <div key={cutin.id} className={`fx-cutin is-side-${cutin.side}`} aria-live="assertive" onAnimationEnd={(ev) => { if (ev.target === ev.currentTarget) setCutin(null); }}
-            style={{ "--fx-c": accentOf(cutin.m), "--cut-src": `url(${JSON.stringify(cutin.m.cut?.src ?? cutin.m.anime ?? cutin.m.photo ?? "")})`, "--cut-y": `${cutin.m.cut ? cutin.m.cut.box[1] + (cutin.m.cut.box[3] - cutin.m.cut.box[1]) * 0.16 : 22}%` } as React.CSSProperties}>
+            style={{ "--fx-c": accentOf(cutin.m), "--cut-src": `url(${JSON.stringify(cutin.m.cut?.src ?? cutin.m.anime ?? cutin.m.photo ?? "")})`, "--cut-x": `${cutin.m.cut ? (cutin.m.cut.box[0] + cutin.m.cut.box[2]) / 2 : 50}%`, "--cut-y": `${cutin.m.cut ? cutin.m.cut.box[1] + (cutin.m.cut.box[3] - cutin.m.cut.box[1]) * 0.24 : 28}%` } as React.CSSProperties}>
             <span className="fx-cutin-band" aria-hidden="true" />
             <Ransom text={cutin.name} as="p" className="fx-cutin-name" />
             <span className="fx-cutin-kicker">Super · {cutin.m.name}</span>
