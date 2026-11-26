@@ -52,6 +52,7 @@ export default function CinemaClient({ rows, hero: picked = null, guild = null }
             <h1 id="cin-closed-h" className="cin-closed-title"><span>Relâche</span><span>ce soir</span></h1>
             <p className="cin-closed-text">Le catalogue des sorties ne répond pas pour le moment (TMDB indisponible ou clé non configurée). La programmation de la Guilde continue juste en dessous.</p>
           </section>
+          <ProgNav guild={false} catalogue={false} />
           <Generiques />
           <FreeShows onOpen={setFreeShow} />
           <Nostalgie />
@@ -84,23 +85,39 @@ export default function CinemaClient({ rows, hero: picked = null, guild = null }
           </div>
         </section>
       ) : !hasGuild && hero && (
-        <section className="cin-hero" style={{ "--bd": hero.backdrop ? `url(${JSON.stringify(optimizedSrc(hero.backdrop, 1200))})` : "none" } as React.CSSProperties}>
-          <div className="gk-wrap cin-hero-inner">
-            <span className="gk-chapter"><b>▶</b><span>GEKIJŌ · LE CINÉMA OTAKU</span></span>
-            <p className="cin-hero-kicker">À l&apos;affiche ce soir</p>
-            <h1 className="gk-display cin-hero-title">{hero.title}</h1>
-            {hero.overview && <p className="cin-hero-syn">{hero.overview.length > 260 ? `${hero.overview.slice(0, hero.overview.lastIndexOf(" ", 258))}…` : hero.overview}</p>}
-            <button type="button" className="cin-play" onClick={() => setOpen(hero)}><Play size={20} aria-hidden="true" /> Bande-annonce et où regarder</button>
+        <section className="cin-hero cin-hero--eiga" aria-labelledby="cin-hero-title">
+          {hero.backdrop && <div className="cin-hero-bd" aria-hidden="true" style={{ backgroundImage: `url(${JSON.stringify(optimizedSrc(hero.backdrop, 1200))})` }} />}
+          <div className="gk-wrap cin-eiga">
+            <div className="cin-eiga-text">
+              <p className="cin-eiga-kicker"><span>Gekijō</span> À l&apos;affiche ce soir</p>
+              <h1 id="cin-hero-title" className="cin-eiga-title">{hero.title}</h1>
+              {hero.overview && <p className="cin-hero-syn">{hero.overview.length > 240 ? `${hero.overview.slice(0, hero.overview.lastIndexOf(" ", 238))}…` : hero.overview}</p>}
+              {/* Le billet de la séance : les informations réelles du titre, détachables. */}
+              <div className="cin-billet">
+                <span className="cin-billet-main">
+                  <small>Séance</small>
+                  <b>{hero.kind === "movie" ? "Film" : "Série"}{hero.year ? ` · ${hero.year}` : ""}</b>
+                </span>
+                {hero.rating ? <span className="cin-billet-stub"><small>Note</small><b>{hero.rating}</b></span> : null}
+              </div>
+              <button type="button" className="cin-play" onClick={() => setOpen(hero)}><Play size={20} aria-hidden="true" /> Bande-annonce et où regarder</button>
+            </div>
+            {hero.poster && (
+              <button type="button" className="cin-eiga-poster" onClick={() => setOpen(hero)} aria-label={`${hero.title} : bande-annonce`}>
+                <Image src={hero.poster} alt="" fill sizes="(max-width: 900px) 40vw, 320px" priority />
+              </button>
+            )}
           </div>
         </section>
       )}
+      <ProgNav guild={!!guild} catalogue={!!rows} />
       <main className="cin-main">
         {guild && <GuildVideos guild={guild} onPlay={setScreening} />}
         <Generiques />
         <FreeShows onOpen={setFreeShow} />
         <Nostalgie />
         {rows && <>
-        <div className="gk-wrap cin-intro">
+        <div className="gk-wrap cin-intro" id="cin-catalogue">
           <h2 className="gk-display cin-h2"><WordReveal>Ce soir, <em>on regarde quoi ?</em></WordReveal></h2>
           <p>Des animes japonais disponibles légalement en France. Choisis une affiche : bande-annonce en grand, puis les plateformes où regarder la série.</p>
         </div>
@@ -117,22 +134,47 @@ export default function CinemaClient({ rows, hero: picked = null, guild = null }
   );
 }
 
+function ProgNav({ guild, catalogue }: { guild: boolean; catalogue: boolean }) {
+  // Le programme de la salle : ancres numérotées vers chaque séance de la page.
+  const n = (i: number) => String(i + (guild ? 1 : 0)).padStart(2, "0");
+  return (
+      <nav className="gk-wrap cin-prog" aria-label="Au programme">
+        <span className="cin-prog-label">Au programme</span>
+        <ol>
+          {guild && <li><a href="#cin-guild-title"><b>01</b>La salle de la Guilde</a></li>}
+          <li><a href="#cin-op-title"><b>{n(1)}</b>Le générique du jour</a></li>
+          <li><a href="#cin-free-title"><b>{n(2)}</b>Séries gratuites</a></li>
+          <li><a href="#cin-nosta-title"><b>{n(3)}</b>Nostalgie</a></li>
+          {catalogue && <li><a href="#cin-catalogue"><b>{n(4)}</b>Le catalogue</a></li>}
+        </ol>
+      </nav>
+  );
+}
+
 function Row({ title, sub, items, onOpen }: { title: string; sub: string; items: CinemaItem[]; onOpen: (i: CinemaItem) => void }) {
+  // Téléphone : grille de trois affiches (pas de défilement horizontal imposé), neuf
+  // d'abord puis le reste sur demande. Ordinateur : la rangée défile comme avant.
+  const [all, setAll] = useState(false);
   if (!items.length) return null;
   return (
-    <section className="cin-row" aria-label={title}>
+    <section className={`cin-row${all ? " is-all" : ""}`} aria-label={title}>
       <div className="gk-wrap cin-row-head"><h3>{title}</h3><small>{sub}</small></div>
       <ul className="cin-strip">
         {items.map((i, n) => (
           <li key={`${i.kind}-${i.id}`} style={{ "--n": n } as React.CSSProperties}>
             <button type="button" className="cin-card" onClick={() => onOpen(i)} aria-label={`${i.title}${i.year ? `, ${i.year}` : ""} : bande-annonce et plateformes`}>
-              <span className="cin-poster">{i.poster && <Image src={i.poster} alt="" fill sizes="(max-width: 600px) 40vw, 200px" />}<span className="cin-poster-play" aria-hidden="true"><Play size={22} /></span></span>
+              <span className="cin-poster">{i.poster && <Image src={i.poster} alt="" fill sizes="(max-width: 600px) 31vw, 200px" />}<span className="cin-poster-play" aria-hidden="true"><Play size={22} /></span>{i.rating ? <span className="cin-poster-note">{i.rating}</span> : null}</span>
               <span className="cin-card-title">{i.title}</span>
-              <span className="cin-card-meta">{[i.year, i.rating ? `★ ${i.rating}` : null].filter(Boolean).join(" · ")}</span>
+              <span className="cin-card-meta">{[i.kind === "movie" ? "Film" : "Série", i.year].filter(Boolean).join(" · ")}</span>
             </button>
           </li>
         ))}
       </ul>
+      {items.length > 9 && (
+        <div className="gk-wrap cin-row-more">
+          <button type="button" className="gk-btn gk-btn--ghost gk-btn--sm" onClick={() => setAll((v) => !v)} aria-expanded={all}>{all ? "Replier" : `Voir les ${items.length - 9} autres`}</button>
+        </div>
+      )}
     </section>
   );
 }

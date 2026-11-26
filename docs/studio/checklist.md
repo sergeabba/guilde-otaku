@@ -16,7 +16,7 @@
 | Anniversaires | Validé visuellement | — |
 | Bibliothèque | Validé sur mobile | Fiches réelles : la lecture publique de la table renvoie 0 fiche, collection vérifiée avec données factices de dev (`?demo=fiches`) |
 | Chronique du Bash | Validé sur mobile | Couverture de numéro, dossier en cases, programme par date, numéros précédents, article avec bandeau et lettrine |
-| Cinéma | En cours | Tester l'état « catalogue indisponible » ; recomposition |
+| Cinéma | Validé sur mobile | Deux états testés (relâche sans TMDB ; catalogue factice de dev `?demo=catalogue`). En production : ajouter `TMDB_API_KEY` dans Vercel |
 | Film de la semaine | Non commencé | — |
 | Calendrier | Non commencé | — |
 | Futilités / Atelier | Non commencé | — |

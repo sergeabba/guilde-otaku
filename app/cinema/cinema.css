@@ -296,3 +296,76 @@ a.cin-step { text-decoration: none; }
 .cin-closed-title { margin: 10px 0 14px; display: grid; font: 400 clamp(3rem, 10vw, 7rem)/.85 var(--gk-font-impact, "Anton"); text-transform: uppercase; color: #fff7e6; text-shadow: 6px 6px 0 #c8102e; }
 .cin-closed-title span:last-child { font: 400 italic clamp(1.4rem, 4vw, 2.6rem)/1 "Fraunces Edit", Georgia, serif; text-transform: none; color: #e9c46a; text-shadow: none; }
 .cin-closed-text { margin: 0 auto; max-width: 52ch; font: 500 1rem/1.55 var(--gk-font-body); color: #f2e6d4; }
+
+/* ═══ CINÉMA v4 : L'AFFICHE JAPONAISE ════════════════════════════════════════
+   Références : affiches de cinéma japonaises (titre énorme qui déborde, affiche cadrée
+   comme dans une vitrine éclairée), billets de séance perforés, programme de salle
+   numéroté. L'image de fond ne bouge plus en boucle : elle se pose au chargement. */
+.cin-hero--eiga { min-height: min(84svh, 760px); align-items: stretch; }
+.cin-hero--eiga::before, .cin-hero--eiga::after { content: none; }
+.cin-hero-bd { position: absolute; inset: 0; z-index: -2; background: center 28% / cover no-repeat; animation: cin-settle 1400ms cubic-bezier(.16,1,.3,1) both; }
+.cin-hero--eiga { background:
+    radial-gradient(circle, rgba(0,0,0,.5) 1px, transparent 1.3px) 0 0 / 5px 5px; }
+.cin-hero--eiga .cin-eiga { position: relative; }
+.cin-hero--eiga::marker { content: none; }
+.cin-eiga { display: grid; gap: 24px 40px; grid-template-columns: minmax(0, 1fr); align-items: end; padding-block: clamp(40px, 9vw, 120px) clamp(30px, 5vw, 64px); }
+@media (min-width: 900px) { .cin-eiga { grid-template-columns: minmax(0, 1.4fr) minmax(0, .6fr); align-items: center; } }
+/* Voile : rouge sombre en bas à gauche (lumière de salle), noir pour la lisibilité. */
+.cin-hero--eiga .cin-eiga::before { content: ""; position: absolute; inset: 0 calc(50% - 50vw); z-index: -1; pointer-events: none;
+  background: linear-gradient(0deg, #07060a 2%, rgba(7,6,10,.35) 50%, rgba(7,6,10,.65)),
+              linear-gradient(90deg, rgba(7,6,10,.92) 10%, rgba(7,6,10,.4) 70%, rgba(7,6,10,.7)),
+              radial-gradient(60% 70% at 0% 100%, rgba(200,16,46,.35), transparent 70%); }
+.cin-eiga-text { min-width: 0; }
+.cin-eiga-kicker { display: flex; align-items: center; gap: 12px; font: 800 .82rem var(--gk-font-ui); letter-spacing: .24em; text-transform: uppercase; color: #e9c46a; }
+.cin-eiga-kicker span { padding: 4px 10px 3px; background: #c8102e; color: #fff7e6; letter-spacing: .12em; transform: skewX(-10deg); }
+.cin-eiga-title { margin-top: 14px; font: 400 clamp(2.8rem, 9vw, 7.4rem)/.88 var(--gk-font-impact, "Anton"); text-transform: uppercase; letter-spacing: -.01em; color: #fff9ed; text-shadow: 6px 6px 0 #c8102e; text-wrap: balance; overflow-wrap: anywhere; animation: cin-rise 800ms cubic-bezier(.16,1,.3,1) both; }
+/* Le billet : talon détachable séparé par une ligne perforée. */
+.cin-billet { display: inline-flex; margin-top: 20px; color: #1a1208; filter: drop-shadow(5px 5px 0 rgba(0,0,0,.6)); animation: cin-rise 800ms 160ms cubic-bezier(.16,1,.3,1) both; }
+.cin-billet > span { display: grid; gap: 2px; padding: 10px 18px; background: #f3e3bf; }
+.cin-billet-main { --r: 8px; mask: radial-gradient(var(--r) at 0 50%, #0000 98%, #000) left / 51% 100% no-repeat, radial-gradient(var(--r) at 100% 50%, #0000 98%, #000) right / 51% 100% no-repeat; }
+.cin-billet-stub { border-left: 3px dotted #7a5a1f; background: #e9c46a !important; text-align: center; }
+.cin-billet small { font: 800 .66rem var(--gk-font-ui); letter-spacing: .2em; text-transform: uppercase; opacity: .7; }
+.cin-billet b { font: 400 1.35rem/1 var(--gk-font-impact, "Anton"); text-transform: uppercase; letter-spacing: .02em; }
+.cin-hero--eiga .cin-play { display: flex; width: fit-content; }
+/* L'affiche dans sa vitrine éclairée. */
+.cin-eiga-poster { position: relative; justify-self: center; width: min(320px, 58vw); aspect-ratio: 2 / 3; padding: 0; border: 6px solid #f6f0e6; outline: 3px solid #07060a; background: #1d1a22; cursor: pointer; box-shadow: 0 0 0 10px rgba(233,196,106,.15), 0 30px 80px rgba(200,16,46,.35); rotate: 2deg; transition: rotate 300ms cubic-bezier(.2,.8,.2,1), translate 300ms cubic-bezier(.2,.8,.2,1); animation: cin-rise 900ms 80ms cubic-bezier(.16,1,.3,1) both; }
+@media (max-width: 899px) {
+  .cin-eiga { padding-top: 24px; }
+  .cin-eiga-poster { grid-row: 1; width: min(200px, 38vw); justify-self: end; rotate: 3deg; border-width: 4px; margin-bottom: -18px; }
+  .cin-eiga-title { text-shadow: 3px 3px 0 #c8102e; line-height: .94; }
+}
+.cin-eiga-poster img { object-fit: cover; }
+@media (hover: hover) { .cin-eiga-poster:hover { rotate: 0deg; translate: 0 -6px; } }
+.cin-eiga-poster:focus-visible { outline: 3px solid #e9c46a; outline-offset: 6px; }
+
+/* Programme de salle. */
+.cin-prog { display: grid; gap: 10px 24px; padding-block: 16px; margin-top: clamp(10px, 2vw, 20px); border-block: 2px solid rgba(246,240,228,.18); }
+@media (min-width: 900px) { .cin-prog { grid-template-columns: auto minmax(0, 1fr); align-items: center; } }
+.cin-prog-label { font: 400 1.4rem/1 var(--gk-font-impact, "Anton"); text-transform: uppercase; color: #e9c46a; }
+.cin-prog ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 16px; }
+@media (min-width: 900px) { .cin-prog ol { grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); grid-template-columns: none; } }
+.cin-prog a { display: flex; align-items: center; gap: 10px; min-height: 48px; color: #f6f0e6; text-decoration: none; font: 900 italic 1rem/1.05 var(--gk-font-ui); text-transform: uppercase; }
+.cin-prog b { font: 400 1.6rem/1 var(--gk-font-impact, "Anton"); font-style: normal; color: rgba(246,240,228,.35); transition: color 140ms ease; }
+@media (hover: hover) { .cin-prog a:hover b { color: #c8102e; } }
+.cin-intro, #cin-guild-title, #cin-op-title, #cin-free-title, #cin-nosta-title { scroll-margin-top: 120px; }
+
+/* Note sur l'affiche, en pastille. */
+.cin-poster-note { position: absolute; left: 6px; top: 6px; padding: 2px 7px; background: #07060a; color: #e9c46a; border: 2px solid #e9c46a; font: 400 .9rem/1.2 var(--gk-font-impact, "Anton"); }
+
+/* Téléphone : grille de trois affiches au lieu d'une rangée qui défile. */
+.cin-row-more { display: none; margin-top: 4px; }
+@media (max-width: 620px) {
+  .cin-row .cin-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 10px; overflow: visible; padding-inline: var(--gk-gutter, 16px); }
+  .cin-row .cin-strip > li { width: auto; }
+  .cin-row:not(.is-all) .cin-strip > li:nth-child(n+10) { display: none; }
+  .cin-row-more { display: block; }
+  .cin-card-title { font-size: .84rem; }
+}
+
+/* Relâche : le titre ne chevauche plus la ligne du dessus. */
+.cin-closed-title { margin-top: 22px; }
+
+@keyframes cin-settle { from { transform: scale(1.08); opacity: .4; } }
+@media (prefers-reduced-motion: reduce) { .cin-hero-bd, .cin-eiga-title, .cin-billet, .cin-eiga-poster { animation: none; } }
+/* La rangée commence dans l'alignement de la page (et l'aimantation respecte la marge). */
+.cin-strip { --cin-pad: max(var(--gk-gutter, 16px), calc((100vw - var(--gk-max, 1320px)) / 2 + var(--gk-gutter, 16px))); padding-inline: var(--cin-pad); scroll-padding-inline: var(--cin-pad); }

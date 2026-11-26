@@ -13,9 +13,11 @@ function pickHero(series: CinemaItem[]): CinemaItem | null {
   return candidates.length ? candidates[Math.floor(Math.random() * candidates.length)] : null;
 }
 
-export default async function CinemaPage() {
+export default async function CinemaPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+  // Dev uniquement : catalogue factice pour tester l'état « avec catalogue » (/cinema?demo=catalogue).
+  const demo = process.env.NODE_ENV !== "production" && (await searchParams).demo === "catalogue";
   const [rows, guild] = await Promise.all([
-    getCinemaRows().catch(() => null),
+    demo ? import("../../lib/dev/cinema-demo").then((m) => m.CINEMA_DEMO) : getCinemaRows().catch(() => null),
     // Le lien du dossier suffit : vidéos lues dans la vue publique de Drive (ou l'API si une clé existe).
     driveFolder()
       ? getGuildVideos().then((c): { collections: GuildCollection[]; error?: string } => ({ collections: c })).catch((e: unknown) => ({ collections: [] as GuildCollection[], error: e instanceof Error ? e.message : "Google Drive indisponible." }))
