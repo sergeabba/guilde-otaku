@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { NAV, chapterNo } from "../config/nav";
+import { NAV_ORDER, navEntry, chapterNo } from "../config/nav";
+import { NavGlyph } from "./GuildeHeader";
 import ReplayIntro from "./ReplayIntro";
 import SoundToggle from "./SoundToggle";
 
@@ -24,12 +25,13 @@ export default function Footer() {
             </span>
           </p>
           <nav aria-label="Toutes les rubriques">
-            {NAV.map((l, i) => (
+            {NAV_ORDER.map((id, i) => { const l = navEntry(id); return (
               <Link key={l.id} href={l.href}>
                 <b aria-hidden="true">{chapterNo(i)}</b>
+                <NavGlyph id={l.id} />
                 {l.label}
               </Link>
-            ))}
+            ); })}
           </nav>
         </div>
         <div className="gk-footer-base">

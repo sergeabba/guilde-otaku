@@ -7,7 +7,10 @@ import { createPortal } from "react-dom";
 import { ChevronDown, Menu, Moon, Search, Sun, X } from "lucide-react";
 import { IconBiblio, IconFighters, IconGuilde, IconSommaire, IconTeams } from "./GuildeIcons";
 import { useTheme } from "../context/ThemeContext";
-import { NAV_GROUPS, groupOf, navEntry, type PageId } from "../config/nav";
+import { NAV_GROUPS, chapterOf, groupOf, navEntry, type PageId } from "../config/nav";
+import { RUBRIC_GLYPHS } from "./guilde/glyphs";
+import FaceToggle from "./FaceToggle";
+import "../styles/nav-v4.css";
 
 interface GuildeHeaderProps {
   activePage: PageId;
@@ -27,6 +30,12 @@ const QUICK_LINKS = [
   { id: "fighters", label: "Fighters", href: "/fighters", Icon: IconFighters },
   { id: "bibliotheque", label: "Biblio", href: "/bibliotheque", Icon: IconBiblio },
 ] as const;
+
+/** Emblème de rubrique (même dessin que les sceaux), en petit pour la navigation. */
+export function NavGlyph({ id }: { id: PageId }) {
+  const g = RUBRIC_GLYPHS[id === "membres" ? "membres" : id];
+  return <svg className="gk-glyph" viewBox="0 0 100 100" aria-hidden="true" focusable="false" style={{ "--sc-bg": "var(--gk-bg)" } as React.CSSProperties}><g fill="currentColor">{g}</g></svg>;
+}
 
 export function openSearch() {
   window.dispatchEvent(new Event("guilde:search"));
@@ -130,12 +139,23 @@ export default function GuildeHeader({
       <GroupedNav activePage={activePage} />
 
       {activePage !== "fighters" && <nav className="gk-mobile-dock" aria-label="Navigation rapide">
-        {QUICK_LINKS.map(({ id, label, href, Icon }) => (
-          <Link key={id} href={href} aria-current={activePage === id ? "page" : undefined}>
-            <Icon aria-hidden="true" />
-            <span>{label}</span>
-          </Link>
-        ))}
+        {QUICK_LINKS.map(({ id, label, href, Icon }, i) => {
+          // La rubrique en cours prend la dernière place quand elle n'a pas son raccourci :
+          // on voit toujours où l'on est.
+          const here = !QUICK_LINKS.some((q) => q.id === activePage) && i === QUICK_LINKS.length - 1 ? navEntry(activePage) : null;
+          if (here) return (
+            <Link key={here.id} href={here.href} aria-current="page" className="is-here">
+              <NavGlyph id={here.id} />
+              <span>{here.label}</span>
+            </Link>
+          );
+          return (
+            <Link key={id} href={href} aria-current={activePage === id ? "page" : undefined}>
+              <Icon aria-hidden="true" />
+              <span>{label}</span>
+            </Link>
+          );
+        })}
         <button
           type="button"
           onClick={() => setMenuOpen(true)}
@@ -159,11 +179,14 @@ export default function GuildeHeader({
           style={{ "--gk-accent": accentColor } as React.CSSProperties}
         >
           <div className="gk-menu-head">
-            <strong>SOMMAIRE <span className="gk-jp" aria-hidden="true">Mokuji</span></strong>
+            <strong>Sommaire <span className="gk-jp" aria-hidden="true">Mokuji</span></strong>
             <button type="button" className="gk-icon-btn" onClick={closeMenu} aria-label="Fermer le sommaire">
               <X size={20} aria-hidden="true" />
             </button>
           </div>
+          <button type="button" className="gk-menu-search" onClick={() => { setMenuOpen(false); openSearch(); }}>
+            <Search size={18} aria-hidden="true" /> <span>Un membre, une œuvre, une rubrique…</span>
+          </button>
           <div className="gk-menu-groups">
             {NAV_GROUPS.map((g, gi) => (
               <section key={g.id} className="gk-menu-group" style={{ "--i": gi } as React.CSSProperties} aria-label={g.label}>
@@ -172,6 +195,8 @@ export default function GuildeHeader({
                   {g.items.map((id) => { const l = navEntry(id); return (
                     <li key={id}>
                       <Link href={l.href} aria-current={activePage === id ? "page" : undefined} onClick={() => setMenuOpen(false)}>
+                        <b className="gk-menu-no" aria-hidden="true">{chapterOf(id)}</b>
+                        <NavGlyph id={id} />
                         <span>{l.label}</span>
                         <small>{l.blurb}</small>
                       </Link>
@@ -182,13 +207,7 @@ export default function GuildeHeader({
             ))}
           </div>
           <div className="gk-menu-foot">
-            <button
-              type="button"
-              className="gk-btn gk-btn--ghost gk-btn--sm"
-              onClick={() => { setMenuOpen(false); openSearch(); }}
-            >
-              <Search size={16} aria-hidden="true" /> Rechercher
-            </button>
+            <FaceToggle />
             <button type="button" className="gk-btn gk-btn--ghost gk-btn--sm" onClick={toggle}>
               {isDark ? <Sun size={16} aria-hidden="true" /> : <Moon size={16} aria-hidden="true" />}
               {isDark ? "Mode clair" : "Mode sombre"}
@@ -224,20 +243,22 @@ function GroupedNav({ activePage }: { activePage: PageId }) {
       {NAV_GROUPS.map((g) => (
         <div key={g.id} className={`gk-navg${current === g.id ? " is-current" : ""}${open === g.id ? " is-open" : ""}`} onPointerEnter={(e) => { if (e.pointerType === "mouse") hover(g.id); }}>
           <button type="button" aria-expanded={open === g.id} aria-controls={`gk-navg-${g.id}`} onClick={() => setOpen((o) => (o === g.id ? null : g.id))}>
-            {g.label} <ChevronDown size={15} aria-hidden="true" />
+            <span className="gk-navg-label">{g.label}</span>
+            {current === g.id && <span className="gk-navg-here">{navEntry(activePage)?.label}</span>}
+            <ChevronDown size={15} aria-hidden="true" />
           </button>
           <div id={`gk-navg-${g.id}`} className="gk-navg-panel" hidden={open !== g.id}>
             <span className="gk-navg-jp" aria-hidden="true">{g.jp}</span>
             {g.items.map((id) => { const l = navEntry(id); return (
               <Link key={id} href={l.href} aria-current={activePage === id ? "page" : undefined} onClick={() => setOpen(null)}>
+                <b className="gk-navg-no" aria-hidden="true">{chapterOf(id)}</b>
+                <NavGlyph id={id} />
                 <strong>{l.label}</strong><small>{l.blurb}</small>
               </Link>
             ); })}
           </div>
         </div>
       ))}
-      {/* Raccourci direct vers la rubrique en cours, pour savoir où l'on est. */}
-      <span className="gk-nav-here" aria-hidden="true">{navEntry(activePage)?.label}</span>
     </nav>
   );
 }

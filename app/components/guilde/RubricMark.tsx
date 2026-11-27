@@ -3,8 +3,11 @@
 // Remplace l'ancien repère de chapitre identique sur toutes les pages. Rendu serveur.
 import Sceau from "./Sceau";
 import Lame from "./Lame";
+import { chapterOf } from "../../config/nav";
 
-export default function RubricMark({ rubric, no, label, romaji, tone = "paper" }: { rubric: string; no: string; label: string; romaji?: string; tone?: "paper" | "red" | "ink" | "gold" }) {
+export default function RubricMark({ rubric, no: given, label, romaji, tone = "paper" }: { rubric: string; no: string; label: string; romaji?: string; tone?: "paper" | "red" | "ink" | "gold" }) {
+  // Numéro du sommaire quand la rubrique y figure (un seul numéro par rubrique sur tout le site).
+  const no = chapterOf(rubric) ?? given;
   return (
     <>
       <span className={`rm-big rm-${rubric}`} aria-hidden="true"><Sceau rubric={rubric} text={romaji ?? label} tone={tone} size="100%" /></span>

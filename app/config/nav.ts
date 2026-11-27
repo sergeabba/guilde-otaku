@@ -50,3 +50,11 @@ export const NAV_GROUPS: NavGroup[] = [
 ];
 export const groupOf = (id: PageId) => NAV_GROUPS.find((g) => g.items.includes(id));
 export const navEntry = (id: PageId) => NAV.find((n) => n.id === id)!;
+
+/** Numéro de chapitre d'une rubrique : sa place dans le sommaire (familles dans l'ordre).
+ *  Le même numéro partout (en-tête, sommaire, pied de page, repère de page). */
+export const NAV_ORDER: PageId[] = NAV_GROUPS.flatMap((g) => g.items);
+export const chapterOf = (id: string) => {
+  const i = NAV_ORDER.indexOf(id as PageId);
+  return i < 0 ? null : chapterNo(i);
+};
