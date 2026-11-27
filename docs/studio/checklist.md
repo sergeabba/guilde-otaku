@@ -11,7 +11,7 @@
 | Scènes de pouvoir (spéciale, bankai, territoire) | Fonctionnel | Qualité d'illustration (illustrations dédiées, shader de matière) |
 | Admin : réglages des scènes de pouvoir | Validé sur mobile | Aperçu en direct (la vraie scène, réduite) ; sauvegarde et suppression testées en isolé (`scripts/qa/admin-mock.js`, écritures interceptées) |
 | Annuaire (arcanes, liste) | Validé sur mobile | — |
-| Teams (terrain, capitaine, écussons, annonce) | Validé visuellement (données de test) | Confrontations, affiches de match, fiches joueurs |
+| Teams (terrain, capitaine, écussons, annonce) | Testé avec données fictives | Affiche de confrontation et notes par ligne ajoutées. Équipes réelles : non lisibles ici (clé de service), à vérifier sur l'aperçu |
 | Wanted | Validé sur mobile | Finition |
 | Anniversaires | Validé visuellement | — |
 | Bibliothèque | Validé sur mobile | Fiches réelles : la lecture publique de la table renvoie 0 fiche, collection vérifiée avec données factices de dev (`?demo=fiches`) |

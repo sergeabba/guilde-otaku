@@ -9,7 +9,7 @@ import { useState } from "react";
 import { ArrowRight, Crown, Flame, Zap } from "lucide-react";
 import Image from "../components/GImage";
 import { onColor } from "../utils/color";
-import { SPORT_LABEL, slotsOf, teamPower, type GuildTeam, type SlotDef, type TeamSlot } from "../../lib/teams-logic";
+import { LINE_LABEL, SPORT_LABEL, lineOf, lineRatings, slotsOf, teamPower, type GuildTeam, type SlotDef, type TeamSlot } from "../../lib/teams-logic";
 
 export interface TeamMember {
   id: number; name: string; rank: string;
@@ -70,6 +70,14 @@ export default function TeamBoard({ team, members, faceMode = "anime", preview =
               <span>Puissance</span><b>{power}</b>
               <i aria-hidden="true"><em style={{ width: `${power}%` }} /></i>
             </div>
+          )}
+          {/* Note de chaque ligne (moyenne des titulaires qui y jouent). */}
+          {power !== null && (
+            <ul className="tm-lines-rating" aria-label="Note par ligne">
+              {lineRatings(team.sport, players.map((p) => ({ code: p.def.code, stats: p.m.stats }))).map((l) => (
+                <li key={l.line}><span>{LINE_LABEL[l.line]}</span><b>{l.value ?? "–"}</b></li>
+              ))}
+            </ul>
           )}
         </header>
 
@@ -184,7 +192,7 @@ function PlayerSheet({ p, preview }: { p: Player; preview: boolean }) {
         {p.m.anime && <figure className="tm-sheet-img is-anime"><Image src={p.m.anime} alt={`${p.m.name}, version anime`} fill sizes="(max-width: 899px) 30vw, 150px" style={{ objectFit: "cover", objectPosition: p.m.animePos }} /><figcaption>Anime</figcaption></figure>}
       </div>
       <div className="tm-sheet-body">
-        <p className="tm-sheet-kick">{p.slot.number !== undefined ? `N° ${p.slot.number} · ` : ""}{p.def.label}{p.slot.captain ? " · Capitaine" : ""}</p>
+        <p className="tm-sheet-kick">{p.slot.number !== undefined ? `N° ${p.slot.number} · ` : ""}{p.def.label}{(() => { const l = lineOf(p.def.code); return l ? ` · ${LINE_LABEL[l]}` : ""; })()}{p.slot.captain ? " · Capitaine" : ""}</p>
         <h3 className="tm-sheet-name">{p.m.name}</h3>
         <p className="tm-sheet-rank">{p.m.rank}</p>
         {st && (

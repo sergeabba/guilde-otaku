@@ -1,0 +1,61 @@
+/* ═══ TEAMS v4 : L'AFFICHE DU CHOC ════════════════════════════════════════════
+   Références : affiches d'avant-match de Blue Lock (diagonale violente, regards face
+   à face), Haikyuu (deux couleurs d'équipe qui s'opposent), Eyeshield 21 (chiffres
+   énormes), Kuroko (« VS » qui fend l'affiche). Données : stats réelles des titulaires. */
+.mp { margin-top: clamp(20px, 4vw, 44px); }
+.mp-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.mp-kicker { margin: 0; font: 900 italic 1.1rem/1 var(--gk-font-title); text-transform: uppercase; letter-spacing: .04em; color: #fff; }
+.mp-pick button { text-transform: none !important; }
+
+.mp-poster { position: relative; isolation: isolate; display: grid; grid-template-columns: 1fr 1fr; min-height: clamp(300px, 48vw, 520px); overflow: hidden; border: 3px solid #fff; box-shadow: 10px 10px 0 #050509; }
+.mp-bg { position: absolute; inset: 0; z-index: -2; background:
+    linear-gradient(105deg, var(--a) 0 49.6%, #050509 49.6% 50.4%, var(--b) 50.4%); }
+.mp-bg::after { content: ""; position: absolute; inset: 0; background:
+    repeating-linear-gradient(105deg, rgba(0,0,0,.18) 0 2px, transparent 2px 14px),
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,.35), transparent 40%); mix-blend-mode: multiply; }
+.mp-cap { position: relative; margin: 0; display: grid; align-items: end; min-width: 0; }
+.mp-cap-img { position: absolute; inset: 0 8% 0 0; z-index: -1; -webkit-mask-image: linear-gradient(90deg, #000 60%, transparent); mask-image: linear-gradient(90deg, #000 60%, transparent); filter: contrast(1.08) saturate(1.1); }
+.mp-cap.is-b .mp-cap-img { inset: 0 0 0 8%; -webkit-mask-image: linear-gradient(270deg, #000 60%, transparent); mask-image: linear-gradient(270deg, #000 60%, transparent); }
+.mp-cap figcaption { display: grid; gap: 4px; padding: clamp(12px, 2.4vw, 22px); background: linear-gradient(0deg, rgba(5,5,9,.92), rgba(5,5,9,0)); color: #fff; }
+.mp-cap.is-b figcaption { text-align: right; justify-items: end; }
+.mp-cap small { font: 700 .8rem var(--gk-font-ui); letter-spacing: .06em; color: rgba(255,255,255,.75); }
+.mp-cap strong { font: 900 italic clamp(1.5rem, 4.6vw, 3rem)/.92 var(--gk-font-title); text-transform: uppercase; overflow-wrap: anywhere; text-shadow: 3px 3px 0 #050509; }
+.mp-cap em { display: inline-flex; align-items: center; gap: 5px; font: 600 .95rem var(--gk-font-body); font-style: normal; }
+.mp-vs { position: absolute; left: 50%; top: 50%; translate: -50% -50%; rotate: -12deg; padding: .05em .25em; background: #050509; color: #fff; font: 400 clamp(3rem, 11vw, 7rem)/1 var(--gk-font-impact); letter-spacing: -.02em; box-shadow: 6px 6px 0 #fff; z-index: 2; animation: mp-slam 520ms cubic-bezier(.2, 1.5, .4, 1) both; }
+@keyframes mp-slam { from { scale: 2.2; opacity: 0; } }
+
+.mp-lines { margin: 14px 0 0; display: grid; gap: 6px; }
+.mp-line { display: grid; grid-template-columns: 3.2em minmax(0, 1fr) 3.2em; align-items: center; gap: 2px 10px; }
+.mp-line dt { text-align: center; font: 800 .9rem var(--gk-font-ui); color: #cfd6ff; }
+.mp-line dd { margin: 0; font: 400 1.6rem/1 var(--gk-font-impact); color: #fff; font-variant-numeric: tabular-nums; }
+.mp-va { text-align: left; } .mp-vb { text-align: right; }
+.mp-line.lead-a .mp-va, .mp-line.lead-b .mp-vb { color: #ffe066; }
+.mp-bar { grid-column: 1 / -1; display: flex; height: 8px; background: rgba(255,255,255,.1); }
+.mp-bar i:first-child { background: var(--a); } .mp-bar i:last-child { background: var(--b); margin-left: auto; }
+.mp-note { margin: 10px 0 0; font: 500 .85rem/1.4 var(--gk-font-body); color: rgba(220,226,255,.7); }
+
+/* Note par ligne dans le bandeau d'équipe. */
+.tm-lines-rating { list-style: none; margin: 0; padding: 0; display: flex; gap: 8px; flex-wrap: wrap; }
+.tm-lines-rating li { display: grid; justify-items: center; min-width: 64px; padding: 4px 8px; background: rgba(5,5,9,.55); border-top: 3px solid var(--tm); }
+.tm-lines-rating span { font: 700 .72rem var(--gk-font-ui); letter-spacing: .04em; color: rgba(255,255,255,.75); }
+.tm-lines-rating b { font: 400 1.4rem/1 var(--gk-font-impact); color: #fff; font-variant-numeric: tabular-nums; }
+
+/* Lisibilité : noms des joueurs et fiche en registres étiquette / lecture. */
+.tm-sheet-kick { text-transform: none !important; letter-spacing: .02em !important; }
+.tm-sheet-rank { text-transform: none !important; }
+
+@media (max-width: 700px) {
+  .mp-poster { min-height: 330px; }
+  .mp-cap strong { font-size: clamp(1.1rem, 5.6vw, 1.6rem); }
+  .mp-cap em { font-size: .8rem; }
+}
+@media (prefers-reduced-motion: reduce) { .mp-vs { animation: none; } }
+@media (max-width: 599px) {
+  .tm-banner { grid-template-columns: 64px minmax(0, 1fr) !important; align-items: center; }
+  .tm-banner > .tm-crest-svg { width: 64px; grid-column: 1; grid-row: 1; }
+  .tm-banner > .tm-banner-text { grid-column: 2; grid-row: 1; }
+  .tm-banner > :is(.tm-captain, .tm-power, .tm-lines-rating) { grid-column: 1 / -1 !important; }
+  .tm-name { font-size: clamp(1.7rem, 8.4vw, 2.4rem) !important; }
+  .tm-sport { letter-spacing: .08em !important; font-size: .74rem !important; }
+  .mp-cap-img :is(img) { object-position: 50% 30% !important; }
+}

@@ -24,6 +24,8 @@ export default async function TeamsTest() {
       slots: foot.map((d, i) => ({ slot: d.id, memberId: pool[i % pool.length].id, number: i + 1, captain: i === 9 })) },
     { id: 9002, slug: "test-basket", name: "Cinq test (fictif)", sport: "basket", formation: "5 majeur", color: "#ef6c00", motto: null, position: 1, published: true,
       slots: basket.map((d, i) => ({ slot: d.id, memberId: pool[(i + 11) % pool.length].id, number: [4, 7, 10, 11, 23][i], captain: i === 0 })) },
+    { id: 9003, slug: "test-foot-2", name: "Rivaux test (fictifs)", sport: "foot", formation: "4-2-3-1", color: "#d7332b", motto: "Seconde composition fictive", position: 2, published: true,
+      slots: FORMATIONS.foot["4-2-3-1"].map((d, i) => ({ slot: d.id, memberId: pool[(i + 16) % pool.length].id, number: i + 1, captain: i === 2 })) },
   ];
   const used = new Set(teams.flatMap((t) => t.slots.map((s) => s.memberId)));
   const members: TeamMember[] = all.filter((m) => used.has(m.id)).map((m) => ({

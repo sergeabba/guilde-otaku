@@ -108,3 +108,21 @@ export function teamPower(stats: ({ force?: number; vitesse?: number; technique?
   const vals = stats.flatMap((st) => (st ? [st.force, st.vitesse, st.technique].filter((v): v is number => typeof v === "number" && v > 0) : []));
   return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null;
 }
+
+/** Lignes de jeu : chaque poste appartient à une ligne (foot) ou à un secteur (basket). */
+export type Line = "attaque" | "milieu" | "defense" | "exterieur" | "interieur";
+export const LINE_LABEL: Record<Line, string> = { attaque: "Attaque", milieu: "Milieu", defense: "Défense", exterieur: "Extérieur", interieur: "Raquette" };
+const LINE_OF: Record<string, Line> = {
+  BU: "attaque", AG: "attaque", AD: "attaque",
+  MC: "milieu", MG: "milieu", MD: "milieu", MOC: "milieu", PIS: "milieu", MDC: "milieu",
+  DG: "defense", DD: "defense", DC: "defense", GB: "defense",
+  MEN: "exterieur", ARR: "exterieur", AIL: "exterieur", AF: "interieur", PIV: "interieur",
+};
+export const lineOf = (code: string): Line | null => LINE_OF[code] ?? null;
+
+/** Note de chaque ligne : moyenne des stats des titulaires qui y jouent (rien d'inventé :
+ *  une ligne sans titulaire noté n'a pas de note). */
+export function lineRatings(sport: Sport, players: { code: string; stats: { force?: number; vitesse?: number; technique?: number } | null }[]): { line: Line; value: number | null }[] {
+  const lines: Line[] = sport === "foot" ? ["attaque", "milieu", "defense"] : ["exterieur", "interieur"];
+  return lines.map((line) => ({ line, value: teamPower(players.filter((p) => lineOf(p.code) === line).map((p) => p.stats)) }));
+}

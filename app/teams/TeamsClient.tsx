@@ -9,6 +9,8 @@ import type { GuildTeam, Sport } from "../../lib/teams-logic";
 import "./teams.css";
 import RubricMark from "../components/guilde/RubricMark";
 import TeamsEmpty from "./TeamsEmpty";
+import MatchPoster from "./MatchPoster";
+import "./teams-v4.css";
 
 type Filter = "tout" | Sport;
 
@@ -42,6 +44,7 @@ export default function TeamsClient({ teams, members, available }: { teams: Guil
             </div>
           </div>
         </header>
+        {filter === "tout" && <div className="gk-wrap"><MatchPoster teams={teams} members={byId} faceMode={faceMode} /></div>}
         <div className="gk-wrap tm-list">
           {shown.length === 0 ? (
             <TeamsEmpty available={available} />
