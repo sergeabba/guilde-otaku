@@ -69,3 +69,17 @@
 .bp-poster-name { font: 400 clamp(3rem, 11vw, 7rem)/.85 var(--gk-font-impact, "Anton"); text-transform: uppercase; letter-spacing: -.01em; overflow-wrap: anywhere; color: #fff8ec; text-shadow: 5px 5px 0 #111; }
 .bp-poster-host { font: 800 .9rem var(--gk-font-ui); letter-spacing: .08em; text-transform: uppercase; padding: 3px 8px; background: #111; color: #fff8ec; }
 @media (max-width: 819px) { .bp-lead-media { min-height: 230px; } }
+/* Officiel ou partagé : distinction nette, et des coupons moins répétitifs. */
+.bp-official, .bp-community { justify-self: start; width: fit-content; padding: 2px 8px; font: 800 .7rem/1.3 var(--gk-font-ui); letter-spacing: .04em; }
+.bp-official { background: #2fbf5a; color: #06210f; }
+.bp-community { border: 1.5px dashed var(--gk-dim); color: var(--gk-dim); }
+.bp-rayon.is-official .bp-rayon-head { border-bottom-color: #2fbf5a; }
+.bp-rayon.is-official .bp-rayon-icon { background: #2fbf5a; color: #06210f; }
+.bp-coupon.is-official { box-shadow: 6px 6px 0 #2fbf5a; }
+.bp-rayon-note { margin: 10px 0 0; max-width: 62ch; font: 500 .9rem/1.45 var(--gk-font-body); color: var(--gk-dim); }
+/* Le premier coupon de chaque rayon est plus large : le rythme change d'un rayon à l'autre. */
+@media (min-width: 700px) { .bp-rayon .bp-grid > .bp-coupon:first-child:not(:only-child) { grid-column: span 2; } .bp-rayon .bp-grid > .bp-coupon:first-child .bp-body h3 { font-size: 2rem; } }
+.bp-rayon:nth-of-type(even) .bp-coupon { grid-template-columns: minmax(0, 1fr) 84px !important; }
+.bp-rayon:nth-of-type(even) .bp-coupon .bp-body { order: 1; }
+.bp-rayon:nth-of-type(even) .bp-coupon .bp-stub { order: 2; border-right: 0; border-left: 2.5px dashed var(--gk-bg); }
+.bp-rayon:nth-of-type(even) .bp-coupon .bp-stub::before, .bp-rayon:nth-of-type(even) .bp-coupon .bp-stub::after { right: auto; left: -9px; }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { BookOpen, ExternalLink, Film, Globe, Heart, Search, Share2, Tv, X } from "lucide-react";
+import { BadgeCheck, BookOpen, ExternalLink, Film, Globe, Heart, Search, Share2, Tv, X } from "lucide-react";
 import GuildeHeader from "./GuildeHeader";
 import type { SupabaseBonPlanRow } from "../types";
 import { useFavorites } from "../hooks/useFavorites";
@@ -10,6 +10,7 @@ import { normalize } from "../utils/text";
 import { onColor } from "../utils/color";
 import "../bons-plans/bons-plans.css";
 import RubricMark from "./guilde/RubricMark";
+import { officialService } from "../../lib/official-services";
 
 // Ordre d'affichage des catégories connues ; les autres suivent, telles que saisies.
 const KNOWN_ORDER = ["Animes", "Scans", "Films/Séries", "Utiles"];
@@ -83,12 +84,13 @@ export default function BonsPlansClient({ initialLinks }: { initialLinks: Supaba
     const color = safeColor(l.color);
     const fav = isFavorite(l.id);
     return (
-      <article key={l.id} id={`bp-${l.id}`} className="bp-coupon" style={{ "--bp": color, "--bp-on": onColor(color), "--i": i } as React.CSSProperties}>
+      <article key={l.id} id={`bp-${l.id}`} className={`bp-coupon${officialService(l.url) ? " is-official" : ""}`} style={{ "--bp": color, "--bp-on": onColor(color), "--i": i } as React.CSSProperties}>
         <div className="bp-stub">
           <Logo link={l} />
           <span className="bp-stub-cat">{l.category}</span>
         </div>
         <div className="bp-body">
+          {officialService(l.url) ? <span className="bp-official">Service officiel</span> : <span className="bp-community">Partagé par la Guilde</span>}
           <h3>{l.title}</h3>
           <p className="bp-domain">{hostOf(l.url)}</p>
           <p className="bp-desc">{l.desc}</p>
@@ -229,19 +231,23 @@ export default function BonsPlansClient({ initialLinks }: { initialLinks: Supaba
               {filtered.map((l, i) => coupon(l, i))}
             </div>
           ) : (
-            // Sans filtre : les adresses rangées par rayon, chaque rayon numéroté.
-            categories.map((cat, n) => {
-              const list = filtered.filter((l) => l.category === cat);
+            // Sans filtre : les plateformes officielles d'abord, puis les adresses partagées
+            // par les membres, rangées par rayon numéroté.
+            [...(filtered.some((l) => officialService(l.url)) ? ["__officiel"] : []), ...categories].map((cat, n) => {
+              const official = cat === "__officiel";
+              const list = official ? filtered.filter((l) => officialService(l.url)) : filtered.filter((l) => l.category === cat && !officialService(l.url));
               if (!list.length) return null;
-              const Icon = CATEGORY_ICON[cat] ?? Globe;
+              const Icon = official ? BadgeCheck : CATEGORY_ICON[cat] ?? Globe;
               return (
-                <section key={cat} className="bp-rayon" data-gk-motion="reveal" aria-labelledby={`bp-r-${n}`}>
+                <section key={cat} className={`bp-rayon${official ? " is-official" : ""}`} data-gk-motion="reveal" aria-labelledby={`bp-r-${n}`}>
                   <header className="bp-rayon-head">
                     <span className="bp-rayon-no" aria-hidden="true">{String(n + 1).padStart(2, "0")}</span>
                     <span className="bp-rayon-icon" aria-hidden="true"><Icon size={22} /></span>
-                    <h2 id={`bp-r-${n}`}>{cat}</h2>
+                    <h2 id={`bp-r-${n}`}>{official ? "Plateformes officielles" : cat}</h2>
                     <small>{list.length} {list.length > 1 ? "adresses" : "adresse"}</small>
                   </header>
+                  {official && <p className="bp-rayon-note">Diffusion sous licence : les œuvres y sont proposées avec l&apos;accord de leurs ayants droit.</p>}
+                  {!official && n === 1 && <p className="bp-rayon-note">Les rayons suivants rassemblent les adresses que les membres se partagent. La Guilde ne les gère pas.</p>}
                   <div className="bp-grid gk-stagger">{list.map((l, i) => coupon(l, i))}</div>
                 </section>
               );
