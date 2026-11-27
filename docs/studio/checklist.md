@@ -21,7 +21,7 @@
 | Calendrier | Validé sur mobile | Vue jour en ligne horaire (repère « maintenant »), vue semaine en grille de programmation (ordinateur) |
 | Futilités / Atelier | Validé sur mobile | Salles par univers, cartels ; galerie réelle non lisible ici (clé de service), testée avec `?demo=galerie` (images de public/atelier) |
 | Bons Plans | Validé sur mobile | Accès direct par nom, rayons numérotés, affiche typographique du dernier ajout |
-| Administration (ergonomie mobile) | En cours | En-tête compact, rubriques en feuille, actions côte à côte ; reste : autres rubriques admin passées une à une |
+| Administration (ergonomie mobile) | Testé avec données fictives | 9 rubriques parcourues sur téléphone (aucun débordement) ; tableau de bord en 2 colonnes ; étiquettes corrigées ; suppressions toujours confirmées (test isolé `scripts/qa/admin-confirm.js`) ; à valider avec ta vraie session |
 | Jeux (salle, lancement) | Validé sur mobile | Emblème original, motif d'écran et police par borne ; écran-titre au lancement. Parties complètes : dépendent d'AniList et des sources externes, non jouables entièrement ici |
 | Fighters : styles, techniques signature, IA | Fonctionnel | Tests de jouabilité réels |
 | Fighters : équilibrage | Fonctionnel | Plus de simulations ; matrice avantages/faiblesses |

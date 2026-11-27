@@ -206,3 +206,17 @@ body:has(.am-sheet) .am-toasts { bottom: calc(88px + env(safe-area-inset-bottom)
   .am-page-actions .am-btn { flex: 1; justify-content: center; font-size: .82rem; padding-inline: 10px; }
 }
 @media (max-width: 700px) { .am-chip { min-height: 40px !important; padding: 4px 12px !important; font-size: .8rem !important; } }
+
+/* ═══ Admin v4 : téléphone confortable, registres de lecture ═══════════════════ */
+/* Étiquettes : jamais déformées par les règles génériques des liens et boutons. */
+.am-row-tags .am-tag { display: inline-flex; align-items: center; gap: 4px; min-height: 0 !important; min-width: 0 !important; height: auto; padding: 3px 9px; border-radius: 99px; text-transform: none; letter-spacing: .01em; font-size: .76rem; line-height: 1.3; }
+.am-row-tags a.am-tag { text-decoration: underline; text-underline-offset: 2px; }
+/* Tableau de bord sur téléphone : deux colonnes compactes, l'essentiel en un écran. */
+@media (max-width: 700px) {
+  .am-hub { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important; }
+  .am-hub-card { min-height: 0 !important; padding: 12px !important; gap: 4px !important; border-radius: 12px !important; }
+  .am-hub-card strong { font-size: 1.02rem !important; }
+  .am-hub-card span { font-size: .8rem !important; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .am-hub-card b { font-size: 1.2rem !important; }
+  .am-chips { gap: 6px !important; }
+}
