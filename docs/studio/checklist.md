@@ -19,7 +19,7 @@
 | Cinéma | Validé sur mobile | Deux états testés (relâche sans TMDB ; catalogue factice de dev `?demo=catalogue`). En production : ajouter `TMDB_API_KEY` dans Vercel |
 | Film de la semaine | Validé sur mobile | Vote intégré à la page (s'affiche quand un vote existe ; aucun vote ouvert dans les données actuelles) |
 | Calendrier | Validé sur mobile | Vue jour en ligne horaire (repère « maintenant »), vue semaine en grille de programmation (ordinateur) |
-| Futilités / Atelier | Validé sur mobile | Salles par univers, cartels ; galerie réelle non lisible ici (clé de service), testée avec `?demo=galerie` (images de public/atelier) |
+| Futilités / Atelier | Testé avec données fictives | En-tête réduit, cartels discrets, gouttières fines : les créations dominent ; salles compactes sur téléphone ; galerie réelle à vérifier sur l'aperçu (clé de service) |
 | Bons Plans | Validé sur mobile | Accès direct par nom, rayons numérotés, affiche typographique du dernier ajout |
 | Administration (ergonomie mobile) | Testé avec données fictives | 9 rubriques parcourues sur téléphone (aucun débordement) ; tableau de bord en 2 colonnes ; étiquettes corrigées ; suppressions toujours confirmées (test isolé `scripts/qa/admin-confirm.js`) ; à valider avec ta vraie session |
 | Jeux (salle, lancement) | Validé sur mobile | Emblème original, motif d'écran et police par borne ; écran-titre au lancement. Parties complètes : dépendent d'AniList et des sources externes, non jouables entièrement ici |

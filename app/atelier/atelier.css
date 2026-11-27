@@ -202,3 +202,33 @@ html[data-vt="at-filter"]::view-transition-old(root), html[data-vt="at-filter"]:
 .at-salle small { font: 700 .74rem var(--gk-font-ui); opacity: .7; align-self: start; }
 @media (hover: hover) { .at-salle:not([aria-pressed="true"]):hover { border-color: #dfb75b; } }
 .at-plate-prompt { display: inline-block; margin-top: 6px; padding: 1px 7px; font: 800 .66rem var(--gk-font-ui); font-style: normal; letter-spacing: .1em; text-transform: uppercase; color: #101014; background: color-mix(in oklab, var(--pv, #dfb75b) 70%, #fff8ec); }
+
+/* ═══ Futilités v5 : les créations dominent ═══════════════════════════════════
+   En-tête ramené à une bande, cartels discrets sous les planches, gouttières fines :
+   le mur d'images occupe l'écran dès l'arrivée. */
+.at-title { font-size: clamp(2rem, 7vw, 4.6rem) !important; }
+.at-hero .gk-hero-lede { font-size: .95rem; max-width: 56ch; }
+@media (min-width: 900px) { .at-hero { grid-template-columns: minmax(0, 1fr) clamp(240px, 22vw, 320px) !important; } .at-fan { height: 220px !important; } }
+.at-wall { --gap: clamp(6px, 1vw, 14px) !important; }
+.at-plate-cap { padding: 7px 10px 8px !important; border-top-width: 1px !important; }
+.at-plate-cap strong { font-size: clamp(.95rem, 2.2vw, 1.15rem) !important; }
+.at-plate-cap::after { display: none; }
+.at-plate-cap small { font-size: .72rem !important; }
+@media (max-width: 599px) { .at-plate-cap small, .at-plate-prompt { display: none !important; } }
+@media (max-width: 599px) {
+  .at-hero .gk-hero-lede { display: none; }
+  .at-title { font-size: clamp(1.8rem, 9vw, 2.4rem) !important; }
+  .at-tools .gk-chips { flex-wrap: wrap !important; overflow: visible !important; }
+  .at-salles { padding-block: 8px; gap: 6px; }
+  .at-salles-label { font-size: 1.05rem; }
+  .at-salles-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .at-salle { grid-template-columns: minmax(0, 1fr); min-height: 44px; padding: 6px 10px; }
+  .at-salle-stack { display: none; }
+  .at-salle strong { font-size: .9rem; }
+  .at-salle small { font-size: .7rem; }
+}
+@media (max-width: 599px) {
+  .at-page .gk-chip { min-height: 38px; padding: 4px 10px; font-size: .82rem; }
+  .at-tools { gap: 6px !important; }
+  .at-page .gk-hero { padding-block: 10px 6px !important; }
+}
