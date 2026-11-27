@@ -12,8 +12,8 @@
 | Admin : réglages des scènes de pouvoir | Validé sur mobile | Aperçu en direct (la vraie scène, réduite) ; sauvegarde et suppression testées en isolé (`scripts/qa/admin-mock.js`, écritures interceptées) |
 | Annuaire (arcanes, liste) | Validé sur mobile | — |
 | Teams (terrain, capitaine, écussons, annonce) | Testé avec données fictives | Affiche de confrontation et notes par ligne ajoutées. Équipes réelles : non lisibles ici (clé de service), à vérifier sur l'aperçu |
-| Wanted | Validé sur mobile | Finition |
-| Anniversaires | Validé visuellement | — |
+| Wanted | Validé sur mobile | Classement mis en scène (Yonkō, primes révélées, registre en barres) ; données réelles |
+| Anniversaires | Validé sur mobile | Guirlande, signe astral, carte de vœux ; données réelles |
 | Bibliothèque | Validé sur mobile | Fiches réelles : la lecture publique de la table renvoie 0 fiche, collection vérifiée avec données factices de dev (`?demo=fiches`) |
 | Chronique du Bash | Validé sur mobile | Couverture de numéro, dossier en cases, programme par date, numéros précédents, article avec bandeau et lettrine |
 | Cinéma | Validé sur mobile | Deux états testés (relâche sans TMDB ; catalogue factice de dev `?demo=catalogue`). En production : ajouter `TMDB_API_KEY` dans Vercel |

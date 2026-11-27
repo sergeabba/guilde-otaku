@@ -12,8 +12,10 @@ import { fetchMembers } from "../utils/dataAdapter";
 import { normalize } from "../utils/text";
 import { useShare } from "../hooks/useShare";
 import type { Member, Rank } from "../../data/members";
-import { rankAccents } from "../config/ranks";
+import BountyBoard from "./BountyBoard";
 import { optimizedSrc } from "../../lib/img";
+import "./wanted-v4.css";
+import { rankAccents } from "../config/ranks";
 import { bounty, BOUNTY_RULES, formatBounty, RANK_BOUNTY, sayBounty } from "../../lib/wanted";
 import { saveImage, saveMessage } from "../../lib/save-image";
 import { fileSlug } from "../../lib/share";
@@ -337,6 +339,7 @@ export default function WantedPage() {
       </section>
 
       <main className="gk-wrap wt-main">
+        <BountyBoard onPick={pick} ranked={ranked.map((m) => { const src = (viewMode === "anime" ? m.animeChar : m.photo) || m.animeChar || m.photo; return { m, prime: primeOf(m), src: src ? optimizedSrc(src, 640) ?? src : null }; })} />
         {/* ── Comment la prime est fixée ── */}
         <section className="wt-rules" aria-labelledby="wt-rules-title" data-gk-motion="reveal">
           <div className="wt-rules-head">
