@@ -1,0 +1,18 @@
+/* ═══ ANNIVERSAIRES v4 : LA FÊTE ═════════════════════════════════════════════
+   La personne fêtée est l'invitée d'honneur : guirlande de fanions à la couleur de son
+   grade, signe astral (dérivé de la date), carte de vœux à envoyer. */
+.bd-spot { position: relative; }
+.bd-bunting { position: absolute; z-index: 3; left: -2px; right: -2px; top: -4px; width: calc(100% + 4px); height: 46px; color: #0d0c10; pointer-events: none; animation: bd-sway 4s ease-in-out infinite alternate; transform-origin: 50% 0; }
+@keyframes bd-sway { to { transform: rotate(.6deg) translateY(1px); } }
+.bd-zodiac { display: inline-block; margin-left: 10px; padding: 1px 8px; border: 1.5px solid currentColor; font: 700 .78rem var(--gk-font-ui); font-style: normal; text-transform: none; letter-spacing: .02em; vertical-align: 2px; }
+
+.bd-wish { display: grid; gap: 6px; margin-top: 10px; max-width: 460px; }
+.bd-wish label { font: 800 .86rem var(--gk-font-ui); text-transform: none; letter-spacing: .01em; color: #f3eee2; }
+.bd-wish-row { display: flex; gap: 8px; }
+.bd-wish .gk-input { padding: 10px 12px !important; min-height: 46px; background: #f3eee2; color: #0d0c10; border-color: #f3eee2; }
+.bd-wish .gk-btn--ink { flex: none; background: var(--bd-acc, #c9a84c); color: #0d0c10; }
+.bd-wish small { font: 500 .78rem/1.35 var(--gk-font-body); color: rgba(243,238,226,.65); }
+
+/* Rangs du calendrier : métadonnées en casse de phrase. */
+.bd-who small { text-transform: none !important; letter-spacing: .01em !important; font-size: .82rem !important; }
+@media (prefers-reduced-motion: reduce) { .bd-bunting { animation: none; } }

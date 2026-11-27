@@ -11,8 +11,10 @@ import { parseBirthday } from "../types";
 import { fetchMembers } from "../utils/dataAdapter";
 import { countdownTo, daysUntil, nextOccurrence, occurrenceIn } from "../utils/birthdays";
 import { useShare } from "../hooks/useShare";
+import { zodiacOf } from "../../lib/zodiac";
 import "./birthdays.css";
 import "./birthdays-v3.css";
+import "./birthdays-v4.css";
 import Sceau from "../components/guilde/Sceau";
 import { starTile } from "../components/guilde/textures";
 import RubricMark from "../components/guilde/RubricMark";
@@ -39,6 +41,19 @@ type Dated = Member & { day: number; month: number; daysUntil: number };
 const CONFETTI_KEY = "guilde-confettis";
 
 /** Compte à rebours isolé : lui seul se redessine chaque seconde. */
+/** Guirlande de fanions (décor), aux couleurs du grade de la personne fêtée. */
+function Bunting({ n = 14 }: { n?: number }) {
+  return (
+    <svg className="bd-bunting" viewBox={`0 0 ${n * 40} 46`} preserveAspectRatio="none" aria-hidden="true">
+      <path d={`M0 6 Q${n * 20} 26 ${n * 40} 6`} fill="none" stroke="currentColor" strokeWidth="2" />
+      {Array.from({ length: n }, (_, i) => {
+        const x = i * 40 + 6, y = 6 + Math.sin((i / (n - 1)) * Math.PI) * 10;
+        return <path key={i} d={`M${x} ${y} L${x + 28} ${y} L${x + 14} ${y + 26} Z`} fill={i % 3 === 0 ? "var(--bd-acc)" : i % 3 === 1 ? "#f3eee2" : "#d7332b"} stroke="#0d0c10" strokeWidth="2" />;
+      })}
+    </svg>
+  );
+}
+
 function Countdown({ target }: { target: Date }) {
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
@@ -70,6 +85,7 @@ export default function BirthdaysPage() {
   const [calMonth, setCalMonth] = useState(() => new Date().getMonth() + 1);
   const [confettiOn, setConfettiOn] = useState(true);
   const { share, Toast } = useShare();
+  const [wish, setWish] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -206,6 +222,7 @@ export default function BirthdaysPage() {
             <section data-gk-motion="reveal" className={`gk-panel bd-spot${isToday ? " is-today" : ""}`} aria-label={isToday ? "Anniversaire du jour" : "Prochain anniversaire"}
               style={{ "--bd-acc": rankAccents[soonest[0].rank as Rank] ?? "#c9a84c", "--bd-tile": starTile("rgba(255,255,255,.55)", 34) } as React.CSSProperties}>
               {/* Invitation d'événement spécial : grande date gravée, sceau du grade de l'invité. */}
+              <Bunting />
               <span className="bd-spot-day" aria-hidden="true">{soonest[0].day}</span>
               <Sceau className="bd-spot-seal" rank={soonest[0].rank} text={rankRomaji[soonest[0].rank as Rank]} tone="gold" size={120} />
               <div className="bd-spot-media">
@@ -224,6 +241,7 @@ export default function BirthdaysPage() {
                 <h2>{soonest.map((m) => m.name).join(" & ")}</h2>
                 <p className="bd-spot-date">
                   {soonest[0].day} {MONTHS[soonest[0].month - 1].toLowerCase()}, {[...new Set(soonest.map((m) => m.rank))].join(" et ")}
+                  <span className="bd-zodiac">{zodiacOf(soonest[0].day, soonest[0].month)}</span>
                 </p>
                 {isToday ? (
                   <p className="bd-shout">Joyeux anniversaire !</p>
@@ -243,6 +261,16 @@ export default function BirthdaysPage() {
                     <Share2 size={16} aria-hidden="true" /> Partager
                   </button>
                 </div>
+                {/* Carte de vœux : le message part avec le lien de la fiche (partage ou copie),
+                    rien n'est enregistré sur le site. */}
+                <form className="bd-wish" onSubmit={(e) => { e.preventDefault(); share({ title: `Vœux pour ${soonest[0].name}`, text: wish.trim() || `Joyeux anniversaire ${soonest[0].name} !`, url: `/membres/${soonest[0].id}` }); }}>
+                  <label htmlFor="bd-wish-text">Ta carte de vœux pour {soonest.map((m) => m.name.split(" ")[0]).join(" & ")}</label>
+                  <div className="bd-wish-row">
+                    <input id="bd-wish-text" className="gk-input" maxLength={160} placeholder={isToday ? "Joyeux anniversaire !" : "Un mot pour le jour J…"} value={wish} onChange={(e) => setWish(e.target.value)} />
+                    <button type="submit" className="gk-btn gk-btn--ink">Envoyer</button>
+                  </div>
+                  <small>Le message est partagé avec le lien de sa fiche (rien n&apos;est publié sur le site).</small>
+                </form>
                 {isToday && (
                   <label style={{ display: "inline-flex", alignItems: "center", gap: 8, font: "700 0.9rem var(--gk-font-ui)", cursor: "pointer", width: "fit-content" }}>
                     <input type="checkbox" checked={confettiOn} onChange={toggleConfetti} style={{ width: 18, height: 18, accentColor: "#111" }} />
@@ -392,7 +420,7 @@ function Row({ m, src, label, onOpen, showMonth = false }: { m: Dated; src: stri
         </span>
         <span className="bd-who">
           <strong>{m.name}</strong>
-          <small>{showMonth ? `${MONTHS[m.month - 1]}, ${m.rank}` : m.rank}</small>
+          <small>{showMonth ? `${MONTHS[m.month - 1]}, ${m.rank}` : m.rank} · {zodiacOf(m.day, m.month)}</small>
         </span>
         <span className={`bd-when${m.daysUntil > 0 && m.daysUntil <= 7 ? " is-soon" : ""}`}>{label}</span>
       </button>
