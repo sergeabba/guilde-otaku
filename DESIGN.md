@@ -93,3 +93,20 @@ Administration : sobre et fonctionnelle (typographie commune seulement).
 
 Rōmaji seulement, aucune écriture japonaise affichée ; aucune donnée inventée (les hôtes et les
 raisons affichées viennent des fiches) ; aucune image ni interface reprise d'un jeu existant.
+
+
+## Registres typographiques (v4)
+
+La voix Persona (condensé italique en capitales) est la signature, réservée aux registres
+où elle sert : affiche (titres), commande (boutons, onglets, filtres, navigation).
+Les informations secondaires, les calendriers, les descriptions et les formulaires passent
+en casse de phrase et en police de lecture. Détail et classes : `app/styles/typo-registers.css`.
+
+| Registre | Usage | Police |
+|---|---|---|
+| Affiche | titres de page et de section | Barlow Condensed 900 italique capitales ; Anton pour les chiffres géants |
+| Commande | boutons, onglets, filtres, navigation | Barlow Condensed italique capitales, court |
+| Étiquette | tags, métadonnées | Barlow Condensed 700 droit, casse de phrase, ≥ 0,78 rem |
+| Lecture | descriptions, synopsis, formulaires | Barlow 400-500, interligne 1,5 |
+| Récit | chapôs, avis, chroniques | Fraunces (`.gk-story`) |
+| Données | heures, scores, compteurs | chiffres tabulaires |

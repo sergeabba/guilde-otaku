@@ -1,0 +1,39 @@
+/* ═══ REGISTRES TYPOGRAPHIQUES ════════════════════════════════════════════════
+   La voix Persona (condensé italique en capitales) reste la signature, mais seulement
+   là où elle a du sens. Six registres, du plus spectaculaire au plus discret :
+
+   1. Affiche   titres de page et de section : condensé 900 italique capitales, Anton
+                pour les chiffres géants (.gk-display, .gk-num). Inchangé.
+   2. Commande  boutons, onglets, familles de navigation, filtres : condensé italique
+                capitales, court (.gk-btn, .gk-chip, .gk-navg). Inchangé.
+   3. Étiquette tags, métadonnées, petites informations : condensé 700 droit, casse de
+                phrase, sans espacement exagéré, jamais sous 0,78 rem.
+   4. Lecture   descriptions, synopsis, aide, formulaires : Barlow droit 400-500,
+                interligne 1,5, casse de phrase.
+   5. Récit     chapôs, avis, chroniques, citations : Fraunces (serif à contraste),
+                pour la richesse picturale « Metaphor » sans en faire une police d'interface.
+   6. Données   heures, scores, compteurs : chiffres tabulaires.
+
+   Ce fichier ajuste les composants partagés vers ces registres ; chaque rubrique peut
+   ensuite les appliquer à ses propres classes. */
+:root { --gk-font-story: "Fraunces Variable", Georgia, serif; }
+
+/* 3. Étiquette */
+.gk-tag { text-transform: none; letter-spacing: .02em; font: 700 .8rem/1.15 var(--gk-font-ui); }
+.gk-tag--solid { text-transform: uppercase; letter-spacing: .06em; }
+
+/* 4. Lecture : formulaires et champs */
+.gk-input, .am-input, input.gk-input::placeholder { font-family: var(--gk-font-body) !important; font-weight: 500 !important; letter-spacing: 0 !important; }
+.gk-empty p, .gk-hero-lede, .gk-body { line-height: 1.55; }
+
+/* 5. Récit */
+.gk-story { font-family: var(--gk-font-story); font-weight: 400; line-height: 1.6; }
+
+/* 6. Données */
+.gk-num, time, .gk-tabular { font-variant-numeric: tabular-nums; }
+
+/* Métadonnées des cartes de rubriques : casse de phrase, plus lisibles. */
+:is(.cin-card-meta, .fs-card-body small, .at-plate-cap small, .bb4-back-card small, .bb-card-body small, .bb4-lead-text small, .bp-domain) {
+  text-transform: none !important; letter-spacing: .01em !important; font-size: max(.8rem, 1em) ;
+}
+.cin-card-title, .fs-card-body strong { text-transform: none !important; font-style: normal !important; font-weight: 800 !important; line-height: 1.15 !important; }

@@ -17,6 +17,13 @@ const DAY = new Intl.DateTimeFormat("fr-FR", { weekday: "long" });
 const DAY_S = new Intl.DateTimeFormat("fr-FR", { weekday: "short" });
 const DATE = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" });
 const TIME = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit" });
+/** Fuseau du visiteur, en clair : « Europe/Paris (UTC+1) ». Les heures du calendrier y sont converties. */
+function zoneLabel(at: number): string {
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "heure locale";
+  const off = -new Date(at).getTimezoneOffset();
+  const h = Math.trunc(Math.abs(off) / 60), m = Math.abs(off) % 60;
+  return `${tz.replace(/_/g, " ")} (UTC${off >= 0 ? "+" : "−"}${h}${m ? `:${String(m).padStart(2, "0")}` : ""})`;
+}
 const dayKey = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 
 function countdown(at: number, now: number): string {
@@ -84,7 +91,7 @@ export default function CalendarClient({ episodes }: { episodes: AiringEpisode[]
         <header className="cal-head">
           <RubricMark rubric="calendrier" no="10" label="Simulcast" romaji="Hōsō" />
           <h1 className="gk-display cal-title"><WordReveal>Les sorties <em>Crunchyroll.</em></WordReveal></h1>
-          <p className="cal-lede">Les épisodes de la semaine sur Crunchyroll, jour par jour et à ton heure (heure de diffusion au Japon ; la mise en ligne suit en général de près).</p>
+          <p className="cal-lede">Les épisodes de la semaine sur Crunchyroll, jour par jour, converties à ton heure. L'heure indiquée est celle de la diffusion au Japon ; la mise en ligne sur Crunchyroll suit en général de près.</p>
         </header>
 
         {!episodes ? (
@@ -108,6 +115,7 @@ export default function CalendarClient({ episodes }: { episodes: AiringEpisode[]
                 <button type="button" aria-pressed={!mine} onClick={() => setMine(false)}>Tout</button>
                 <button type="button" aria-pressed={mine} onClick={() => setMine(true)}>Suivis par la Guilde ({followedCount})</button>
               </div>
+              {now !== null && <p className="cal-tz"><Clock size={14} aria-hidden="true" /> Heures affichées dans ton fuseau : <b>{zoneLabel(now)}</b></p>}
               <div className="gk-switch cal-view" role="group" aria-label="Affichage">
                 <button type="button" aria-pressed={view === "jour"} onClick={() => setView("jour")}>Jour</button>
                 <button type="button" aria-pressed={view === "semaine"} onClick={() => setView("semaine")}>Semaine</button>

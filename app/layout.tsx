@@ -27,6 +27,7 @@ import TypoPreview from "./components/TypoPreview";
 import IntentPrefetch from "./components/IntentPrefetch";
 import ImageFallback from "./components/ImageFallback";
 import "./styles/ambiance.css";
+import "./styles/typo-registers.css";
 import { ThemeProvider } from "./context/ThemeContext";
 import { FACE_INIT_SCRIPT } from "../lib/face-script";
 import { MusicDockProvider } from "./components/MusicDock";
