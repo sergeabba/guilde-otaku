@@ -311,3 +311,18 @@ body.modal-open .hm-float { display: none; }
   .hm-case-swap:nth-of-type(2) { animation-delay: 90ms; }
   .hm-case-swap:nth-of-type(3) { animation-delay: 180ms; }
 }
+
+/* ═══ Annuaire v4 : compendium et bascule compacte ══════════════════════════════
+   « Classer par » : grade (sections) ou un seul classement façon compendium de RPG,
+   le critère (force, vitesse, technique) affiché en grand sur chaque arcane. */
+.hm-order { display: inline-flex; align-items: center; gap: 8px; }
+.hm-order span { font: 700 .86rem var(--gk-font-ui); color: var(--gk-dim); white-space: nowrap; }
+.hm-order .gk-input { width: auto; min-height: 44px; padding: 6px 34px 6px 12px !important; }
+.hm-stat-card { position: relative; }
+.hm-stat-badge { position: absolute; z-index: 4; left: -8px; top: -10px; display: grid; justify-items: center; min-width: 54px; padding: 4px 6px 3px; background: var(--gk-text); color: var(--gk-bg); clip-path: polygon(8% 0, 100% 0, 92% 100%, 0 100%); filter: drop-shadow(3px 3px 0 var(--gk-accent)); }
+.hm-stat-badge b { font: 400 1.5rem/1 var(--gk-font-impact); font-variant-numeric: tabular-nums; }
+.hm-stat-badge small { font: 700 .66rem var(--gk-font-ui); }
+.hm-stat-v { font: 400 1.3rem/1 var(--gk-font-impact); font-variant-numeric: tabular-nums; }
+/* Bascule flottante : petite pastille en bas à droite, ne couvre plus les cartes. */
+.hm-float { left: auto !important; right: max(14px, env(safe-area-inset-right)) !important; transform: none !important; }
+.hm-float button { min-width: 44px; padding-inline: 10px !important; justify-content: center; }

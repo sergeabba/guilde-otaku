@@ -105,6 +105,8 @@ export default function HomePageClient({ initialMembers, featuredFilm, atelierTi
   const [showFloat, setShowFloat] = useState(false);
   const directoryRef = useRef<HTMLElement>(null);
   const toolsRef = useRef<HTMLDivElement>(null);
+  // Ordre de l'annuaire : par grade (sections) ou en un seul classement (nom, statistiques).
+  const [order, setOrder] = useState<"grade" | "nom" | "force" | "vitesse" | "technique">("grade");
   const { isDark: globalDark } = useTheme();
 
   useEffect(() => { setMounted(true); }, []);
@@ -397,6 +399,16 @@ export default function HomePageClient({ initialMembers, featuredFilm, atelierTi
                   </button>
                 )}
               </div>
+              <label className="hm-order">
+                <span>Classer par</span>
+                <select className="gk-input" value={order} onChange={(e) => { const v = e.target.value as typeof order; viewTransition({ kind: "list", update: () => flushSync(() => setOrder(v)) }); }}>
+                  <option value="grade">Grade</option>
+                  <option value="nom">Nom</option>
+                  <option value="force">Force</option>
+                  <option value="vitesse">Vitesse</option>
+                  <option value="technique">Technique</option>
+                </select>
+              </label>
               <div className="gk-switch hm-viewmode" role="group" aria-label="Affichage de l'annuaire">
                 <button type="button" aria-pressed={dirView === "arcanes"} onClick={() => changeDirView("arcanes")}>Arcanes</button>
                 <button type="button" aria-pressed={dirView === "liste"} onClick={() => changeDirView("liste")}>Liste</button>
@@ -452,8 +464,44 @@ export default function HomePageClient({ initialMembers, featuredFilm, atelierTi
                 <button type="button" className="gk-btn" onClick={resetFilters}>Tout réafficher</button>
               </div>
             ) : (
-              <div key={`${activeRank}-${activeCountry ?? "all"}`}>
-                {visibleRanks.map((rank) => {
+              <div key={`${activeRank}-${activeCountry ?? "all"}-${order}`}>
+                {order !== "grade" && (() => {
+                  // Un seul classement, comme le compendium d'un RPG : le critère en grand sur chaque entrée.
+                  const statOf = (m: (typeof filteredMembers)[number]) => (order === "nom" ? 0 : (m.stats?.[order] ?? 0));
+                  const sorted = [...filteredMembers].sort((a, b) => order === "nom" ? a.name.localeCompare(b.name, "fr") : statOf(b) - statOf(a));
+                  return (
+                    <section className="hm-rank-block hm-compendium" aria-label={`Classement par ${order}`}>
+                      <div className="hm-rank-head"><h3>{order === "nom" ? "De A à Z" : `Classement : ${order}`}</h3><span className="gk-tag">{sorted.length} membres</span><span className="hm-rank-line" aria-hidden="true" /></div>
+                      {dirView === "liste" ? (
+                        <ol className="hm-list">
+                          {sorted.map((member, i) => {
+                            const src = viewMode === "anime" ? (member.animeChar || member.photo) : (member.photo || member.animeChar);
+                            return (
+                              <li key={member.id} data-member-id={member.id}>
+                                <button type="button" onClick={(e) => openMember(member, e.currentTarget)} aria-label={`Ouvrir la fiche de ${member.name}, ${member.rank}`}>
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <span className="hm-list-face mc-media">{src && <img src={optimizedSrc(src, 128)} alt="" loading="lazy" decoding="async" />}</span>
+                                  <span><b>{order === "nom" ? "" : `${i + 1}. `}{member.name}</b><small>{member.rank}</small></span>
+                                  <span className="hm-list-rank">{order === "nom" ? member.rank : <><b className="hm-stat-v">{statOf(member)}</b> {order}</>}</span>
+                                </button>
+                              </li>
+                            );
+                          })}
+                        </ol>
+                      ) : (
+                        <div className="hm-grid gk-stagger">
+                          {sorted.map((member, i) => (
+                            <div key={member.id} className="hm-stat-card">
+                              {order !== "nom" && <span className="hm-stat-badge" aria-label={`${order} ${statOf(member)}, ${i + 1}e`}><b>{statOf(member)}</b><small>{i + 1}e</small></span>}
+                              <MemberCard member={member} index={i} viewMode={viewMode} cut={cuts[member.id]} onClick={(el) => openMember(member, el)} />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </section>
+                  );
+                })()}
+                {order === "grade" && visibleRanks.map((rank) => {
                   const rankMembers = filteredMembers.filter((m) => m.rank === rank);
                   if (rankMembers.length === 0) return null;
                   const rk = rankAccents[rank as Rank];
@@ -518,11 +566,11 @@ export default function HomePageClient({ initialMembers, featuredFilm, atelierTi
 
       {mounted && showFloat && !selectedMember && createPortal(
         <div className={`hm-float gk-switch tone-${isDark ? "dark" : "light"}`} role="group" aria-label="Type de portrait" style={{ "--gk-accent": accent } as React.CSSProperties}>
-          <button type="button" aria-pressed={viewMode === "real"} onClick={() => setViewMode("real")}>
-            <User size={16} aria-hidden="true" /> Réel
+          <button type="button" aria-pressed={viewMode === "real"} onClick={() => setViewMode("real")} aria-label="Portraits réels" title="Réel">
+            <User size={17} aria-hidden="true" />
           </button>
-          <button type="button" aria-pressed={viewMode === "anime"} onClick={() => setViewMode("anime")}>
-            <Sword size={16} aria-hidden="true" /> Anime
+          <button type="button" aria-pressed={viewMode === "anime"} onClick={() => setViewMode("anime")} aria-label="Portraits anime" title="Anime">
+            <Sword size={17} aria-hidden="true" />
           </button>
         </div>,
         document.body

@@ -10,7 +10,7 @@
 | Fiches membres (vue Personnage) | Validé sur mobile | Nom recomposé sans plaque (colonne d'identité, portrait décalé, nom réel en second plan) ; reste : distinctions et personnalisation des illustrations |
 | Scènes de pouvoir (spéciale, bankai, territoire) | Fonctionnel | Qualité d'illustration (illustrations dédiées, shader de matière) |
 | Admin : réglages des scènes de pouvoir | Validé sur mobile | Aperçu en direct (la vraie scène, réduite) ; sauvegarde et suppression testées en isolé (`scripts/qa/admin-mock.js`, écritures interceptées) |
-| Annuaire (arcanes, liste) | Validé sur mobile | — |
+| Annuaire (arcanes, liste) | Validé sur mobile | « Classer par » grade, nom, force, vitesse, technique (compendium, valeur en grand) ; bascule Anime/Réel flottante compacte ; données réelles |
 | Teams (terrain, capitaine, écussons, annonce) | Testé avec données fictives | Affiche de confrontation et notes par ligne ajoutées. Équipes réelles : non lisibles ici (clé de service), à vérifier sur l'aperçu |
 | Wanted | Validé sur mobile | Classement mis en scène (Yonkō, primes révélées, registre en barres) ; données réelles |
 | Anniversaires | Validé sur mobile | Guirlande, signe astral, carte de vœux ; données réelles |
