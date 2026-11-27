@@ -29,15 +29,7 @@ function side(team: GuildTeam, members: Map<number, TeamMember>) {
   };
 }
 
-export default function MatchPoster({ teams, members, faceMode }: { teams: GuildTeam[]; members: Map<number, TeamMember>; faceMode: Face }) {
-  // Paires possibles : deux équipes d'un même sport. On choisit la paire affichée.
-  const pairs: [GuildTeam, GuildTeam][] = [];
-  for (let i = 0; i < teams.length; i++) for (let j = i + 1; j < teams.length; j++) if (teams[i].sport === teams[j].sport) pairs.push([teams[i], teams[j]]);
-  const [k, setK] = useState(0);
-  if (!pairs.length) return null;
-  const [ta, tb] = pairs[Math.min(k, pairs.length - 1)];
-  const a = side(ta, members), b = side(tb, members);
-  const Cap = ({ s, flip }: { s: ReturnType<typeof side>; flip?: boolean }) => {
+function Cap({ s, flip, faceMode }: { s: ReturnType<typeof side>; flip?: boolean; faceMode: Face }) {
     const p = s.cap && face(s.cap.m, faceMode);
     return (
       <figure className={`mp-cap${flip ? " is-b" : ""}`}>
@@ -49,7 +41,16 @@ export default function MatchPoster({ teams, members, faceMode }: { teams: Guild
         </figcaption>
       </figure>
     );
-  };
+  }
+
+export default function MatchPoster({ teams, members, faceMode }: { teams: GuildTeam[]; members: Map<number, TeamMember>; faceMode: Face }) {
+  // Paires possibles : deux équipes d'un même sport. On choisit la paire affichée.
+  const pairs: [GuildTeam, GuildTeam][] = [];
+  for (let i = 0; i < teams.length; i++) for (let j = i + 1; j < teams.length; j++) if (teams[i].sport === teams[j].sport) pairs.push([teams[i], teams[j]]);
+  const [k, setK] = useState(0);
+  if (!pairs.length) return null;
+  const [ta, tb] = pairs[Math.min(k, pairs.length - 1)];
+  const a = side(ta, members), b = side(tb, members);
   return (
     <section className="mp" aria-labelledby="mp-title" style={{ "--a": a.color, "--b": b.color } as React.CSSProperties}>
       <header className="mp-head">
@@ -63,9 +64,9 @@ export default function MatchPoster({ teams, members, faceMode }: { teams: Guild
       </header>
       <div className="mp-poster">
         <span className="mp-bg" aria-hidden="true" />
-        <Cap s={a} />
+        <Cap s={a} faceMode={faceMode} />
         <span className="mp-vs" aria-hidden="true">VS</span>
-        <Cap s={b} flip />
+        <Cap s={b} flip faceMode={faceMode} />
       </div>
       <dl className="mp-lines">
         {[{ line: "global", label: "Puissance", va: a.power, vb: b.power }, ...a.lines.map((l, i) => ({ line: l.line, label: LINE_LABEL[l.line], va: l.value, vb: b.lines[i]?.value ?? null }))].map((r) => {
