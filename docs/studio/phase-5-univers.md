@@ -43,6 +43,14 @@ expérience et cite les rubriques liées :
 3. **Passeport du membre** : tampons gagnés en visitant chaque rubrique (stocké sur
    l'appareil), qui débloquent des fonds de carte.
 
+## Réalisé
+
+- **Quartier général** (`/qg`) : tour en coupe de neuf étages dessinés en SVG (toit, trône,
+  musée, projection, bibliothèque, arcade, fêtes, vestiaire, atelier), occupants et images
+  réels, salles qui s'allument au passage, ascenseur qui suit le défilement, heure sombre
+  (code Konami ou sept touches sur l'enseigne). Accès : en-tête (La Guilde), sommaire,
+  menu de l'accueil.
+
 ## Ordre proposé
 
 1. QG (la carte, sans contenu nouveau : chaque salle renvoie aux rubriques existantes).

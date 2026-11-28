@@ -32,4 +32,5 @@ Six colonnes, cochées seulement quand c'est réellement vérifié :
 | Jeux (identités par borne) | ✓ | – | ✗ | ✓ | ✓ | | Parties complètes : sources externes inaccessibles d'ici |
 | Administration (mobile, confirmations, aperçus) | ✓ | ✓ | ✗ | ✓ | ✓ | | Ta vraie session : procédure dédiée |
 | Fighters | En pause | | | | | | Références en pied attendues (sprites) |
-| Phase 5 : expériences communautaires | Proposé | | | | | | Voir `phase-5-univers.md` |
+| Phase 5 : Quartier général (/qg) | ✓ | – | ✓ | ✓ | ✓ | | Équipes et galerie réelles lues avec la clé de service (vestiaire et chevalet à vérifier sur l'aperçu) |
+| Phase 5 : Musée, Archives, Cartes, Cérémonies | Non commencé | | | | | | Ordre dans `phase-5-univers.md` |

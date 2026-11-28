@@ -24,6 +24,7 @@ export async function v3Data() {
   used.add(fete.id);
   const entries: V3Entry[] = [
     { id: "membres", label: "Les nakama", href: "/#annuaire", rubric: "membres", host: star.id, why: "En couverture cette semaine" },
+    { id: "qg", label: "Le QG", href: "/qg", rubric: "qg", host: (cast.find((m) => m.rank === "Fondateur") ?? star).id, why: "Il garde la tour de la Guilde" },
     { id: "fighters", label: "Fighters", href: "/fighters", rubric: "fighters", host: fort.id, why: `La plus grande force · ${fort.stats?.force ?? "?"}` },
     { id: "wanted", label: "Wanted", href: "/wanted", rubric: "wanted", host: titre.id, why: `Le plus titré · ${titre.awards.length} distinctions` },
     { id: "bibliotheque", label: "Bibliothèque", href: "/bibliotheque", rubric: "bibliotheque", host: lecteur.id, why: `Le plus lecteur · ${lecteur.works.length} séries favorites` },

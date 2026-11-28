@@ -173,6 +173,8 @@ export default function QgClient({ data }: { data: QgData }) {
         </header>
 
         <div className="qg-tower">
+          {/* Cage d'ascenseur : la cabine reste à hauteur d'yeux et descend la tour avec le visiteur. */}
+          <span className="qg-shaft" aria-hidden="true"><span className="qg-cabin"><b>{cur.no}</b></span></span>
           {floors.map((f) => (
             <section key={f.id} id={`qg-${f.id}`} data-floor={f.id} className={`qg-floor k-${f.kind}`} aria-labelledby={`qg-${f.id}-t`}
               style={{ "--lx": `${f.light[0]}%`, "--ly": `${f.light[1]}%` } as React.CSSProperties}>
