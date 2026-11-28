@@ -1,0 +1,134 @@
+/* ═══ LE QUARTIER GÉNÉRAL ═══════════════════════════════════════════════════
+   Références : coupe d'un dortoir/repaire façon menus de Persona 3 Reload (étages
+   empilés, numéro géant), écrans titres de Persona 5 Royal (lune, ville, lames),
+   cases de manga (chaque salle est une case cernée d'encre, gouttière noire entre les
+   étages), ornements de Metaphor (plaque d'étage dorée). Parcours vertical : on descend
+   la tour en faisant défiler. */
+.qg { --qg-night: #07061a; --qg-gold: #e9c46a; --qg-paper: #f3eee2; background: var(--qg-night); color: var(--qg-paper); min-height: 100vh; }
+.qg { background:
+    radial-gradient(1200px 700px at 75% -10%, rgba(80, 64, 170, .45), transparent 60%),
+    radial-gradient(circle, rgba(255,255,255,.55) 1px, transparent 1.4px) 0 0 / 90px 90px,
+    radial-gradient(circle, rgba(255,255,255,.35) .8px, transparent 1.2px) 45px 30px / 70px 70px,
+    var(--qg-night); }
+
+/* ─── Titre ─────────────────────────────────────────────────────────────── */
+.qg-head { width: min(1120px, 100% - 2 * var(--gk-gutter)); margin: 0 auto; padding: clamp(28px, 6vw, 70px) 0 clamp(18px, 3vw, 30px); }
+.qg-kicker { margin: 0; font: 800 .8rem var(--gk-font-ui); letter-spacing: .2em; text-transform: uppercase; color: var(--qg-gold); }
+.qg-title { margin: 8px 0 0; display: grid; gap: .3em; line-height: .86; }
+.qg-title span:first-child { font: 900 italic clamp(1.4rem, 4vw, 2.4rem)/1 var(--gk-font-title); text-transform: uppercase; }
+.qg-title span:last-child { font: 400 clamp(4rem, 17vw, 11rem)/.85 var(--gk-font-impact); text-transform: uppercase; letter-spacing: -.01em; color: var(--qg-paper); text-shadow: 6px 6px 0 #c8102e; transform: skewX(-6deg); transform-origin: left; }
+.qg-lede { max-width: 56ch; margin: 14px 0 0; font: 400 clamp(1rem, 2vw, 1.15rem)/1.55 var(--gk-font-body); color: rgba(243,238,226,.82); }
+.qg-dark-note { margin: 12px 0 0; display: inline-block; padding: 6px 12px; background: #0f3a22; color: #b7ffcf; font: 700 .9rem var(--gk-font-ui); border-left: 4px solid #4dff9a; }
+
+/* ─── La tour : façade en pierre, étages empilés ─────────────────────────────── */
+.qg-tower { position: relative; width: min(1180px, 100% - 2 * var(--gk-gutter)); margin: 0 auto clamp(70px, 10vw, 120px); padding: 0 clamp(8px, 1.6vw, 18px); background: #1d1a2c; border: 4px solid #0d0c10; box-shadow: 0 0 0 6px #2f2a47, 14px 14px 0 6px #000; }
+.qg-tower::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .35; background:
+    linear-gradient(#0d0c10 2px, transparent 2px) 0 0 / 64px 32px,
+    linear-gradient(90deg, #0d0c10 2px, transparent 2px) 0 0 / 64px 64px,
+    linear-gradient(90deg, #0d0c10 2px, transparent 2px) 32px 32px / 64px 64px; }
+
+.qg-floor { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; padding-block: clamp(14px, 2vw, 22px); border-bottom: 14px solid #0d0c10; scroll-margin-top: 90px; }
+@media (min-width: 900px) { .qg-floor { grid-template-columns: 150px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 18px; } .qg-plate { grid-row: span 2; } }
+
+/* Plaque d'étage : grand numéro, nom en lame, rōmaji en italique. */
+.qg-plate { position: relative; z-index: 1; align-self: start; display: grid; align-content: start; gap: 4px; padding: 10px 12px 12px; background: #0d0c10; border: 2px solid var(--qg-gold); box-shadow: 5px 5px 0 #c8102e; margin-bottom: 10px; }
+@media (max-width: 899px) { .qg-plate { grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 12px; margin: 0 0 8px; } .qg-plate i { grid-column: 2; } .qg-no { grid-row: span 2; } }
+.qg-no { font: 400 clamp(3rem, 9vw, 5.4rem)/.8 var(--gk-font-impact); color: var(--qg-gold); }
+.qg-plate h2 { margin: 0; font: 900 italic clamp(1.15rem, 2.6vw, 1.5rem)/1 var(--gk-font-title); text-transform: uppercase; color: var(--qg-paper); }
+.qg-plate i { font: italic 500 .95rem var(--gk-font-body); color: rgba(243,238,226,.7); }
+
+/* La salle : une case 16:9 (4:3 sur téléphone, recadrée au centre comme le décor). */
+.qg-room { position: relative; aspect-ratio: 16 / 9; overflow: hidden; border: 5px solid #0d0c10; outline: 2px solid #3a3456; background: #0d0c10; }
+@media (max-width: 599px) { .qg-room { aspect-ratio: 4 / 3; } }
+.qg-stage { position: absolute; top: 0; left: 50%; height: 100%; aspect-ratio: 16 / 9; translate: -50% 0; }
+.qg-art { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+/* Lumière : éteinte (voile nocturne) tant que l'étage n'est pas atteint, puis la lampe
+   s'allume (léger papillonnement), et le voile se lève. */
+.qg-dim { position: absolute; inset: 0; pointer-events: none; background: rgba(6, 5, 26, .72); transition: opacity 700ms cubic-bezier(.2, .9, .3, 1) 120ms; }
+.qg-glow { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: screen; opacity: 0; background: radial-gradient(42% 60% at var(--lx) var(--ly), rgba(255, 214, 107, .38), transparent 70%); transition: opacity 500ms ease; }
+.qg-floor.is-lit .qg-dim { opacity: 0; }
+.qg-floor.is-lit .qg-glow { opacity: 1; animation: qg-flicker 900ms steps(1) 1; }
+@keyframes qg-flicker { 0% { opacity: 0; } 12% { opacity: 1; } 20% { opacity: .2; } 32% { opacity: 1; } 44% { opacity: .5; } 56%, 100% { opacity: 1; } }
+
+/* Occupants (membres) et images posées dans le décor. */
+.qg-occ { position: absolute; z-index: 2; translate: -50% 0; aspect-ratio: 3 / 4; display: block; transition: translate 600ms cubic-bezier(.2, 1, .3, 1), opacity 400ms ease; }
+.qg-occ img { width: 100%; height: 100%; object-fit: contain; object-position: bottom center; filter: drop-shadow(4px 0 0 #fff) drop-shadow(-4px 0 0 #fff) drop-shadow(0 -4px 0 #fff) drop-shadow(8px 8px 0 rgba(0,0,0,.45)); }
+.qg-occ.is-framed { aspect-ratio: 1; }
+.qg-occ.is-framed img { object-fit: cover; object-position: 50% 15%; border: 4px solid #fff; outline: 4px solid #0d0c10; border-radius: 50%; filter: none; }
+.qg-occ-name { position: absolute; left: 50%; bottom: 4%; translate: -50% 0; white-space: nowrap; padding: 2px 8px; background: #0d0c10; color: #fff; border-left: 4px solid var(--c); font: 800 clamp(.6rem, 1.2vw, .82rem) var(--gk-font-ui); opacity: 0; transition: opacity 200ms ease; }
+.qg-occ:hover .qg-occ-name, .qg-occ:focus-visible .qg-occ-name { opacity: 1; }
+.qg-occ:focus-visible { outline: 3px solid var(--qg-gold); outline-offset: 2px; }
+.qg-floor:not(.is-lit) .qg-occ { translate: -50% 12%; opacity: 0; }
+.qg-occ.is-court { z-index: 1; }
+
+.qg-inset { position: absolute; z-index: 1; overflow: hidden; display: grid; place-items: end start; }
+.qg-inset img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.qg-inset.is-frame img { object-position: 50% 18%; }
+.qg-inset.is-frame img.is-cut { object-fit: contain; object-position: bottom center; background: radial-gradient(circle at 50% 40%, #fff5d8, #e8d4a4); }
+.qg-inset.is-screen { background: #efe8d8; }
+.qg-inset.is-screen img { filter: contrast(1.05) saturate(1.1); }
+.qg-inset.is-screen::after { content: ""; position: absolute; inset: 0; background: radial-gradient(70% 70% at 50% 40%, transparent 40%, rgba(0,0,0,.45)); }
+.qg-screen-title { position: relative; z-index: 1; margin: 0 0 4% 4%; padding: 2px 10px; background: rgba(13,12,16,.85); color: #fff; font: 900 italic clamp(.8rem, 2vw, 1.4rem) var(--gk-font-title); text-transform: uppercase; }
+.qg-inset.is-book { rotate: -6deg; border: 4px solid #0d0c10; box-shadow: 8px 8px 0 rgba(0,0,0,.5); }
+.qg-inset.is-canvas { background: #f3eee2; }
+.qg-blank { margin: auto; font: italic 500 clamp(.8rem, 1.6vw, 1rem) "Fraunces Variable", Georgia, serif; color: #8a8174; }
+.qg-plaque { position: absolute; z-index: 2; display: grid; place-items: center; font: 700 clamp(.55rem, 1.3vw, 1rem) "Cinzel", Georgia, serif; color: #3a2513; font-variant-numeric: tabular-nums; }
+
+/* Enseigne au néon du toit (sept touches : l'heure sombre). */
+.qg-neon { position: absolute; z-index: 2; left: 12%; top: 12%; display: grid; gap: 0; padding: 10px 18px; background: rgba(10, 8, 24, .55); border: 4px solid #f472b6; border-radius: 12px; color: #ffe1f0; cursor: pointer; box-shadow: 0 0 18px #f472b6, inset 0 0 14px #f472b6; transform: rotate(-4deg); }
+.qg-neon span { font: 400 clamp(1.4rem, 4.6vw, 3.6rem)/.9 var(--gk-font-impact); text-transform: uppercase; letter-spacing: .04em; text-shadow: 0 0 10px #f472b6, 0 0 2px #fff; }
+.qg-floor.is-lit .qg-neon { animation: qg-neon 2.8s steps(1) 600ms 1; }
+@keyframes qg-neon { 0%, 100% { opacity: 1; } 10% { opacity: .3; } 14% { opacity: 1; } 40% { opacity: .5; } 42% { opacity: 1; } }
+
+/* Détails animés du décor (doux, coupés en mouvement réduit). */
+.qg-cab-screen { animation: qg-screen 2.4s ease-in-out infinite alternate; }
+@keyframes qg-screen { to { opacity: .55; } }
+.qg-flame { animation: qg-flame 700ms ease-in-out infinite alternate; transform-origin: center bottom; transform-box: fill-box; }
+@keyframes qg-flame { to { transform: scaleY(1.25) skewX(6deg); } }
+.qg-bulb { animation: qg-bulb 1.6s ease-in-out infinite alternate; }
+.qg-bulb:nth-child(odd) { animation-delay: .8s; }
+@keyframes qg-bulb { to { fill: #fff3c4; } }
+
+/* Le registre de l'étage : ce qu'il s'y passe, avec les données réelles. */
+.qg-log { display: grid; gap: 6px; align-content: start; margin-top: 10px; padding: 12px 14px; background: var(--qg-paper); color: #1a1612; border-left: 6px solid var(--qg-gold); clip-path: polygon(0 0, 100% 0, 99.4% 100%, 0 100%); }
+.qg-log p { margin: 0; font: 400 1rem/1.5 var(--gk-font-body); }
+.qg-log a:not(.qg-cta) { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.qg-cta { justify-self: start; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; margin-top: 4px; padding: 6px 14px; background: #0d0c10; color: #fff; text-decoration: none; font: 900 italic 1rem var(--gk-font-title); text-transform: uppercase; clip-path: polygon(3% 0, 100% 0, 97% 100%, 0 100%); }
+@media (hover: hover) { .qg-cta:hover { background: #c8102e; } }
+.qg-ground { margin: 0; padding: 14px; text-align: center; font: 800 .8rem var(--gk-font-ui); letter-spacing: .2em; text-transform: uppercase; color: rgba(243,238,226,.5); }
+
+/* ─── Ascenseur ─────────────────────────────────────────────────────────── */
+.qg-lift { position: fixed; z-index: 40; right: max(14px, env(safe-area-inset-right)); top: 50%; translate: 0 -50%; display: grid; gap: 4px; padding: 8px; background: rgba(13, 12, 16, .88); border: 2px solid var(--qg-gold); }
+.qg-lift a { display: grid; grid-template-columns: 2.2em auto; align-items: center; gap: 6px; min-height: 36px; padding: 2px 8px 2px 4px; color: rgba(243,238,226,.6); text-decoration: none; }
+.qg-lift b { display: grid; place-items: center; width: 2em; height: 2em; border: 2px solid currentColor; border-radius: 50%; font: 400 .9rem var(--gk-font-impact); }
+.qg-lift span { font: 800 .78rem var(--gk-font-ui); white-space: nowrap; max-width: 0; overflow: hidden; transition: max-width 240ms ease; }
+.qg-lift:hover span, .qg-lift a[aria-current] span { max-width: 14em; }
+.qg-lift a[aria-current] { color: #0d0c10; background: var(--qg-gold); }
+.qg-lcd { display: none; }
+@media (max-width: 1499px) { .qg-lift { display: none; } }
+@media (max-width: 1499px) {
+  .qg-lcd { position: fixed; z-index: 40; right: max(10px, env(safe-area-inset-right)); top: 66px; display: flex; align-items: center; gap: 8px; margin: 0; padding: 4px 10px 4px 4px; background: #0d0c10; border: 2px solid var(--qg-gold); color: var(--qg-gold); box-shadow: 0 0 12px rgba(233,196,106,.35); }
+  .qg-lcd b { display: grid; place-items: center; min-width: 30px; height: 30px; background: #1f1a05; font: 400 1.1rem var(--gk-font-impact); color: #ffe08a; text-shadow: 0 0 6px #ffcf4a; }
+  .qg-lcd span { font: 800 .74rem var(--gk-font-ui); }
+}
+@media (min-width: 900px) and (max-width: 1499px) { .qg-lcd { top: 78px; } }
+
+/* ─── L'heure sombre (easter egg) ────────────────────────────────────────── */
+.qg.is-dark { --qg-gold: #4dff9a; }
+.qg.is-dark .qg-art, .qg.is-dark .qg-inset img, .qg.is-dark .qg-occ img { filter: grayscale(.6) sepia(.3) hue-rotate(70deg) saturate(1.6) brightness(.8); }
+.qg.is-dark .qg-moon { fill: #c9ffd9; }
+.qg.is-dark .qg-glow { background: radial-gradient(42% 60% at var(--lx) var(--ly), rgba(77, 255, 154, .3), transparent 70%); }
+
+@media (prefers-reduced-motion: reduce) {
+  .qg-dim, .qg-glow, .qg-occ { transition: none; }
+  .qg-floor .qg-glow, .qg-neon, .qg-cab-screen, .qg-flame, .qg-bulb { animation: none !important; }
+}
+/* Finitions : titre sans chevauchement, textes du décor proportionnels à la salle. */
+.qg-title span:first-child { margin-bottom: .1em; }
+.qg-title span:last-child { line-height: 1 !important; padding-top: .06em; }
+.qg-stage { container-type: size; }
+.qg-plaque { white-space: nowrap; font-size: 1.15cqw !important; }
+.qg-screen-title { font-size: 1.6cqw !important; }
+.qg-occ-name { font-size: max(.62rem, .9cqw) !important; }
+.qg-neon span { font-size: 4cqw !important; }

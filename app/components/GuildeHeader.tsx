@@ -146,7 +146,7 @@ export default function GuildeHeader({
           if (here) return (
             <Link key={here.id} href={here.href} aria-current="page" className="is-here">
               <NavGlyph id={here.id} />
-              <span>{here.label}</span>
+              <span>{here.id === "qg" ? "QG" : here.label}</span>
             </Link>
           );
           return (

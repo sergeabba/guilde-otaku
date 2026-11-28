@@ -1,6 +1,7 @@
 // Sommaire du site : source unique pour l'en-tête, le menu mobile,
 // le pied de page et la recherche globale.
 export type PageId =
+  | "qg"
   | "membres"
   | "birthdays"
   | "wanted"
@@ -25,6 +26,7 @@ export interface NavEntry {
 }
 
 export const NAV: NavEntry[] = [
+  { id: "qg",           label: "Quartier général", href: "/qg",        jp: "Honbu",    blurb: "La tour de la Guilde, étage par étage." },
   { id: "membres",      label: "Membres",       href: "/",             jp: "Nakama",   blurb: "L'annuaire de la Guilde, grade par grade." },
   { id: "birthdays",    label: "Anniversaires", href: "/birthdays",    jp: "Tanjōbi", blurb: "Qui souffle ses bougies, et dans combien de jours." },
   { id: "teams",        label: "Teams",         href: "/teams",        jp: "Chīmu",   blurb: "Les cinq de basket et les onze de foot de la Guilde." },
@@ -44,7 +46,7 @@ export const chapterNo = (i: number) => String(i + 1).padStart(2, "0");
 /** Regroupement des rubriques (en-tête et sommaire) : trois familles au lieu de onze entrées. */
 export interface NavGroup { id: string; label: string; jp: string; items: PageId[] }
 export const NAV_GROUPS: NavGroup[] = [
-  { id: "guilde", label: "La Guilde", jp: "Nakama", items: ["membres", "teams", "birthdays", "fighters", "jeux", "wanted"] },
+  { id: "guilde", label: "La Guilde", jp: "Nakama", items: ["qg", "membres", "teams", "birthdays", "fighters", "jeux", "wanted"] },
   { id: "culture", label: "Animes & films", jp: "Bunka", items: ["bibliotheque", "calendrier", "cinema", "film-semaine"] },
   { id: "bonus", label: "Bonus", jp: "Omake", items: ["atelier", "bons-plans"] },
 ];

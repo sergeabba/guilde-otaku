@@ -41,6 +41,7 @@ export const RANK_GLYPHS: Record<string, ReactNode> = {
 
 /** Rubriques : emblèmes de navigation. */
 export const RUBRIC_GLYPHS: Record<string, ReactNode> = {
+  qg: <><path d="M34 80 V34 L50 20 L66 34 V80 Z" /><rect x="42" y="40" width="6" height="7" fill="var(--sc-bg)" /><rect x="52" y="40" width="6" height="7" fill="var(--sc-bg)" /><rect x="42" y="54" width="6" height="7" fill="var(--sc-bg)" /><rect x="52" y="54" width="6" height="7" fill="var(--sc-bg)" /><rect x="45" y="68" width="10" height="12" fill="var(--sc-bg)" /><circle cx="68" cy="24" r="7" /></>,
   accueil: <><path d={flame} /><polygon points={starPoints(4, 7, 2.5, 50, 56)} fill="var(--sc-bg)" /></>,
   membres: <>{[[34, 42], [66, 42], [50, 36]].map(([x, y], i) => <g key={i}><circle cx={x} cy={y} r={i === 2 ? 8 : 6.5} /><path d={`M${x - (i === 2 ? 13 : 10)} ${y + 26} A${i === 2 ? 13 : 10} ${i === 2 ? 13 : 10} 0 0 1 ${x + (i === 2 ? 13 : 10)} ${y + 26} Z`} /></g>)}</>,
   teams: <><path d="M30 26 H70 V50 C70 64 60 72 50 77 C40 72 30 64 30 50 Z" /><path d="M30 44 L70 30 V38 L30 52 Z" fill="var(--sc-bg)" /></>,
